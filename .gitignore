@@ -1,0 +1,9 @@
+**/*.csv
+.vscode
+datasets/
+node_modules/
+dist/
+**/*.log
+backup/**/*
+scripts/backup/**/*.json
+/generated/prisma

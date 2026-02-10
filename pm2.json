@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "pride-spaces-backend",
+      "script": "npm",
+      "args": "run start",
+      "watch": false
+    }
+  ]
+}
