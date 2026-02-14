@@ -22,7 +22,7 @@ const EmailTokenSchema = new Conn.Schema(
     },
     for: {
       type: String,
-      enum: emailTokenUserTypes,
+      enum: emailTokenTypes,
       default: "verification",
       required: true,
     },
