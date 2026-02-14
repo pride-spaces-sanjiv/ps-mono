@@ -10,9 +10,6 @@
     "@/*": "./src/*",
     "@root/*": "./*"
   },
-  "prisma": {
-    "schema": "./prisma"
-  },
   "scripts": {
     "test": "tsx",
     "start": "node dist/index.js",
@@ -21,7 +18,6 @@
   },
   "dependencies": {
     "@henrygd/queue": "^1.2.0",
-    "@prisma/client": "6.19",
     "amqplib": "^0.10.8",
     "axios": "^1.10.0",
     "cluster": "^0.7.7",
@@ -58,7 +54,6 @@
     "@types/node": "^24.10.13",
     "@types/nodemailer": "^6.4.17",
     "nodemon": "^3.1.10",
-    "prisma": "6.19",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
