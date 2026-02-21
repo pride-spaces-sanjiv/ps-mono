@@ -1,0 +1,73 @@
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { tokenStore, userStore } from "../store/user";
+import { getAccountData } from "../apis/account";
+import { datifyObjectValues } from "@/utils/object/datify";
+import { validateNumber } from "@/utils/number";
+// import { validateNumber } from "@/utils/number";
+import { delayPromise } from "@/utils/promise";
+import { queryKeys } from "@/utils/query-keys";
+
+type Props = {
+  promiseDelay: number;
+};
+export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
+  const userStoreState = userStore((state) => state);
+  const tokenStoreState = tokenStore((state) => state);
+  const userData = userStore((state) => state.value);
+  const fetchCount = userStore((state) => state.fetchCount);
+  const userLevel = useMemo(
+    () => validateNumber(userData?.level, { invalidValue: 0 }),
+    [userData?.level],
+  );
+
+  const isTokenValid = useMemo(
+    () =>
+      !!tokenStoreState.value?.expiry &&
+      tokenStoreState.value.expiry.getTime() > Date.now() + 10000,
+    [tokenStoreState.value],
+  );
+
+  const queryState = useQuery({
+    queryKey: [queryKeys.USERDATA, tokenStoreState.value?.expiry],
+    queryFn: () => {
+      userStoreState.increaseFetchCount();
+      return tokenStoreState
+        ? delayPromise(getAccountData(), promiseDelay)
+        : null;
+    },
+    retry: 3,
+  });
+
+  const { data: res } = queryState;
+
+  useEffect(() => {
+    if (res?.data?.data?.id) {
+      const modified = datifyObjectValues(res.data.data, [
+        "expiry",
+        "createdAt",
+        "updatedAt",
+        "testExpiry",
+      ]);
+      userStoreState.setter({
+        ...userStoreState.value,
+        ...modified,
+      } as typeof modified);
+      return;
+    }
+  }, [res?.data?.data?.id]);
+
+  useEffect(() => {}, [queryState.fetchStatus]);
+
+  return {
+    userStore,
+    userStoreState,
+    tokenStore,
+    tokenStoreState,
+    userData,
+    userLevel,
+    isTokenValid,
+    fetchCount,
+    ...queryState,
+  };
+}

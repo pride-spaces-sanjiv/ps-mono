@@ -1,0 +1,261 @@
+// import React from "react";
+import { useEffect, type JSX } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useMutation } from "@tanstack/react-query";
+import * as secureStorage from "@secure-storage/common";
+import { toast } from "sonner";
+import { isAxiosError } from "axios";
+import { tokenStore, userStore } from "@/services/store/user";
+import { loginAPI, googleAuthAPI } from "@/services/apis/auth";
+import { getAccountData } from "@/services/apis/account";
+import {
+  loginSchema,
+  type GoogleAuthSchema,
+  type LoginSchema,
+} from "@/utils/schemas/user";
+import { reConfigureAuthToken } from "@/utils/axios/configure";
+import { handleAxiosErrorCases } from "@/utils/axios/error";
+import { datifyObjectValues } from "@/utils/object/datify";
+import { delayPromise } from "@/utils/promise";
+import { queryKeys } from "@/utils/query-keys";
+import ForgotPasswordModal from "../forgot-password";
+import FormField from "@/components/form/field";
+import ActionButton from "@/components/buttons/action-btn";
+import GoogleButton from "@/components/buttons/google-btn";
+import AuthCard from "@/containers/auth-card";
+
+export default function LoginPage({
+  className,
+  ...props
+}: JSX.IntrinsicElements["div"]) {
+  const tokenData = tokenStore((state) => state.value);
+  const setTokenData = tokenStore((state) => state.setter);
+  const setUserData = userStore((state) => state.setter);
+
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const {
+    data: logged,
+    mutateAsync: mutatedLogin,
+    isPending: loading,
+    isError: errored,
+    error: loginError,
+    isSuccess: loginFinished,
+  } = useMutation({
+    mutationFn: (body: LoginSchema) =>
+      delayPromise(loginAPI({ body: body }), 1),
+  });
+
+  const {
+    data: googleAuthData,
+    mutateAsync: mutatedGoogleAuth,
+    isPending: googleLoading,
+    isError: googleErrored,
+    error: googleError,
+    isSuccess: googleAuthFinished,
+  } = useMutation({
+    mutationFn: (body: GoogleAuthSchema) =>
+      delayPromise(googleAuthAPI({ body: body }), 1),
+  });
+
+  const { mutateAsync: mutatedUserData } = useMutation({
+    mutationKey: [queryKeys.USERDATA],
+    mutationFn: () => getAccountData({}),
+  });
+
+  const login = async (body: LoginSchema) => {
+    try {
+      const res = await mutatedLogin(body);
+      if (isAxiosError(res)) {
+        throw res;
+      }
+
+      const data = res.data?.data;
+      if (res.status === 200 && res.data?.success && data?.token) {
+        const modified = datifyObjectValues(data, ["expiry"]);
+
+        // Save token and reconfigure axios instances
+        secureStorage.localStorage.setItem("__aT__", modified);
+        const configured = reConfigureAuthToken(
+          modified?.token as string,
+          modified?.expiry as Date,
+        );
+        if (!configured) {
+          throw new Error("Failed to reconfigure token");
+        }
+        setTokenData({ ...tokenData, ...modified } as typeof tokenData);
+
+        const userRes = await mutatedUserData();
+        const userData = userRes.data?.data;
+        if (userRes.status === 200 && res.data?.success && userData?.id) {
+          const modified = datifyObjectValues(userData, [
+            "createdAt",
+            "updatedAt",
+            "expiry",
+            "testExpiry",
+          ]);
+          setUserData(modified);
+          toast.success("Login Successful");
+          navigate("/dashboard");
+          return true;
+        }
+      }
+      throw new Error("Invalid response");
+    } catch (err) {
+      const handled = handleAxiosErrorCases<
+        Awaited<ReturnType<typeof loginAPI>>["data"]
+      >(err, [
+        {
+          status: 400,
+          handler: (res) => {
+            console.log("Error login parsed :", res?.data);
+            if (res?.data?.errorType?.toLowerCase().match(/(incorrect)/)) {
+              toast.error(`Incorrect Fields : ${res?.data?.message || ""}`);
+              console.log("Something is incorrect");
+            }
+          },
+        },
+        {
+          status: 404,
+          handler: (res) => {
+            toast.error(`User Doesn't Exists`);
+            console.log("Error login parsed :", res?.data);
+          },
+        },
+      ]);
+
+      if (!handled) {
+        toast.error(`Login Failed`);
+        console.error("Unhandled login error :", err);
+      }
+    }
+  };
+
+  const handleGoogleAuth = async (body: GoogleAuthSchema) => {
+    try {
+      const res = await mutatedGoogleAuth(body);
+      if (isAxiosError(res)) {
+        throw res;
+      }
+
+      const data = res.data?.data;
+      if (res.status === 200 && res.data?.success && data?.token) {
+        const modified = datifyObjectValues(data, ["expiry"]);
+
+        // Save token and reconfigure axios instances
+        secureStorage.localStorage.setItem("__aT__", modified);
+        const configured = reConfigureAuthToken(
+          modified?.token as string,
+          modified?.expiry as Date,
+        );
+        if (!configured) {
+          throw new Error("Failed to reconfigure token");
+        }
+        setTokenData({ ...tokenData, ...modified } as typeof tokenData);
+
+        const userRes = await mutatedUserData();
+        const userData = userRes.data?.data;
+        if (userRes.status === 200 && res.data?.success && userData?.id) {
+          const modified = datifyObjectValues(userData, [
+            "createdAt",
+            "updatedAt",
+            "expiry",
+            "testExpiry",
+          ]);
+          setUserData(modified);
+          toast.success("Login Successful");
+          navigate("/dashboard");
+          return true;
+        }
+      }
+      throw new Error("Invalid response");
+    } catch (err) {
+      const handled = handleAxiosErrorCases<
+        Awaited<ReturnType<typeof loginAPI>>["data"]
+      >(err, [
+        {
+          status: 400,
+          handler: (res) => {
+            console.log("Error login parsed :", res?.data);
+            if (res?.data?.errorType?.toLowerCase().match(/(incorrect)/)) {
+              toast.error(`Incorrect Fields : ${res?.data?.message || ""}`);
+              console.log("Something is incorrect");
+            }
+          },
+        },
+        {
+          status: 404,
+          handler: (res) => {
+            toast.error(`User Doesn't Exists`);
+            console.log("Error login parsed :", res?.data);
+          },
+        },
+      ]);
+
+      if (!handled) {
+        toast.error(`Login Failed`);
+        console.error("Unhandled login error :", err);
+      }
+    }
+  };
+
+  return (
+    <AuthCard
+      titleProps={{ children: "Login your account" }}
+      descriptionProps={{
+        children: "Enter your details below to login to your account",
+      }}
+    >
+      <form onSubmit={handleSubmit(login)}>
+        <div className="flex flex-col gap-6">
+          <FormField
+            label="Email"
+            placeholder="username@mail.com"
+            required
+            error={errors.email}
+            {...register("email")}
+          />
+          <FormField
+            inputType="password"
+            label="Password"
+            required
+            error={errors.password}
+            {...register("password")}
+          />
+          <ForgotPasswordModal />
+          <div className="flex flex-col gap-3">
+            <ActionButton type="submit" className="w-full" loading={loading}>
+              Login
+            </ActionButton>
+            <GoogleButton
+              type="button"
+              className="w-full"
+              loading={googleLoading}
+              onSuccess={(tokenRes) => {
+                handleGoogleAuth({ code: tokenRes.code });
+              }}
+              // onError={(err)=>{
+              //   console.error()
+              // }}
+            >
+              Google Login
+            </GoogleButton>
+          </div>
+        </div>
+      </form>
+    </AuthCard>
+  );
+}

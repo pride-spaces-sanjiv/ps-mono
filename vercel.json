@@ -1,0 +1,15 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ],
+  "build": [
+    {
+      "config": {
+        "indcludeFiles": [".env.dev"]
+      }
+    }
+  ]
+}

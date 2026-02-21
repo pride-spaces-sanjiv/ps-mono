@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "pride-client-fe",
+      "script": "./script.sh",
+      "args": "--env-file .env.dev",
+      "watch": ["dist"]
+    }
+  ]
+}

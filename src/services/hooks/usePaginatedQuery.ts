@@ -1,0 +1,63 @@
+import { useMemo, useState } from "react";
+import {
+  QueryClient,
+  useQuery,
+  type DefinedInitialDataOptions,
+  type QueryFunction,
+  type QueryKey,
+} from "@tanstack/react-query";
+
+type Params<
+  TQueryFnData = any,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = readonly any[]
+> = {
+  page: number;
+  limit: number;
+} & Omit<
+  DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>,
+  "queryFn"
+> & {
+    queryFn?: (
+      page: number,
+      limit: number,
+      context: Parameters<QueryFunction<TQueryFnData, TQueryKey>>[0]
+    ) => ReturnType<QueryFunction<TQueryFnData, TQueryKey>>;
+  };
+
+export function usePaginatedQuery<
+  TQueryFnData = any,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = readonly any[]
+>(
+  params: Partial<Params<TQueryFnData, TError, TData, TQueryKey>> | null,
+  queryClient?: QueryClient
+) {
+  const allParams = useMemo(() => ({ ...params }), [params]);
+  const onlyQueryOptions = useMemo(
+    () =>
+      ({
+        ...allParams,
+        page: undefined,
+        limit: undefined,
+      } as Partial<Omit<Params, "page" | "undefined">>),
+    [allParams]
+  );
+
+  const [page, setPage] = useState(allParams.page ?? 0);
+  const [limit, setLimit] = useState(allParams.limit ?? 10);
+
+  const query = useQuery<TQueryFnData, TError, TData, TQueryKey>(
+    {
+      ...onlyQueryOptions,
+      // @ts-ignore
+      queryKey: [...(onlyQueryOptions?.queryKey || []), page],
+      queryFn: (context) => onlyQueryOptions?.queryFn?.(page, limit, context),
+    },
+    queryClient
+  );
+
+  return { page, setPage, limit, setLimit, ...query };
+}
