@@ -24,6 +24,7 @@ import ActionButton from "@/components/buttons/action-btn";
 // Lazy load components
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Users = lazy(() => import("@/pages/users"));
+const Display = lazy(() => import("@/pages/display"));
 const Settings = lazy(() => import("@/pages/settings"));
 
 interface SuspensedViewProps {
@@ -110,6 +111,15 @@ const PrivateRoutes = () => {
                   <Dashboard />
                 )} */}
                 <AutoNavigateRender El={<Dashboard />} />
+              </SuspensedView>
+            }
+          />
+          <Route
+            path="/display"
+            element={
+              <SuspensedView>
+
+                <AutoNavigateRender El={<Display />} />
               </SuspensedView>
             }
           />
