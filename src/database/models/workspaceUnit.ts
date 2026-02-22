@@ -1,5 +1,5 @@
 import { Conn } from "@/database/mongoose.js";
-import { amenities } from "@/types/data/amenities.js";
+import { amenities, Amenity, amenityIds } from "@/types/data/amenities.js";
 import {
   appendGeneralFields,
   getFieldsOfModel,
@@ -36,7 +36,7 @@ const PlanSchema = new Conn.Schema(
     minBookingMonths: { type: Number, required: true, default: 1 },
     terms: { type: String },
     amenities: {
-      type: [{ type: String, enum: amenities }],
+      type: [{ type: Number, enum: amenityIds, required: true }],
       required: true,
       default: [],
     },

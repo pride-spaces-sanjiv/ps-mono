@@ -25,6 +25,7 @@ const EnterpriseSchema = new Conn.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
     headquarter: { type: HeadQuarterSchema, required: true },
     person: { type: HeadQuarterPersonSchema, required: true },
   },
@@ -43,4 +44,10 @@ export const Enterprise = Conn.model(
 export const enterpriseFields = getFieldsOfModel(Enterprise, {
   timestamps: false,
 });
+export const enterpriseNonPassFields = enterpriseFields.filter(
+  (f) => f !== "password",
+);
 export const allEnterpriseFieldsEnabled = appendGeneralFields(enterpriseFields);
+export const allEnterpriseNonPassFieldsEnabled = appendGeneralFields(
+  enterpriseNonPassFields,
+);

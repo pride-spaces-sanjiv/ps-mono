@@ -12,5 +12,6 @@ export const amenities = [
     name: "WiFi",
   },
 ] as const;
+export const amenityIds = amenities.map((d) => d.id);
 export type Amenity = (typeof amenities)[number];
-export type AmenityId = (typeof amenities)[number];
+export type AmenityId = (typeof amenityIds)[number];
