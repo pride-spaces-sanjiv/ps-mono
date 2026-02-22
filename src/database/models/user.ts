@@ -26,7 +26,7 @@ const UserSchema = new Conn.Schema(
     isGoogleAcc: { type: Boolean, default: false },
     isEmailVerified: { type: Boolean, default: false },
     phone: {
-      type: Number,
+      type: String,
     },
     organisation: { type: OrganisationSchema },
   },
@@ -54,7 +54,7 @@ const AdminSchema = new Conn.Schema(
       default: "support",
     },
     phone: {
-      type: Number,
+      type: String,
     },
   },
   { timestamps: true },
