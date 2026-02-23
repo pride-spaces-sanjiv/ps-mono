@@ -1,9 +1,9 @@
 import { Conn } from "@/database/mongoose.js";
-import { ModelDocumentKeys } from "@/types/mongoose/document.js";
 import {
   getFieldsOfModel,
   appendGeneralFields,
 } from "@/utils/mongoose/fields.js";
+import { adminLevels, type AdminLevel } from "@/utils/data/admin.js";
 
 const OrganisationSchema = new Conn.Schema(
   {
@@ -34,8 +34,6 @@ const UserSchema = new Conn.Schema(
 );
 UserSchema.index({ username: 1, email: 1, name: 1 });
 
-export const adminLevels = ["super-admin", "admin", "support"] as const;
-export type AdminLevel = (typeof adminLevels)[number];
 const AdminSchema = new Conn.Schema(
   {
     name: { type: String, required: true },

@@ -10,7 +10,7 @@ import { z } from "zod";
 import { Admin, User } from "@/database/models/user.js";
 import { getRedisClient } from "@/utils/services/redis/redis.js";
 import { decodeCrypto } from "@/utils/crypto.js";
-import { decodeJWT, decodeJWTwithCrypto } from "@/utils/jwt.js";
+import { decodeJWTwithCrypto } from "@/utils/jwt.js";
 // types
 import { SessionData, RequiredSessionData } from "express-session";
 import { SetOptions } from "redis";
@@ -18,7 +18,6 @@ import { ModelToRaw } from "../types/mongoose/document.js";
 import { ResponseLocals } from "../types/query.js";
 import { ManagedResponseWithLocalUrl } from "../types/request.js";
 import { Model } from "mongoose";
-import { Enterprise } from "@/database/models/enterprise.js";
 
 type DynamicObject = { [k: string]: any };
 type Data = any;

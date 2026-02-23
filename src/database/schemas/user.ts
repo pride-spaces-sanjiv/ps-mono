@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminLevels } from "@/database/models/user.js";
+import { adminLevels } from "@/utils/data/admin.js";
 import {
   getEmailSchema,
   getNameSchema,
