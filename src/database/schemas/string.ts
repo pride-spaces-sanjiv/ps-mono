@@ -1,9 +1,25 @@
+import { isObjectIdOrHexString } from "mongoose";
 import { minLength, z } from "zod";
 
 type StringSchemaOptions = {
   keyName: string;
   doTrim: boolean;
   schema: z.ZodString;
+};
+
+// Id
+export const getIdSchema = ({
+  keyName = "Id",
+  doTrim = true,
+  schema = z.string(),
+}: Partial<StringSchemaOptions> = {}) => {
+  if (doTrim) {
+    schema = schema.trim();
+  }
+  schema = schema.refine((val) => isObjectIdOrHexString(val), {
+    error: `${keyName} is invalid`,
+  });
+  return schema;
 };
 
 // Name

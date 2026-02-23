@@ -1,8 +1,11 @@
 import { Model } from "mongoose";
 import { NextFunction } from "express";
+import { Admin } from "@/database/models/user.js";
 import { ResponseHandler } from "./request.js";
+import { AdminLevel, compareAdminLevels } from "@/utils/data/admin.js";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 
+// Check user exists by field value, then pass/exit
 export const checkUserExistenceByBodyValue = <T extends any, K extends string>(
   model: Model<T>,
   field: K,
@@ -17,8 +20,8 @@ export const checkUserExistenceByBodyValue = <T extends any, K extends string>(
   }> = {},
 ) => {
   const handler = async (
-    req: ManagedRequest,
-    res: ManagedResponse<Record<string, any> & Record<K, any>>,
+    req: ManagedRequest<Record<string, any> & Record<K, any>>,
+    res: ManagedResponse,
     next: NextFunction,
   ) => {
     try {
@@ -44,6 +47,109 @@ export const checkUserExistenceByBodyValue = <T extends any, K extends string>(
       ResponseHandler.handleError(res, {
         errorType: `check-${userErrorKey}-error`,
         message: `Failed to check ${userErrorMsgKey}`,
+      });
+    }
+  };
+  return handler;
+};
+
+// Allowance of admin levels in body
+export const allowAdminLevelByBody = <K extends string = "level">({
+  field = "level" as K,
+  levelErrorKey = "admin-level",
+  levelErrorMsgKey = "admin-level",
+  allowedCompares = ["lesser"],
+}: Partial<{
+  field: K;
+  levelErrorKey: string;
+  levelErrorMsgKey: string;
+  allowedCompares: ReturnType<typeof compareAdminLevels>[];
+}> = {}) => {
+  const handler = async (
+    req: ManagedRequest<Record<string, any> & Record<K, any>>,
+    res: ManagedResponse,
+    next: NextFunction,
+  ) => {
+    try {
+      const selfId = req.session.user?.id;
+
+      const selfDoc = await Admin.findOne({ _id: selfId }, { level: 1 });
+      if (req.body[field]) {
+        const comparison = compareAdminLevels(
+          selfDoc?.level as AdminLevel,
+          req.body[field],
+        );
+        if (!allowedCompares.includes(comparison)) {
+          return ResponseHandler.handleUnauthorized(res, {
+            errorType: `${levelErrorKey}-unauthorized`,
+            message: `You are not authorized to set ${levelErrorMsgKey} to this value`,
+          });
+        }
+      }
+      return next();
+    } catch (err) {
+      ResponseHandler.handleError(res, {
+        errorType: `check-${levelErrorKey}-error`,
+        message: `Failed to check ${levelErrorMsgKey}`,
+      });
+    }
+  };
+  return handler;
+};
+
+// Allowance of admin levels from param id
+export const authorizeAdminDetailsByParam = <K extends string = "id">({
+  field = "id" as K,
+  levelErrorKey = "admin-level",
+  levelErrorMsgKey = "admin-level",
+  notFoundKey = "admin",
+  notFoundMsgKey = "admin",
+  allowedCompares = ["lesser"],
+}: Partial<{
+  field: K;
+  levelErrorKey: string;
+  levelErrorMsgKey: string;
+  notFoundKey: string;
+  notFoundMsgKey: string;
+  allowedCompares: ReturnType<typeof compareAdminLevels>[];
+}> = {}) => {
+  const handler = async (
+    req: ManagedRequest,
+    res: ManagedResponse,
+    next: NextFunction,
+  ) => {
+    try {
+      const selfId = req.session.user?.id;
+
+      const selfDoc = await Admin.findOne({ _id: selfId }, { level: 1 });
+      const otherDoc = await Admin.findOne(
+        { _id: req.params[field] },
+        { level: 1 },
+      );
+
+      if (!otherDoc) {
+        return ResponseHandler.handleNotFound(res, {
+          errorType: `${notFoundKey}-not-found`,
+          message: `No such ${notFoundMsgKey} exists`,
+        });
+      }
+      if (req.body[field]) {
+        const comparison = compareAdminLevels(
+          selfDoc?.level as AdminLevel,
+          otherDoc?.level as AdminLevel,
+        );
+        if (!allowedCompares.includes(comparison)) {
+          return ResponseHandler.handleUnauthorized(res, {
+            errorType: `${levelErrorKey}-unauthorized`,
+            message: `You are not authorized to this ${levelErrorMsgKey}`,
+          });
+        }
+      }
+      return next();
+    } catch (err) {
+      ResponseHandler.handleError(res, {
+        errorType: `check-${levelErrorKey}-error`,
+        message: `Failed to check ${levelErrorMsgKey}`,
       });
     }
   };

@@ -7,6 +7,6 @@ const router = Router();
 router.use("/auth", AuthRouter);
 
 // Authorized routes
-router.use("/admin", AdminRouter);
+router.use("/admins", AdminRouter);
 
 export { router as AdminRouter };

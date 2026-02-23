@@ -12,7 +12,8 @@ export type ManagedRequest<
   B extends any = any,
   Q = ParsedQs,
   L extends Record<string, any> = Record<string, any>,
-> = Request<any, any, B, Q, L>;
+  P extends any = any,
+> = Request<P, any, B, Q, L>;
 
 export type ManagedResponse<
   B extends any = any,

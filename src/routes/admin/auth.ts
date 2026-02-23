@@ -8,7 +8,9 @@ const router = Router();
 
 router.post(
   "/login",
-  RequestMiddleware.bodyValidator(adminSchema.pick(["email", "password"])),
+  RequestMiddleware.bodyValidator(
+    adminSchema.pick({ email: true, password: true }),
+  ),
   login,
 );
 

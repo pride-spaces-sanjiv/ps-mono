@@ -218,6 +218,67 @@ export class RequestMiddleware {
     }
   };
 
+  static paramValidator = <T extends z.ZodString>(
+    schema: T,
+    field: string,
+    options?: Partial<{ validateOnlyPresent: boolean; allowEmpty: boolean }>,
+  ): RequestHandler<any, any, any, any> => {
+    type Requester = Request<any, any, any, any>;
+    try {
+      const allOptions: typeof options = {
+        validateOnlyPresent: true,
+        ...options,
+      };
+      const handler = async (
+        req: Requester,
+        res: Response,
+        next: NextFunction,
+      ) => {
+        try {
+          const val = req.params[field];
+
+          schema.parse(val);
+          next?.();
+        } catch (err: any) {
+          console.log("Inside param errored :", err);
+
+          if (err instanceof z.ZodError) {
+            return ResponseHandler.handleError(res, {
+              message: err.message,
+              errorType: "param-validation",
+              appendData: {
+                validationError: true,
+                error: err.message,
+                field: err.issues[0]?.path?.join(".") || "unknown",
+                errors: err.issues.map((e) => {
+                  // @ts-ignore
+                  delete e.input;
+                  return e;
+                }),
+                fields: err.issues.map((e) => e.path.join(".")),
+              },
+            });
+          }
+          return ResponseHandler.handleError(res, {
+            errorType: "param-validation-parser",
+            message: "Validating Parser error occurred",
+            appendData: { error: err.message },
+          });
+        }
+      };
+      return handler;
+    } catch (err) {
+      console.log("Inside param errored :", err);
+      const handler = async (req: Requester, res: Response) => {
+        ResponseHandler.handleError(res, {
+          errorType: "param-validation-parser",
+          message: "Validating Parser error occurred",
+        });
+      };
+      return handler;
+    }
+  };
+
   static queryValidator = <T extends ValidatableSchema>(
     schema: z.ZodObject<T>,
     options?: Partial<{ validateOnlyPresent: boolean; allowEmpty: boolean }>,
