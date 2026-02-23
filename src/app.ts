@@ -7,19 +7,20 @@ import moment from "moment";
 import fs from "fs";
 import util from "node:util";
 // Middlewares
-import { RequestMiddleware, ResponseHandler } from "./middlewares/request.js";
-import { validateUserAccess } from "./middlewares/users.js";
+import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
+import { validateUserAccess } from "@/middlewares/users.js";
 import {
   userAgentLogger,
   validateConnection,
-} from "./middlewares/connections.js";
+} from "@/middlewares/connections.js";
 // Controllers
 // Routers
-import { PlaylistRouter } from "./routes/playlist.js";
+import { AdminRouter } from "@/routes/admin/route.js";
+import { PlaylistRouter } from "@/routes/playlist.js";
 import { JioRouter } from "./routes/jio.js";
-import { ZeeRouter } from "./routes/zee.js";
-import { SonyRouter } from "./routes/sony.js";
-import { HotstarRouter } from "./routes/hotstar.js";
+import { ZeeRouter } from "@/routes/zee.js";
+import { SonyRouter } from "@/routes/sony.js";
+import { HotstarRouter } from "@/routes/hotstar.js";
 // import { authRouter } from "./routes/auth/route.js";
 // import { usersRouter } from "./routes/users/route.js";
 // import { accountRouter } from "./routes/account/route.js";
@@ -29,13 +30,13 @@ import { HotstarRouter } from "./routes/hotstar.js";
 // Services
 import { RedisClient, redisStore } from "./utils/services/redis/redis.js";
 // Utils
-import { getIP } from "./utils/ip.js";
+import { getIP } from "@/utils/ip.js";
 // Data
 // Types
 import {
   ManagedResponseWithLocalUrl,
   ManagedResponseWithLocalUrlIP,
-} from "./types/request.js";
+} from "@/types/request.js";
 // import { handleMailQueue } from "./utils/services/rabbitmq/email.js";
 
 const app = express();
@@ -123,8 +124,8 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   try {
     const headers: Record<string, string> = {
-      Server: "TG IPTV",
-      "X-Powered-By": "TG IPTV Panel",
+      Server: "Pride Spaces",
+      "X-Powered-By": "Pride Spaces",
     };
     for (const key in headers) {
       res.setHeader(key, headers[key]);
@@ -221,24 +222,8 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
   }
 }, RequestMiddleware.sendCachedData);
 
-// Playlist
-app.use(
-  /^\/playlist([.]m3u|)$/,
-  // @ts-ignore
-  validateUserAccess({ checkActive: true }, { filter: { level: { $gte: 0 } } }),
-  userAgentLogger(),
-  PlaylistRouter,
-);
-app.use(
-  "/xtream",
-  // @ts-ignore
-  validateUserAccess(
-    { checkActive: true, userKey: "username", passKey: "password" },
-    { filter: { level: { $gte: 0 } } },
-  ),
-  userAgentLogger(),
-  PlaylistRouter,
-);
+app.use("/admin", AdminRouter);
+app.use("/enterprise", AdminRouter);
 
 // IP based caching
 app.use((req, res: ManagedResponseWithLocalUrlIP, next) => {
@@ -259,42 +244,42 @@ app.use((req, res: ManagedResponseWithLocalUrlIP, next) => {
   }
 });
 
-app.use(
-  "/jio",
-  validateUserAccess(
-    { checkActive: true, checkExpiry: true },
-    { filter: { level: { $gte: 0 } } },
-  ),
-  validateConnection(),
-  JioRouter,
-);
-app.use(
-  "/zee",
-  validateUserAccess(
-    { checkActive: true, checkExpiry: true },
-    { filter: { level: { $gte: 0 } } },
-  ),
-  validateConnection(),
-  ZeeRouter,
-);
-app.use(
-  "/sony",
-  validateUserAccess(
-    { checkActive: true, checkExpiry: true },
-    { filter: { level: { $gte: 0 } } },
-  ),
-  validateConnection(),
-  SonyRouter,
-);
-app.use(
-  "/star",
-  validateUserAccess(
-    { checkActive: true, checkExpiry: true },
-    { filter: { level: { $gte: 0 } } },
-  ),
-  validateConnection(),
-  HotstarRouter,
-);
+// app.use(
+//   "/jio",
+//   validateUserAccess(
+//     { checkActive: true, checkExpiry: true },
+//     { filter: { level: { $gte: 0 } } },
+//   ),
+//   validateConnection(),
+//   JioRouter,
+// );
+// app.use(
+//   "/zee",
+//   validateUserAccess(
+//     { checkActive: true, checkExpiry: true },
+//     { filter: { level: { $gte: 0 } } },
+//   ),
+//   validateConnection(),
+//   ZeeRouter,
+// );
+// app.use(
+//   "/sony",
+//   validateUserAccess(
+//     { checkActive: true, checkExpiry: true },
+//     { filter: { level: { $gte: 0 } } },
+//   ),
+//   validateConnection(),
+//   SonyRouter,
+// );
+// app.use(
+//   "/star",
+//   validateUserAccess(
+//     { checkActive: true, checkExpiry: true },
+//     { filter: { level: { $gte: 0 } } },
+//   ),
+//   validateConnection(),
+//   HotstarRouter,
+// );
 
 // Independent cache routes
 app.use((req, res: ManagedResponseWithLocalUrl, next) => {

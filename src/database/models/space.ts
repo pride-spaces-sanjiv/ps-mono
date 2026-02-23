@@ -20,6 +20,7 @@ const LocationSchema = new Conn.Schema(
 const SpaceSchema = new Conn.Schema(
   {
     branch: { type: String, required: true },
+    enterprise: { type: String, required: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     location: { type: LocationSchema, required: true },
@@ -34,7 +35,7 @@ const SpaceSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-SpaceSchema.index({ name: 1, email: 1, branch: 1 });
+SpaceSchema.index({ name: 1, email: 1, branch: 1, enterprise: 1 });
 
 // Model Instances
 export const Space = Conn.model("Space", SpaceSchema, "spaces");

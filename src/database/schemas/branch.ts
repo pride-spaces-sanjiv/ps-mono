@@ -9,8 +9,6 @@ const personSchema = z.object({
   role: z.string().min(1, "Role is required"),
 });
 
-type PersonSchema = z.infer<typeof personSchema>;
-
 // 2. Branch Schema
 export const branchSchema = z.object({
   enterprise: z.string().min(1, "Enterprise ID/Name is required"),

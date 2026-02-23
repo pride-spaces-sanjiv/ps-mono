@@ -16,7 +16,11 @@ import { SessionData, RequiredSessionData } from "express-session";
 import { SetOptions } from "redis";
 import { ModelToRaw } from "../types/mongoose/document.js";
 import { ResponseLocals } from "../types/query.js";
-import { ManagedResponseWithLocalUrl } from "../types/request.js";
+import {
+  ManagedRequest,
+  ManagedResponse,
+  ManagedResponseWithLocalUrl,
+} from "../types/request.js";
 import { Model } from "mongoose";
 
 type DynamicObject = { [k: string]: any };
@@ -24,7 +28,7 @@ type Data = any;
 
 type AuthCookies = Partial<{ __aT__: string }>;
 
-type ValidatableSchema = z.core.$ZodShape;
+type ValidatableSchema = z.core.$ZodLooseShape;
 type DefaultZodSchema = z.core.$ZodLooseShape;
 
 const extractOnlySchemaKeys = <T extends ValidatableSchema>(
@@ -105,7 +109,7 @@ export class RequestMiddleware {
       // If token is OK then fetch data from DB
       const data = await model.findOne(
         { _id: decodedToken.data.id.trim() },
-        { _id: 1, username: 1, email: 1, level: 1 },
+        { _id: 1, username: 1, email: 1 },
       );
       if (!data?.id) {
         throw new Error("Invalid data");
@@ -347,8 +351,8 @@ export class RequestMiddleware {
             }
             if (options?.extractOnlyRequiredFields) {
               req.body = extractOnlySchemaKeys(
-                // @ts-ignore
                 req.body,
+                // @ts-ignore
                 schema,
               ) as typeof req.body;
             }
@@ -361,8 +365,8 @@ export class RequestMiddleware {
           }
           if (options?.extractOnlyRequiredFields) {
             req.body = extractOnlySchemaKeys(
-              // @ts-ignore
               req.body,
+              // @ts-ignore
               schema,
             ) as typeof req.body;
           }
@@ -403,6 +407,25 @@ export class RequestMiddleware {
       return handler;
     }
   };
+
+  static removeCaching = (
+    req: ManagedRequest,
+    res: ManagedResponseWithLocalUrl,
+    next: NextFunction,
+  ) => {
+    try {
+      if (typeof res.locals === "object" && res.locals?.url) {
+        // @ts-ignore
+        delete res.locals.url;
+      }
+      next?.();
+    } catch (err) {
+      ResponseHandler.handleError(res, {
+        errorType: "system-error-cc",
+        message: "Error handling system",
+      });
+    }
+  };
 }
 
 export class ResponseHandler {
@@ -441,7 +464,7 @@ export class ResponseHandler {
   };
 
   static handleUnauthorized = (
-    res: ManagedResponseWithLocalUrl,
+    res: ManagedResponse,
     options?: Partial<typeof this.options.handleUnauthorizedOptions>,
     cacheOptions?: Partial<SetOptions>,
   ) => {
@@ -457,7 +480,7 @@ export class ResponseHandler {
       ...allOptions.appendData,
     });
     this.cacher(
-      res,
+      res as ManagedResponseWithLocalUrl,
       {
         response: {
           success: allOptions.success,
@@ -491,7 +514,7 @@ export class ResponseHandler {
   };
 
   static handleSuccess = (
-    res: ManagedResponseWithLocalUrl,
+    res: ManagedResponse,
     options?: Partial<typeof this.options.handleSuccess>,
     cacheOptions?: Partial<SetOptions>,
   ) => {
@@ -506,7 +529,7 @@ export class ResponseHandler {
       ...allOptions.appendData,
     });
     this.cacher(
-      res,
+      res as ManagedResponseWithLocalUrl,
       {
         response: {
           success: allOptions.success,
@@ -522,7 +545,7 @@ export class ResponseHandler {
   };
 
   static handleNotFound = (
-    res: ManagedResponseWithLocalUrl,
+    res: ManagedResponse,
     options?: Partial<typeof this.options.handleNotFound>,
     cacheOptions?: Partial<SetOptions>,
   ) => {
@@ -538,7 +561,7 @@ export class ResponseHandler {
       ...allOptions.appendData,
     });
     this.cacher(
-      res,
+      res as ManagedResponseWithLocalUrl,
       {
         response: {
           success: allOptions.success,

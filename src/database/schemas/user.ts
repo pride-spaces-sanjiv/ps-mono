@@ -28,7 +28,7 @@ export const userSchema = z.object({
 export type UserSchema = z.infer<typeof userSchema>;
 
 // Admin
-export const adminZodSchema = z.object({
+export const adminSchema = z.object({
   name: getNameSchema(),
   email: getEmailSchema(),
   username: z.string().trim().min(3, "Username must be at least 3 characters"),
@@ -38,4 +38,4 @@ export const adminZodSchema = z.object({
   phone: getPhoneSchema(),
 });
 
-export type AdminSchema = z.infer<typeof adminZodSchema>;
+export type AdminSchema = z.infer<typeof adminSchema>;
