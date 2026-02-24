@@ -117,7 +117,7 @@ export class RequestMiddleware {
       authData.user = {
         id: data.id,
         email: data.email || undefined,
-        userType: userType,
+        userType: userType === "admin" ? data.userType : userType,
       };
       req.session.user = authData.user;
       req.session.save();
@@ -134,11 +134,7 @@ export class RequestMiddleware {
     model: T = User,
     userType: RequiredSessionData["user"]["userType"] = "user",
   ) => {
-    const handler = async (
-      req: Request,
-      res: Response<any, ResponseLocals<{ url?: string; [k: string]: any }>>,
-      next: NextFunction,
-    ) => {
+    const handler = async (req: Request, res: Response, next: NextFunction) => {
       try {
         // if (
         //   typeof minLevel !== "number" ||

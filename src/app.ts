@@ -9,10 +9,10 @@ import util from "node:util";
 // Middlewares
 import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
 import { validateUserAccess } from "@/middlewares/users.js";
-import {
-  userAgentLogger,
-  validateConnection,
-} from "@/middlewares/connections.js";
+// import {
+//   userAgentLogger,
+//   validateConnection,
+// } from "@/middlewares/connections.js";
 // Controllers
 // Routers
 import { AdminRouter } from "@/routes/admin/route.js";

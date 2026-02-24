@@ -9,6 +9,7 @@ const router = Router();
 router.use("/auth", AuthRouter);
 
 // Authorized routes
+// @ts-ignore
 router.use(RequestMiddleware.authenticateUser(Admin, "admin"));
 router.use("/admins", AdminRouter);
 
