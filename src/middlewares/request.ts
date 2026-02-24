@@ -109,7 +109,7 @@ export class RequestMiddleware {
       // If token is OK then fetch data from DB
       const data = await model.findOne(
         { _id: decodedToken.data.id.trim() },
-        { _id: 1, username: 1, email: 1 },
+        { _id: 1, username: 1, email: 1, userType: 1 },
       );
       if (!data?.id) {
         throw new Error("Invalid data");
