@@ -4,6 +4,10 @@ import {
   appendGeneralFields,
 } from "@/utils/mongoose/fields.js";
 import { adminLevels, type AdminLevel } from "@/utils/data/admin.js";
+import {
+  getRedisObject,
+  setRedisObject,
+} from "@/utils/services/redis/convert.js";
 
 const OrganisationSchema = new Conn.Schema(
   {

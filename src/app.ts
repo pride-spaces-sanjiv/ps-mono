@@ -8,7 +8,7 @@ import fs from "fs";
 import util from "node:util";
 // Middlewares
 import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
-import { validateUserAccess } from "@/middlewares/users.js";
+// import { validateUserAccess } from "@/middlewares/users.js";
 // import {
 //   userAgentLogger,
 //   validateConnection,
@@ -30,7 +30,7 @@ import { AdminRouter } from "@/routes/admin/route.js";
 // Services
 import { RedisClient, redisStore } from "./utils/services/redis/redis.js";
 // Utils
-// import { getIP } from "@/utils/ip.js";
+import { getIP } from "@/utils/ip.js";
 // Data
 // Types
 import {

@@ -27,7 +27,11 @@ router.get(
 );
 router.post(
   "/",
-  RequestMiddleware.bodyValidator(adminSchema),
+  RequestMiddleware.bodyValidator(adminSchema, {
+    validateOnlyPresent: false,
+    overridePostValidation: true,
+    extractOnlyRequiredFields: true,
+  }),
   checkUserExistenceByBodyValue(Admin, "email"),
   allowAdminLevelByBody({ field: "level" }),
   createAdmin,
@@ -40,6 +44,7 @@ router.put(
     allowEmpty: true,
     validateOnlyPresent: true,
     overridePostValidation: true,
+    extractOnlyRequiredFields: true,
   }),
   allowAdminLevelByBody({ field: "level" }),
   updateAdmin,
