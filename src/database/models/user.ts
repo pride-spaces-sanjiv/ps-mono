@@ -8,6 +8,7 @@ import {
   getRedisObject,
   setRedisObject,
 } from "@/utils/services/redis/convert.js";
+import { cachePlugin } from "@/utils/mongoose/cachePlugin.js";
 
 const OrganisationSchema = new Conn.Schema(
   {
@@ -62,6 +63,10 @@ const AdminSchema = new Conn.Schema(
   { timestamps: true },
 );
 AdminSchema.index({ username: 1, email: 1, name: 1 });
+
+// Cache Plugin
+UserSchema.plugin(cachePlugin);
+AdminSchema.plugin(cachePlugin);
 
 // Model Instances
 export const User = Conn.model("User", UserSchema, "users");

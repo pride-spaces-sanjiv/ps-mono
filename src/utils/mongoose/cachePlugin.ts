@@ -1,10 +1,16 @@
 import { RedisClient } from "@/utils/services/redis/redis.js";
-import { Document, IfAny, Model, Require_id } from "mongoose";
+import {
+  CallbackWithoutResultAndOptionalError,
+  Model,
+  Query,
+  Schema,
+} from "mongoose";
 import {
   getRedisObject,
   setRedisObject,
 } from "@/utils/services/redis/convert.js";
 import { datifyFieldsInObject } from "../object/datify.js";
+import { SchemaToRaw } from "@/types/mongoose/document.js";
 
 const defaultDateFields = ["createdAt", "updatedAt"];
 
@@ -13,6 +19,12 @@ type CacheHandlerOptions = {
   dateFields: string[];
   ttl: number;
 };
+
+type PluginHandler<S extends Schema> = (schema: S, opts?: any) => void;
+
+/**
+ * @description GET/SET cache of mongo data
+ */
 async function cacheHandler<T extends any>(
   model: Model<T>,
   key: string,
@@ -20,10 +32,11 @@ async function cacheHandler<T extends any>(
 ) {
   const cached = await getRedisObject(key);
 
+  // return if cache data present
   if (cached) {
     return datifyFieldsInObject(
       cached as Record<string, any>,
-      defaultDateFields.concat(defaultDateFields.concat(dateFields)),
+      defaultDateFields.concat(dateFields),
     );
   }
 
@@ -32,6 +45,10 @@ async function cacheHandler<T extends any>(
   return result;
 }
 
+/**
+ * @description sets `this._cacheKey` on pre handler
+ * @description caches data to key=`this._cacheKey` on post handler
+ */
 function handlePrePost<T extends any>(
   model: Model<T>,
   method: string | RegExp,
@@ -66,16 +83,25 @@ function handlePrePost<T extends any>(
   });
 }
 
-async function clearCache(modelName: string) {
-  const keys = await RedisClient.keys(`${modelName}:*`);
-  if (keys.length) {
-    await RedisClient.del(keys);
-  }
+/**
+ * @description deletes all cached keys for a given model name in pattern `db-cache-{modelName}:*`
+ */
+function clearCache<T extends any>(modelName: string) {
+  return async (
+    err: NativeError,
+    res: any,
+    callback: CallbackWithoutResultAndOptionalError,
+  ) => {
+    const keys = await RedisClient.keys(`db-cache-${modelName}:*`);
+    if (keys.length) {
+      await RedisClient.del(keys);
+    }
+  };
 }
 
-export function cachePlugin<T extends any>(
-  this: any,
-  model: Model<T>,
+export function cachePlugin<S extends Schema, T extends SchemaToRaw<S>>(
+  this: Query<any, T>,
+  schema: S,
   {
     ttl = 20,
     dateFields = [],
@@ -84,6 +110,7 @@ export function cachePlugin<T extends any>(
     dateFields: (keyof T)[];
   }> = {},
 ) {
+  const model = this.model;
   const modelName = model.collection.name;
   const query = this.getQuery();
   const key = `db-cache-${modelName}:${JSON.stringify(query)}`;
@@ -105,12 +132,14 @@ export function cachePlugin<T extends any>(
   // -------------------------
   // INVALIDATE ON WRITE
   // -------------------------
-  model.schema.post("save", clearCache(modelName));
-  model.schema.post("findOneAndReplace", clearCache(modelName));
-  model.schema.post("updateOne", clearCache(modelName));
-  model.schema.post("updateMany", clearCache(modelName));
-  model.schema.post("findOneAndUpdate", clearCache(modelName));
-  model.schema.post("deleteOne", clearCache(modelName));
-  model.schema.post("deleteMany", clearCache(modelName));
-  model.schema.post("findOneAndDelete", clearCache(modelName));
+  type MethodName = Parameters<typeof model.schema.post>[0];
+  const cacheClearFunc = clearCache(modelName);
+  model.schema.post("save" as MethodName, async (err, res, next) => {});
+  model.schema.post("findOneAndReplace" as MethodName, cacheClearFunc);
+  model.schema.post("updateOne" as MethodName, cacheClearFunc);
+  model.schema.post("updateMany" as MethodName, cacheClearFunc);
+  model.schema.post("findOneAndUpdate" as MethodName, cacheClearFunc);
+  model.schema.post("deleteOne" as MethodName, cacheClearFunc);
+  model.schema.post("deleteMany" as MethodName, cacheClearFunc);
+  model.schema.post("findOneAndDelete" as MethodName, cacheClearFunc);
 }
