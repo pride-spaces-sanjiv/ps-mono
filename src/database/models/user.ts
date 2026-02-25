@@ -9,6 +9,7 @@ import {
   setRedisObject,
 } from "@/utils/services/redis/convert.js";
 import { cachePlugin } from "@/utils/mongoose/cachePlugin.js";
+import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 
 const OrganisationSchema = new Conn.Schema(
   {
@@ -37,7 +38,9 @@ const UserSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-UserSchema.index({ username: 1, email: 1, name: 1 });
+indexFieldsFromSchema(UserSchema, {
+  singleFields: ["email", "username", "name"],
+});
 
 const AdminSchema = new Conn.Schema(
   {
@@ -62,7 +65,9 @@ const AdminSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-AdminSchema.index({ username: 1, email: 1, name: 1 });
+indexFieldsFromSchema(AdminSchema, {
+  singleFields: ["email", "username", "name"],
+});
 
 // Cache Plugin
 // UserSchema.plugin(cachePlugin);
