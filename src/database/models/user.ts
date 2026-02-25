@@ -4,10 +4,6 @@ import {
   appendGeneralFields,
 } from "@/utils/mongoose/fields.js";
 import { adminLevels, type AdminLevel } from "@/utils/data/admin.js";
-import {
-  getRedisObject,
-  setRedisObject,
-} from "@/utils/services/redis/convert.js";
 import { cachePlugin } from "@/utils/mongoose/cachePlugin.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 
@@ -39,7 +35,7 @@ const UserSchema = new Conn.Schema(
   { timestamps: true },
 );
 indexFieldsFromSchema(UserSchema, {
-  singleFields: ["email", "username", "name"],
+  singleFields: ["name"],
 });
 
 const AdminSchema = new Conn.Schema(
@@ -66,7 +62,7 @@ const AdminSchema = new Conn.Schema(
   { timestamps: true },
 );
 indexFieldsFromSchema(AdminSchema, {
-  singleFields: ["email", "username", "name"],
+  singleFields: ["name"],
 });
 
 // Cache Plugin

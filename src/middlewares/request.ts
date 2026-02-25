@@ -129,7 +129,7 @@ export class RequestMiddleware {
     }
   };
 
-  static authenticateUser = async <T extends Model<any> = typeof User>(
+  static authenticateUser = <T extends Model<any> = typeof User>(
     // @ts-ignore
     model: T = User,
     userType: RequiredSessionData["user"]["userType"] = "user",
