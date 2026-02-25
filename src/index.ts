@@ -1,4 +1,5 @@
-import { ENV } from "@/utils/env.js";
+import { loadEnv } from "@/utils/env.js";
+loadEnv({ path: "./.env.dev", override: true });
 // import { loggings } from "@/utils/console.js";
 // import * as MQs from "@/utils/services/rabbitmq/rabbitmq.js";
 import cluster from "cluster";
@@ -11,7 +12,7 @@ import { handleMailQueue } from "@/utils/services/rabbitmq/email.js";
 import { sleep } from "@/utils/time.js";
 // import { workers } from "@/utils/workers/handler.js";
 
-ENV;
+// ENV;
 // loggings;
 // MQs;
 

@@ -65,8 +65,8 @@ const AdminSchema = new Conn.Schema(
 AdminSchema.index({ username: 1, email: 1, name: 1 });
 
 // Cache Plugin
-UserSchema.plugin(cachePlugin);
-AdminSchema.plugin(cachePlugin);
+// UserSchema.plugin(cachePlugin);
+// AdminSchema.plugin(cachePlugin);
 
 // Model Instances
 export const User = Conn.model("User", UserSchema, "users");

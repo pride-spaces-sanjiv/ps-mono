@@ -22,6 +22,13 @@ type CacheHandlerOptions = {
 
 type PluginHandler<S extends Schema> = (schema: S, opts?: any) => void;
 
+const getQueryKey = <T extends any>(currentQuery: Query<any, T>) => {
+  const modelName = currentQuery.model.collection.name;
+  const query = currentQuery.getQuery();
+  const key = `db-cache-${modelName}:${JSON.stringify(query)}`;
+  return key;
+};
+
 /**
  * @description GET/SET cache of mongo data
  */
@@ -52,35 +59,43 @@ async function cacheHandler<T extends any>(
 function handlePrePost<T extends any>(
   model: Model<T>,
   method: string | RegExp,
-  key: string,
   {
     dateFields = [],
     ttl = 20,
   }: Partial<Omit<CacheHandlerOptions, "query">> = {},
 ) {
   // @ts-ignore
-  model.schema.pre(method, async function () {
+  model.schema.pre(method, async function (this: Query<any, T>) {
+    const key = getQueryKey(this);
     // @ts-ignore
     this._cacheKey = key;
   });
 
-  // @ts-ignore
-  model.schema.post(method, async function (result) {
+  model.schema.post(
     // @ts-ignore
-    const key = this._cacheKey;
-    if (key && result) {
-      await setRedisObject(
-        key,
-        datifyFieldsInObject(
-          result as Record<string, any>,
-          defaultDateFields.concat(dateFields),
-        ),
-        {
-          expiration: { type: "EX", value: ttl },
-        },
-      );
-    }
-  });
+    method,
+    async function (
+      this: Query<any, T> & { _cacheKey?: string },
+      result,
+      next,
+    ) {
+      // @ts-ignore
+      const key = this._cacheKey;
+      if (key && result) {
+        await setRedisObject(
+          key,
+          datifyFieldsInObject(
+            result as Record<string, any>,
+            defaultDateFields.concat(dateFields),
+          ),
+          {
+            expiration: { type: "EX", value: ttl },
+          },
+        );
+      }
+      return result;
+    },
+  );
 }
 
 /**
@@ -100,31 +115,27 @@ function clearCache<T extends any>(modelName: string) {
 }
 
 export function cachePlugin<S extends Schema, T extends SchemaToRaw<S>>(
-  this: Query<any, T>,
   schema: S,
+  // @ts-ignore
   {
     ttl = 20,
     dateFields = [],
+    model,
   }: Partial<{
     ttl: number;
     dateFields: (keyof T)[];
-  }> = {},
+  }> & { model: Model<T> } = {},
 ) {
-  const model = this.model;
-  const modelName = model.collection.name;
-  const query = this.getQuery();
-  const key = `db-cache-${modelName}:${JSON.stringify(query)}`;
-
   // -------------------------
-  // CACHE FOR FIND / FINDONE / FINDBYID
+  // CACHE FOR FIND / FINDONE
   // -------------------------
-  cacheHandler(model, key, { query, dateFields: dateFields as string[], ttl });
+  // cacheHandler(model, key, { query, dateFields: dateFields as string[], ttl });
 
-  handlePrePost(model, "find", key, {
+  handlePrePost(model, "find", {
     ttl,
     dateFields: dateFields as string[],
   });
-  handlePrePost(model, "findOne", key, {
+  handlePrePost(model, "findOne", {
     ttl,
     dateFields: dateFields as string[],
   });
@@ -133,8 +144,14 @@ export function cachePlugin<S extends Schema, T extends SchemaToRaw<S>>(
   // INVALIDATE ON WRITE
   // -------------------------
   type MethodName = Parameters<typeof model.schema.post>[0];
-  const cacheClearFunc = clearCache(modelName);
-  model.schema.post("save" as MethodName, async (err, res, next) => {});
+  function cacheClearFunc(this: Query<any, T>) {
+    const modelName = this.model.collection.name;
+    return clearCache(modelName);
+  }
+  model.schema.post("save", function (this, res) {
+    const modelName = this.collection.name;
+    return clearCache(modelName);
+  });
   model.schema.post("findOneAndReplace" as MethodName, cacheClearFunc);
   model.schema.post("updateOne" as MethodName, cacheClearFunc);
   model.schema.post("updateMany" as MethodName, cacheClearFunc);
