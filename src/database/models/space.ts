@@ -3,6 +3,7 @@ import {
   appendGeneralFields,
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
+import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 
 const LocationSchema = new Conn.Schema(
   {
@@ -35,7 +36,9 @@ const SpaceSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-SpaceSchema.index({ name: 1, email: 1, branch: 1, enterprise: 1 });
+indexFieldsFromSchema(SpaceSchema, {
+  singleFields: ["branch", "enterprise", "name"],
+});
 
 // Model Instances
 export const Space = Conn.model("Space", SpaceSchema, "spaces");

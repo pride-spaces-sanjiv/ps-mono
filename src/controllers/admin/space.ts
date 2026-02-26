@@ -1,47 +1,74 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { User, userNonPassFields } from "@/database/models/user.js";
+import { Space, spaceFields } from "@/database/models/space.js";
 import {
   cleanPaginatedData,
   paginatedResults,
 } from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
+import { getIdSchema } from "@/database/schemas/string.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { encodeCrypto } from "@/utils/crypto.js";
+import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { UserSchema } from "@/database/schemas/user.js";
+import { SpaceSchema } from "@/database/schemas/space.js";
 
-export const getUsers = async (
-  req: ManagedRequest<any, { [k: string]: any }>,
+export const getSpaces = async (
+  req: ManagedRequest<
+    any,
+    { [k: string]: any } & Partial<{ enterprise: string; branch: string }>
+  >,
   res: ManagedResponse,
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
+    const branchId = (req.query?.branch || "").trim();
+    const enterpriseId = (req.query?.enterprise || "").trim();
+
+    // Validate space id
+    if (enterpriseId && !getIdSchema().safeParse(enterpriseId).success) {
+      return ResponseHandler.handleError(res, {
+        errorType: "invalid-enterprise-id",
+        message: "Invalid enterprise ID",
+      });
+    }
+    // Validate branch id
+    if (branchId && !getIdSchema().safeParse(branchId).success) {
+      return ResponseHandler.handleError(res, {
+        errorType: "invalid-branch-id",
+        message: "Invalid branch ID",
+      });
+    }
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
-      User,
-      userNonPassFields,
+      Space,
+      spaceFields,
     );
     const { page, metrics, results, errored, err } = await paginatedResults(
       req,
-      User,
-      userNonPassFields,
+      Space,
+      spaceFields,
       { limit: 10 },
-      { projection: projectors },
+      {
+        projection: projectors,
+        filter: cleanObject(
+          { enterprise: enterpriseId, branch: branchId },
+          { excludeByValues: [""] },
+        ),
+      },
     );
 
     // On results error
     if (errored && err) {
       ResponseHandler.handleError(res, {
-        errorType: "get-users-error",
-        message: "Failed to get users list",
+        errorType: "get-spaces-error",
+        message: "Failed to get spaces list",
       });
       return;
     }
     if (results.length === 0) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "users-not-found",
-        message: "No users found",
+        errorType: "spaces-not-found",
+        message: "No spaces found",
         data: { results, page, metrics },
       });
       return;
@@ -49,33 +76,33 @@ export const getUsers = async (
 
     const data = cleanPaginatedData({ results, page, metrics, err, errored });
     ResponseHandler.handleSuccess(res, {
-      message: "Got users list",
+      message: "Got spaces list",
       data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-users-error-failure",
-      message: "Failed to get users list",
+      errorType: "get-spaces-error-failure",
+      message: "Failed to get spaces list",
     });
   }
 };
 
-export const getUser = async (
+export const getSpace = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
   try {
     const { fields, projectors } = getFieldsandProjectors(
       req,
-      User,
-      userNonPassFields,
+      Space,
+      spaceFields,
     );
 
-    const doc = await User.findOne({ _id: req.params.id }, projectors);
+    const doc = await Space.findOne({ _id: req.params.id }, projectors);
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "user-not-found",
-        message: "User not found",
+        errorType: "space-not-found",
+        message: "Space not found",
       });
       return;
     }
@@ -86,23 +113,19 @@ export const getUser = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-user-error-failure",
-      message: "Failed to get user details",
+      errorType: "get-space-error-failure",
+      message: "Failed to get space details",
     });
   }
 };
 
-export const createUser = async (
-  req: ManagedRequest<UserSchema>,
+export const createSpace = async (
+  req: ManagedRequest<SpaceSchema>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
-    const encodedPass = encodeCrypto(body.password);
-    const doc = new User({
-      ...body,
-      password: encodedPass,
-    });
+    const doc = new Space(body);
     await doc.save();
 
     const data = convertDataToJSON(doc);
@@ -119,19 +142,19 @@ export const createUser = async (
   }
 };
 
-export const updateUser = async (
-  req: ManagedRequest<Omit<UserSchema, "password">>,
+export const updateSpace = async (
+  req: ManagedRequest<Omit<SpaceSchema, "branch" | "enterprise">>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
-    const doc = await User.findOneAndUpdate({ _id: req.params.id }, body, {
+    const doc = await Space.findOneAndUpdate({ _id: req.params.id }, body, {
       new: true,
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "user-not-found",
-        message: "User not found",
+        errorType: "space-not-found",
+        message: "Space not found",
       });
       return;
     }
@@ -142,19 +165,22 @@ export const updateUser = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "update-user-error-failure",
-      message: "Failed to update user details",
+      errorType: "update-space-error-failure",
+      message: "Failed to update space details",
     });
   }
 };
 
-export const deleteUser = async (req: ManagedRequest, res: ManagedResponse) => {
+export const deleteSpace = async (
+  req: ManagedRequest,
+  res: ManagedResponse,
+) => {
   try {
-    const doc = await User.findOneAndDelete({ _id: req.params.id });
+    const doc = await Space.findOneAndDelete({ _id: req.params.id });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "user-not-found",
-        message: "User not found",
+        errorType: "space-not-found",
+        message: "Space not found",
       });
       return;
     }
@@ -165,8 +191,8 @@ export const deleteUser = async (req: ManagedRequest, res: ManagedResponse) => {
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "delete-user-error-failure",
-      message: "Failed to delete user",
+      errorType: "delete-space-error-failure",
+      message: "Failed to delete space",
     });
   }
 };

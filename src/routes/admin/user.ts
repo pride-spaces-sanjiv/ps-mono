@@ -11,13 +11,6 @@ import {
   updateUser,
   deleteUser,
 } from "@/controllers/admin/user.js";
-import {
-  createEnterprise,
-  deleteEnterprise,
-  getEnterprise,
-  getEnterprises,
-  updateEnterprise,
-} from "@/controllers/admin/enterprise.js";
 import { getIdSchema } from "@/database/schemas/string.js";
 
 const router = Router();
