@@ -1,5 +1,9 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Admin, adminNonPassFields } from "@/database/models/user.js";
+import {
+  Enterprise,
+  enterpriseNonPassFields,
+} from "@/database/models/enterprise.js";
 import { paginatedResults } from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
@@ -7,8 +11,9 @@ import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
 import { type AdminSchema } from "@/database/schemas/user.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { EnterpriseSchema } from "@/database/schemas/enterprise.js";
 
-export const getAdmins = async (
+export const getEnterprises = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
@@ -19,46 +24,47 @@ export const getAdmins = async (
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
-      Admin,
-      adminNonPassFields,
+      Enterprise,
+      enterpriseNonPassFields,
     );
     const { page, metrics, results, errored, err } = await paginatedResults(
       req,
-      Admin,
-      adminNonPassFields,
+      Enterprise,
+      enterpriseNonPassFields,
       { limit: 10 },
-      { projection: projectors, filter: { level: { $in: lowerLevels } } },
+      { projection: projectors },
     );
 
     // On results error
     if (errored && err) {
       ResponseHandler.handleError(res, {
-        errorType: "get-admins-error",
-        message: "Failed to get admins list",
+        errorType: "get-enterprises-error",
+        message: "Failed to get enterprises list",
       });
       return;
     }
     if (results.length === 0) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "admins-not-found",
-        message: "No admins found",
+        errorType: "enterprises-not-found",
+        message: "No enterprises found",
         data: { results, page, metrics },
       });
       return;
     }
 
     ResponseHandler.handleSuccess(res, {
+      message: "Got enterprises list",
       data: { results, page, metrics },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-admins-error-failure",
-      message: "Failed to get admins list",
+      errorType: "get-enterprises-error-failure",
+      message: "Failed to get enterprises list",
     });
   }
 };
 
-export const getAdmin = async (
+export const getEnterprise = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
@@ -69,11 +75,11 @@ export const getAdmin = async (
       adminNonPassFields,
     );
 
-    const doc = await Admin.findOne({ _id: req.params.id }, projectors);
+    const doc = await Enterprise.findOne({ _id: req.params.id }, projectors);
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "admin-not-found",
-        message: "Admin not found",
+        errorType: "enterprise-not-found",
+        message: "Enterprise not found",
       });
       return;
     }
@@ -84,20 +90,20 @@ export const getAdmin = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-admin-error",
-      message: "Failed to get admin",
+      errorType: "get-enterprise-error-failure",
+      message: "Failed to get enterprise",
     });
   }
 };
 
-export const createAdmin = async (
-  req: ManagedRequest<AdminSchema>,
+export const createEnterprise = async (
+  req: ManagedRequest<EnterpriseSchema>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
     const encodedPass = encodeCrypto(body.password);
-    const doc = new Admin({
+    const doc = new Enterprise({
       ...body,
       password: encodedPass,
     });
@@ -105,29 +111,35 @@ export const createAdmin = async (
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
+      status: 201,
+      message: "Created enterprise successfully",
       data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "create-admin-error",
-      message: "Failed to create admin",
+      errorType: "create-enterprise-error-failure",
+      message: "Failed to create enterprise",
     });
   }
 };
 
-export const updateAdmin = async (
-  req: ManagedRequest<Omit<AdminSchema, "password">>,
+export const updateEnterprise = async (
+  req: ManagedRequest<Omit<EnterpriseSchema, "password">>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
-    const doc = await Admin.findOneAndUpdate({ _id: req.params.id }, body, {
-      new: true,
-    });
+    const doc = await Enterprise.findOneAndUpdate(
+      { _id: req.params.id },
+      body,
+      {
+        new: true,
+      },
+    );
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "admin-not-found",
-        message: "Admin not found",
+        errorType: "enterprise-not-found",
+        message: "Enterprise not found",
       });
       return;
     }
@@ -138,8 +150,8 @@ export const updateAdmin = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "create-admin-error",
-      message: "Failed to create admin",
+      errorType: "update-enterprise-error-failure",
+      message: "Failed to update enterprise",
     });
   }
 };

@@ -76,7 +76,7 @@ export const paginatedResults = async <
       // @ts-ignore
       .find(args?.filter, { ...projectors, ...args?.projection }, args?.options)
       .skip(offset)
-      .sort(sortBy ? { [sortBy]: sortOrder === "asc" ? 1 : -1 } : {})
+      .sort(sortBy ? { [sortBy]: sortOrder || "desc" } : {})
       .limit(limit)) as FlattenMaps<T>[];
     data.results = results;
     data.metrics.total = total;

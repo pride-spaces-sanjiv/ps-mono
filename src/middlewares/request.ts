@@ -627,6 +627,7 @@ export class ResponseHandler {
       {
         response: {
           success: allOptions.success,
+          errorType: allOptions.errorType,
           message: allOptions.message,
           data: allOptions.data,
           ...allOptions.appendData,

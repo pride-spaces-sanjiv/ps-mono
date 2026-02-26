@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { AuthRouter } from "./auth.js";
-import { AdminRouter } from "./admin.js";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { Admin } from "@/database/models/user.js";
+import { AuthRouter } from "./auth.js";
+import { AdminRouter } from "./admin.js";
+import { EnterpriseRouter } from "./enterprise.js";
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use("/auth", AuthRouter);
 // @ts-ignore
 router.use(RequestMiddleware.authenticateUser(Admin, "admin"));
 router.use("/admins", AdminRouter);
+router.use("/enterprises", EnterpriseRouter);
 
 export { router as AdminRouter };
