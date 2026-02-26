@@ -1,8 +1,5 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import {
-  Enterprise,
-  enterpriseNonPassFields,
-} from "@/database/models/enterprise.js";
+import { User, userNonPassFields } from "@/database/models/user.js";
 import { paginatedResults } from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
@@ -10,8 +7,9 @@ import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { EnterpriseSchema } from "@/database/schemas/enterprise.js";
+import { UserSchema } from "@/database/schemas/user.js";
 
-export const getEnterprises = async (
+export const getUsers = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
@@ -22,13 +20,13 @@ export const getEnterprises = async (
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
-      Enterprise,
-      enterpriseNonPassFields,
+      User,
+      userNonPassFields,
     );
     const { page, metrics, results, errored, err } = await paginatedResults(
       req,
-      Enterprise,
-      enterpriseNonPassFields,
+      User,
+      userNonPassFields,
       { limit: 10 },
       { projection: projectors },
     );
@@ -36,48 +34,48 @@ export const getEnterprises = async (
     // On results error
     if (errored && err) {
       ResponseHandler.handleError(res, {
-        errorType: "get-enterprises-error",
-        message: "Failed to get enterprises list",
+        errorType: "get-users-error",
+        message: "Failed to get users list",
       });
       return;
     }
     if (results.length === 0) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "enterprises-not-found",
-        message: "No enterprises found",
+        errorType: "users-not-found",
+        message: "No users found",
         data: { results, page, metrics },
       });
       return;
     }
 
     ResponseHandler.handleSuccess(res, {
-      message: "Got enterprises list",
+      message: "Got users list",
       data: { results, page, metrics },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-enterprises-error-failure",
-      message: "Failed to get enterprises list",
+      errorType: "get-users-error-failure",
+      message: "Failed to get users list",
     });
   }
 };
 
-export const getEnterprise = async (
+export const getUser = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
   try {
     const { fields, projectors } = getFieldsandProjectors(
       req,
-      Enterprise,
-      enterpriseNonPassFields,
+      User,
+      userNonPassFields,
     );
 
-    const doc = await Enterprise.findOne({ _id: req.params.id }, projectors);
+    const doc = await User.findOne({ _id: req.params.id }, projectors);
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "enterprise-not-found",
-        message: "Enterprise not found",
+        errorType: "user-not-found",
+        message: "User not found",
       });
       return;
     }
@@ -88,20 +86,20 @@ export const getEnterprise = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-enterprise-error-failure",
-      message: "Failed to get enterprise",
+      errorType: "get-user-error-failure",
+      message: "Failed to get user",
     });
   }
 };
 
-export const createEnterprise = async (
-  req: ManagedRequest<EnterpriseSchema>,
+export const createUser = async (
+  req: ManagedRequest<UserSchema>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
     const encodedPass = encodeCrypto(body.password);
-    const doc = new Enterprise({
+    const doc = new User({
       ...body,
       password: encodedPass,
     });
@@ -110,34 +108,30 @@ export const createEnterprise = async (
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
       status: 201,
-      message: "Created enterprise successfully",
+      message: "Created user successfully",
       data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "create-enterprise-error-failure",
-      message: "Failed to create enterprise",
+      errorType: "create-user-error-failure",
+      message: "Failed to create user",
     });
   }
 };
 
-export const updateEnterprise = async (
-  req: ManagedRequest<Omit<EnterpriseSchema, "password">>,
+export const updateUser = async (
+  req: ManagedRequest<Omit<UserSchema, "password">>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
-    const doc = await Enterprise.findOneAndUpdate(
-      { _id: req.params.id },
-      body,
-      {
-        new: true,
-      },
-    );
+    const doc = await User.findOneAndUpdate({ _id: req.params.id }, body, {
+      new: true,
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "enterprise-not-found",
-        message: "Enterprise not found",
+        errorType: "user-not-found",
+        message: "User not found",
       });
       return;
     }
@@ -148,33 +142,31 @@ export const updateEnterprise = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "update-enterprise-error-failure",
-      message: "Failed to update enterprise",
+      errorType: "update-user-error-failure",
+      message: "Failed to update user",
     });
   }
 };
 
-export const deleteEnterprise = async (
-  req: ManagedRequest,
-  res: ManagedResponse,
-) => {
+export const deleteUser = async (req: ManagedRequest, res: ManagedResponse) => {
   try {
-    const doc = await Enterprise.findOneAndDelete({ _id: req.params.id });
+    const doc = await User.findOneAndDelete({ _id: req.params.id });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "enterprise-not-found",
-        message: "Enterprise not found",
+        errorType: "user-not-found",
+        message: "User not found",
       });
       return;
     }
 
+    const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
-      data: { id: doc.id },
+      data: { id: data?.id },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "delete-enterprise-error-failure",
-      message: "Failed to delete enterprise",
+      errorType: "delete-user-error-failure",
+      message: "Failed to delete user",
     });
   }
 };
