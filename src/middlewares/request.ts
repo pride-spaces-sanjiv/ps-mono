@@ -8,7 +8,7 @@ import {
 import moment from "moment";
 import { z } from "zod";
 import { Admin, User } from "@/database/models/user.js";
-import { getRedisClient } from "@/utils/services/redis/redis.js";
+import { RedisClient } from "@/utils/services/redis/redis.js";
 import { decodeCrypto } from "@/utils/crypto.js";
 import { decodeJWTwithCrypto } from "@/utils/jwt.js";
 // types
@@ -192,7 +192,6 @@ export class RequestMiddleware {
   ) => {
     try {
       const url = req.originalUrl.trim().toLowerCase();
-      const RedisClient = await getRedisClient();
       const cache = await RedisClient?.get(
         req.session?.user?.id
           ? `query:${req.session.user.id}:${url}`
@@ -648,7 +647,7 @@ export class ResponseHandler {
         .trim()
         .toLowerCase();
       if (url) {
-        const Redis = await getRedisClient();
+        const Redis = RedisClient;
         const str =
           typeof data !== "object" ? String(data) : JSON.stringify(data);
         if (Redis) {

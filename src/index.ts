@@ -1,5 +1,5 @@
-import { loadEnv } from "@/utils/env.js";
-loadEnv({ path: "./.env.dev", override: true });
+import { ENV } from "@/utils/env.js";
+ENV;
 // import { loggings } from "@/utils/console.js";
 // import * as MQs from "@/utils/services/rabbitmq/rabbitmq.js";
 import cluster from "cluster";
@@ -34,7 +34,7 @@ if (cluster.isPrimary) {
   });
 
   // Queues
-  handleMailQueue();
+  // handleMailQueue();
 } else {
   // Workers run the HTTP server
   const server = createServer(app);

@@ -28,7 +28,7 @@ import { AdminRouter } from "@/routes/admin/route.js";
 // import { commonRouter } from "./routes/common/route.js";
 // Database
 // Services
-import { RedisClient, redisStore } from "./utils/services/redis/redis.js";
+import { RedisClient, redisStore } from "@/utils/services/redis/redis.js";
 // Utils
 import { getIP } from "@/utils/ip.js";
 // Data
@@ -88,9 +88,12 @@ app.use(
     secret: process.env.SESSION_SECRET as string,
     cookie: {
       maxAge: moment.duration(7, "days").asMilliseconds(),
+      secure: process.env.ENV === "dev" ? false : true,
+      sameSite: "none",
+      httpOnly: true,
     },
-    // store: redisStore,
-    // rolling: true,
+    store: redisStore,
+    rolling: true,
   }),
 );
 

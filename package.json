@@ -9,7 +9,7 @@
   "scripts": {
     "test": "tsx",
     "start": "node dist/index.js",
-    "start-dev": "node dist/index.js --env=dev",
+    "start:dev": "node dist/index.js --env=dev",
     "dev": "nodemon src/index.ts --env=dev",
     "build": "npx tsc"
   },

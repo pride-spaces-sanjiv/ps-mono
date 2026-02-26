@@ -1,5 +1,6 @@
 import { config, configDotenv, DotenvConfigOptions } from "dotenv";
 import PATH from "path";
+import { getProcessArgsObject } from "./args.js";
 
 export const loadEnv = (
   options: DotenvConfigOptions = {},
@@ -22,13 +23,9 @@ export const loadEnv = (
 };
 
 const updateEnvFromArgs = () => {
-  const argsObj = Object.fromEntries(
-    process.argv
-      .filter((arg) => arg.match(/^--[A-z]+[=]/))
-      .map((s) => s.replace(/^--/, ""))
-      .map((arg) => arg.split("=")),
-  );
-  process.env = loadEnv({ path: `./.env.${argsObj?.env}` }).parsed!;
+  const argsObj = getProcessArgsObject<{ env?: string }>();
+  process.env = loadEnv({ path: `./.env.${argsObj.env}` }).parsed!;
+  process.env.ENV = argsObj.env || process.env.ENV;
 };
 updateEnvFromArgs();
 export const ENV = process.env;
