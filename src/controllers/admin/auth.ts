@@ -14,7 +14,7 @@ export const login = async (
     const encodedPass = encodeCrypto(password);
     const doc = await Admin.findOne(
       { email: email },
-      { _id: 1, email: 1, name: 1, password: 1, username: 1 },
+      { _id: 1, email: 1, name: 1, password: 1, username: 1, level: 1 },
     );
 
     if (!doc) {

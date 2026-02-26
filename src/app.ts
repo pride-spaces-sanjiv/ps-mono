@@ -225,27 +225,24 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
   }
 }, RequestMiddleware.sendCachedData);
 
-app.use("/admin", AdminRouter);
-app.use("/enterprise", AdminRouter);
-
 // IP based caching
-app.use((req, res: ManagedResponseWithLocalUrlIP, next) => {
-  try {
-    if (req.method !== "GET") {
-      return next?.();
-    }
+// app.use((req, res: ManagedResponseWithLocalUrlIP, next) => {
+//   try {
+//     if (req.method !== "GET") {
+//       return next?.();
+//     }
 
-    const IP = getIP(req);
-    res.locals = { ...res.locals, cacheIP: IP };
-    // console.log("Local updater");
-    next?.();
-  } catch (err) {
-    ResponseHandler.handleError(res, {
-      errorType: "operation-error",
-      message: "Operation error",
-    });
-  }
-});
+//     const IP = getIP(req);
+//     res.locals = { ...res.locals, cacheIP: IP };
+//     // console.log("Local updater");
+//     next?.();
+//   } catch (err) {
+//     ResponseHandler.handleError(res, {
+//       errorType: "operation-error",
+//       message: "Operation error",
+//     });
+//   }
+// });
 
 // app.use(
 //   "/jio",
@@ -287,6 +284,9 @@ app.use((req, res: ManagedResponseWithLocalUrlIP, next) => {
 // Independent cache routes
 app.use((req, res: ManagedResponseWithLocalUrl, next) => {
   try {
+    if (req.method !== "GET") {
+      return next?.();
+    }
     // @ts-ignore
     res.locals = req.session.user?.id
       ? { ...res.locals, cacheUser: req.session?.user?.id }
@@ -298,7 +298,9 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
       message: "Operation error",
     });
   }
-});
+}, RequestMiddleware.sendCachedData);
+app.use("/admin", AdminRouter);
+app.use("/enterprise", AdminRouter);
 // app.use("/users", RequestMiddleware.authenticateUser(1), usersRouter);
 // app.use("/group", RequestMiddleware.authenticateUser(1), groupRouter);
 // app.use("/account", RequestMiddleware.authenticateUser(0), accountRouter);

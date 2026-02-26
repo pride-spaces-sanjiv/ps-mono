@@ -9,14 +9,19 @@ import { createServer } from "http";
 import moment from "moment";
 import app from "./app.js";
 import { handleMailQueue } from "@/utils/services/rabbitmq/email.js";
+import { getProcessArgsObject } from "./utils/args.js";
 import { sleep } from "@/utils/time.js";
 // import { workers } from "@/utils/workers/handler.js";
 
 // ENV;
 // loggings;
 // MQs;
+const args = getProcessArgsObject<{ max_cpus: string }>();
+const maxCpus = Number.isFinite(Number(args.max_cpus))
+  ? Number(args.max_cpus)
+  : os.cpus().length;
 
-const CPU_COUNT = os.cpus().length;
+const CPU_COUNT = maxCpus;
 console.log("Total CPUS :", CPU_COUNT);
 
 if (cluster.isPrimary) {

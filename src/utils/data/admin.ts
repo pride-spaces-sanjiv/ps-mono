@@ -14,5 +14,5 @@ export const compareAdminLevels = (level1: AdminLevel, level2: AdminLevel) => {
 
 export const getAdminLowerLevels = (level: AdminLevel) => {
   const ind = adminLevels.indexOf(level);
-  return adminLevels.slice(ind, adminLevels.length);
+  return adminLevels.slice(ind + 1, adminLevels.length);
 };

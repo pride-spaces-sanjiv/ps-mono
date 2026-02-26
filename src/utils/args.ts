@@ -11,6 +11,6 @@ export const getProcessArgsObject = <
       .filter((arg) => arg.match(/^--[A-z]+[=]/))
       .map((s) => s.replace(/^--/, ""))
       .map((arg) => arg.split("=")),
-  ) as T & Partial<Record<string, string>>;
+  ) as Partial<T> & Partial<Record<string, string>>;
   return argsObj;
 };

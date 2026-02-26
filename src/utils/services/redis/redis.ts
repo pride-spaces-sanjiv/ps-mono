@@ -5,7 +5,7 @@ import { sleep } from "../../time.js";
 const redisStr = `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
 const redisClients: { [x: string]: RedisClientType } = {};
 
-export const RedisClientDBs = { general: 1, sessionStore: 2 };
+export const RedisClientDBs = { general: 1, sessionStore: 0 };
 
 export const getRedisClient = async (db: number | string) => {
   try {

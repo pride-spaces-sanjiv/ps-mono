@@ -17,6 +17,7 @@ export const getAdmins = async (
   try {
     const selfLevel = req.session.user?.userType;
     const lowerLevels = getAdminLowerLevels(selfLevel as AdminLevel);
+    console.log(lowerLevels);
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -43,6 +44,7 @@ export const getAdmins = async (
       ResponseHandler.handleNotFound(res, {
         errorType: "admins-not-found",
         message: "No admins found",
+        data: { results, page, metrics },
       });
       return;
     }
@@ -52,7 +54,7 @@ export const getAdmins = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-admins-error",
+      errorType: "get-admins-error-failure",
       message: "Failed to get admins list",
     });
   }

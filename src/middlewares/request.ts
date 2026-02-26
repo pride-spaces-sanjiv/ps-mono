@@ -84,6 +84,7 @@ export class RequestMiddleware {
 
       // If there is any valid session data already also can authenticate user
       req.session.reload(() => {});
+      // console.log(req.session);
       if (
         req.session.user?.id &&
         typeof req.session.user?.userType === "string"
@@ -191,14 +192,19 @@ export class RequestMiddleware {
     next: NextFunction,
   ) => {
     try {
+      if (req.method !== "GET") {
+        next?.();
+        return;
+      }
       const url = req.originalUrl.trim().toLowerCase();
       const cache = await RedisClient?.get(
-        req.session?.user?.id
-          ? `query:${req.session.user.id}:${url}`
+        res.locals?.cacheUser
+          ? `query:${res.locals?.cacheUser}:${url}`
           : `query:${url}`,
       );
       if (cache) {
         const data: { response: any; status: number } = JSON.parse(cache);
+        res.setHeader("X-Cache-Status", "Cached");
         ResponseHandler.handleSuccess(res, {
           ...data.response,
           status: data.status,
