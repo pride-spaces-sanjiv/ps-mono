@@ -1,6 +1,9 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Admin, adminNonPassFields } from "@/database/models/user.js";
-import { paginatedResults } from "@/utils/mongoose/pagination.js";
+import {
+  cleanPaginatedData,
+  paginatedResults,
+} from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { encodeCrypto } from "@/utils/crypto.js";
@@ -47,8 +50,10 @@ export const getAdmins = async (
       return;
     }
 
+    const data = cleanPaginatedData({ results, page, metrics, err, errored });
     ResponseHandler.handleSuccess(res, {
-      data: { results, page, metrics },
+      message: "Got admins list",
+      data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -80,12 +85,13 @@ export const getAdmin = async (
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
+      message: "Got admin details",
       data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-admin-error",
-      message: "Failed to get admin",
+      errorType: "get-admin-error-failure",
+      message: "Failed to get admin details",
     });
   }
 };
@@ -105,11 +111,13 @@ export const createAdmin = async (
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
+      status: 201,
+      message: "Created admin successfully",
       data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "create-admin-error",
+      errorType: "create-admin-error-failure",
       message: "Failed to create admin",
     });
   }
@@ -134,12 +142,13 @@ export const updateAdmin = async (
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
+      message: "Updated admin successfully",
       data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "create-admin-error",
-      message: "Failed to create admin",
+      errorType: "update-admin-error-failure",
+      message: "Failed to update admin",
     });
   }
 };

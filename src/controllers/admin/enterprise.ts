@@ -3,7 +3,10 @@ import {
   Enterprise,
   enterpriseNonPassFields,
 } from "@/database/models/enterprise.js";
-import { paginatedResults } from "@/utils/mongoose/pagination.js";
+import {
+  cleanPaginatedData,
+  paginatedResults,
+} from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { encodeCrypto } from "@/utils/crypto.js";
@@ -50,9 +53,10 @@ export const getEnterprises = async (
       return;
     }
 
+    const data = cleanPaginatedData({ results, page, metrics, err, errored });
     ResponseHandler.handleSuccess(res, {
       message: "Got enterprises list",
-      data: { results, page, metrics },
+      data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -89,7 +93,7 @@ export const getEnterprise = async (
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "get-enterprise-error-failure",
-      message: "Failed to get enterprise",
+      message: "Failed to get enterprise details",
     });
   }
 };
@@ -149,7 +153,7 @@ export const updateEnterprise = async (
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "update-enterprise-error-failure",
-      message: "Failed to update enterprise",
+      message: "Failed to update enterprise details",
     });
   }
 };

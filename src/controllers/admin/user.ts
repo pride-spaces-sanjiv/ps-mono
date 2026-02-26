@@ -1,12 +1,14 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { User, userNonPassFields } from "@/database/models/user.js";
-import { paginatedResults } from "@/utils/mongoose/pagination.js";
+import {
+  cleanPaginatedData,
+  paginatedResults,
+} from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { EnterpriseSchema } from "@/database/schemas/enterprise.js";
 import { UserSchema } from "@/database/schemas/user.js";
 
 export const getUsers = async (
@@ -48,9 +50,10 @@ export const getUsers = async (
       return;
     }
 
+    const data = cleanPaginatedData({ results, page, metrics, err, errored });
     ResponseHandler.handleSuccess(res, {
       message: "Got users list",
-      data: { results, page, metrics },
+      data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -87,7 +90,7 @@ export const getUser = async (
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "get-user-error-failure",
-      message: "Failed to get user",
+      message: "Failed to get user details",
     });
   }
 };
@@ -143,7 +146,7 @@ export const updateUser = async (
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "update-user-error-failure",
-      message: "Failed to update user",
+      message: "Failed to update user details",
     });
   }
 };
