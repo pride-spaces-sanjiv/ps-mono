@@ -9,7 +9,6 @@ import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
-import { type AdminSchema } from "@/database/schemas/user.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { EnterpriseSchema } from "@/database/schemas/enterprise.js";
 

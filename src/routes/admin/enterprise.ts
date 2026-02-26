@@ -1,12 +1,9 @@
 import { Router } from "express";
-import { Admin } from "@/database/models/user.js";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import {
-  allowAdminLevelByBody,
   authorizeAdminDetailsByParam,
   checkUserExistenceByBodyValue,
 } from "@/middlewares/checkUser.js";
-import { adminSchema } from "@/database/schemas/user.js";
 import { enterpriseSchema } from "@/database/schemas/enterprise.js";
 // Controllers
 import {

@@ -3,6 +3,7 @@ import {
   appendGeneralFields,
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
+import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 
 const HeadQuarterPersonSchema = new Conn.Schema(
   {
@@ -31,7 +32,7 @@ const EnterpriseSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-EnterpriseSchema.index({ name: 1, email: 1 });
+indexFieldsFromSchema(EnterpriseSchema, { singleFields: ["name"] });
 
 // Model Instances
 export const Enterprise = Conn.model(
