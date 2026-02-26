@@ -10,7 +10,9 @@
     "test": "tsx",
     "start": "node dist/index.js",
     "start:dev": "node dist/index.js --env=dev --max_cpus=2",
+    "start:local": "node dist/index.js --env=local --max_cpus=2",
     "dev": "nodemon src/index.ts --env=dev --max_cpus=2",
+    "dev:local": "nodemon src/index.ts --env=local --max_cpus=2",
     "build": "npx tsc && npx tsc-alias"
   },
   "dependencies": {
