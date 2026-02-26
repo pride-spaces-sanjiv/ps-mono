@@ -1,9 +1,9 @@
 {
   "apps": [
     {
-      "name": "pride-spaces-backend",
+      "name": "ps-backend",
       "script": "npm",
-      "args": "run start",
+      "args": "run start:dev",
       "watch": false
     }
   ]

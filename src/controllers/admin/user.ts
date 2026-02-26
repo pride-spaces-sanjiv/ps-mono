@@ -17,8 +17,6 @@ export const getUsers = async (
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
-    const lowerLevels = getAdminLowerLevels(selfLevel as AdminLevel);
-    console.log(lowerLevels);
 
     const { fields, projectors } = getFieldsandProjectors(
       req,

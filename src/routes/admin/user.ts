@@ -26,7 +26,7 @@ router.get("/", getUsers);
 router.get(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  getEnterprise,
+  getUser,
 );
 router.post(
   "/",
