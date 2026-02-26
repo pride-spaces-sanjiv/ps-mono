@@ -57,5 +57,4 @@ jobs:
             echo "${{ secrets.PASSWORD }}" | sudo -S systemctl restart nginx && echo "Nginx restarted ✅" || echo "Nginx restart failed ❌"
             git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
             git stash clear && echo "Stashed changes cleared ✅" || echo "Stash clear failed ❌"
-            git checkout main
             echo "SSH actions Ended ✅"
