@@ -11,7 +11,7 @@
     "start": "node dist/index.js",
     "start:dev": "node dist/index.js --env=dev --max_cpus=2",
     "dev": "nodemon src/index.ts --env=dev --max_cpus=2",
-    "build": "npx tsc"
+    "build": "npx tsc && npx tsc-alias"
   },
   "dependencies": {
     "@henrygd/queue": "^1.2.0",
@@ -52,6 +52,7 @@
     "@types/nodemailer": "^6.4.17",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }
