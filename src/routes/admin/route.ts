@@ -6,6 +6,7 @@ import { AuthRouter } from "./auth.js";
 import { AdminRouter } from "./admin.js";
 import { EnterpriseRouter } from "./enterprise.js";
 import { UserRouter } from "./user.js";
+import { SpaceRouter } from "./space.js";
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use(RequestMiddleware.authenticateUser(Admin, "admin"));
 router.use("/admins", AdminRouter);
 router.use("/enterprises", EnterpriseRouter);
 router.use("/users", UserRouter);
+router.use("/spaces", SpaceRouter);
 
 export { router as AdminRouter };

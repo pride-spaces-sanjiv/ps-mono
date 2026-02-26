@@ -63,4 +63,4 @@ router.delete(
   deleteSpace,
 );
 
-export { router as UserRouter };
+export { router as SpaceRouter };
