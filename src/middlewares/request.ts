@@ -205,10 +205,7 @@ export class RequestMiddleware {
       if (cache) {
         const data: { response: any; status: number } = JSON.parse(cache);
         res.setHeader("X-Cache-Status", "Cached");
-        ResponseHandler.handleSuccess(res, {
-          ...data.response,
-          status: data.status,
-        });
+        res.status(data.status).send(data.response);
         return;
       }
       res.locals.url = url;
@@ -546,6 +543,7 @@ export class ResponseHandler {
       {
         response: {
           success: allOptions.success,
+          errorType: allOptions.errorType,
           message: allOptions.message,
           data: allOptions.data,
           ...allOptions.appendData,
