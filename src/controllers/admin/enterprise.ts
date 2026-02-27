@@ -118,7 +118,16 @@ export const createEnterprise = async (
       message: "Created enterprise successfully",
       data: data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "enterprise-unique-error",
+        msgPre: "Enterprise",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
     ResponseHandler.handleError(res, {
       errorType: "create-enterprise-error-failure",
       message: "Failed to create enterprise",
@@ -152,12 +161,14 @@ export const updateEnterprise = async (
       data: data,
     });
   } catch (err: any) {
-    const errorData = handleMongooseError(err);
-    if (errorData.cause === "unique" && errorData.field) {
-      return ResponseHandler.handleError(res, {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
         errorType: "enterprise-unique-error",
-        message: `Enterprise with ${errorData.field} already exists`,
-      });
+        msgPre: "Enterprise",
+      },
+    });
+    if (errorData.handled) {
+      return;
     }
     ResponseHandler.handleError(res, {
       errorType: "update-enterprise-error-failure",

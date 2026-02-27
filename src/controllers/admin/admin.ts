@@ -5,6 +5,7 @@ import {
   paginatedResults,
 } from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
+import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
@@ -115,7 +116,16 @@ export const createAdmin = async (
       message: "Created admin successfully",
       data: data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "admin-unique-error",
+        msgPre: "Admin",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
     ResponseHandler.handleError(res, {
       errorType: "create-admin-error-failure",
       message: "Failed to create admin",
@@ -145,7 +155,16 @@ export const updateAdmin = async (
       message: "Updated admin successfully",
       data: data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "admin-unique-error",
+        msgPre: "Admin",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
     ResponseHandler.handleError(res, {
       errorType: "update-admin-error-failure",
       message: "Failed to update admin",

@@ -5,6 +5,7 @@ import {
   paginatedResults,
 } from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
+import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { getIdSchema } from "@/database/schemas/string.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
@@ -131,10 +132,19 @@ export const createSpace = async (
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
       status: 201,
-      message: "Created user successfully",
+      message: "Created space successfully",
       data: data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "space-unique-error",
+        msgPre: "Space",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
     ResponseHandler.handleError(res, {
       errorType: "create-user-error-failure",
       message: "Failed to create user",
@@ -163,7 +173,16 @@ export const updateSpace = async (
     ResponseHandler.handleSuccess(res, {
       data: data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "space-unique-error",
+        msgPre: "Space",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
     ResponseHandler.handleError(res, {
       errorType: "update-space-error-failure",
       message: "Failed to update space details",

@@ -5,6 +5,7 @@ import {
   paginatedResults,
 } from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
+import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
@@ -111,7 +112,16 @@ export const createUser = async (
       message: "Created user successfully",
       data: data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "user-unique-error",
+        msgPre: "User",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
     ResponseHandler.handleError(res, {
       errorType: "create-user-error-failure",
       message: "Failed to create user",
@@ -140,7 +150,16 @@ export const updateUser = async (
     ResponseHandler.handleSuccess(res, {
       data: data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "user-unique-error",
+        msgPre: "User",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
     ResponseHandler.handleError(res, {
       errorType: "update-user-error-failure",
       message: "Failed to update user details",
