@@ -23,20 +23,20 @@ export const getSpaces = async (
     const branchId = (req.query?.branch || "").trim();
     const enterpriseId = (req.query?.enterprise || "").trim();
 
-    // Validate space id
-    if (enterpriseId && !getIdSchema().safeParse(enterpriseId).success) {
-      return ResponseHandler.handleError(res, {
-        errorType: "invalid-enterprise-id",
-        message: "Invalid enterprise ID",
-      });
-    }
-    // Validate branch id
-    if (branchId && !getIdSchema().safeParse(branchId).success) {
-      return ResponseHandler.handleError(res, {
-        errorType: "invalid-branch-id",
-        message: "Invalid branch ID",
-      });
-    }
+    // // Validate space id
+    // if (enterpriseId && !getIdSchema().safeParse(enterpriseId).success) {
+    //   return ResponseHandler.handleError(res, {
+    //     errorType: "invalid-enterprise-id",
+    //     message: "Invalid enterprise ID",
+    //   });
+    // }
+    // // Validate branch id
+    // if (branchId && !getIdSchema().safeParse(branchId).success) {
+    //   return ResponseHandler.handleError(res, {
+    //     errorType: "invalid-branch-id",
+    //     message: "Invalid branch ID",
+    //   });
+    // }
 
     const { fields, projectors } = getFieldsandProjectors(
       req,

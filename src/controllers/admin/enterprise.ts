@@ -3,6 +3,7 @@ import {
   Enterprise,
   enterpriseNonPassFields,
 } from "@/database/models/enterprise.js";
+import { handleMongooseError } from "@/utils/mongoose/error.js";
 import {
   cleanPaginatedData,
   paginatedResults,
@@ -150,7 +151,14 @@ export const updateEnterprise = async (
     ResponseHandler.handleSuccess(res, {
       data: data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    const errorData = handleMongooseError(err);
+    if (errorData.cause === "unique" && errorData.field) {
+      return ResponseHandler.handleError(res, {
+        errorType: "enterprise-unique-error",
+        message: `Enterprise with ${errorData.field} already exists`,
+      });
+    }
     ResponseHandler.handleError(res, {
       errorType: "update-enterprise-error-failure",
       message: "Failed to update enterprise details",

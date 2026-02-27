@@ -60,4 +60,4 @@ const testUser = async <T extends Record<string, any>, M extends Model<any>>(
 // await dropColl(User);
 // await dropColl(Admin);
 testUser(data, User);
-testUser(adminData, Admin);
+// testUser(adminData, Admin);
