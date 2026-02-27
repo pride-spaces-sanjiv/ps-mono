@@ -7,6 +7,7 @@ import { AdminRouter } from "./admin.js";
 import { EnterpriseRouter } from "./enterprise.js";
 import { UserRouter } from "./user.js";
 import { SpaceRouter } from "./space.js";
+import { BranchRouter } from "./branch.js";
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use("/admins", AdminRouter);
 router.use("/enterprises", EnterpriseRouter);
 router.use("/users", UserRouter);
 router.use("/spaces", SpaceRouter);
+router.use("/branches", BranchRouter);
 
 export { router as AdminRouter };
