@@ -8,7 +8,7 @@ import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 // Check user exists by field value, then pass/exit
 export const checkUserExistenceByBodyValue = <T extends any, K extends string>(
   model: Model<T>,
-  field: K,
+  fields: K | K[],
   {
     userErrorKey = "user",
     userErrorMsgKey = "user",
@@ -25,23 +25,38 @@ export const checkUserExistenceByBodyValue = <T extends any, K extends string>(
     next: NextFunction,
   ) => {
     try {
-      const val = req.body[field];
-      const exists = await model.findOne({ [field]: val }, { [field]: 1 });
-      if (passOnExists) {
-        if (!exists) {
-          return ResponseHandler.handleNotFound(res, {
-            errorType: `${userErrorKey}-not-found`,
-            message: `No such ${userErrorMsgKey} exists`,
-          });
+      const existsFieldChecker = async (field: K) => {
+        const val = req.body[field];
+        const exists = await model.findOne({ [field]: val }, { [field]: 1 });
+        if (passOnExists) {
+          if (!exists) {
+            ResponseHandler.handleNotFound(res, {
+              errorType: `${userErrorKey}-not-found`,
+              message: `No such ${userErrorMsgKey} exists`,
+            });
+            return true;
+          }
+          return false;
         }
-        return next();
+        if (exists) {
+          ResponseHandler.handleError(res, {
+            errorType: `${userErrorKey}-exists`,
+            message: `${userErrorMsgKey} already exists`,
+          });
+          return true;
+        }
+        return false;
+      };
+
+      fields = Array.isArray(fields) ? fields : [fields];
+      for (let i = 0; i < fields.length; i++) {
+        const field = fields[i];
+        const exists = await existsFieldChecker(field);
+        if (exists) {
+          return;
+        }
       }
-      if (exists) {
-        return ResponseHandler.handleError(res, {
-          errorType: `${userErrorKey}-exists`,
-          message: `${userErrorMsgKey} already exists`,
-        });
-      }
+
       return next();
     } catch (err) {
       ResponseHandler.handleError(res, {
