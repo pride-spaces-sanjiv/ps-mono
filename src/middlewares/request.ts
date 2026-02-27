@@ -282,6 +282,7 @@ export class RequestMiddleware {
     options?: Partial<{ validateOnlyPresent: boolean; allowEmpty: boolean }>,
   ): RequestHandler<any, any, any, z.infer<typeof schema>> => {
     type Requester = Request<any, any, any, z.infer<typeof schema>>;
+    let field = "";
     try {
       const allOptions: typeof options = {
         validateOnlyPresent: true,
@@ -314,6 +315,7 @@ export class RequestMiddleware {
           if (allOptions.validateOnlyPresent) {
             for (const key in query) {
               if (schema.shape[key]) {
+                field = key.trim();
                 // @ts-ignore
                 schema.shape[key].parse(query[key]);
               }
@@ -333,7 +335,7 @@ export class RequestMiddleware {
               appendData: {
                 validationError: true,
                 error: err.message,
-                field: err.issues[0]?.path?.join(".") || "unknown",
+                field: err.issues[0]?.path?.join(".") || field || "unknown",
                 errors: err.issues.map((e) => {
                   // @ts-ignore
                   delete e.input;
