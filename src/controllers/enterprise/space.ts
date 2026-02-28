@@ -1,0 +1,210 @@
+import { ResponseHandler } from "@/middlewares/request.js";
+import { Space, spaceFields } from "@/database/models/space.js";
+import {
+  cleanPaginatedData,
+  paginatedResults,
+} from "@/utils/mongoose/pagination.js";
+import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
+import { handleMongooseError } from "@/utils/mongoose/error.js";
+import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
+import { cleanObject } from "@/utils/object/clean.js";
+import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { SpaceSchema } from "@/database/schemas/space.js";
+
+export const getSpaces = async (
+  req: ManagedRequest<
+    any,
+    { [k: string]: any } & Partial<{ enterprise: string; branch: string }>
+  >,
+  res: ManagedResponse,
+) => {
+  try {
+    const selfId = req.session.user?.id;
+    const branchId = (req.query?.branch || "").trim();
+
+    const { fields, projectors } = getFieldsandProjectors(
+      req,
+      Space,
+      spaceFields,
+    );
+    const { page, metrics, results, errored, err } = await paginatedResults(
+      req,
+      Space,
+      spaceFields,
+      { limit: 10 },
+      {
+        projection: projectors,
+        filter: cleanObject(
+          { enterprise: selfId, branch: branchId },
+          { excludeByValues: [""] },
+        ),
+      },
+    );
+
+    // On results error
+    if (errored && err) {
+      ResponseHandler.handleError(res, {
+        errorType: "get-spaces-error",
+        message: "Failed to get spaces list",
+      });
+      return;
+    }
+    if (results.length === 0) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "spaces-not-found",
+        message: "No spaces found",
+        data: { results, page, metrics },
+      });
+      return;
+    }
+
+    const data = cleanPaginatedData({ results, page, metrics, err, errored });
+    ResponseHandler.handleSuccess(res, {
+      message: "Got spaces list",
+      data: data,
+    });
+  } catch (err) {
+    ResponseHandler.handleError(res, {
+      errorType: "get-spaces-error-failure",
+      message: "Failed to get spaces list",
+    });
+  }
+};
+
+export const getSpace = async (
+  req: ManagedRequest<any, { [k: string]: any }>,
+  res: ManagedResponse,
+) => {
+  try {
+    const { fields, projectors } = getFieldsandProjectors(
+      req,
+      Space,
+      spaceFields,
+    );
+
+    const doc = await Space.findOne(
+      { _id: req.params.id, enterprise: req.session.user?.id },
+      projectors,
+    );
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "space-not-found",
+        message: "Space not found",
+      });
+      return;
+    }
+
+    const data = convertDataToJSON(doc);
+    ResponseHandler.handleSuccess(res, {
+      data: data,
+    });
+  } catch (err) {
+    ResponseHandler.handleError(res, {
+      errorType: "get-space-error-failure",
+      message: "Failed to get space details",
+    });
+  }
+};
+
+export const createSpace = async (
+  req: ManagedRequest<Omit<SpaceSchema, "enterprise">>,
+  res: ManagedResponse,
+) => {
+  try {
+    const body = req.body;
+    const doc = new Space({ ...body, enterprise: req.session.user?.id });
+    await doc.save();
+
+    const data = convertDataToJSON(doc);
+    ResponseHandler.handleSuccess(res, {
+      status: 201,
+      message: "Created space successfully",
+      data: data,
+    });
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "space-unique-error",
+        msgPre: "Space",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
+    ResponseHandler.handleError(res, {
+      errorType: "create-user-error-failure",
+      message: "Failed to create user",
+    });
+  }
+};
+
+export const updateSpace = async (
+  req: ManagedRequest<Omit<SpaceSchema, "branch" | "enterprise">>,
+  res: ManagedResponse,
+) => {
+  try {
+    const body = req.body;
+    const doc = await Space.findOneAndUpdate(
+      { _id: req.params.id, enterprise: req.session.user?.id },
+      body,
+      {
+        new: true,
+      },
+    );
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "space-not-found",
+        message: "Space not found",
+      });
+      return;
+    }
+
+    const data = convertDataToJSON(doc);
+    ResponseHandler.handleSuccess(res, {
+      data: data,
+    });
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "space-unique-error",
+        msgPre: "Space",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
+    ResponseHandler.handleError(res, {
+      errorType: "update-space-error-failure",
+      message: "Failed to update space details",
+    });
+  }
+};
+
+export const deleteSpace = async (
+  req: ManagedRequest,
+  res: ManagedResponse,
+) => {
+  try {
+    const doc = await Space.findOneAndDelete({
+      _id: req.params.id,
+      enterprise: req.session.user?.id,
+    });
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "space-not-found",
+        message: "Space not found",
+      });
+      return;
+    }
+
+    const data = convertDataToJSON(doc);
+    ResponseHandler.handleSuccess(res, {
+      data: { id: data?.id },
+    });
+  } catch (err) {
+    ResponseHandler.handleError(res, {
+      errorType: "delete-space-error-failure",
+      message: "Failed to delete space",
+    });
+  }
+};
