@@ -86,6 +86,7 @@ export class RequestMiddleware {
       req.session.reload(() => {});
       // console.log(req.session);
       if (
+        !decodedToken?.data?.id &&
         req.session.user?.id &&
         typeof req.session.user?.userType === "string"
       ) {
@@ -110,7 +111,7 @@ export class RequestMiddleware {
       // If token is OK then fetch data from DB
       const data = await model.findOne(
         { _id: decodedToken.data.id.trim() },
-        { _id: 1, username: 1, email: 1, userType: 1 },
+        { _id: 1, username: 1, email: 1, level: 1 },
       );
       if (!data?.id) {
         throw new Error("Invalid data");
@@ -118,7 +119,7 @@ export class RequestMiddleware {
       authData.user = {
         id: data.id,
         email: data.email || undefined,
-        userType: userType === "admin" ? data.userType : userType,
+        userType: userType === "admin" ? data.level : userType,
       };
       req.session.user = authData.user;
       req.session.save();
