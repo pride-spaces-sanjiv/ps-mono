@@ -72,6 +72,7 @@ export class RequestMiddleware {
     const authData = {
       user: null as null | SessionData["user"],
       invalid: false,
+      userTypeConflict: false,
       empty: false,
       expired: false,
       errored: false,
@@ -91,6 +92,9 @@ export class RequestMiddleware {
         typeof req.session.user?.userType === "string"
       ) {
         authData.user = req.session.user;
+        if (authData.user?.userType !== userType) {
+          authData.userTypeConflict = true;
+        }
         return authData;
       }
 
@@ -150,6 +154,13 @@ export class RequestMiddleware {
         //   );
         // }
         const auth = await this.handleAuth(req, model, userType);
+        if (auth.userTypeConflict) {
+          ResponseHandler.handleUnauthorized(res, {
+            errorType: "unauthorized-user-role",
+            message: "You cannot access this route",
+          });
+          return;
+        }
         if (auth.invalid) {
           ResponseHandler.handleError(res, {
             message: "Invalid token",
