@@ -156,7 +156,7 @@ export class RequestMiddleware {
         const auth = await this.handleAuth(req, model, userType);
         if (auth.userTypeConflict) {
           ResponseHandler.handleUnauthorized(res, {
-            errorType: "unauthorized-user-role",
+            errorType: "unauthorized-role-access",
             message: "You cannot access this route",
           });
           return;
