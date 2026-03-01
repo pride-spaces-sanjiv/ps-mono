@@ -11,6 +11,7 @@ import { Admin, User } from "@/database/models/user.js";
 import { RedisClient } from "@/utils/services/redis/redis.js";
 import { decodeCrypto } from "@/utils/crypto.js";
 import { decodeJWTwithCrypto } from "@/utils/jwt.js";
+import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
 // types
 import { SessionData, RequiredSessionData } from "express-session";
 import { SetOptions } from "redis";
@@ -92,7 +93,13 @@ export class RequestMiddleware {
         typeof req.session.user?.userType === "string"
       ) {
         authData.user = req.session.user;
-        if (authData.user?.userType !== userType) {
+        if (
+          userType === "admin" &&
+          !adminLevels.includes(authData.user?.userType as AdminLevel)
+        ) {
+          authData.userTypeConflict = true;
+        }
+        if (userType !== "admin" && authData.user?.userType !== userType) {
           authData.userTypeConflict = true;
         }
         return authData;
