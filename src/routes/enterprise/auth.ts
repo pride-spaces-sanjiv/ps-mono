@@ -2,7 +2,7 @@ import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { enterpriseSchema } from "@/database/schemas/enterprise.js";
 // Controllers
-import { login } from "@/controllers/admin/auth.js";
+import { login } from "@/controllers/enterprise/auth.js";
 
 const router = Router();
 
