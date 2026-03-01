@@ -30,9 +30,34 @@ const items = [
     icon: Home,
   },
   {
+    title: "Display",
+    url: "/display",
+    icon: Tv,
+  },
+  {
+    title: "Notfication",
+    url: "/notfication",
+    icon: LogOutIcon,
+  },
+  {   
+    title: "Migrate Offices",
+    url: "/migration",
+    icon: LogOutIcon,
+  },
+  {
+    title: "List Finite Offices",
+    url: "/listfiniteoffices",
+    icon: LogOutIcon,
+  },
+  {
     title: "Users",
     url: "/users",
     icon: Users,
+  },
+  {
+    title: "Space Operator",
+    url: "/spaceoperator",
+    icon: LogOutIcon,
   },
   {
     title: "Settings",
