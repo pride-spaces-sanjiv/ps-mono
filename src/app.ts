@@ -16,6 +16,7 @@ import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
 // Controllers
 // Routers
 import { AdminRouter } from "@/routes/admin/route.js";
+import { EnterpriseRouter } from "./routes/enterprise/route.js";
 // import { PlaylistRouter } from "@/routes/playlist.js";
 // import { JioRouter } from "./routes/jio.js";
 // import { ZeeRouter } from "@/routes/zee.js";
@@ -300,7 +301,7 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
   }
 }, RequestMiddleware.sendCachedData);
 app.use("/admin", AdminRouter);
-app.use("/enterprise", AdminRouter);
+app.use("/enterprise", EnterpriseRouter);
 // app.use("/users", RequestMiddleware.authenticateUser(1), usersRouter);
 // app.use("/group", RequestMiddleware.authenticateUser(1), groupRouter);
 // app.use("/account", RequestMiddleware.authenticateUser(0), accountRouter);
