@@ -111,8 +111,8 @@ export function AppSidebar() {
         {/* Main Navigation */}
         <SidebarGroup className="gap-2 h-full bg-popover">
           <SidebarGroupLabel className="text-xl self-center font-bold text-accent-foreground flex items-center gap-2">
-            <Tv className="w-8 h-8 text-primary" />
-            <span className="">Beiz Panel</span>
+            {/* <Tv className="w-8 h-8 text-primary" /> */}
+            <span className="">Pride Spaces</span>
           </SidebarGroupLabel>
           <SidebarGroupContent className="py-3">
             <SidebarMenu>

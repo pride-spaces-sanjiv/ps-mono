@@ -7,10 +7,10 @@ import {
   useNavigate,
   Outlet,
 } from "react-router-dom";
-import { TawkLiveChat } from "tawk-react";
+// import { TawkLiveChat } from "tawk-react";
 import { Toaster } from "@/components/ui/sonner";
 import { tokenStore } from "@/services/store/user";
-import { useTawk } from "@/services/hooks/use-tawk";
+// import { useTawk } from "@/services/hooks/use-tawk";
 import { refreshTokenAPI } from "@/services/apis/auth";
 import { reConfigureAuthToken } from "@/utils/axios/configure";
 import { validateNumber } from "@/utils/number";
@@ -33,7 +33,7 @@ const LoadingSpinner = () => (
 );
 
 const AppRoutes = () => {
-  useTawk();
+  // useTawk();
 
   // const navigate = useNavigate();
   const [tokenData, setTokenData] = [
@@ -96,15 +96,15 @@ const AppRoutes = () => {
   return (
     <Router>
       <Suspense fallback={<LoadingSpinner />}>
-        <TawkLiveChat
-          propertyId="695d4b1cb3e90b197cc30e76"
-          widgetId="1jea6qq7o"
+        {/* // <TawkLiveChat 
+          // propertyId="695d4b1cb3e90b197cc30e76"
+          // widgetId="1jea6qq7o"
           // visitor={
           //   userData?.email && userData.name
           //     ? { email: userData?.email, name: userData?.name }
           //     : undefined
           // }
-        />
+        // /> */}
         <Routes>
           <Route
             element={

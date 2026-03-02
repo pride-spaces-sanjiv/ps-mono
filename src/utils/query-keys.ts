@@ -6,6 +6,7 @@ const keys = [
   "providers",
   "users",
   "credits",
+  "spaces",
 ] as const;
 
 type QueryKey = (typeof keys)[number];

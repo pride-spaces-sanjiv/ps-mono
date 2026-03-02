@@ -3,6 +3,7 @@ import * as secureStorage from "@secure-storage/common";
 import type { TokenData } from "../store/user";
 
 const baseUrl = import.meta.env.VITE_BASE_API;
+const baseUrl2 = "https://ps-backend.sanjiv.ip-ddns.com";
 const mode = import.meta.env.VITE_ENV_MODE === "dev" ? "dev" : "prod";
 const token =
   secureStorage.localStorage.getItem<TokenData | null>("__aT__")?.token || "";
@@ -55,6 +56,11 @@ export const ACCOUNT = axios.create({
 });
 export const USERS = axios.create({
   baseURL: baseUrl + "/users",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const SPACES = axios.create({
+  baseURL: baseUrl2 + "/admin/spaces",
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
