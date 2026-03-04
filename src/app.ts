@@ -48,6 +48,9 @@ app.set("trust proxy", true);
 app.set("view engine", "ejs");
 
 // CORS
+const allowedOrigins = process.env.CORS_ALLOWED?.split(/[;]+/g).map((s) =>
+  s.trim(),
+);
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -59,17 +62,15 @@ app.use(
       ) {
         return callback(null, true);
       }
-      if (origin?.startsWith("https://panel-play.tg-iptv.site")) {
-        return callback(null, true);
-      }
-      if (origin?.startsWith("https://beizer.vercel.app")) {
-        return callback(null, true);
-      }
-      if (origin?.startsWith("https://beiz-panel.tg-iptv.site")) {
-        return callback(null, true);
-      }
       if (origin?.match(/^http(s|)[:]\/\/localhost[:][345]00[0-9]{0,3}/)) {
         return callback(null, true);
+      }
+      if (allowedOrigins) {
+        for (const domain of allowedOrigins) {
+          if (origin?.match(/^http(s|)[:]\/\//) && origin.endsWith(domain)) {
+            return callback(null, true);
+          }
+        }
       }
       return callback(
         new Error(`Origin [${origin}] not allowed by CORS`, {
