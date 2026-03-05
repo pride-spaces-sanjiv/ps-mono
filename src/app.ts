@@ -14,6 +14,7 @@ import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
 //   validateConnection,
 // } from "@/middlewares/connections.js";
 // Controllers
+import { getTokenInfo } from "./controllers/tokenInfo.js";
 // Routers
 import { AdminRouter } from "@/routes/admin/route.js";
 import { EnterpriseRouter } from "./routes/enterprise/route.js";
@@ -209,6 +210,8 @@ app.get("/", async (req, res) => {
     ResponseHandler.handleError(res);
   }
 });
+
+app.get("/token-info", getTokenInfo);
 
 // Routes may use caching
 app.use((req, res: ManagedResponseWithLocalUrl, next) => {

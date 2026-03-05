@@ -32,7 +32,10 @@ export const login = async (
     }
 
     // Sign Bearer Token
-    const token = signJWTwithCrypto({ id: doc.id }, { expiresIn: "7d" });
+    const token = signJWTwithCrypto(
+      { id: doc.id, level: doc.level },
+      { expiresIn: "7d" },
+    );
     const refreshToken = signJWTwithCrypto(
       { id: doc.id, refresh: true },
       { expiresIn: "30d" },

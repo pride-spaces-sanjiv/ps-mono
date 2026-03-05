@@ -53,7 +53,12 @@ export class RequestMiddleware {
   static decryptUserAuthToken(token = "") {
     try {
       // const jwt = decodeCrypto(token);
-      const decoded = decodeJWTwithCrypto<Partial<{ id: string }>>(token);
+      const decoded = decodeJWTwithCrypto<
+        Partial<{
+          id: string;
+          level: RequiredSessionData["user"]["userType"];
+        }>
+      >(token);
       if (!decoded?.data?.id) {
         throw new Error("invalid data");
       }
