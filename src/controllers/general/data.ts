@@ -1,17 +1,9 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Admin, adminNonPassFields } from "@/database/models/user.js";
-import {
-  cleanPaginatedData,
-  paginatedResults,
-} from "@/utils/mongoose/pagination.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { getFieldsOfModel } from "@/utils/mongoose/fields.js";
-import { encodeCrypto } from "@/utils/crypto.js";
 import { cleanObject } from "@/utils/object/clean.js";
-import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
-import { type AdminSchema } from "@/database/schemas/user.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { Model } from "mongoose";
