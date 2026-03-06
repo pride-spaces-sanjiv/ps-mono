@@ -52,6 +52,7 @@
     "tailwindcss": "^4.1.11",
     "tawk-react": "^0.0.2",
     "yup": "^1.6.1",
+    "zod": "^4.3.6",
     "zustand": "^5.0.6"
   },
   "devDependencies": {

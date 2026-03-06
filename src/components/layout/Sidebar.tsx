@@ -39,7 +39,7 @@ const items = [
     url: "/notfication",
     icon: LogOutIcon,
   },
-  {   
+  {
     title: "Migrate Offices",
     url: "/migration",
     icon: LogOutIcon,
@@ -71,7 +71,7 @@ export function AppSidebar() {
   const userState = userStore();
   const { userLevel } = useUser();
   const validItems = useMemo(
-    () => (userLevel >= 1 ? items : items.filter((d) => d.url !== "/users")),
+    () => (userLevel ? items : items.filter((d) => d.url !== "/users")),
     [userLevel],
   );
 
@@ -111,8 +111,8 @@ export function AppSidebar() {
         {/* Main Navigation */}
         <SidebarGroup className="gap-2 h-full bg-popover">
           <SidebarGroupLabel className="text-xl self-center font-bold text-accent-foreground flex items-center gap-2">
-            <Tv className="w-8 h-8 text-primary" />
-            <span className="">Beiz Panel</span>
+            {/* <Tv className="w-8 h-8 text-primary" /> */}
+            <span className="">Pride Spaces</span>
           </SidebarGroupLabel>
           <SidebarGroupContent className="py-3">
             <SidebarMenu>

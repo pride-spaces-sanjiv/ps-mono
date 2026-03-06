@@ -3,6 +3,7 @@ import * as secureStorage from "@secure-storage/common";
 import type { TokenData } from "../store/user";
 
 const baseUrl = import.meta.env.VITE_BASE_API;
+const baseUrl2 = "https://ps-backend.sanjiv.ip-ddns.com";
 const mode = import.meta.env.VITE_ENV_MODE === "dev" ? "dev" : "prod";
 const token =
   secureStorage.localStorage.getItem<TokenData | null>("__aT__")?.token || "";
@@ -23,6 +24,11 @@ const jsonContentHeadersAuth = {
 
 // Admin configs
 
+export const BASE = axios.create({
+  baseURL: baseUrl,
+  headers: jsonContentHeaders,
+  withCredentials: true,
+});
 export const ADMIN = axios.create({
   baseURL: baseUrl + "/admin",
   headers: jsonContentHeadersAuth,
@@ -30,6 +36,11 @@ export const ADMIN = axios.create({
 });
 export const ADMIN_AUTH = axios.create({
   baseURL: baseUrl + "/admin/auth",
+  headers: jsonContentHeaders,
+  withCredentials: true,
+});
+export const ADMIN_DATA = axios.create({
+  baseURL: baseUrl + "/admin/data",
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
@@ -61,8 +72,18 @@ export const ENTERPRISE = axios.create({
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
+export const SPACES = axios.create({
+  baseURL: baseUrl2 + "/admin/spaces",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
 export const ENTERPRISE_AUTH = axios.create({
   baseURL: baseUrl + "/enterprise/auth",
+  headers: jsonContentHeaders,
+  withCredentials: true,
+});
+export const ENTERPRISE_DATA = axios.create({
+  baseURL: baseUrl + "/enterprise/data",
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });

@@ -1,7 +1,7 @@
-import { COMMON, CHANNEL } from "./config";
+import { BASE } from "./config";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
-import { addChannelSchema, channelSchema } from "@/utils/schemas/channel";
+// import { addChannelSchema, channelSchema } from "@/utils/schemas/channel";
 import type {
   GeneralResponseWithError,
   PaginatedResponse,
@@ -20,40 +20,40 @@ export type ChannelRes = GeneralResponseWithError<
 
 export const getProviders = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = "/providers" + queryToString(param?.query);
-    const res = await COMMON.get<ProvidersRes>(url, config);
+    const url = "/no-route" + queryToString(param?.query);
+    const res = await BASE.get<ProvidersRes>(url, config);
     return res;
   },
 });
 
 export const getCommonGroups = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = "/groups" + queryToString(param?.query);
-    const res = await COMMON.get<GroupsRes>(url, config);
+    const url = "/no-route" + queryToString(param?.query);
+    const res = await BASE.get<GroupsRes>(url, config);
     return res;
   },
 });
 
 export const getCommonChannels = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = "/channels" + queryToString(param?.query);
-    const res = await COMMON.get<ChannelRes>(url, config);
+    const url = "/no-route" + queryToString(param?.query);
+    const res = await BASE.get<ChannelRes>(url, config);
     return res;
   },
 });
 
 export const updateChannel = APIBodyValidationWrapper({
-  schema: addChannelSchema.pick([
-    "groupId",
-    "enabled",
-    "keyType",
-    "name",
-    "streamType",
-    "streamUrl",
-  ]),
+  // schema: addChannelSchema.pick([
+  //   "groupId",
+  //   "enabled",
+  //   "keyType",
+  //   "name",
+  //   "streamType",
+  //   "streamUrl",
+  // ]),
   handle: async (param, config) => {
-    const url = "/" + queryToString(param?.query);
-    const res = await CHANNEL.put<ChannelRes>(url, param?.body, config);
+    const url = "/no-route" + queryToString(param?.query);
+    const res = await BASE.put<ChannelRes>(url, param?.body, config);
     return res;
   },
 });

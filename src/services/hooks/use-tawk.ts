@@ -6,7 +6,7 @@ import {
   TawkLiveChat,
 } from "tawk-react";
 import { useUser } from "./use-user";
-import { generateTawkHash } from "../apis/account";
+import { generateTawkHash } from "../apis/admin/auth";
 
 const safeCall = <
   R extends any | void,

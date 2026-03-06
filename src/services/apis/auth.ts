@@ -1,10 +1,10 @@
-import { AUTH } from "./config";
-import {
-  loginSchema,
-  resetPasswordSchema,
-  refreshTokenSchema,
-  googleAuthSchema,
-} from "@/utils/schemas/user";
+import { BASE } from "./config";
+// import {
+//   loginSchema,
+//   resetPasswordSchema,
+//   refreshTokenSchema,
+//   googleAuthSchema,
+// } from "@/utils/schemas/user";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import type { GeneralResponseWithError } from "@/types/axios/response";
 import type { TokenData } from "../store/user";
@@ -13,45 +13,45 @@ type LoginRes = GeneralResponseWithError<Partial<TokenData> | null>;
 type LogoutRes = GeneralResponseWithError<Partial<{ id: string }> | null>;
 
 export const loginAPI = APIBodyValidationWrapper({
-  schema: loginSchema,
+  // schema: loginSchema,
   handle: async (param, config) => {
-    const res = await AUTH.post<LoginRes>("/login", param?.body, config);
+    const res = await BASE.post<LoginRes>("/no-route", param?.body, config);
     return res;
   },
 });
 
 export const refreshTokenAPI = APIBodyValidationWrapper({
-  schema: refreshTokenSchema,
+  // schema: refreshTokenSchema,
   handle: async (param, config) => {
-    const res = await AUTH.post<
+    const res = await BASE.post<
       GeneralResponseWithError<Partial<Omit<TokenData, "refreshToken">>>
-    >("/re-login", param?.body, config);
+    >("/no-route", param?.body, config);
     return res;
   },
 });
 
 export const googleAuthAPI = APIBodyValidationWrapper({
-  schema: googleAuthSchema,
+  // schema: googleAuthSchema,
   handle: async (param, config) => {
-    const res = await AUTH.post<LoginRes>("/google-auth", param?.body, config);
+    const res = await BASE.post<LoginRes>("/no-route", param?.body, config);
     return res;
   },
 });
 
 export const logoutAPI = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const res = await AUTH.get<LogoutRes>("/logout", config);
+    const res = await BASE.get<LogoutRes>("/no-route", config);
     return res;
   },
 });
 
 export const resetPasswordRequest = APIBodyValidationWrapper({
-  schema: loginSchema.pick(["email"]),
+  // schema: loginSchema.pick(["email"]),
   handle: async (param, config) => {
-    const res = await AUTH.post<GeneralResponseWithError<any>>(
-      "/reset-password-email",
+    const res = await BASE.post<GeneralResponseWithError<any>>(
+      "/no-route",
       param?.body,
-      config
+      config,
     );
     return res;
   },
@@ -69,24 +69,24 @@ export const resetPasswordRequest = APIBodyValidationWrapper({
 // };
 
 export const verifyResetPasswordToken = APIBodyValidationWrapper({
-  schema: resetPasswordSchema.pick(["token"]),
+  // schema: resetPasswordSchema.pick(["token"]),
   handle: async (param, config) => {
-    const res = await AUTH.post<GeneralResponseWithError<any>>(
-      "/validate-reset-password",
+    const res = await BASE.post<GeneralResponseWithError<any>>(
+      "/no-route",
       param?.body,
-      config
+      config,
     );
     return res;
   },
 });
 
 export const resetPassword = APIBodyValidationWrapper({
-  schema: resetPasswordSchema,
+  // schema: resetPasswordSchema,
   handle: async (param, config) => {
-    const res = await AUTH.post<GeneralResponseWithError<any>>(
-      "/reset-password",
+    const res = await BASE.post<GeneralResponseWithError<any>>(
+      "/no-route",
       param?.body,
-      config
+      config,
     );
     return res;
   },
