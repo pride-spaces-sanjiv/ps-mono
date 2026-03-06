@@ -1,27 +1,9 @@
 import type { Datified } from "@/utils/object/datify";
+import type { UserSchema, AdminSchema } from "@/utils/schemas/user";
+import type { GeneralData } from "./general";
 
-export type User = {
-  id: string;
-  name: string;
-  username: string;
-  password: string;
-  email?: string;
-  level: number;
-  credits: number;
-  isActive: boolean;
-  underUser?: string;
-  verified: boolean;
-  expiry: string;
-  testExpiry?: string;
-  phone?: number;
-  shortLink?: string;
-  enabledGroups: string[];
-  userAgents: string[];
-  createdAt: string;
-  updatedAt: string;
-};
+export type User = GeneralData & Omit<Partial<UserSchema>, "password">;
+export type Admin = GeneralData & Omit<Partial<AdminSchema>, "password">;
 
-export type DatifiedUser = Datified<
-  User,
-  ["createdAt", "updatedAt", "expiry", "testExpiry"]
->;
+export type DatifiedUser = Datified<User, ["createdAt", "updatedAt"]>;
+export type DatifiedAdmin = Datified<Admin, ["createdAt", "updatedAt"]>;

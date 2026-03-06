@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { tokenStore, userStore } from "../store/user";
-import { getAccountData } from "../apis/account";
+import { tokenStore, userStore } from "@/services/store/user";
+import { getSelfData as getAdminData } from "@/services/apis/admin/auth";
+import { getSelfData as getEnterpriseData } from "@/services/apis/self/enterprise";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { validateNumber } from "@/utils/number";
 // import { validateNumber } from "@/utils/number";
@@ -16,10 +17,8 @@ export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
   const tokenStoreState = tokenStore((state) => state);
   const userData = userStore((state) => state.value);
   const fetchCount = userStore((state) => state.fetchCount);
-  const userLevel = useMemo(
-    () => validateNumber(userData?.level, { invalidValue: 0 }),
-    [userData?.level],
-  );
+  const userLevel = useMemo(() => userStoreState.level, [userStoreState]);
+  const setUserLevel = useMemo(() => userStoreState.setLevel, [userStoreState]);
 
   const isTokenValid = useMemo(
     () =>
@@ -33,7 +32,7 @@ export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
     queryFn: () => {
       userStoreState.increaseFetchCount();
       return tokenStoreState
-        ? delayPromise(getAccountData(), promiseDelay)
+        ? delayPromise(getAdminData(), promiseDelay)
         : null;
     },
     retry: 3,
@@ -44,10 +43,8 @@ export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
   useEffect(() => {
     if (res?.data?.data?.id) {
       const modified = datifyObjectValues(res.data.data, [
-        "expiry",
         "createdAt",
         "updatedAt",
-        "testExpiry",
       ]);
       userStoreState.setter({
         ...userStoreState.value,
@@ -66,6 +63,7 @@ export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
     tokenStoreState,
     userData,
     userLevel,
+    setUserLevel,
     isTokenValid,
     fetchCount,
     ...queryState,

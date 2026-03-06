@@ -1,8 +1,8 @@
-import { ADMIN_CHANNEL } from "./config";
-import {
-  addChannelSchema,
-  type AddChannelSchema,
-} from "@/utils/schemas/channel";
+import { BASE } from "./config";
+// import {
+//   addChannelSchema,
+//   type AddChannelSchema,
+// } from "@/utils/schemas/channel";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import type {
   GeneralResponseWithError,
@@ -11,10 +11,10 @@ import type {
 import { type ChannelRes } from "./common";
 
 export const addChannel = APIBodyValidationWrapper({
-  schema: addChannelSchema,
+  // schema: addChannelSchema,
   handle: async (param, config) => {
-    const url = "/add";
-    const res = await ADMIN_CHANNEL.post<ChannelRes>(url, param?.body, config);
+    const url = "/no-route";
+    const res = await BASE.post<ChannelRes>(url, param?.body, config);
     return res;
   },
 });
@@ -31,14 +31,10 @@ export type TestChannelRes = GeneralResponseWithError<{
   redirects: { status: number; statusText: string; url: RedirectURL }[];
 }>;
 export const testChannelStream = APIBodyValidationWrapper({
-  schema: addChannelSchema.pick(["provider", "streamUrl"]),
+  // schema: addChannelSchema.pick(["provider", "streamUrl"]),
   handle: async (param, config) => {
-    const url = "/test-stream";
-    const res = await ADMIN_CHANNEL.post<TestChannelRes>(
-      url,
-      param?.body,
-      config,
-    );
+    const url = "/no-route";
+    const res = await BASE.post<TestChannelRes>(url, param?.body, config);
     return res;
   },
 });

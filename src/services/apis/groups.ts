@@ -1,5 +1,5 @@
-import { GROUP } from "./config";
-import { groupSchema } from "@/utils/schemas/group";
+import { BASE } from "./config";
+// import { groupSchema } from "@/utils/schemas/group";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
 import type {
@@ -14,19 +14,19 @@ export type UserGroupsRes = GeneralResponseWithError<
 
 export const getGroups = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = "/list" + queryToString(param?.query);
-    const res = await GROUP.get<UserGroupsRes>(url, config);
+    const url = "/no-route" + queryToString(param?.query);
+    const res = await BASE.get<UserGroupsRes>(url, config);
     return res;
   },
 });
 export const createGroup = APIBodyValidationWrapper({
-  schema: groupSchema,
+  // schema: groupSchema,
   handle: async (param, config) => {
-    const url = "/";
-    const res = await GROUP.post<GeneralResponseWithError<UserGroup>>(
+    const url = "/no-route";
+    const res = await BASE.post<GeneralResponseWithError<UserGroup>>(
       url,
       param?.body,
-      config
+      config,
     );
     return res;
   },
@@ -34,8 +34,8 @@ export const createGroup = APIBodyValidationWrapper({
 
 export const deleteGroup = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = "/" + queryToString(param?.query);
-    const res = await GROUP.delete<GeneralResponseWithError<any>>(url, config);
+    const url = "/no-route" + queryToString(param?.query);
+    const res = await BASE.delete<GeneralResponseWithError<any>>(url, config);
     return res;
   },
 });

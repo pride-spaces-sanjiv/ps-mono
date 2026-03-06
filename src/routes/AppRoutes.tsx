@@ -10,8 +10,8 @@ import {
 import { TawkLiveChat } from "tawk-react";
 import { Toaster } from "@/components/ui/sonner";
 import { tokenStore } from "@/services/store/user";
-import { useTawk } from "@/services/hooks/use-tawk";
-import { refreshTokenAPI } from "@/services/apis/auth";
+// import { useTawk } from "@/services/hooks/use-tawk";
+// import { refreshTokenAPI } from "@/services/apis/auth";
 import { reConfigureAuthToken } from "@/utils/axios/configure";
 import { validateNumber } from "@/utils/number";
 import AuthRoutes from "@/routes/AuthRoutes";
@@ -33,7 +33,7 @@ const LoadingSpinner = () => (
 );
 
 const AppRoutes = () => {
-  useTawk();
+  // useTawk();
 
   // const navigate = useNavigate();
   const [tokenData, setTokenData] = [
@@ -45,7 +45,7 @@ const AppRoutes = () => {
     () =>
       validateNumber(tokenData?.expiry?.getTime(), { invalidValue: 0 }) <=
       Date.now(),
-    [tokenData]
+    [tokenData],
   );
 
   const refresh = async () => {
@@ -53,28 +53,29 @@ const AppRoutes = () => {
       if (!tokenData?.refreshToken) {
         throw new Error("Refresh token not present");
       }
-      const res = await refreshTokenAPI({
-        body: { refreshToken: tokenData?.refreshToken },
-      });
-      const data = res.data?.data;
-      if (
-        res.status === 200 &&
-        res.data.success &&
-        data?.token &&
-        data?.expiry
-      ) {
-        const expiry = new Date(data.expiry);
-        if (expiry.getTime() <= Date.now()) {
-          throw new Error("Token expired");
-        }
+      throw new Error("Error due to incomplete code");
+      // const res = await refreshTokenAPI({
+      //   body: { refreshToken: tokenData?.refreshToken },
+      // });
+      // const data = res.data?.data;
+      // if (
+      //   res.status === 200 &&
+      //   res.data.success &&
+      //   data?.token &&
+      //   data?.expiry
+      // ) {
+      //   const expiry = new Date(data.expiry);
+      //   if (expiry.getTime() <= Date.now()) {
+      //     throw new Error("Token expired");
+      //   }
 
-        reConfigureAuthToken(data.token, expiry);
-        setTokenData({
-          ...tokenData,
-          token: data.token,
-          expiry: expiry,
-        });
-      }
+      //   reConfigureAuthToken(data.token, expiry);
+      //   setTokenData({
+      //     ...tokenData,
+      //     token: data.token,
+      //     expiry: expiry,
+      //   });
+      // }
     } catch (err) {
       console.error("Error refreshing :", err);
     }

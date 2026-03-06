@@ -23,6 +23,11 @@ const jsonContentHeadersAuth = {
 
 // Admin configs
 
+export const BASE = axios.create({
+  baseURL: baseUrl,
+  headers: jsonContentHeaders,
+  withCredentials: true,
+});
 export const ADMIN = axios.create({
   baseURL: baseUrl + "/admin",
   headers: jsonContentHeadersAuth,
@@ -30,7 +35,7 @@ export const ADMIN = axios.create({
 });
 export const ADMIN_AUTH = axios.create({
   baseURL: baseUrl + "/admin/auth",
-  headers: jsonContentHeadersAuth,
+  headers: jsonContentHeaders,
   withCredentials: true,
 });
 export const ADMIN_ENTERPRISE = ADMIN.create({
@@ -63,7 +68,7 @@ export const ENTERPRISE = axios.create({
 });
 export const ENTERPRISE_AUTH = axios.create({
   baseURL: baseUrl + "/enterprise/auth",
-  headers: jsonContentHeadersAuth,
+  headers: jsonContentHeaders,
   withCredentials: true,
 });
 export const ENTERPRISE_BRANCH = ENTERPRISE.create({

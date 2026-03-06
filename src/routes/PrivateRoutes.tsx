@@ -51,11 +51,11 @@ const PrivateRoutes = () => {
     }: Partial<{
       El: ReactNode;
     }>) =>
-      fetchCount > 0 && status === "success" && userLevel < 1 ? (
-        <Navigate to={"/settings"} />
-      ) : (
-        El
-      ),
+      // fetchCount > 0 && status === "success" ? (
+      //   <Navigate to={"/settings"} />
+      // ) : (
+      El,
+    // )
     [fetchCount, status, userLevel],
   );
 
@@ -118,7 +118,6 @@ const PrivateRoutes = () => {
             path="/display"
             element={
               <SuspensedView>
-
                 <AutoNavigateRender El={<Display />} />
               </SuspensedView>
             }

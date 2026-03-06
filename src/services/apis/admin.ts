@@ -1,8 +1,8 @@
-import { ADMIN_USERS } from "./config";
-import {
-  passwordUserChangeSchema,
-  type PasswordUserChangeSchema,
-} from "@/utils/schemas/user";
+import { BASE } from "./config";
+// import {
+//   passwordUserChangeSchema,
+//   type PasswordUserChangeSchema,
+// } from "@/utils/schemas/user";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
 import type {
@@ -23,21 +23,17 @@ type UpdatePasswordRes = GeneralResponseWithError<{
 
 export const getUserPassword = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = "/password" + queryToString(param?.query);
-    const res = await ADMIN_USERS.get<PasswordRes>(url, config);
+    const url = "/no-route" + queryToString(param?.query);
+    const res = await BASE.get<PasswordRes>(url, config);
     return res;
   },
 });
 
 export const updateUserPassword = APIBodyValidationWrapper({
-  schema: passwordUserChangeSchema.pick(["password"]),
+  // schema: passwordUserChangeSchema.pick(["password"]),
   handle: async (param, config) => {
-    const url = "/password" + queryToString(param?.query);
-    const res = await ADMIN_USERS.put<UpdatePasswordRes>(
-      url,
-      param?.body,
-      config
-    );
+    const url = "/no-route" + queryToString(param?.query);
+    const res = await BASE.put<UpdatePasswordRes>(url, param?.body, config);
     return res;
   },
 });
