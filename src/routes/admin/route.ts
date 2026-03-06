@@ -8,6 +8,7 @@ import { EnterpriseRouter } from "./enterprise.js";
 import { UserRouter } from "./user.js";
 import { SpaceRouter } from "./space.js";
 import { BranchRouter } from "./branch.js";
+import { DataRouter } from "./data.js";
 
 const router = Router();
 
@@ -16,6 +17,7 @@ router.use("/auth", AuthRouter);
 // Authorized routes
 // @ts-ignore
 router.use(RequestMiddleware.authenticateUser(Admin, "admin"));
+router.use("/data", DataRouter);
 router.use("/admins", AdminRouter);
 router.use("/enterprises", EnterpriseRouter);
 router.use("/users", UserRouter);
