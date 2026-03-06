@@ -39,7 +39,7 @@ const items = [
     url: "/notfication",
     icon: LogOutIcon,
   },
-  {   
+  {
     title: "Migrate Offices",
     url: "/migration",
     icon: LogOutIcon,
@@ -71,7 +71,7 @@ export function AppSidebar() {
   const userState = userStore();
   const { userLevel } = useUser();
   const validItems = useMemo(
-    () => (userLevel >= 1 ? items : items.filter((d) => d.url !== "/users")),
+    () => (userLevel ? items : items.filter((d) => d.url !== "/users")),
     [userLevel],
   );
 

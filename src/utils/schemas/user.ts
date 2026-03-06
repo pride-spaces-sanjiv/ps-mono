@@ -43,3 +43,12 @@ export type AdminSchema = z.infer<typeof adminSchema>;
 // Login
 export const loginSchema = adminSchema.pick({ email: true, password: true });
 export type LoginSchema = z.infer<typeof loginSchema>;
+
+// ResetPassword
+export const resetPasswordSchema = adminSchema.pick({ password: true }).and(
+  z.object({
+    confirmPassword: getPasswordSchema({ keyName: "Confirm Password" }),
+    token: z.string().min(4, "Token must be at least 4 characters"),
+  }),
+);
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;

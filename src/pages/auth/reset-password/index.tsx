@@ -2,7 +2,7 @@
 import { useEffect, useState, type JSX } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import * as yup from "yup";
 import { toast } from "sonner";
@@ -37,16 +37,7 @@ export default function ResetPasswordPage({
     formState: { errors },
     reset,
   } = useForm({
-    resolver: yupResolver(
-      resetPasswordSchema.concat(
-        yup.object().shape({
-          confirmPassword: yup
-            .string()
-            .required("Confirm Password is required")
-            .oneOf([yup.ref("password")], "Confirm password must match"),
-        })
-      )
-    ),
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       token: token,
       password: "",
@@ -66,7 +57,7 @@ export default function ResetPasswordPage({
   });
   const { mutateAsync: mutatedReset, isPending: loading } = useMutation({
     mutationKey: ["reset-token"],
-    mutationFn: (body: ResetPasswordSchema) =>
+    mutationFn: (body: Omit<ResetPasswordSchema, "confirmPassword">) =>
       delayPromise(resetPassword({ body: body }), 1),
   });
 
@@ -75,7 +66,7 @@ export default function ResetPasswordPage({
   > | null>();
 
   const handleReset = async (
-    body: ResetPasswordSchema & { confirmPassword: string }
+    body: ResetPasswordSchema & { confirmPassword: string },
   ) => {
     try {
       const cleaned = deleteFields(body, ["confirmPassword"]);
@@ -172,8 +163,8 @@ export default function ResetPasswordPage({
           ? failedVerfRes?.data?.errorType?.match(/invalid/i)
             ? "Token was invalid. Please use the one given to you"
             : failedVerfRes?.status === 404
-            ? "Token doesn't exists. Please use the one given to you"
-            : "Token verification failed. Refresh again to retry or use another"
+              ? "Token doesn't exists. Please use the one given to you"
+              : "Token verification failed. Refresh again to retry or use another"
           : "Token verification failed. Refresh again to retry or use another"}
       </p>
       <ActionButton
@@ -185,7 +176,7 @@ export default function ResetPasswordPage({
                 Date.now() && tokenData?.token
                 ? "dashboard"
                 : "login"
-            }`
+            }`,
           );
         }}
       >

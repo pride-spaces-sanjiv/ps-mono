@@ -29,7 +29,7 @@ import { handleAxiosErrorCases } from "@/utils/axios/error";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { delayPromise } from "@/utils/promise";
 import { queryKeys } from "@/utils/query-keys";
-import ForgotPasswordModal from "../forgot-password";
+// import ForgotPasswordModal from "../forgot-password";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 import GoogleButton from "@/components/buttons/google-btn";
@@ -260,7 +260,7 @@ export default function LoginPage({
             error={errors.password}
             {...register("password")}
           />
-          <ForgotPasswordModal />
+          {/* <ForgotPasswordModal /> */}
           <div className="flex flex-col gap-3">
             <ActionButton type="submit" className="w-full" loading={loading}>
               Login

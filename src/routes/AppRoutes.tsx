@@ -97,7 +97,7 @@ const AppRoutes = () => {
   return (
     <Router>
       <Suspense fallback={<LoadingSpinner />}>
-        <TawkLiveChat
+        {/* <TawkLiveChat
           propertyId="695d4b1cb3e90b197cc30e76"
           widgetId="1jea6qq7o"
           // visitor={
@@ -105,7 +105,7 @@ const AppRoutes = () => {
           //     ? { email: userData?.email, name: userData?.name }
           //     : undefined
           // }
-        />
+        /> */}
         <Routes>
           <Route
             element={
@@ -124,7 +124,7 @@ const AppRoutes = () => {
             />
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/home" element={<LandingPage />} />

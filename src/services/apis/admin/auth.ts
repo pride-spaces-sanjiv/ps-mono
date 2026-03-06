@@ -1,4 +1,4 @@
-import { ADMIN, ADMIN_AUTH } from "../config";
+import { ADMIN, ADMIN_AUTH, ADMIN_DATA } from "../config";
 import { adminSchema, loginSchema } from "@/utils/schemas/user";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import type { GeneralResponseWithError } from "@/types/axios/response";
@@ -19,14 +19,14 @@ export const loginAdmin = APIBodyValidationWrapper({
 // Crud
 export const getSelfData = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const res = await ADMIN.get<GetRes>("/", config);
+    const res = await ADMIN_DATA.get<GetRes>("/", config);
     return res;
   },
 });
 export const updateSelfData = APIBodyValidationWrapper({
   schema: adminSchema.omit({ password: true }),
   handle: async (param, config) => {
-    const res = await ADMIN.post<GetRes>("/", param?.body, config);
+    const res = await ADMIN_DATA.post<GetRes>("/", param?.body, config);
     return res;
   },
 });

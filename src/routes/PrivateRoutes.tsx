@@ -23,9 +23,9 @@ import ActionButton from "@/components/buttons/action-btn";
 
 // Lazy load components
 const Dashboard = lazy(() => import("@/pages/dashboard"));
-const Users = lazy(() => import("@/pages/users"));
+// const Users = lazy(() => import("@/pages/users"));
 const Display = lazy(() => import("@/pages/display"));
-const Settings = lazy(() => import("@/pages/settings"));
+// const Settings = lazy(() => import("@/pages/settings"));
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -128,27 +128,25 @@ const PrivateRoutes = () => {
               index
               element={
                 <SuspensedView>
-                  {/* <Users /> */}
-                  <AutoNavigateRender El={<Users />} />
+                  <AutoNavigateRender El={<Dashboard />} />
                 </SuspensedView>
               }
             />
-            <Route
+            {/* <Route
               path="/users/:id"
               element={
                 <SuspensedView>
-                  {/* <Users /> */}
                   <AutoNavigateRender El={<Users />} />
                 </SuspensedView>
               }
-            />
+            /> */}
           </Route>
 
           <Route
             path="/settings/*"
             element={
               <SuspensedView>
-                <Settings />
+                <AutoNavigateRender El={<Dashboard />} />
               </SuspensedView>
             }
           />
