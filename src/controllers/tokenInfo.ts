@@ -47,6 +47,7 @@ export const getTokenInfo = async (
       });
     }
     ResponseHandler.handleSuccess(res, {
+      message: "Token details retrieved successfully",
       data: { level: decrypted.data.level },
     });
   } catch (err) {
