@@ -11,10 +11,10 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold">Total Credits: 100</h1>
+        <h1 className="text-2xl font-bold">This is Dashboard Page!</h1>
         {/* <UserCreateModal /> */}
       </div>
-      <UsersTabledResults />
+      {/* <UsersTabledResults /> */}
     </div>
   );
 };
