@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
+import { Admin } from "@/database/models/user.js";
 import { adminSchema } from "@/database/schemas/user.js";
 // Controllers
-import { login } from "@/controllers/admin/auth.js";
+import { login } from "@/controllers/general/auth.js";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ router.post(
   RequestMiddleware.bodyValidator(
     adminSchema.pick({ email: true, password: true }),
   ),
-  login,
+  login(Admin, { keyName: "admin" }),
 );
 
 export { router as AuthRouter };

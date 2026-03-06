@@ -37,7 +37,7 @@ export const login = async (
       { expiresIn: "7d" },
     );
     const refreshToken = signJWTwithCrypto(
-      { id: doc.id, refresh: true },
+      { id: doc.id, level: doc.level, refresh: true },
       { expiresIn: "30d" },
     );
 
