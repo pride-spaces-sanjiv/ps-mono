@@ -23,8 +23,8 @@ export const headQuarterSchema = z.object({
 
 export type HeadQuarterSchema = z.infer<typeof headQuarterSchema>;
 
-// 3. Enterprise
-export const enterpriseSchema = z.object({
+// 3. Operator
+export const operatorSchema = z.object({
   name: getNameSchema(),
   email: getEmailSchema(),
   password: getPasswordSchema(),
@@ -32,4 +32,4 @@ export const enterpriseSchema = z.object({
   person: headQuarterPersonSchema,
 });
 
-export type EnterpriseSchema = z.infer<typeof enterpriseSchema>;
+export type OperatorSchema = z.infer<typeof operatorSchema>;

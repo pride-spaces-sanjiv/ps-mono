@@ -4,52 +4,52 @@ import {
   authorizeAdminDetailsByParam,
   checkUserExistenceByBodyValue,
 } from "@/middlewares/checkUser.js";
-import { enterpriseSchema } from "@/database/schemas/enterprise.js";
+import { operatorSchema } from "@/database/schemas/operator.js";
 // Controllers
 import {
-  createEnterprise,
-  deleteEnterprise,
-  getEnterprise,
-  getEnterprises,
-  updateEnterprise,
-} from "@/controllers/admin/enterprise.js";
+  createOperator,
+  deleteOperator,
+  getOperator,
+  getOperators,
+  updateOperator,
+} from "@/controllers/admin/operator.js";
 import { getIdSchema } from "@/database/schemas/string.js";
-import { Enterprise } from "@/database/models/enterprise.js";
+import { Operator } from "@/database/models/operator.js";
 
 const router = Router();
 
-router.get("/", getEnterprises);
+router.get("/", getOperators);
 router.get(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
   // authorizeAdminDetailsByParam(),
-  getEnterprise,
+  getOperator,
 );
 router.post(
   "/",
-  RequestMiddleware.bodyValidator(enterpriseSchema, {
+  RequestMiddleware.bodyValidator(operatorSchema, {
     validateOnlyPresent: false,
     overridePostValidation: true,
     extractOnlyRequiredFields: true,
   }),
-  checkUserExistenceByBodyValue(Enterprise, "email"),
+  checkUserExistenceByBodyValue(Operator, "email"),
   // allowAdminLevelByBody({ field: "level" }),
-  createEnterprise,
+  createOperator,
 );
 router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  RequestMiddleware.bodyValidator(enterpriseSchema.omit({ password: true }), {
+  RequestMiddleware.bodyValidator(operatorSchema.omit({ password: true }), {
     allowEmpty: true,
     validateOnlyPresent: true,
     overridePostValidation: true,
     extractOnlyRequiredFields: true,
   }),
-  updateEnterprise,
+  updateOperator,
 );
 router.delete(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  deleteEnterprise,
+  deleteOperator,
 );
-export { router as EnterpriseRouter };
+export { router as OperatorRouter };

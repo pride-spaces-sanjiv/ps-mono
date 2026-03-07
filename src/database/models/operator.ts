@@ -22,7 +22,7 @@ const HeadQuarterSchema = new Conn.Schema(
   { _id: false },
 );
 
-const EnterpriseSchema = new Conn.Schema(
+const OperatorSchema = new Conn.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -32,23 +32,19 @@ const EnterpriseSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-indexFieldsFromSchema(EnterpriseSchema, { singleFields: ["name"] });
+indexFieldsFromSchema(OperatorSchema, { singleFields: ["name"] });
 
 // Model Instances
-export const Enterprise = Conn.model(
-  "Enterprise",
-  EnterpriseSchema,
-  "enterprises",
-);
+export const Operator = Conn.model("Operator", OperatorSchema, "operators");
 
 // Field names
-export const enterpriseFields = getFieldsOfModel(Enterprise, {
+export const operatorFields = getFieldsOfModel(Operator, {
   timestamps: false,
 });
-export const enterpriseNonPassFields = enterpriseFields.filter(
+export const operatorNonPassFields = operatorFields.filter(
   (f) => f !== "password",
 );
-export const allEnterpriseFieldsEnabled = appendGeneralFields(enterpriseFields);
-export const allEnterpriseNonPassFieldsEnabled = appendGeneralFields(
-  enterpriseNonPassFields,
+export const allOperatorFieldsEnabled = appendGeneralFields(operatorFields);
+export const allOperatorNonPassFieldsEnabled = appendGeneralFields(
+  operatorNonPassFields,
 );

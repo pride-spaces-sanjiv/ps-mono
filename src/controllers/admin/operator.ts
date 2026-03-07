@@ -1,8 +1,5 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import {
-  Enterprise,
-  enterpriseNonPassFields,
-} from "@/database/models/enterprise.js";
+import { Operator, operatorNonPassFields } from "@/database/models/operator.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import {
   cleanPaginatedData,
@@ -13,9 +10,9 @@ import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { EnterpriseSchema } from "@/database/schemas/enterprise.js";
+import { OperatorSchema } from "@/database/schemas/operator.js";
 
-export const getEnterprises = async (
+export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
@@ -26,13 +23,13 @@ export const getEnterprises = async (
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
-      Enterprise,
-      enterpriseNonPassFields,
+      Operator,
+      operatorNonPassFields,
     );
     const { page, metrics, results, errored, err } = await paginatedResults(
       req,
-      Enterprise,
-      enterpriseNonPassFields,
+      Operator,
+      operatorNonPassFields,
       { limit: 10 },
       { projection: projectors },
     );
@@ -40,15 +37,15 @@ export const getEnterprises = async (
     // On results error
     if (errored && err) {
       ResponseHandler.handleError(res, {
-        errorType: "get-enterprises-error",
-        message: "Failed to get enterprises list",
+        errorType: "get-operators-error",
+        message: "Failed to get operators list",
       });
       return;
     }
     if (results.length === 0) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "enterprises-not-found",
-        message: "No enterprises found",
+        errorType: "operators-not-found",
+        message: "No operators found",
         data: { results, page, metrics },
       });
       return;
@@ -56,33 +53,33 @@ export const getEnterprises = async (
 
     const data = cleanPaginatedData({ results, page, metrics, err, errored });
     ResponseHandler.handleSuccess(res, {
-      message: "Got enterprises list",
+      message: "Got operators list",
       data: data,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-enterprises-error-failure",
-      message: "Failed to get enterprises list",
+      errorType: "get-operators-error-failure",
+      message: "Failed to get operators list",
     });
   }
 };
 
-export const getEnterprise = async (
+export const getOperator = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
   try {
     const { fields, projectors } = getFieldsandProjectors(
       req,
-      Enterprise,
-      enterpriseNonPassFields,
+      Operator,
+      operatorNonPassFields,
     );
 
-    const doc = await Enterprise.findOne({ _id: req.params.id }, projectors);
+    const doc = await Operator.findOne({ _id: req.params.id }, projectors);
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "enterprise-not-found",
-        message: "Enterprise not found",
+        errorType: "operator-not-found",
+        message: "Operator not found",
       });
       return;
     }
@@ -93,20 +90,20 @@ export const getEnterprise = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-enterprise-error-failure",
-      message: "Failed to get enterprise details",
+      errorType: "get-operator-error-failure",
+      message: "Failed to get operator details",
     });
   }
 };
 
-export const createEnterprise = async (
-  req: ManagedRequest<EnterpriseSchema>,
+export const createOperator = async (
+  req: ManagedRequest<OperatorSchema>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
     const encodedPass = encodeCrypto(body.password);
-    const doc = new Enterprise({
+    const doc = new Operator({
       ...body,
       password: encodedPass,
     });
@@ -115,43 +112,39 @@ export const createEnterprise = async (
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
       status: 201,
-      message: "Created enterprise successfully",
+      message: "Created operator successfully",
       data: data,
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
       uniqueError: {
-        errorType: "enterprise-unique-error",
-        msgPre: "Enterprise",
+        errorType: "operator-unique-error",
+        msgPre: "Operator",
       },
     });
     if (errorData.handled) {
       return;
     }
     ResponseHandler.handleError(res, {
-      errorType: "create-enterprise-error-failure",
-      message: "Failed to create enterprise",
+      errorType: "create-operator-error-failure",
+      message: "Failed to create operator",
     });
   }
 };
 
-export const updateEnterprise = async (
-  req: ManagedRequest<Omit<EnterpriseSchema, "password">>,
+export const updateOperator = async (
+  req: ManagedRequest<Omit<OperatorSchema, "password">>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
-    const doc = await Enterprise.findOneAndUpdate(
-      { _id: req.params.id },
-      body,
-      {
-        new: true,
-      },
-    );
+    const doc = await Operator.findOneAndUpdate({ _id: req.params.id }, body, {
+      new: true,
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "enterprise-not-found",
-        message: "Enterprise not found",
+        errorType: "operator-not-found",
+        message: "Operator not found",
       });
       return;
     }
@@ -163,30 +156,30 @@ export const updateEnterprise = async (
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
       uniqueError: {
-        errorType: "enterprise-unique-error",
-        msgPre: "Enterprise",
+        errorType: "operator-unique-error",
+        msgPre: "Operator",
       },
     });
     if (errorData.handled) {
       return;
     }
     ResponseHandler.handleError(res, {
-      errorType: "update-enterprise-error-failure",
-      message: "Failed to update enterprise details",
+      errorType: "update-operator-error-failure",
+      message: "Failed to update operator details",
     });
   }
 };
 
-export const deleteEnterprise = async (
+export const deleteOperator = async (
   req: ManagedRequest,
   res: ManagedResponse,
 ) => {
   try {
-    const doc = await Enterprise.findOneAndDelete({ _id: req.params.id });
+    const doc = await Operator.findOneAndDelete({ _id: req.params.id });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "enterprise-not-found",
-        message: "Enterprise not found",
+        errorType: "operator-not-found",
+        message: "Operator not found",
       });
       return;
     }
@@ -196,8 +189,8 @@ export const deleteEnterprise = async (
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "delete-enterprise-error-failure",
-      message: "Failed to delete enterprise",
+      errorType: "delete-operator-error-failure",
+      message: "Failed to delete operator",
     });
   }
 };

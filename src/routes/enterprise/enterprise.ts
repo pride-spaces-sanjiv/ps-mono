@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { enterpriseSchema } from "@/database/schemas/enterprise.js";
+import { enterpriseSchema } from "@/database/schemas/operator.js";
 // Controllers
 import {
   getEnterprise,
   updateEnterprise,
-} from "@/controllers/enterprise/enterprise.js";
+} from "@/controllers/operator/enterprise.js";
 
 const router = Router();
 

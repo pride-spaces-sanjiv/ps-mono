@@ -11,7 +11,7 @@ import {
   createSpace,
   updateSpace,
   deleteSpace,
-} from "@/controllers/enterprise/space.js";
+} from "@/controllers/operator/space.js";
 import { getIdSchema } from "@/database/schemas/string.js";
 
 const router = Router();

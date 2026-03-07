@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { Enterprise } from "@/database/models/enterprise.js";
+import { Enterprise } from "@/database/models/operator.js";
 import { RequestMiddleware } from "@/middlewares/request.js";
 // import { allowAdminLevelByBody } from "@/middlewares/checkUser.js";
-import { enterpriseSchema } from "@/database/schemas/enterprise.js";
+import { enterpriseSchema } from "@/database/schemas/operator.js";
 // Controllers
 import { getData, updateData } from "@/controllers/general/data.js";
 

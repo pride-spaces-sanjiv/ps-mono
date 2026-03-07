@@ -1,8 +1,8 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Enterprise } from "@/database/models/enterprise.js";
+import { Enterprise } from "@/database/models/operator.js";
 import { compareCryptos, encodeCrypto } from "@/utils/crypto.js";
 import { decodeJWTwithCrypto, signJWTwithCrypto } from "@/utils/jwt.js";
-import { EnterpriseSchema } from "@/database/schemas/enterprise.js";
+import { EnterpriseSchema } from "@/database/schemas/operator.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 
 export const login = async (

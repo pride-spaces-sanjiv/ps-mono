@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { Enterprise } from "@/database/models/enterprise.js";
-import { enterpriseSchema } from "@/database/schemas/enterprise.js";
+import { Enterprise } from "@/database/models/operator.js";
+import { enterpriseSchema } from "@/database/schemas/operator.js";
 // Controllers
 import { login } from "@/controllers/general/auth.js";
 

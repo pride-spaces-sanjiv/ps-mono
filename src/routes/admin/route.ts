@@ -4,7 +4,7 @@ import { Admin } from "@/database/models/user.js";
 // Routers
 import { AuthRouter } from "./auth.js";
 import { AdminRouter } from "./admin.js";
-import { EnterpriseRouter } from "./enterprise.js";
+import { OperatorRouter } from "./operator.js";
 import { UserRouter } from "./user.js";
 import { SpaceRouter } from "./space.js";
 import { BranchRouter } from "./branch.js";
@@ -19,7 +19,7 @@ router.use("/auth", AuthRouter);
 router.use(RequestMiddleware.authenticateUser(Admin, "admin"));
 router.use("/data", DataRouter);
 router.use("/admins", AdminRouter);
-router.use("/enterprises", EnterpriseRouter);
+router.use("/operators", OperatorRouter);
 router.use("/users", UserRouter);
 router.use("/spaces", SpaceRouter);
 router.use("/branches", BranchRouter);

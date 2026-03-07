@@ -2,13 +2,13 @@ import { ResponseHandler } from "@/middlewares/request.js";
 import {
   Enterprise,
   enterpriseNonPassFields,
-} from "@/database/models/enterprise.js";
+} from "@/database/models/operator.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { EnterpriseSchema } from "@/database/schemas/enterprise.js";
+import { EnterpriseSchema } from "@/database/schemas/operator.js";
 
 export const getEnterprise = async (
   req: ManagedRequest<any, { [k: string]: any }>,

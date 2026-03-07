@@ -11,7 +11,7 @@ import {
   createBranch,
   updateBranch,
   deleteBranch,
-} from "@/controllers/enterprise/branch.js";
+} from "@/controllers/operator/branch.js";
 import { getIdSchema } from "@/database/schemas/string.js";
 
 const router = Router();
