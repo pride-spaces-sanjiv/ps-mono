@@ -30,7 +30,7 @@ export const getBranches = async (
       { limit: 10 },
       {
         projection: projectors,
-        filter: cleanObject({ enterprise: selfId }, { excludeByValues: [""] }),
+        filter: cleanObject({ operator: selfId }, { excludeByValues: [""] }),
       },
     );
 
@@ -76,7 +76,7 @@ export const getBranch = async (
     );
 
     const doc = await Branch.findOne(
-      { _id: req.params.id, enterprise: req.session.user?.id },
+      { _id: req.params.id, operator: req.session.user?.id },
       projectors,
     );
     if (!doc) {
@@ -100,12 +100,12 @@ export const getBranch = async (
 };
 
 export const createBranch = async (
-  req: ManagedRequest<Omit<BranchSchema, "enterprise">>,
+  req: ManagedRequest<Omit<BranchSchema, "operator">>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
-    const doc = new Branch({ ...body, enterprise: req.session.user?.id });
+    const doc = new Branch({ ...body, operator: req.session.user?.id });
     await doc.save();
 
     const data = convertDataToJSON(doc);
@@ -132,13 +132,13 @@ export const createBranch = async (
 };
 
 export const updateBranch = async (
-  req: ManagedRequest<Omit<BranchSchema, "enterprise">>,
+  req: ManagedRequest<Omit<BranchSchema, "operator">>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
     const doc = await Branch.findOneAndUpdate(
-      { _id: req.params.id, enterprise: req.session.user?.id },
+      { _id: req.params.id, operator: req.session.user?.id },
       body,
       {
         new: true,
@@ -180,7 +180,7 @@ export const deleteBranch = async (
   try {
     const doc = await Branch.findOneAndDelete({
       _id: req.params.id,
-      enterprise: req.session.user?.id,
+      operator: req.session.user?.id,
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {

@@ -14,7 +14,7 @@ import { SpaceSchema } from "@/database/schemas/space.js";
 export const getSpaces = async (
   req: ManagedRequest<
     any,
-    { [k: string]: any } & Partial<{ enterprise: string; branch: string }>
+    { [k: string]: any } & Partial<{ operator: string; branch: string }>
   >,
   res: ManagedResponse,
 ) => {
@@ -35,7 +35,7 @@ export const getSpaces = async (
       {
         projection: projectors,
         filter: cleanObject(
-          { enterprise: selfId, branch: branchId },
+          { operator: selfId, branch: branchId },
           { excludeByValues: [""] },
         ),
       },
@@ -83,7 +83,7 @@ export const getSpace = async (
     );
 
     const doc = await Space.findOne(
-      { _id: req.params.id, enterprise: req.session.user?.id },
+      { _id: req.params.id, operator: req.session.user?.id },
       projectors,
     );
     if (!doc) {
@@ -107,12 +107,12 @@ export const getSpace = async (
 };
 
 export const createSpace = async (
-  req: ManagedRequest<Omit<SpaceSchema, "enterprise">>,
+  req: ManagedRequest<Omit<SpaceSchema, "operator">>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
-    const doc = new Space({ ...body, enterprise: req.session.user?.id });
+    const doc = new Space({ ...body, operator: req.session.user?.id });
     await doc.save();
 
     const data = convertDataToJSON(doc);
@@ -139,13 +139,13 @@ export const createSpace = async (
 };
 
 export const updateSpace = async (
-  req: ManagedRequest<Omit<SpaceSchema, "branch" | "enterprise">>,
+  req: ManagedRequest<Omit<SpaceSchema, "branch" | "operator">>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
     const doc = await Space.findOneAndUpdate(
-      { _id: req.params.id, enterprise: req.session.user?.id },
+      { _id: req.params.id, operator: req.session.user?.id },
       body,
       {
         new: true,
@@ -187,7 +187,7 @@ export const deleteSpace = async (
   try {
     const doc = await Space.findOneAndDelete({
       _id: req.params.id,
-      enterprise: req.session.user?.id,
+      operator: req.session.user?.id,
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {

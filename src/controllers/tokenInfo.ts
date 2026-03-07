@@ -2,7 +2,7 @@ import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
 import { adminLevels } from "@/utils/data/admin.js";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 
-const allLevels = [...adminLevels, "enterprise", "user"] as const;
+const allLevels = [...adminLevels, "operator", "user"] as const;
 
 export const getTokenInfo = async (
   req: ManagedRequest,

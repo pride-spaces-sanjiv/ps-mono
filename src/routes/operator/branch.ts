@@ -24,7 +24,7 @@ router.get(
 );
 router.post(
   "/",
-  RequestMiddleware.bodyValidator(branchSchema.omit({ enterprise: true }), {
+  RequestMiddleware.bodyValidator(branchSchema.omit({ operator: true }), {
     validateOnlyPresent: false,
     overridePostValidation: true,
     extractOnlyRequiredFields: true,
@@ -35,7 +35,7 @@ router.post(
 router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  RequestMiddleware.bodyValidator(branchSchema.omit({ enterprise: true }), {
+  RequestMiddleware.bodyValidator(branchSchema.omit({ operator: true }), {
     allowEmpty: true,
     validateOnlyPresent: true,
     overridePostValidation: true,

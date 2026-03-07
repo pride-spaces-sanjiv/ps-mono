@@ -3,6 +3,7 @@ import {
   appendGeneralFields,
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
+import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 
 const PersonSchema = new Conn.Schema(
   {
@@ -16,7 +17,7 @@ const PersonSchema = new Conn.Schema(
 
 const BranchSchema = new Conn.Schema(
   {
-    enterprise: { type: String, required: true },
+    operator: { type: String, required: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     person: { type: PersonSchema, required: true },
@@ -25,7 +26,9 @@ const BranchSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-BranchSchema.index({ name: 1, email: 1, enterprise: 1 });
+indexFieldsFromSchema(BranchSchema, {
+  singleFields: ["name", "email", "operator"],
+});
 
 // Model Instances
 export const Branch = Conn.model("Branch", BranchSchema, "branches");

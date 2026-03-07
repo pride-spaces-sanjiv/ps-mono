@@ -11,7 +11,7 @@ const personSchema = z.object({
 
 // 2. Branch Schema
 export const branchSchema = z.object({
-  enterprise: z.string().min(1, "Enterprise ID/Name is required"),
+  operator: z.string().min(1, "Operator ID/Name is required"),
   name: getNameSchema(),
   email: getEmailSchema(),
   person: personSchema,

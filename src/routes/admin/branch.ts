@@ -17,7 +17,7 @@ import { getIdSchema } from "@/database/schemas/string.js";
 const router = Router();
 
 const getListSchema = z.object({
-  enterprise: getIdSchema({ keyName: "Enterprise ID" }),
+  operator: getIdSchema({ keyName: "Operator ID" }),
 });
 router.get(
   "/",
@@ -45,7 +45,7 @@ router.post(
 router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  RequestMiddleware.bodyValidator(branchSchema.omit({ enterprise: true }), {
+  RequestMiddleware.bodyValidator(branchSchema.omit({ operator: true }), {
     allowEmpty: true,
     validateOnlyPresent: true,
     overridePostValidation: true,

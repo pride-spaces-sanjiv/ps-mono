@@ -15,7 +15,7 @@ export const locationSchema = z.object({
 // --- Space Schema ---
 export const spaceSchema = z.object({
   branch: getIdSchema({ keyName: "Branch ID" }),
-  enterprise: getIdSchema({ keyName: "Enterprise ID" }),
+  operator: getIdSchema({ keyName: "Operator ID" }),
   name: getNameSchema({ keyName: "Space Name" }),
   email: getEmailSchema(),
   location: locationSchema,

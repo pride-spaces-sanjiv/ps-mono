@@ -14,14 +14,14 @@ import { SpaceSchema } from "@/database/schemas/space.js";
 export const getSpaces = async (
   req: ManagedRequest<
     any,
-    { [k: string]: any } & Partial<{ enterprise: string; branch: string }>
+    { [k: string]: any } & Partial<{ operator: string; branch: string }>
   >,
   res: ManagedResponse,
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
     const branchId = (req.query?.branch || "").trim();
-    const enterpriseId = (req.query?.enterprise || "").trim();
+    const operatorId = (req.query?.operator || "").trim();
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -36,7 +36,7 @@ export const getSpaces = async (
       {
         projection: projectors,
         filter: cleanObject(
-          { enterprise: enterpriseId, branch: branchId },
+          { operator: operatorId, branch: branchId },
           { excludeByValues: [""] },
         ),
       },
@@ -137,7 +137,7 @@ export const createSpace = async (
 };
 
 export const updateSpace = async (
-  req: ManagedRequest<Omit<SpaceSchema, "branch" | "enterprise">>,
+  req: ManagedRequest<Omit<SpaceSchema, "branch" | "operator">>,
   res: ManagedResponse,
 ) => {
   try {

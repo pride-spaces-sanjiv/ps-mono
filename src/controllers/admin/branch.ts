@@ -14,13 +14,13 @@ import { BranchSchema } from "@/database/schemas/branch.js";
 export const getBranches = async (
   req: ManagedRequest<
     any,
-    { [k: string]: any } & Partial<{ enterprise: string }>
+    { [k: string]: any } & Partial<{ operator: string }>
   >,
   res: ManagedResponse,
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
-    const enterpriseId = (req.query?.enterprise || "").trim();
+    const operatorId = (req.query?.operator || "").trim();
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -35,7 +35,7 @@ export const getBranches = async (
       {
         projection: projectors,
         filter: cleanObject(
-          { enterprise: enterpriseId },
+          { operator: operatorId },
           { excludeByValues: [""] },
         ),
       },
@@ -136,7 +136,7 @@ export const createBranch = async (
 };
 
 export const updateBranch = async (
-  req: ManagedRequest<Omit<BranchSchema, "enterprise">>,
+  req: ManagedRequest<Omit<BranchSchema, "operator">>,
   res: ManagedResponse,
 ) => {
   try {
