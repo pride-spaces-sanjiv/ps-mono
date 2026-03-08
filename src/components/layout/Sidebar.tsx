@@ -56,7 +56,7 @@ const items = [
   },
   {
     title: "Space Operator",
-    url: "/spaceoperator",
+    url: "/space-operator",
     icon: LogOutIcon,
   },
   {
@@ -106,7 +106,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="absolutet top-0 left-0">
+    <Sidebar className="fixed left-0 top-0 h-screen w-64 border-r">
       <SidebarContent>
         {/* Main Navigation */}
         <SidebarGroup className="gap-2 h-full bg-popover">
