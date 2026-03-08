@@ -300,11 +300,11 @@ const SpacesTabledResults = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                {/* <DropdownMenuItem
-                                    onClick={() => navigate(`/space/${row.id}`)}
+                                <DropdownMenuItem
+                                    onClick={() => navigate(`/space-edit-page/${row.id}`)}
                                 >
                                     Show details
-                                </DropdownMenuItem> */}
+                                </DropdownMenuItem>
                                 {/* <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
                   Delete User

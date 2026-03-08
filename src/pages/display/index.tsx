@@ -6,7 +6,6 @@ const DisplayPage = () => {
         <div className="container mx-auto p-6">
             <div className="flex justify-between items-center my-4">
                 <h1 className="text-2xl font-bold">Spaces: </h1>
-
             </div>
             <SpacesTabledResults/>
         </div>
