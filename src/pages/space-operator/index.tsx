@@ -1,4 +1,4 @@
-import Spacetable from "@/containers/spaces-table/spaces-table";
+import Spacetable from "@/containers/spaces-table/spaces-operator-table";
 import AddSpaceDialog from "@/components/dialog/add-space";
 
 export default function SpaceOperatorPage() {
