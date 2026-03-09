@@ -1,5 +1,6 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Space, spaceFields } from "@/database/models/space.js";
+import { getSpaceOperatorsData } from "@/utils/mongoose/relations/space-operator.js";
 import {
   cleanPaginatedData,
   paginatedResults,
@@ -24,6 +25,8 @@ export const getSpaces = async (
   try {
     const selfId = req.session.user?.id;
     const branchId = (req.query?.branch || "").trim();
+    const withOperator =
+      String(req.query?.withOperator || "").toLowerCase() === "true";
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -73,9 +76,26 @@ export const getSpaces = async (
     }
 
     const data = cleanPaginatedData({ results, page, metrics, err, errored });
+    const operators = withOperator
+      ? (
+          await getSpaceOperatorsData(
+            data.results.map((space) => space.operator),
+          )
+        ).map((d) => convertDataToJSON(d))
+      : [];
     ResponseHandler.handleSuccess(res, {
       message: "Got spaces list",
-      data: data,
+      data: {
+        ...data,
+        references: withOperator
+          ? {
+              operators: {
+                results: operators,
+                metrics: { total: operators.length },
+              },
+            }
+          : undefined,
+      },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -95,6 +115,8 @@ export const getSpace = async (
       Space,
       spaceFields,
     );
+    const withOperator =
+      String(req.query?.withOperator || "").toLowerCase() === "true";
 
     const doc = await Space.findOne(
       { _id: req.params.id, operator: req.session.user?.id },
@@ -109,8 +131,16 @@ export const getSpace = async (
     }
 
     const data = convertDataToJSON(doc);
+    const operators = withOperator
+      ? (await getSpaceOperatorsData([data?.operator as string])).map((d) =>
+          convertDataToJSON(d),
+        )
+      : [];
     ResponseHandler.handleSuccess(res, {
-      data: data,
+      data: {
+        ...data,
+        references: withOperator ? { operator: operators[0] } : undefined,
+      },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {

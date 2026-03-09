@@ -1,5 +1,6 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Space, spaceFields } from "@/database/models/space.js";
+import { getSpaceOperatorsData } from "@/utils/mongoose/relations/space-operator.js";
 import {
   cleanPaginatedData,
   paginatedResults,
@@ -17,7 +18,11 @@ import { SpaceSchema } from "@/database/schemas/space.js";
 export const getSpaces = async (
   req: ManagedRequest<
     any,
-    { [k: string]: any } & Partial<{ operator: string; branch: string }>
+    { [k: string]: any } & Partial<{
+      operator: string;
+      branch: string;
+      withOperator: string;
+    }>
   >,
   res: ManagedResponse,
 ) => {
@@ -25,6 +30,8 @@ export const getSpaces = async (
     const selfLevel = req.session.user?.userType;
     const branchId = (req.query?.branch || "").trim();
     const operatorId = (req.query?.operator || "").trim();
+    const withOperator =
+      String(req.query?.withOperator || "").toLowerCase() === "true";
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -73,9 +80,26 @@ export const getSpaces = async (
     }
 
     const data = cleanPaginatedData({ results, page, metrics, err, errored });
+    const operators = withOperator
+      ? (
+          await getSpaceOperatorsData(
+            data.results.map((space) => space.operator),
+          )
+        ).map((d) => convertDataToJSON(d))
+      : [];
     ResponseHandler.handleSuccess(res, {
       message: "Got spaces list",
-      data: data,
+      data: {
+        ...data,
+        references: withOperator
+          ? {
+              operators: {
+                results: operators,
+                metrics: { total: operators.length },
+              },
+            }
+          : undefined,
+      },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -95,6 +119,8 @@ export const getSpace = async (
       Space,
       spaceFields,
     );
+    const withOperator =
+      String(req.query?.withOperator || "").toLowerCase() === "true";
 
     const doc = await Space.findOne({ _id: req.params.id }, projectors);
     if (!doc) {
@@ -106,8 +132,16 @@ export const getSpace = async (
     }
 
     const data = convertDataToJSON(doc);
+    const operators = withOperator
+      ? (await getSpaceOperatorsData([data?.operator as string])).map((d) =>
+          convertDataToJSON(d),
+        )
+      : [];
     ResponseHandler.handleSuccess(res, {
-      data: data,
+      data: {
+        ...data,
+        references: withOperator ? { operator: operators[0] } : undefined,
+      },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
