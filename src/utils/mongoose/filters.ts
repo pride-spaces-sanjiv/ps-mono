@@ -1,6 +1,6 @@
 import { Model } from "mongoose";
 import { ManagedRequest } from "@/types/request.js";
-import { ModelDocumentKeys } from "@/types/mongoose/document.js";
+import { ModelDocumentKeys, ModelToRaw } from "@/types/mongoose/document.js";
 
 export type SortOrder = "asc" | "desc";
 export type SortOptions<
@@ -126,6 +126,39 @@ export const getSortOptions = <
       return data;
     }
     throw new Error("No match for sort field");
+  } catch (err) {
+    return null;
+  }
+};
+
+export const getSearchFilters = <M extends Model<any>>(
+  req: ManagedRequest<
+    any,
+    {
+      [k: string]: any;
+    }
+  >,
+  options: Partial<{ fieldMaps: Record<string, keyof ModelToRaw<M>> }> = {},
+) => {
+  try {
+    const { fieldMaps = {} } = options;
+    const filter = {} as Partial<
+      Record<keyof ModelToRaw<M>, { $regex: string; $options: string }>
+    >;
+    for (const queryField in fieldMaps) {
+      if (
+        !Object.hasOwn(req.query, `s${queryField}`) &&
+        req.query[`s${queryField}`]
+      ) {
+        continue;
+      }
+      const field = fieldMaps[queryField];
+      filter[field] = {
+        $regex: String(req.query[`s${queryField}`]).trim().replace(/ +/g, " "),
+        $options: "i",
+      };
+    }
+    return filter;
   } catch (err) {
     return null;
   }

@@ -4,7 +4,10 @@ import {
   cleanPaginatedData,
   paginatedResults,
 } from "@/utils/mongoose/pagination.js";
-import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
+import {
+  getFieldsandProjectors,
+  getSearchFilters,
+} from "@/utils/mongoose/filters.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
@@ -27,6 +30,17 @@ export const getSpaces = async (
       Space,
       spaceFields,
     );
+    const searchFilters = getSearchFilters<typeof Space>(req, {
+      fieldMaps: {
+        Name: "name",
+        Email: "email",
+        // @ts-ignore
+        City: "location.city",
+        // @ts-ignore
+        State: "location.state",
+      },
+    });
+
     const { page, metrics, results, errored, err } = await paginatedResults(
       req,
       Space,
@@ -35,7 +49,7 @@ export const getSpaces = async (
       {
         projection: projectors,
         filter: cleanObject(
-          { operator: selfId, branch: branchId },
+          { operator: selfId, branch: branchId, ...searchFilters },
           { excludeByValues: [""] },
         ),
       },
