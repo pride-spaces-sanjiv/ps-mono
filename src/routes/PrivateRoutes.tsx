@@ -22,12 +22,12 @@ import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
 import SpaceOperatorPage from "@/pages/space-operator";
 import SpaceOperator from "@/pages/space-operator";
-import SpaceEditPage from "@/pages/display/space-edit-page";
+import SpaceEditPage from "@/pages/space/space-edit-page";
 
 // Lazy load components
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 // const Users = lazy(() => import("@/pages/users"));
-const Display = lazy(() => import("@/pages/display"));
+const Space = lazy(() => import("@/pages/space"));
 // const Settings = lazy(() => import("@/pages/settings"));
 
 interface SuspensedViewProps {
@@ -118,10 +118,10 @@ const PrivateRoutes = () => {
             }
           />
           <Route
-            path="/display"
+            path="/space"
             element={
               <SuspensedView>
-                <AutoNavigateRender El={<Display />} />
+                <AutoNavigateRender El={<Space />} />
               </SuspensedView>
             }
           />
@@ -136,7 +136,7 @@ const PrivateRoutes = () => {
               }
             />
           </Route>
-            <Route path="/space-edit-page/:id" element={<SpaceEditPage />} /> 
+            <Route path="/spaces/:id" element={<SpaceEditPage />} /> 
             <Route
               path="/space-operator"
               element={

@@ -4,6 +4,7 @@ import {
   getNameSchema,
   getPasswordSchema,
   getPhoneSchema,
+  getSlugSchema,
 } from "./string.js";
 
 // 1. Head Quarter Person
@@ -23,13 +24,14 @@ export const headQuarterSchema = z.object({
 
 export type HeadQuarterSchema = z.infer<typeof headQuarterSchema>;
 
-// 3. Enterprise
-export const enterpriseSchema = z.object({
+// 3. Operator
+export const operatorSchema = z.object({
   name: getNameSchema(),
   email: getEmailSchema(),
   password: getPasswordSchema(),
+  slug: getSlugSchema({ keyName: "Operator Slug" }),
   headquarter: headQuarterSchema,
   person: headQuarterPersonSchema,
 });
 
-export type EnterpriseSchema = z.infer<typeof enterpriseSchema>;
+export type OperatorSchema = z.infer<typeof operatorSchema>;

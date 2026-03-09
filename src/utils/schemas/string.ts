@@ -15,9 +15,6 @@ export const getIdSchema = ({
   if (doTrim) {
     schema = schema.trim();
   }
-  // schema = schema.refine((val) => isObjectIdOrHexString(val), {
-  //   error: `${keyName} is invalid`,
-  // });
   return schema;
 };
 
@@ -137,5 +134,44 @@ export const getPasswordSchema = ({
     const regexp = regexps[i];
     schema = schema.regex(regexp.match, `${keyName} ${regexp.message}`);
   }
+  return schema;
+};
+
+// Slug
+type SlugSchemaOptions = StringSchemaOptions & {
+  minLength: number;
+  slugRegexp: RegExp;
+  slugRegexpMsg: string;
+};
+export const getSlugSchema = ({
+  keyName = "Slug",
+  doTrim = true,
+  minLength = 1,
+  slugRegexp = /(^[a-z0-9][a-z0-9\-]+[a-z0-9]$)/,
+  slugRegexpMsg = "invalid slug",
+  schema = z.string(),
+}: Partial<SlugSchemaOptions> = {}) => {
+  if (doTrim) {
+    schema = schema
+      .trim()
+  }
+  // @ts-ignore
+  schema = schema.transform((value) => value.toLowerCase().replace(/ +/g, "")).superRefine((val, ctx) => {
+    if (!slugRegexp.test(val)) {
+      return ctx.addIssue({
+        code: "invalid_value",
+        values: [val],
+        message: `${keyName} ${slugRegexpMsg}`
+      });
+    }
+    if (Number.isFinite(minLength) && val.length < minLength) {
+      return ctx.addIssue({
+        code: "too_small",
+        minimum: minLength,
+        origin: "number",
+        message: `${keyName} must be at least ${minLength} characters long`
+      });
+    }
+  });
   return schema;
 };

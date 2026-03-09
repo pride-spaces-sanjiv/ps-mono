@@ -110,7 +110,7 @@ export default function SettingsGroups() {
     }
   };
 
-  const displaySelectedGroup = () => {
+  const spaceSelectedGroup = () => {
     const group = commonGroupsState.value.find(
       (gr) => gr.id === watch("referenceGroup")
     );
@@ -294,7 +294,7 @@ export default function SettingsGroups() {
                           <Input
                             className="min-h-[40px]"
                             type="button"
-                            value={displaySelectedGroup()}
+                            value={spaceSelectedGroup()}
                           />
                         ),
                       }}

@@ -1,4 +1,4 @@
-import { SPACES } from "./config";
+import { SPACES } from "../config";
 import { spaceSchema } from "@/utils/schemas/space";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";

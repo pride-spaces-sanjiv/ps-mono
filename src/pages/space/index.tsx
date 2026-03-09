@@ -1,6 +1,6 @@
 import SpacesTabledResults from "@/containers/spaces-table";
 
-const DisplayPage = () => {
+const SpacePage = () => {
 
     return (
         <div className="container mx-auto p-6">
@@ -11,4 +11,4 @@ const DisplayPage = () => {
         </div>
     )
 }
-export default DisplayPage;
+export default SpacePage;

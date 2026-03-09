@@ -10,7 +10,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { getSpaces } from "@/services/apis/spaces";
+import { getSpaces } from "@/services/apis/admin/spaces";
 import type { Space } from "@/types/data/spaces";
 import {
     type ColumnDef,
@@ -301,14 +301,14 @@ const SpacesTabledResults = () => {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuItem
-                                    onClick={() => navigate(`/space-edit-page/${row.id}`)}
+                                    onClick={() => navigate(`/spaces/${row.original.id}`)}
                                 >
                                     Show details
                                 </DropdownMenuItem>
-                                {/* <DropdownMenuSeparator />
+                                <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
-                  Delete User
-                </DropdownMenuItem> */}
+                  Delete Space
+                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     );
