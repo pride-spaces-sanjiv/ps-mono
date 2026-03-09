@@ -156,12 +156,28 @@ export const getSlugSchema = ({
   schema = z.string(),
 }: Partial<SlugSchemaOptions> = {}) => {
   if (doTrim) {
-    // @ts-ignore
-    schema = schema
-      .trim()
-      .transform((value) => value.toLowerCase().replace(/ +/g, ""));
+    schema = schema.trim();
   }
-  schema = schema.regex(slugRegexp, `${keyName}${slugRegexpMsg}`);
+  // @ts-ignore
+  schema = schema
+    .transform((value) => value.toLowerCase().replace(/ +/g, ""))
+    .superRefine((val, ctx) => {
+      if (!slugRegexp.test(val)) {
+        return ctx.addIssue({
+          code: "invalid_value",
+          values: [val],
+          message: `${keyName} ${slugRegexpMsg}`,
+        });
+      }
+      if (Number.isFinite(minLength) && val.length < minLength) {
+        return ctx.addIssue({
+          code: "too_small",
+          minimum: minLength,
+          origin: "number",
+          message: `${keyName} must be at least ${minLength} characters long`,
+        });
+      }
+    });
   if (Number.isFinite(minLength)) {
     schema = schema.min(
       minLength,
