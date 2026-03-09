@@ -147,8 +147,8 @@ export const getSearchFilters = <M extends Model<any>>(
     >;
     for (const queryField in fieldMaps) {
       if (
-        !Object.hasOwn(req.query, `s${queryField}`) &&
-        req.query[`s${queryField}`]
+        !Object.hasOwn(req.query, `s${queryField}`) ||
+        !req.query[`s${queryField}`]
       ) {
         continue;
       }

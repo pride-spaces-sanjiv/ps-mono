@@ -5,8 +5,12 @@ import {
   cleanPaginatedData,
   paginatedResults,
 } from "@/utils/mongoose/pagination.js";
-import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
+import {
+  getFieldsandProjectors,
+  getSearchFilters,
+} from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
+import { cleanObject } from "@/utils/object/clean.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
@@ -26,12 +30,21 @@ export const getOperators = async (
       Operator,
       operatorNonPassFields,
     );
+    const searchFilters = getSearchFilters<typeof Operator>(req, {
+      fieldMaps: {
+        Name: "name",
+        Email: "email",
+      },
+    });
     const { page, metrics, results, errored, err } = await paginatedResults(
       req,
       Operator,
       operatorNonPassFields,
       { limit: 10 },
-      { projection: projectors },
+      {
+        projection: projectors,
+        filter: cleanObject({ ...searchFilters }, { excludeByValues: [""] }),
+      },
     );
 
     // On results error
