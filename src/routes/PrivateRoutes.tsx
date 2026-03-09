@@ -22,6 +22,7 @@ import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
 import SpaceOperatorPage from "@/pages/space-operator";
 import SpaceOperator from "@/pages/space-operator";
+import SpaceEditPage from "@/pages/display/space-edit-page";
 
 // Lazy load components
 const Dashboard = lazy(() => import("@/pages/dashboard"));
@@ -135,6 +136,7 @@ const PrivateRoutes = () => {
               }
             />
           </Route>
+            <Route path="/space-edit-page/:id" element={<SpaceEditPage />} /> 
             <Route
               path="/space-operator"
               element={
