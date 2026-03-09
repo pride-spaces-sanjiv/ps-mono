@@ -178,11 +178,5 @@ export const getSlugSchema = ({
         });
       }
     });
-  if (Number.isFinite(minLength)) {
-    schema = schema.min(
-      minLength,
-      `${keyName} must be at least ${minLength} characters long`,
-    );
-  }
   return schema;
 };
