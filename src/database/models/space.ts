@@ -32,13 +32,23 @@ const SpaceSchema = new Conn.Schema(
     openDays: { type: Number },
     isVerified: { type: Boolean },
     isActive: { type: Boolean },
+    totalSeats: { type: Number, default: 0 },
+    bookedSeats: { type: Number, default: 0 },
     rating: { type: Number },
     reviews: { type: Number },
   },
   { timestamps: true },
 );
 indexFieldsFromSchema(SpaceSchema, {
-  singleFields: ["branch", "operator", "name", "slug"],
+  singleFields: [
+    "branch",
+    "operator",
+    "name",
+    "slug",
+    "location.city",
+    "location.country",
+    "location.state",
+  ],
 });
 
 // Model Instances

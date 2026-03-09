@@ -1,6 +1,7 @@
 import { Model } from "mongoose";
 import { ManagedRequest } from "@/types/request.js";
 import { ModelDocumentKeys, ModelToRaw } from "@/types/mongoose/document.js";
+import { ObjectDepthKeys } from "@/types/object.js";
 
 export type SortOrder = "asc" | "desc";
 export type SortOptions<
@@ -138,7 +139,9 @@ export const getSearchFilters = <M extends Model<any>>(
       [k: string]: any;
     }
   >,
-  options: Partial<{ fieldMaps: Record<string, keyof ModelToRaw<M>> }> = {},
+  options: Partial<{
+    fieldMaps: Record<string, ObjectDepthKeys<ModelToRaw<M>>>;
+  }> = {},
 ) => {
   try {
     const { fieldMaps = {} } = options;

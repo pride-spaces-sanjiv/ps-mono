@@ -4,6 +4,7 @@ import {
   getNameSchema,
   getPasswordSchema,
   getPhoneSchema,
+  getSlugSchema,
 } from "./string.js";
 
 // 1. Head Quarter Person
@@ -28,7 +29,7 @@ export const operatorSchema = z.object({
   name: getNameSchema(),
   email: getEmailSchema(),
   password: getPasswordSchema(),
-  slug: z.string(),
+  slug: getSlugSchema({ keyName: "Operator Slug" }),
   headquarter: headQuarterSchema,
   person: headQuarterPersonSchema,
 });

@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { getEmailSchema, getIdSchema, getNameSchema } from "./string.js";
+import {
+  getEmailSchema,
+  getIdSchema,
+  getNameSchema,
+  getSlugSchema,
+} from "./string.js";
 
 // --- Location Schema ---
 export const locationSchema = z.object({
@@ -19,7 +24,7 @@ export const spaceSchema = z.object({
   name: getNameSchema({ keyName: "Space Name" }),
   email: getEmailSchema(),
   location: locationSchema,
-  slug: z.string(),
+  slug: getSlugSchema({ keyName: "Space Slug" }),
   description: z.string().optional(),
   openTime: z.date().optional(),
   closeTime: z.date().optional(),
@@ -28,6 +33,8 @@ export const spaceSchema = z.object({
   isActive: z.boolean().optional().default(false),
   rating: z.number().optional().default(0),
   reviews: z.number().optional().default(0),
+  totalSeats: z.number().default(0),
+  bookedSeats: z.number().default(0),
 });
 
 // TypeScript Types (Optional but recommended)

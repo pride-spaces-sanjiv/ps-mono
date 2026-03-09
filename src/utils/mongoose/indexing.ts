@@ -1,5 +1,6 @@
 import { Schema } from "mongoose";
 import { SchemaToRaw } from "@/types/mongoose/document.js";
+import { ObjectDepthKeys } from "@/types/object.js";
 
 type IndexOptions<T extends keyof string> = {
   singleFields: T[];
@@ -8,7 +9,7 @@ type IndexOptions<T extends keyof string> = {
 };
 export const indexFieldsFromSchema = <
   S extends Schema,
-  T extends keyof SchemaToRaw<S>,
+  T extends ObjectDepthKeys<SchemaToRaw<S>>,
 >(
   schema: S,
   // @ts-ignore

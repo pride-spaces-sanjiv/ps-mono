@@ -140,3 +140,33 @@ export const getPasswordSchema = ({
   }
   return schema;
 };
+
+// Slug
+type SlugSchemaOptions = StringSchemaOptions & {
+  minLength: number;
+  slugRegexp: RegExp;
+  slugRegexpMsg: string;
+};
+export const getSlugSchema = ({
+  keyName = "Slug",
+  doTrim = true,
+  minLength = 1,
+  slugRegexp = /(^[a-z0-9][a-z0-9\-]+[a-z0-9]$)/,
+  slugRegexpMsg = "invalid slug",
+  schema = z.string(),
+}: Partial<SlugSchemaOptions> = {}) => {
+  if (doTrim) {
+    // @ts-ignore
+    schema = schema
+      .trim()
+      .transform((value) => value.toLowerCase().replace(/ +/g, ""));
+  }
+  schema = schema.regex(slugRegexp, `${keyName}${slugRegexpMsg}`);
+  if (Number.isFinite(minLength)) {
+    schema = schema.min(
+      minLength,
+      `${keyName} must be at least ${minLength} characters long`,
+    );
+  }
+  return schema;
+};

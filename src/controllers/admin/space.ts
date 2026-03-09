@@ -42,9 +42,7 @@ export const getSpaces = async (
       fieldMaps: {
         Name: "name",
         Email: "email",
-        // @ts-ignore
         City: "location.city",
-        // @ts-ignore
         State: "location.state",
       },
     });
