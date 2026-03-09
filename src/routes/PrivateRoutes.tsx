@@ -21,8 +21,8 @@ import ActionButton from "@/components/buttons/action-btn";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Display = lazy(() => import("@/pages/display"));
-const OperatorsPage = lazy(() => import("@/pages/operators"))
-const OperatorSpacesPage = lazy(() => import("@/pages/operators/operator-spaces"))
+const SpaceOperator = lazy(() => import("@/pages/operators"));
+
 interface SuspensedViewProps {
   children: ReactNode;
 }
@@ -30,15 +30,11 @@ interface SuspensedViewProps {
 const PrivateRoutes = () => {
   const navigate = useNavigate();
 
-  const {
-    data: res,
-    isFetching,
-    tokenStoreState,
-  } = useUser();
+  const { data: res, isFetching, tokenStoreState } = useUser();
 
   const AutoNavigateRender = useCallback(
     ({ El }: { El?: ReactNode }) => El,
-    []
+    [],
   );
 
   const isExpired = useMemo(
@@ -47,12 +43,12 @@ const PrivateRoutes = () => {
       validateNumber(tokenStoreState.value?.expiry?.getTime(), {
         invalidValue: 0,
       }),
-    [tokenStoreState.value]
+    [tokenStoreState.value],
   );
 
   useEffect(() => {
     if (!res?.data?.data?.id && !isFetching) {
-      toast.error("Something wrong! Please relogin");
+      toast.error("Something wrong ! Please relogin");
     }
   }, [isFetching, res?.data?.data?.id]);
 
@@ -60,6 +56,7 @@ const PrivateRoutes = () => {
     return (
       <div className="w-full h-full min-h-dvh flex flex-col gap-3 justify-center items-center px-2 py-4">
         <RotatingLoader className="size-[50px] text-accent-foreground" />
+
         <p className="text-xl font-medium text-muted-foreground">
           Please Wait.....
         </p>
@@ -73,14 +70,10 @@ const PrivateRoutes = () => {
         {!tokenStoreState.value?.token
           ? "You need to login with your account before proceeding"
           : isExpired
-          ? "Your session has expired. Login again"
-          : "We cannot get your data at the moment. Try login again"}
+            ? "Your session has expired. Login again"
+            : "We cannot get your data at the moment. Try login again"}
 
-        <ActionButton
-          onClick={() => {
-            navigate("/login");
-          }}
-        >
+        <ActionButton onClick={() => navigate("/login")}>
           Go to Login
         </ActionButton>
       </div>
@@ -90,7 +83,6 @@ const PrivateRoutes = () => {
   return (
     <Routes>
       <Route element={<Layout />}>
-
         {/* Dashboard */}
         <Route
           path="/dashboard"
@@ -110,37 +102,23 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
-
-        {/* Operators Table */}
         <Route
           path="/operators"
           element={
             <SuspensedView>
-              <AutoNavigateRender El={<OperatorsPage />} />
+              <AutoNavigateRender El={<SpaceOperator />} />
             </SuspensedView>
           }
         />
 
-        {/* Spaces under Operator */}
-        <Route
-          path="/operators/:operatorId"
-          element={
-            <SuspensedView>
-              <AutoNavigateRender El={<OperatorSpacesPage />} />
-            </SuspensedView>
-          }
-        />
-
-        {/* Default Redirect */}
+        {/* Default redirect */}
         <Route path="/*" element={<Navigate to="/dashboard" />} />
-
       </Route>
     </Routes>
   );
 };
 
 const SuspensedView = ({ children }: SuspensedViewProps) => {
-
   TopBarProgress.config({
     barColors: {
       0: getCssVariableValue("--primary"),
@@ -153,11 +131,7 @@ const SuspensedView = ({ children }: SuspensedViewProps) => {
     shadowBlur: 5,
   });
 
-  return (
-    <Suspense fallback={<TopBarProgress />}>
-      {children}
-    </Suspense>
-  );
+  return <Suspense fallback={<TopBarProgress />}>{children}</Suspense>;
 };
 
 export default PrivateRoutes;

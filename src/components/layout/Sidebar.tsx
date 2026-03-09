@@ -55,8 +55,8 @@ const items = [
     icon: Users,
   },
   {
-    title: "Space Operator",
-    url: "/space-operator",
+    title: "Operator",
+    url: "/operators",
     icon: LogOutIcon,
   },
   {
