@@ -25,6 +25,7 @@ const SpaceSchema = new Conn.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     location: { type: LocationSchema, required: true },
+    slug: { type: String, required: true, unique: true },
     description: { type: String },
     openTime: { type: Date },
     closeTime: { type: Date },
@@ -37,7 +38,7 @@ const SpaceSchema = new Conn.Schema(
   { timestamps: true },
 );
 indexFieldsFromSchema(SpaceSchema, {
-  singleFields: ["branch", "operator", "name"],
+  singleFields: ["branch", "operator", "name", "slug"],
 });
 
 // Model Instances

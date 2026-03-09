@@ -27,12 +27,13 @@ const OperatorSchema = new Conn.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
     headquarter: { type: HeadQuarterSchema, required: true },
     person: { type: HeadQuarterPersonSchema, required: true },
   },
   { timestamps: true },
 );
-indexFieldsFromSchema(OperatorSchema, { singleFields: ["name"] });
+indexFieldsFromSchema(OperatorSchema, { singleFields: ["name", "slug"] });
 
 // Model Instances
 export const Operator = Conn.model("Operator", OperatorSchema, "operators");

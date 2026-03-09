@@ -19,6 +19,7 @@ export const spaceSchema = z.object({
   name: getNameSchema({ keyName: "Space Name" }),
   email: getEmailSchema(),
   location: locationSchema,
+  slug: z.string(),
   description: z.string().optional(),
   openTime: z.date().optional(),
   closeTime: z.date().optional(),

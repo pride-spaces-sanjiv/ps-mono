@@ -28,6 +28,7 @@ export const operatorSchema = z.object({
   name: getNameSchema(),
   email: getEmailSchema(),
   password: getPasswordSchema(),
+  slug: z.string(),
   headquarter: headQuarterSchema,
   person: headQuarterPersonSchema,
 });
