@@ -154,7 +154,10 @@ export const getSearchFilters = <M extends Model<any>>(
       }
       const field = fieldMaps[queryField];
       filter[field] = {
-        $regex: String(req.query[`s${queryField}`]).trim().replace(/ +/g, " "),
+        $regex: String(req.query[`s${queryField}`])
+          .trim()
+          .toLowerCase()
+          .replace(/ +/g, " "),
         $options: "i",
       };
     }
