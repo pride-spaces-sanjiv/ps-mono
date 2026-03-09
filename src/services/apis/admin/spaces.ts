@@ -1,5 +1,5 @@
 import { SPACES } from "../config";
-import { spaceSchema } from "@/utils/schemas/space";
+import { spaceSchema } from "@/utils/schemas/spaces";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
 
@@ -23,6 +23,18 @@ export const getSpaces = APIBodyValidationWrapper({
   },
 });
 
+export const getSpaceById = APIBodyValidationWrapper({
+  handle: async (param, config) => {
+    const url = `/${(param?.query as { id: string })?.id}`;
+
+    const res = await SPACES.get<GeneralResponseWithError<Space>>(
+      url,
+      config
+    );
+
+    return res;
+  },
+});
 
 // 🔹 Get Single Space
 export const getSpaceData = APIBodyValidationWrapper({

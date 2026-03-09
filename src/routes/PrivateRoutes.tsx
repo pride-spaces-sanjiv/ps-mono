@@ -118,7 +118,7 @@ const PrivateRoutes = () => {
             }
           />
           <Route
-            path="/space"
+            path="/spaces"
             element={
               <SuspensedView>
                 <AutoNavigateRender El={<Space />} />
