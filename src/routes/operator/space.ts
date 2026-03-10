@@ -2,8 +2,9 @@ import { Router } from "express";
 import { z } from "zod";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { checkUserExistenceByBodyValue } from "@/middlewares/checkUser.js";
+import { preParseDateFieldsFromBody } from "@/middlewares/parseDateFields.js";
 import { Space } from "@/database/models/space.js";
-import { spaceSchema } from "@/database/schemas/space.js";
+import { type SpaceSchema, spaceSchema } from "@/database/schemas/space.js";
 // Controllers
 import {
   getSpace,
@@ -34,6 +35,9 @@ router.get(
 );
 router.post(
   "/",
+  preParseDateFieldsFromBody<SpaceSchema>({
+    fields: ["openTime", "closeTime"],
+  }),
   RequestMiddleware.bodyValidator(spaceSchema.omit({ operator: true }), {
     validateOnlyPresent: false,
     overridePostValidation: true,
@@ -45,6 +49,9 @@ router.post(
 router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  preParseDateFieldsFromBody<SpaceSchema>({
+    fields: ["openTime", "closeTime"],
+  }),
   RequestMiddleware.bodyValidator(
     spaceSchema.omit({ branch: true, operator: true }),
     {
