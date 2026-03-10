@@ -34,7 +34,7 @@ export const spaceSchema = z.object({
       .int("Day must be an integer")
       .positive("Day must be a positive integer")
       .min(1, "Day must be atleast 1")
-      .max(6, "Day must be at most 6"),
+      .max(7, "Day must be at most 7"),
   ),
   isVerified: z.boolean().optional().default(false),
   isActive: z.boolean().optional().default(false),
