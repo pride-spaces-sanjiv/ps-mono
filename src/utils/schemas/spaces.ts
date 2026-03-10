@@ -28,7 +28,14 @@ export const spaceSchema = z.object({
   description: z.string().optional(),
   openTime: z.date().optional(),
   closeTime: z.date().optional(),
-  openDays: z.number().optional(),
+  openDays: z.array(
+    z
+      .number()
+      .int("Day must be an integer")
+      .positive("Day must be a positive integer")
+      .min(1, "Day must be atleast 1")
+      .max(7, "Day must be at most 7"),
+  ),
   isVerified: z.boolean().optional().default(false),
   isActive: z.boolean().optional().default(false),
   rating: z.number().optional().default(0),

@@ -3,7 +3,7 @@ import * as secureStorage from "@secure-storage/common";
 import type { DatifiedAdmin, DatifiedUser } from "@/types/data/user";
 import type { ZustandStore } from "@/types/zustand/store";
 import { datifyObjectValues } from "@/utils/object/datify";
-import type { DatifiedEnterprise } from "@/types/data/enterprise";
+import type { DatifiedOperator } from "@/types/data/operator";
 import { type AdminLevel } from "@/utils/data/admin";
 
 export type TokenData = { token: string; expiry: Date; refreshToken: string };
@@ -26,7 +26,7 @@ type UserStoreExtras = {
 };
 export const userStore = create<
   ZustandStore<
-    Partial<DatifiedAdmin | DatifiedEnterprise> | null,
+    Partial<DatifiedAdmin | DatifiedOperator> | null,
     UserStoreExtras
   >
 >((set) => ({
@@ -34,7 +34,7 @@ export const userStore = create<
   level: null,
   setLevel: (level: UserStoreExtras["level"] = null) => set({ level }),
   setter: (update) => set({ value: update }),
-  setterAndPersist: (update: DatifiedAdmin | DatifiedEnterprise | null) => {
+  setterAndPersist: (update: DatifiedAdmin | DatifiedOperator | null) => {
     secureStorage.localStorage.setItem("__uD__", update);
     set({ value: update });
   },

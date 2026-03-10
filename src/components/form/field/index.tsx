@@ -1,5 +1,5 @@
 import React from "react";
-import { Input, PasswordInput } from "@/components/ui/input";
+import { Input, PasswordInput, TextArea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils/className";
 import {
@@ -12,19 +12,19 @@ import { type FieldError } from "react-hook-form";
 type InputType = "default" | "textarea" | "password" | "select";
 type Props<
   T extends InputType = "default",
-  V extends any = any
+  V extends any = any,
 > = (T extends "password"
   ? Omit<Parameters<typeof PasswordInput>[0], "wrapperProps"> & {
       fieldWrapperProps?: Parameters<typeof PasswordInput>[0]["wrapperProps"];
     }
   : T extends "select"
-  ? Partial<
-      SelectPickerMainProps &
-        Pick<SelectPickerProps<V>, "items"> & {
-          pickerProps: Partial<Omit<SelectPickerProps<V>, "items">>;
-        }
-    >
-  : React.ComponentProps<T extends "textarea" ? "textarea" : "input">) &
+    ? Partial<
+        SelectPickerMainProps &
+          Pick<SelectPickerProps<V>, "items"> & {
+            pickerProps: Partial<Omit<SelectPickerProps<V>, "items">>;
+          }
+      >
+    : React.ComponentProps<T extends "textarea" ? "textarea" : "input">) &
   Partial<{
     labelProps: Parameters<typeof Label>[0];
     errorProps: React.JSX.IntrinsicElements["p"];
@@ -39,7 +39,7 @@ type Props<
 
 export default function FormField<
   T extends InputType = "default",
-  V extends any = any
+  V extends any = any,
 >({
   className,
   type = "text" as Props<"default">["type"],
@@ -82,14 +82,14 @@ export default function FormField<
               ...(props as Props<"password">)?.fieldWrapperProps,
               className: cn(
                 "min-h-[40px]",
-                (props as Props<"password">)?.fieldWrapperProps?.className
+                (props as Props<"password">)?.fieldWrapperProps?.className,
               ),
             }}
             className={className}
             type={type}
           />
         ) : inputType === "textarea" ? (
-          <textarea
+          <TextArea
             {...(props as Props<"textarea">)}
             className={cn("min-h-[40px] h-auto", className)}
           />

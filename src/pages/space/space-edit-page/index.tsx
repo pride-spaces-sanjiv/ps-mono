@@ -9,6 +9,10 @@ import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
 import FormField from "@/components/form/field";
 import { SelectPicker } from "@/components/select";
+import GroupsSelectPicker from "@/components/groups-selector";
+import { GroupedSearchSelect } from "@/components/search-select";
+import ActionButton from "@/components/buttons/action-btn";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const SpaceEditPage = () => {
   const { id } = useParams();
@@ -76,6 +80,7 @@ const SpaceEditPage = () => {
           {/* Email */}
           <FormField
             label="Email"
+            type="email"
             placeholder="my-space@example.com"
             {...register("email")}
             error={errors.email}
@@ -105,10 +110,15 @@ const SpaceEditPage = () => {
           <FormField
             label="Open Days"
             placeholder="My Space Org"
-            error={errors.openDays}
+            error={{
+              message: errors.openDays?.message,
+              type: errors.openDays?.type || "validate",
+            }}
           >
-            <SelectPicker
-              defaultValue={defaultValues?.openDays}
+            <GroupedSearchSelect
+              key={`days-${defaultValues?.openDays?.length}`}
+              type="multiple"
+              defaultSelected={defaultValues?.openDays}
               items={[
                 "Monday",
                 "Tuesday",
@@ -117,117 +127,94 @@ const SpaceEditPage = () => {
                 "Friday",
                 "Saturday",
                 "Sunday",
-              ].map((day, i) => ({ label: day, value: i + 1 }))}
-              wrapperProps={{
-                onValueChange: (val) =>
-                  setValue("openDays", Number(val), { shouldValidate: true }),
+              ].map((dt, i) => ({
+                label: dt,
+                value: i + 1,
+              }))}
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"secondary"}
+                    className={"min-h-[40px]"}
+                  >
+                    {watch("openDays", []).length > 0
+                      ? watch("openDays", []).length
+                      : "Select Days"}
+                  </ActionButton>
+                ),
+              }}
+              contentProps={{ className: "max-h-[300px]" }}
+              onSelect={(items) => {
+                setValue(
+                  "openDays",
+                  items.filter((val) => typeof val === "number"),
+                );
               }}
             />
           </FormField>
 
           {/* Description */}
-          <div className="flex flex-col gap-2 md:col-span-2">
-            <label className="text-white text-sm">Description</label>
-            <textarea
-              rows={3}
-              {...register("description")}
-              className="p-2 rounded-md border border-gray-600 bg-transparent"
-            />
-          </div>
+          <FormField
+            label="Description"
+            placeholder="Enter a description for your space"
+            {...register("description")}
+            error={errors.description}
+            inputType="textarea"
+          />
 
           {/* Location Section */}
-          <div className="md:col-span-2">
-            <label className="text-white text-sm mb-2 block">Location</label>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-white text-xs opacity-80">Address</label>
-                <input
-                  {...register("location.address")}
-                  className="p-2 rounded-md border border-gray-600 bg-transparent"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-white text-xs opacity-80">City</label>
-                <input
-                  {...register("location.city")}
-                  className="p-2 rounded-md border border-gray-600 bg-transparent"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-white text-xs opacity-80">State</label>
-                <input
-                  {...register("location.state")}
-                  className="p-2 rounded-md border border-gray-600 bg-transparent"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-white text-xs opacity-80">
-                  Postal Code
-                </label>
-                <input
-                  {...register("location.postalCode")}
-                  className="p-2 rounded-md border border-gray-600 bg-transparent"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-white text-xs opacity-80">Country</label>
-                <input
-                  {...register("location.country")}
-                  className="p-2 rounded-md border border-gray-600 bg-transparent"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-white text-xs opacity-80">
-                  Latitude
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  {...register("location.lat")}
-                  className="p-2 rounded-md border border-gray-600 bg-transparent"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-white text-xs opacity-80">
-                  Longitude
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  {...register("location.lng")}
-                  className="p-2 rounded-md border border-gray-600 bg-transparent"
-                />
-              </div>
-            </div>
-          </div>
+          <FormField
+            label="City"
+            placeholder="Enter the city for your space"
+            {...register("location.city")}
+            error={errors.location?.city}
+          />
+          <FormField
+            label="State"
+            placeholder="Enter the state for your space"
+            {...register("location.state")}
+            error={errors.location?.state}
+          />
+          <FormField
+            label="Country"
+            placeholder="Enter the country for your space"
+            {...register("location.country")}
+            error={errors.location?.country}
+          />
+          {/* Address */}
+          <FormField
+            label="Address"
+            placeholder="Enter the address for your space"
+            {...register("location.address")}
+            error={errors.location?.address}
+            inputType="textarea"
+          />
 
           {/* Status */}
           <div className="flex items-center gap-4">
             <label className="text-white text-sm">Active</label>
-            <input type="checkbox" {...register("isActive")} />
+            <Checkbox
+              defaultChecked={!!defaultValues?.isActive}
+              {...register("isActive")}
+            />
           </div>
 
           <div className="flex items-center gap-4">
             <label className="text-white text-sm">Verified</label>
-            <input type="checkbox" {...register("isVerified")} />
+            <Checkbox
+              defaultChecked={!!defaultValues?.isVerified}
+              {...register("isVerified")}
+            />
           </div>
 
           {/* Submit */}
-          <div className="md:col-span-2 flex justify-end mt-4">
-            <button
-              type="submit"
-              className="px-6 py-2 rounded-md border border-gray-500 hover:opacity-80"
-            >
-              Update Space
-            </button>
-          </div>
+          <ActionButton
+            type="submit"
+            className="max-w-fit self-end col-span-full"
+          >
+            Save Changes
+          </ActionButton>
         </form>
       </div>
       {/* <UserCreateModal /> */}
