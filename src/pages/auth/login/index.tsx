@@ -23,7 +23,7 @@ import {
 import {
   operatorSchema,
   type OperatorSchema,
-} from "@/utils/schemas/operator";
+} from "@/utils/schemas/operators";
 import { reConfigureAuthToken } from "@/utils/axios/configure";
 import { handleAxiosErrorCases } from "@/utils/axios/error";
 import { datifyObjectValues } from "@/utils/object/datify";

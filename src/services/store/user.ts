@@ -3,7 +3,7 @@ import * as secureStorage from "@secure-storage/common";
 import type { DatifiedAdmin, DatifiedUser } from "@/types/data/user";
 import type { ZustandStore } from "@/types/zustand/store";
 import { datifyObjectValues } from "@/utils/object/datify";
-import type { DatifiedOperator } from "@/types/data/operator";
+import type { DatifiedOperator } from "@/types/data/operators";
 import { type AdminLevel } from "@/utils/data/admin";
 
 export type TokenData = { token: string; expiry: Date; refreshToken: string };

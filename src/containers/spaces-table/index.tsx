@@ -136,9 +136,9 @@ const SpacesTabledResults = () => {
         },
         cell: ({ row }) => (
           <div>
-            {(row.original.operator &&
+            {(row.original?.operator &&
               res?.data?.data?.references?.operators?.results?.find(
-                (op) => op.id === row.original.operator,
+                (op) => op.id === row.original?.operator,
               )?.name) ||
               "-"}
           </div>
@@ -165,7 +165,7 @@ const SpacesTabledResults = () => {
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
+        cell: ({ row }) => <div>{row.original?.person?.email|| "-"}</div>,
       },
       {
         accessorKey: "location",
@@ -302,7 +302,7 @@ const SpacesTabledResults = () => {
         },
       },
     ],
-    [navigate],
+    [res?.data],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);

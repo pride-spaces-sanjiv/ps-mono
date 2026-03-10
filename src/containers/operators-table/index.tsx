@@ -2,16 +2,13 @@ import React, { useMemo, useState } from "react";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { getSpaces } from "@/services/apis/spaces";
-import type { Space } from "@/types/data/spaces";
+// import { getOperators } from "@/services/apis/admin/operators";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -28,18 +25,17 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  ChevronDown,
   MoreHorizontal,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { queryKeys } from "@/utils/query-keys";
 import { datifyObjectValues } from "@/utils/object/datify";
+import { formatOpenDays } from "@/utils/data/days";
 import { keepPreviousData } from "@tanstack/react-query";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -47,42 +43,38 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
+// import { operators } from "./operator";
+import type { Operator } from "@/types/data/operators";
+import { getOperators } from "@/services/apis/admin/operators";
 
 const OperatorsTabledResults = () => {
-  // const totalCredits = userStore((state) =>
-  //   validateNumber(state.value?.credits, { invalidValue: 0 }),
-  // );
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
   const debouncedSearch = useDebouncer(search, 500);
 
-  const { data: res, isFetching } = usePaginatedQuery({
-    limit: 10,
-    queryKey: [queryKeys.SPACES],
-    queryFn: () => getSpaces(),
-    placeholderData: keepPreviousData,
-  });
+const {
+  data: res,
+  isFetching,
+} = usePaginatedQuery({
+  limit: 10,
+  queryKey: [queryKeys.OPERATORS],
+  queryFn: () => getOperators(),
+  placeholderData: keepPreviousData,
+});
 
-  const operators: any[] = useMemo(
-    () =>
-      ((res?.data?.data?.results ?? []) as Space[])
-        .map((dt) =>
-          datifyObjectValues(dt, [
-            "createdAt",
-            "updatedAt",
-          ]),
-        )
-        .filter(Boolean),
-    [res?.data?.data],
-  );
+const operators: Operator[] = useMemo(
+  () =>
+    ((res?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
+  [res?.data?.data?.results]
+);
   console.log("operators", operators);
 
   // Columns definition
-  const columns: ColumnDef<Space>[] = useMemo(
+  const columns: ColumnDef<Operator>[] = useMemo(
     () => [
       {
-        accessorKey: "branch",
+        accessorKey: "name",
         header: ({ column }) => {
           return (
             <Button
@@ -91,7 +83,7 @@ const OperatorsTabledResults = () => {
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Branch
+              Name
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -102,7 +94,7 @@ const OperatorsTabledResults = () => {
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("branch") || "-"}</div>,
+        cell: ({ row }) => <div>{row.getValue("name") || "-"}</div>,
       },
       {
         accessorKey: "email",
@@ -127,129 +119,81 @@ const OperatorsTabledResults = () => {
         },
         cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
       },
-      {
-        accessorKey: "location",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Location
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => {
-          const location = row.original.location;
-
-          return (
-            <div>
-              {location.city}, {location.state}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "description",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Description
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("description") || "-"}</div>,
-      },
-      {
-        accessorKey: "openTime",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Open Time
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("openTime") || "-"}</div>,
-      },
-      {
-        accessorKey: "closeTime",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Close Time
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("closeTime") || "-"}</div>,
-      },
-      {
-        accessorKey: "openDays",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Open Days
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("openDays") || "-"}</div>,
-      },
+{
+  accessorKey: "headquarter.address",
+  header: ({ column }) => {
+    return (
+      <Button
+        variant="ghost"
+        onClick={() =>
+          column.toggleSorting(column.getIsSorted() === "asc")
+        }
+      >
+        Headquarter
+        {column.getIsSorted() === "asc" ? (
+          <ArrowDown />
+        ) : column.getIsSorted() === "desc" ? (
+          <ArrowUp />
+        ) : (
+          <ArrowUpDown />
+        )}
+      </Button>
+    );
+  },
+  cell: ({ row }) => (
+    <div>{row.original.headquarter?.address || "-"}</div>
+  ),
+},
+{
+  accessorKey: "person.name",
+  header: ({ column }) => {
+    return (
+      <Button
+        variant="ghost"
+        onClick={() =>
+          column.toggleSorting(column.getIsSorted() === "asc")
+        }
+      >
+        Person Name
+        {column.getIsSorted() === "asc" ? (
+          <ArrowDown />
+        ) : column.getIsSorted() === "desc" ? (
+          <ArrowUp />
+        ) : (
+          <ArrowUpDown />
+        )}
+      </Button>
+    );
+  },
+  cell: ({ row }) => (
+    <div>{row.original.person?.name || "-"}</div>
+  ),
+},
+{
+  accessorKey: "person.email",
+  header: ({ column }) => {
+    return (
+      <Button
+        variant="ghost"
+        onClick={() =>
+          column.toggleSorting(column.getIsSorted() === "asc")
+        }
+      >
+        Person Email
+        {column.getIsSorted() === "asc" ? (
+          <ArrowDown />
+        ) : column.getIsSorted() === "desc" ? (
+          <ArrowUp />
+        ) : (
+          <ArrowUpDown />
+        )}
+      </Button>
+    );
+  },
+  cell: ({ row }) => (
+    <div>{row.original.person?.email || "-"}</div>
+  ),
+},
       {
         id: "actions",
         enableHiding: false,
@@ -265,26 +209,26 @@ const OperatorsTabledResults = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={() => navigate(`/space-edit-page/${row.id}`)}
+                  onClick={() => navigate(`/operators/${row.original.id}`)}
                 >
                   Show details
                 </DropdownMenuItem>
-                {/* <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
-                  Delete User
-                </DropdownMenuItem> */}
+                  Delete Operator
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );
         },
       },
     ],
-    [navigate],
+    [navigate]
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
+    []
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -304,46 +248,11 @@ const OperatorsTabledResults = () => {
   });
 
   return (
-    <div className="rounded-md border max-w-full overflow-x-auto w-auto">
-      {/* <Table>
-                     <TableCaption>Data of Spaces with there operators.</TableCaption> 
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[100px]">Branch</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead >Location</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>OpenTime</TableHead>
-                            <TableHead>CloseTime</TableHead>
-                            <TableHead>OpenDays</TableHead>
-                            <TableHead>Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
+    <div
 
-  {table.getRowModel().rows.map((row) => (
-    <TableRow key={space.id}>
-      <TableCell className="font-medium">{space.branch}</TableCell>
-      <TableCell className="whitespace-normal">{space.name }</TableCell>
-      <TableCell className="whitespace-normal">{space.email}</TableCell>
-      <TableCell className="whitespace-normal">
-        {space.location.city}, {space.location.state}
-      </TableCell>
-      <TableCell className="whitespace-normal">{space.description}</TableCell>
-      <TableCell>{space.openTime}</TableCell>
-      <TableCell>{space.closeTime}</TableCell>
-      <TableCell>{space.openDays}</TableCell>
-      
-    </TableRow>
-  ))}               </TableBody>
-                    {/* <TableFooter>
-        <TableRow>
-          <TableCell colSpan={3}>Total</TableCell>
-          <TableCell className="text-right">$2,500.00</TableCell>
-        </TableRow>
-      </TableFooter> 
-                </Table> */}
+      className=
+      "rounded-md border max-w-full overflow-x-auto w-auto"
+    >
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -353,9 +262,9 @@ const OperatorsTabledResults = () => {
                   {header.isPlaceholder
                     ? null
                     : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                 </TableHead>
               ))}
             </TableRow>
@@ -380,7 +289,10 @@ const OperatorsTabledResults = () => {
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="whitespace-normal">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -391,7 +303,7 @@ const OperatorsTabledResults = () => {
                 colSpan={columns.length}
                 className="text-center py-4 font-medium"
               >
-                No spaces found
+                No operators found
               </TableCell>
             </TableRow>
           )}

@@ -35,8 +35,8 @@ const items = [
     icon: Tv,
   },
   {
-    title: "Notfication",
-    url: "/notfication",
+    title: "Operators",
+    url: "/operators",
     icon: LogOutIcon,
   },
   {
@@ -50,14 +50,14 @@ const items = [
     icon: LogOutIcon,
   },
   {
-    title: "Users",
-    url: "/users",
-    icon: Users,
+    title: "Notfication",
+    url: "/notfication",
+    icon: LogOutIcon,
   },
   {
-    title: "Operator",
-    url: "/operators",
-    icon: LogOutIcon,
+    title: "Users",
+    url: "/deshboard",
+    icon: Users,
   },
   {
     title: "Settings",

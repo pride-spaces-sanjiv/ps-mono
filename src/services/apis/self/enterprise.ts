@@ -2,7 +2,7 @@ import { ENTERPRISE } from "../config";
 import {
   operatorSchema,
   type OperatorSchema,
-} from "@/utils/schemas/operator";
+} from "@/utils/schemas/operators";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import type { GeneralResponseWithError } from "@/types/axios/response";
 

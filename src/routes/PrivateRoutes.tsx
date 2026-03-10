@@ -19,10 +19,11 @@ import Layout from "@/components/layout/Layout";
 import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
 import SpaceEditPage from "@/pages/space/space-edit-page";
+import OperatorEditPage from "@/pages/operators/operator-edit-page";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Space = lazy(() => import("@/pages/space"));
-const SpaceOperator = lazy(() => import("@/pages/operators"));
+const SpaceOperators = lazy(() => import("@/pages/operators"));
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -104,12 +105,13 @@ const PrivateRoutes = () => {
           }
         />
                     <Route path="/spaces/:id" element={<SpaceEditPage />} /> 
+                    <Route path="/operators/:id" element={<OperatorEditPage />} /> 
 
         <Route
           path="/operators"
           element={
             <SuspensedView>
-              <AutoNavigateRender El={<SpaceOperator />} />
+              <AutoNavigateRender El={<SpaceOperators />} />
             </SuspensedView>
           }
         />
