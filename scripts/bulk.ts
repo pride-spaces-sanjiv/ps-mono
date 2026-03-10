@@ -5,8 +5,14 @@ import moment from "moment";
 import { Types } from "mongoose";
 import { ENV } from "../src/utils/env";
 ENV;
+import { encodeCrypto } from "../src/utils/crypto";
 import { spaceSchema, SpaceSchema } from "../src/database/schemas/space";
+import {
+  operatorSchema,
+  OperatorSchema,
+} from "../src/database/schemas/operator";
 import { Space } from "../src/database/models/space";
+import { Operator } from "../src/database/models/operator";
 import { facilities } from "../src/utils/data/facilties";
 
 const { default: parsedData } = await import("../data/parsed-data.json", {
@@ -39,7 +45,7 @@ const convertData = (data: (typeof parsedData)[number]) => {
   const converted: SpaceSchema = {
     name: data["Centre Name"].trim(),
     branch: new Types.ObjectId().toHexString(),
-    operator: new Types.ObjectId().toHexString(),
+    operator: "69b08adb22a9fe9d0e91127a",
     slug: data["Centre Name"]
       .trim()
       .replace(/[^a-zA-Z0-9]+/g, "-")
@@ -96,15 +102,33 @@ fs.writeFileSync(
 );
 
 let saves = 0;
-await Space.deleteMany();
-for (const space of convertedSpaces) {
-  try {
-    const doc = new Space(space);
-    console.log(doc.slug);
-    await doc.save();
-    saves += 1;
-  } catch (err) {
-    console.log("Failed to push", space.name, err);
-  }
-}
-console.log("Saved", saves);
+// await Space.deleteMany();
+// for (const space of convertedSpaces) {
+//   try {
+//     const doc = new Space(space);
+//     console.log(doc.slug);
+//     await doc.save();
+//     saves += 1;
+//   } catch (err) {
+//     console.log("Failed to push", space.name, err);
+//   }
+// }
+// console.log("Saved", saves);
+
+// const operator: OperatorSchema = {
+//   name: "Awfis Space Solutions Limited",
+//   slug: "awfis",
+//   email: "info@awfis.com",
+//   headquarter: { address: "Pune", contactNo: "9999999999" },
+//   password: "Awfis@login123",
+//   person: {
+//     name: "Raghav Mittal",
+//     email: "raghav.mittal@awfis.com",
+//     role: "Head Manager",
+//   },
+// };
+// if (operatorSchema.safeParse(operator).success) {
+//   const data = operatorSchema.safeParse(operator).data;
+//   const doc = new Operator({ ...data, password: encodeCrypto(data?.password) });
+//   await doc.save();
+// }
