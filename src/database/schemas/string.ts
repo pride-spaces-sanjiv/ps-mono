@@ -45,7 +45,7 @@ export const getNameSchema = ({
       `${keyName} must be at least ${minLength} characters long`,
     );
   }
-  schema = schema.regex(alphaRegexp, `${keyName}${alphaRegexpMsg}`);
+  schema = schema.regex(alphaRegexp, `${keyName} ${alphaRegexpMsg}`);
   return schema;
 };
 
@@ -78,14 +78,15 @@ export const getPhoneSchema = ({
   keyName = "Phone No",
   doTrim = true,
   minLength = 4,
-  telRegexp = /^([0-2]|91)[0-9]{9,10}$/,
+  // telRegexp = /^([0-2]|91)[0-9]{9,12}$/,
+  telRegexp = /^[0-9]{9,13}$/,
   telRegexpMsg = "invalid phone number",
   schema = z.string(),
 }: Partial<PhoneSchemaOptions> = {}) => {
   if (doTrim) {
     schema = schema.trim();
   }
-  schema = schema.regex(telRegexp, `${keyName}${telRegexpMsg}`);
+  schema = schema.regex(telRegexp, `${keyName} ${telRegexpMsg}`);
   if (Number.isFinite(minLength)) {
     schema = schema.min(
       minLength,

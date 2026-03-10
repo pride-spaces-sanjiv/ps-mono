@@ -4,7 +4,21 @@ import {
   getIdSchema,
   getNameSchema,
   getSlugSchema,
+  getPhoneSchema,
 } from "./string.js";
+import { facilities } from "@/utils/data/facilties.js";
+import { spaceCategories } from "@/utils/data/category.js";
+
+// Person Schema
+export const personSchema = z.object({
+  name: getNameSchema({
+    keyName: "Person Name",
+    alphaRegexp: /^[A-Za-z0-9, ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
+  email: getEmailSchema({ keyName: "Person Email" }),
+  contactNo: getPhoneSchema({ keyName: "Person Contact Number" }),
+});
 
 // --- Location Schema ---
 export const locationSchema = z.object({
@@ -21,10 +35,16 @@ export const locationSchema = z.object({
 export const spaceSchema = z.object({
   branch: getIdSchema({ keyName: "Branch ID" }),
   operator: getIdSchema({ keyName: "Operator ID" }),
-  name: getNameSchema({ keyName: "Space Name" }),
+  name: getNameSchema({
+    keyName: "Space Name",
+    alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
   email: getEmailSchema(),
   location: locationSchema,
+  person: personSchema,
   slug: getSlugSchema({ keyName: "Space Slug" }),
+  category: z.enum(spaceCategories).default("Classic"),
   description: z.string().optional(),
   openTime: z.date().optional(),
   closeTime: z.date().optional(),
@@ -40,8 +60,17 @@ export const spaceSchema = z.object({
   isActive: z.boolean().optional().default(false),
   rating: z.number().optional().default(0),
   reviews: z.number().optional().default(0),
-  totalSeats: z.number().default(0),
-  bookedSeats: z.number().default(0),
+  totalSeats: z
+    .number()
+    .min(0)
+    .int("Total seats must be a positive integer")
+    .default(0),
+  bookedSeats: z
+    .number()
+    .min(0)
+    .int("Booked seats must be a positive integer")
+    .default(0),
+  facilities: z.array(z.enum(facilities)).default([]),
 });
 
 // TypeScript Types (Optional but recommended)

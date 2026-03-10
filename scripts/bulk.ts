@@ -1,0 +1,110 @@
+import * as fs from "fs";
+import * as path from "path";
+import * as csv from "fast-csv";
+import moment from "moment";
+import { Types } from "mongoose";
+import { ENV } from "../src/utils/env";
+ENV;
+import { spaceSchema, SpaceSchema } from "../src/database/schemas/space";
+import { Space } from "../src/database/models/space";
+import { facilities } from "../src/utils/data/facilties";
+
+const { default: parsedData } = await import("../data/parsed-data.json", {
+  assert: { type: "json" },
+});
+const { default: convertedParsed } = await import(
+  "../data/converted-spaces.json",
+  {
+    assert: { type: "json" },
+  }
+);
+// console.log(parsedData);
+
+const csvFile = "C:\\Users\\Sanjiv\\OneDrive\\Documents\\ps-dump-data.csv";
+
+const rows: any[] = [];
+// fs.createReadStream(path.resolve(csvFile))
+//   .pipe(csv.parse({ headers: true }))
+//   .on("error", (error) => console.error(error))
+//   .on("data", (row) => {
+//     rows.push(row);
+//   })
+//   .on("end", (rowCount: number) => {
+//     console.log(`Parsed ${rowCount} rows`);
+//     console.log(rows);
+//     fs.writeFileSync("./parsed-data.json", JSON.stringify(rows, null, 2));
+//   });
+
+const convertData = (data: (typeof parsedData)[number]) => {
+  const converted: SpaceSchema = {
+    name: data["Centre Name"].trim(),
+    branch: new Types.ObjectId().toHexString(),
+    operator: new Types.ObjectId().toHexString(),
+    slug: data["Centre Name"]
+      .trim()
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .toLowerCase(),
+    isActive: true,
+    isVerified: false,
+    email: "randommail@gmail.com",
+    location: {
+      country: "India",
+      address: data["Address"].trim(),
+      city: data["City"].trim(),
+      state: data["State"].trim(),
+      postalCode: "000000",
+      lat: 0,
+      lng: 0,
+    },
+    person: {
+      name: data.Name.trim(),
+      email: data.Email.trim(),
+      contactNo: data["Contact No."].trim().replace(/ +/g, ""),
+    },
+    openDays: [1, 2, 3, 4, 5, 6],
+    openTime: moment(data["Opening Time "].trim() || "00:00", "HH:mm").toDate(),
+    closeTime: moment(data["Closing Time"].trim() || "00:00", "HH:mm").toDate(),
+    category:
+      data.Category.trim().toLowerCase().includes("platinum") ||
+      data.Category.trim().toLowerCase() === "gold"
+        ? "Apex"
+        : data.Category.trim().toLowerCase() === "silver"
+          ? "Elite"
+          : "Classic",
+    facilities: facilities.filter((f) =>
+      data[f]?.trim().toLowerCase().includes("yes"),
+    ),
+    rating: 0,
+    reviews: 0,
+    totalSeats: 100,
+    bookedSeats: 5,
+  };
+  const parsed = spaceSchema.safeParse(converted);
+  if (!parsed.success) {
+    console.log(parsed.error);
+    return null;
+  }
+  return parsed.data;
+};
+
+const convertedSpaces = parsedData
+  .map(convertData)
+  .filter((v): v is NonNullable<typeof v> => !!v);
+fs.writeFileSync(
+  "./data/converted-spaces.json",
+  JSON.stringify(convertedSpaces, null, 2),
+);
+
+let saves = 0;
+await Space.deleteMany();
+for (const space of convertedSpaces) {
+  try {
+    const doc = new Space(space);
+    console.log(doc.slug);
+    await doc.save();
+    saves += 1;
+  } catch (err) {
+    console.log("Failed to push", space.name, err);
+  }
+}
+console.log("Saved", saves);

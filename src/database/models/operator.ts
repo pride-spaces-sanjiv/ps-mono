@@ -33,7 +33,9 @@ const OperatorSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-indexFieldsFromSchema(OperatorSchema, { singleFields: ["name", "slug"] });
+indexFieldsFromSchema(OperatorSchema, {
+  singleFields: ["name", "slug", "person.name", "person.email"],
+});
 
 // Model Instances
 export const Operator = Conn.model("Operator", OperatorSchema, "operators");
