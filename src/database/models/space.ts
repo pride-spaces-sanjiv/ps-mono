@@ -29,7 +29,7 @@ const SpaceSchema = new Conn.Schema(
     description: { type: String },
     openTime: { type: Date },
     closeTime: { type: Date },
-    openDays: { type: Number },
+    openDays: { type: [Number] },
     isVerified: { type: Boolean },
     isActive: { type: Boolean },
     totalSeats: { type: Number, default: 0 },
