@@ -1,4 +1,4 @@
-import { SPACES } from "../config";
+import { ADMIN_SPACE } from "../config";
 import { spaceSchema } from "@/utils/schemas/spaces";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
@@ -11,25 +11,40 @@ import type {
 import type { Space } from "@/types/data/spaces";
 
 type SpacesRes = GeneralResponseWithError<
-  PaginatedResponse<Partial<{ results: Space[] }>>
+  PaginatedResponse<
+    Partial<{
+      results: Space[];
+      references: Record<
+        string,
+        Partial<{ results: any[]; metrics: { total: number } }>
+      >;
+    }>
+  >
 >;
-
 
 // 🔹 Get All Spaces (Paginated)
 export const getSpaces = APIBodyValidationWrapper({
-  handle: async (_param, config) => {
-    const res = await SPACES.get("", config);
+  handle: async (param, config) => {
+    const url = (
+      `/` +
+      (param?.url || "") +
+      queryToString(param?.query)
+    ).replace(/\/+/g, "/");
+    const res = await ADMIN_SPACE.get<SpacesRes>(url, config);
     return res;
   },
 });
 
 export const getSpaceById = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = `/${(param?.query as { id: string })?.id}`;
-
-    const res = await SPACES.get<GeneralResponseWithError<Space>>(
+    const url = (
+      `/` +
+      (param?.url || "") +
+      queryToString(param?.query)
+    ).replace(/\/+/g, "/");
+    const res = await ADMIN_SPACE.get<GeneralResponseWithError<Space>>(
       url,
-      config
+      config,
     );
 
     return res;
@@ -39,51 +54,60 @@ export const getSpaceById = APIBodyValidationWrapper({
 // 🔹 Get Single Space
 export const getSpaceData = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = "/" + queryToString(param?.query);
-    const res = await SPACES.get<GeneralResponseWithError<Space>>(
+    const url = (
+      `/` +
+      (param?.url || "") +
+      queryToString(param?.query)
+    ).replace(/\/+/g, "/");
+    const res = await ADMIN_SPACE.get<GeneralResponseWithError<Space>>(
       url,
-      config
+      config,
     );
     return res;
   },
 });
-
 
 // 🔹 Create Space
 export const createSpace = APIBodyValidationWrapper({
   schema: spaceSchema,
   handle: async (param, config) => {
     const url = "/";
-    const res = await SPACES.post<GeneralResponseWithError<Space>>(
+    const res = await ADMIN_SPACE.post<GeneralResponseWithError<Space>>(
       url,
       param?.body,
-      config
+      config,
     );
     return res;
   },
 });
-
 
 // 🔹 Update Space
 export const updateSpace = APIBodyValidationWrapper({
   schema: spaceSchema.partial(),
   handle: async (param, config) => {
-    const url = "/" + queryToString(param?.query);
-    const res = await SPACES.put<GeneralResponseWithError<Space>>(
+    const url = (
+      `/` +
+      (param?.url || "") +
+      queryToString(param?.query)
+    ).replace(/\/+/g, "/");
+    const res = await ADMIN_SPACE.put<GeneralResponseWithError<Space>>(
       url,
       param?.body,
-      config
+      config,
     );
     return res;
   },
 });
 
-
 // 🔹 Delete Space
 export const deleteSpace = APIBodyValidationWrapper({
   handle: async (param, config) => {
-    const url = "/" + queryToString(param?.query);
-    const res = await SPACES.delete<
+    const url = (
+      `/` +
+      (param?.url || "") +
+      queryToString(param?.query)
+    ).replace(/\/+/g, "/");
+    const res = await ADMIN_SPACE.delete<
       GeneralResponseWithError<Pick<Space, "id">>
     >(url, config);
     return res;
