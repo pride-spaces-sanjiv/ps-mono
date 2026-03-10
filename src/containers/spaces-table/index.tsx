@@ -35,6 +35,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { queryKeys } from "@/utils/query-keys";
 import { datifyObjectValues } from "@/utils/object/datify";
+import { formatOpenDays } from "@/utils/data/days";
 import { keepPreviousData } from "@tanstack/react-query";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
 import {
@@ -189,7 +190,7 @@ const SpacesTabledResults = () => {
 
                     return (
                         <div>
-                            {location.city}, {location.state}
+                            {location?.city}, {location?.state}
                         </div>
                     )
                 }
@@ -217,75 +218,58 @@ const SpacesTabledResults = () => {
                 },
                 cell: ({ row }) => <div>{row.getValue("description") || "-"}</div>,
             },
+{
+  accessorKey: "openTime",
+  header: "Open Time",
+  cell: ({ row }) => {
+    const time = row.original.openTime;
+    if (!time) return "-";
+
+    return new Date(time).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  },
+},
+ {
+  accessorKey: "closeTime",
+  header: "Close Time",
+  cell: ({ row }) => {
+    const time = row.original.closeTime;
+    if (!time) return "-";
+
+    return new Date(time).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  },
+},
             {
-                accessorKey: "openTime",
-                header: ({ column }) => {
-                    return (
-                        <Button
-                            variant="ghost"
-                            onClick={() =>
-                                column.toggleSorting(column.getIsSorted() === "asc")
-                            }
-                        >
-                            Open Time
-                            {column.getIsSorted() === "asc" ? (
-                                <ArrowDown />
-                            ) : column.getIsSorted() === "desc" ? (
-                                <ArrowUp />
-                            ) : (
-                                <ArrowUpDown />
-                            )}
-                        </Button>
-                    );
-                },
-                cell: ({ row }) => <div>{row.getValue("openTime") || "-"}</div>,
-            },
-            {
-                accessorKey: "closeTime",
-                header: ({ column }) => {
-                    return (
-                        <Button
-                            variant="ghost"
-                            onClick={() =>
-                                column.toggleSorting(column.getIsSorted() === "asc")
-                            }
-                        >
-                            Close Time
-                            {column.getIsSorted() === "asc" ? (
-                                <ArrowDown />
-                            ) : column.getIsSorted() === "desc" ? (
-                                <ArrowUp />
-                            ) : (
-                                <ArrowUpDown />
-                            )}
-                        </Button>
-                    );
-                },
-                cell: ({ row }) => <div>{row.getValue("closeTime") || "-"}</div>,
-            },
-            {
-                accessorKey: "openDays",
-                header: ({ column }) => {
-                    return (
-                        <Button
-                            variant="ghost"
-                            onClick={() =>
-                                column.toggleSorting(column.getIsSorted() === "asc")
-                            }
-                        >
-                            Open Days
-                            {column.getIsSorted() === "asc" ? (
-                                <ArrowDown />
-                            ) : column.getIsSorted() === "desc" ? (
-                                <ArrowUp />
-                            ) : (
-                                <ArrowUpDown />
-                            )}
-                        </Button>
-                    );
-                },
-                cell: ({ row }) => <div>{row.getValue("openDays") || "-"}</div>,
-            },
+  accessorKey: "openDays",
+  header: ({ column }) => {
+    return (
+      <Button
+        variant="ghost"
+        onClick={() =>
+          column.toggleSorting(column.getIsSorted() === "asc")
+        }
+      >
+        Open Days
+        {column.getIsSorted() === "asc" ? (
+          <ArrowDown />
+        ) : column.getIsSorted() === "desc" ? (
+          <ArrowUp />
+        ) : (
+          <ArrowUpDown />
+        )}
+      </Button>
+    );
+  },
+  cell: ({ row }) => {
+    const openDays = row.original.openDays;
+    return <div>{formatOpenDays(openDays)}</div>;
+  },
+},
             {
                 id: "actions",
                 enableHiding: false,

@@ -85,16 +85,14 @@ export const createSpace = APIBodyValidationWrapper({
 export const updateSpace = APIBodyValidationWrapper({
   schema: spaceSchema.partial(),
   handle: async (param, config) => {
-    const url = (
-      `/` +
-      (param?.url || "") +
-      queryToString(param?.query)
-    ).replace(/\/+/g, "/");
+    const url = `/${param?.url}`;
+
     const res = await ADMIN_SPACE.put<GeneralResponseWithError<Space>>(
       url,
       param?.body,
-      config,
+      config
     );
+
     return res;
   },
 });

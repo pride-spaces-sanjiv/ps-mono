@@ -1,22 +1,27 @@
 import { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import moment from "moment";
 import { getSpaceById, updateSpace } from "@/services/apis/admin/spaces";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
+import { Checkbox } from "@/components/ui/checkbox";
 import FormField from "@/components/form/field";
 import { SelectPicker } from "@/components/select";
 import GroupsSelectPicker from "@/components/groups-selector";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ActionButton from "@/components/buttons/action-btn";
-import { Checkbox } from "@/components/ui/checkbox";
+
+const defaultTime = moment().hour(0).minute(0).toDate();
 
 const SpaceEditPage = () => {
   const { id } = useParams();
-  const { data: res, isFetching: isLoading } = useQuery({
+  const navigate = useNavigate();
+  const { data: res, isFetching } = useQuery({
     queryKey: [queryKeys.SPACES, id],
     queryFn: () =>
       getSpaceById({ query: { withOperator: true }, url: `/${id}` }),
@@ -31,7 +36,7 @@ const SpaceEditPage = () => {
     formState: { errors, defaultValues },
     watch,
     setValue,
-  } = useForm({ resolver: zodResolver(spaceSchema) });
+  } = useForm({ resolver: zodResolver(spaceSchema), defaultValues: { openTime: defaultTime, closeTime: defaultTime } });
 
   // useEffect(() => {
   //   if (data) {
@@ -46,19 +51,34 @@ const SpaceEditPage = () => {
         "createdAt",
         "updatedAt",
       ]);
-      reset(modified as NonNullable<typeof modified>);
+      reset({ openTime: defaultTime, closeTime: defaultTime, ...modified } as NonNullable<typeof modified>);
     }
   }, [res]);
 
-  const { mutateAsync } = useMutation({
+  const {
+    mutateAsync,
+    isPending: updateLoading,
+  } = useMutation({
     mutationFn: updateSpace,
   });
 
-  const onSubmit = async (body: any) => {
-    await mutateAsync({
-      query: { id },
-      body,
-    });
+  const onSubmit = async (body: SpaceSchema) => {
+    try {
+      console.log("Space edit body", body)
+
+      await mutateAsync({
+        url: id,
+        body,
+      });
+      console.log("Space edit body", body)
+
+      toast.success("Space updated successfully");
+
+      navigate("/spaces");
+
+    } catch (err) {
+      toast.error("Failed to update space");
+    }
   };
 
   return (
@@ -69,12 +89,21 @@ const SpaceEditPage = () => {
 
       <div className="w-full max-w-4xl mx-auto py-8">
         <form onSubmit={handleSubmit(onSubmit)} className="auto-form-grid">
+
           {/* Name */}
           <FormField
             label="Space Name"
             placeholder="My Space"
             {...register("name")}
             error={errors.name}
+          />
+
+          {/* Slug */}
+          <FormField
+            label="Slug"
+            placeholder="my-space-slug"
+            {...register("slug")}
+            error={errors.slug}
           />
 
           {/* Email */}
@@ -89,27 +118,64 @@ const SpaceEditPage = () => {
           {/* Branch */}
           <FormField
             label="Branch"
-            placeholder="Mumbai"
             {...register("branch")}
             readOnly
             disabled
             error={errors.branch}
           />
 
-          {/* Enterprise */}
+          {/* Operator */}
           <FormField
             label="Operator"
-            placeholder="My Space Org"
             {...register("operator")}
             readOnly
             disabled
             error={errors.operator}
           />
 
+          {/* Open Time */}
+          <FormField
+            label="Open Time"
+            type="time"
+            defaultValue={defaultValues?.openTime ? moment(defaultValues?.openTime).format("HH:mm") : undefined}
+            onChange={(e) => {
+              const val = e.currentTarget.value
+              setValue("openTime", moment(val, "HH:mm", true).toDate(), { shouldValidate: true })
+            }}
+            error={errors.openTime}
+          />
+
+          {/* Close Time */}
+          <FormField
+            label="Close Time"
+            type="time"
+            defaultValue={defaultValues?.closeTime ? moment(defaultValues?.closeTime).format("HH:mm") : undefined}
+            onChange={(e) => {
+              const val = e.currentTarget.value
+              setValue("closeTime", moment(val, "HH:mm", true).toDate(), { shouldValidate: true })
+            }}
+            error={errors.closeTime}
+          />
+
+          {/* Total Seats */}
+          <FormField
+            label="Total Seats"
+            type="number"
+            {...register("totalSeats", { valueAsNumber: true })}
+            error={errors.totalSeats}
+          />
+
+          {/* Booked Seats */}
+          <FormField
+            label="Booked Seats"
+            type="number"
+            {...register("bookedSeats", { valueAsNumber: true })}
+            error={errors.bookedSeats}
+          />
+
           {/* Open Days */}
           <FormField
             label="Open Days"
-            placeholder="My Space Org"
             error={{
               message: errors.openDays?.message,
               type: errors.openDays?.type || "validate",
@@ -163,35 +229,63 @@ const SpaceEditPage = () => {
             inputType="textarea"
           />
 
-          {/* Location Section */}
+          {/* Location Fields */}
+
           <FormField
             label="City"
-            placeholder="Enter the city for your space"
+            placeholder="Enter the city"
             {...register("location.city")}
             error={errors.location?.city}
           />
+
           <FormField
             label="State"
-            placeholder="Enter the state for your space"
+            placeholder="Enter the state"
             {...register("location.state")}
             error={errors.location?.state}
           />
+
           <FormField
             label="Country"
-            placeholder="Enter the country for your space"
+            placeholder="Enter the country"
             {...register("location.country")}
             error={errors.location?.country}
           />
+
+          <FormField
+            label="Postal Code"
+            placeholder="Postal Code"
+            {...register("location.postalCode")}
+            error={errors.location?.postalCode}
+          />
+
+          <FormField
+            label="Latitude"
+            type="number"
+            step="any"
+            {...register("location.lat")}
+            error={errors.location?.lat}
+          />
+
+          <FormField
+            label="Longitude"
+            type="number"
+            step="any"
+            {...register("location.lng")}
+            error={errors.location?.lng}
+          />
+
           {/* Address */}
           <FormField
             label="Address"
-            placeholder="Enter the address for your space"
+            placeholder="Enter address"
             {...register("location.address")}
             error={errors.location?.address}
             inputType="textarea"
           />
 
           {/* Status */}
+
           <div className="flex items-center gap-4">
             <label className="text-white text-sm">Active</label>
             <Checkbox
@@ -209,12 +303,17 @@ const SpaceEditPage = () => {
           </div>
 
           {/* Submit */}
-          <ActionButton
-            type="submit"
-            className="max-w-fit self-end col-span-full"
-          >
-            Save Changes
-          </ActionButton>
+
+          <div className="col-span-full flex justify-end">
+            <ActionButton
+              type="submit"
+              loading={updateLoading}
+              className="max-w-fit"
+            >
+              Update Space
+            </ActionButton>
+          </div>
+
         </form>
       </div>
       {/* <UserCreateModal /> */}
