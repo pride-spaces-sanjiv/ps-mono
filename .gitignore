@@ -7,3 +7,4 @@ dist/
 backup/**/*
 scripts/backup/**/*.json
 /generated/prisma
+data/*
