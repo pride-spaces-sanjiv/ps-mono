@@ -41,7 +41,7 @@ export const getSpaces = async (
     const searchFilters = getSearchFilters<typeof Space>(req, {
       fieldMaps: {
         Name: "name",
-        Email: "email",
+        Email: "person.email",
         City: "location.city",
         State: "location.state",
       },
