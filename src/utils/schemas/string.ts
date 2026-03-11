@@ -74,14 +74,14 @@ export const getPhoneSchema = ({
   keyName = "Phone No",
   doTrim = true,
   minLength = 4,
-  telRegexp = /^([0-2]|91)[0-9]{9,10}$/,
-  telRegexpMsg = "invalid phone number",
+  telRegexp = /^[0-9]{9,13}$/,
+  telRegexpMsg = "is an invalid phone number",
   schema = z.string(),
 }: Partial<PhoneSchemaOptions> = {}) => {
   if (doTrim) {
     schema = schema.trim();
   }
-  schema = schema.regex(telRegexp, `${keyName}${telRegexpMsg}`);
+  schema = schema.regex(telRegexp, `${keyName} ${telRegexpMsg}`);
   if (Number.isFinite(minLength)) {
     schema = schema.min(
       minLength,
@@ -152,26 +152,27 @@ export const getSlugSchema = ({
   schema = z.string(),
 }: Partial<SlugSchemaOptions> = {}) => {
   if (doTrim) {
-    schema = schema
-      .trim()
+    schema = schema.trim();
   }
   // @ts-ignore
-  schema = schema.transform((value) => value.toLowerCase().replace(/ +/g, "")).superRefine((val, ctx) => {
-    if (!slugRegexp.test(val)) {
-      return ctx.addIssue({
-        code: "invalid_value",
-        values: [val],
-        message: `${keyName} ${slugRegexpMsg}`
-      });
-    }
-    if (Number.isFinite(minLength) && val.length < minLength) {
-      return ctx.addIssue({
-        code: "too_small",
-        minimum: minLength,
-        origin: "number",
-        message: `${keyName} must be at least ${minLength} characters long`
-      });
-    }
-  });
+  schema = schema
+    .transform((value) => value.toLowerCase().replace(/ +/g, ""))
+    .superRefine((val, ctx) => {
+      if (!slugRegexp.test(val)) {
+        return ctx.addIssue({
+          code: "invalid_value",
+          values: [val],
+          message: `${keyName} ${slugRegexpMsg}`,
+        });
+      }
+      if (Number.isFinite(minLength) && val.length < minLength) {
+        return ctx.addIssue({
+          code: "too_small",
+          minimum: minLength,
+          origin: "number",
+          message: `${keyName} must be at least ${minLength} characters long`,
+        });
+      }
+    });
   return schema;
 };

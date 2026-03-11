@@ -1,17 +1,6 @@
 import React, { useMemo, useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { getSpaces } from "@/services/apis/admin/spaces";
-import type { Space } from "@/types/data/spaces";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -24,20 +13,18 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronDown,
-  MoreHorizontal,
-} from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { queryKeys } from "@/utils/query-keys";
-import { datifyObjectValues } from "@/utils/object/datify";
-import { formatOpenDays } from "@/utils/data/days";
 import { keepPreviousData } from "@tanstack/react-query";
-import { useDebouncer } from "@/services/hooks/use-debouncer";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -47,21 +34,86 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
+import { Input } from "@/components/ui/input";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  MoreHorizontal,
+} from "lucide-react";
+import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
+import { getSpaces } from "@/services/apis/admin/spaces";
+import { datifyObjectValues } from "@/utils/object/datify";
+import { formatOpenDays } from "@/utils/data/days";
+import { queryKeys } from "@/utils/query-keys";
+import { useDebouncer } from "@/services/hooks/use-debouncer";
+import type { Space } from "@/types/data/spaces";
+import { cn } from "@/utils/className";
+import { SelectPicker } from "@/components/select";
 
-const SpacesTabledResults = () => {
-  // const totalCredits = userStore((state) =>
-  //   validateNumber(state.value?.credits, { invalidValue: 0 }),
-  // );
+type Props = {
+  id: string | null;
+  tableWrapperProps: React.JSX.IntrinsicElements["div"];
+  tableProps: React.ComponentProps<"table">;
+  tableHeaderProps: React.ComponentProps<"thead">;
+  tableBodyProps: React.ComponentProps<"tbody">;
+  tableRowProps: React.ComponentProps<"tr">;
+  tableHeadProps: React.ComponentProps<"th">;
+  tableCellProps: React.ComponentProps<"td">;
+  skeletonProps: Partial<SkeletonProps>;
+  pagination: boolean;
+  prevButtonProps: Parameters<typeof Button>[0];
+  nextButtonProps: Parameters<typeof Button>[0];
+  inputProps: Parameters<typeof Input>[0];
+} & React.JSX.IntrinsicElements["div"];
+
+const SpacesTabledResults = ({
+  id,
+  className,
+  pagination = true,
+  tableWrapperProps,
+  tableProps,
+  tableHeaderProps,
+  tableBodyProps,
+  tableRowProps,
+  tableHeadProps,
+  tableCellProps,
+  prevButtonProps,
+  nextButtonProps,
+  inputProps,
+  skeletonProps,
+  ...props
+}: Partial<Props>) => {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
 
+  // Catch operator id from location state
+  const { state: locState } = useLocation();
+  const operatorId = useMemo<string | null>(
+    () =>
+      typeof locState === "object" && locState ? locState.operatorId : null,
+    [locState],
+  );
+
+  const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
 
   const { data: res, isFetching } = usePaginatedQuery({
     limit: 10,
-    queryKey: [queryKeys.SPACES],
-    queryFn: () => getSpaces({ query: { withOperator: true } }),
+    queryKey: [
+      queryKeys.SPACES,
+      debouncedSearch.field,
+      debouncedSearch.value,
+      operatorId,
+    ],
+    queryFn: () =>
+      getSpaces({
+        query: {
+          withOperator: true,
+          ...((operatorId && { operator: operatorId || "" }) || null),
+          [`s${debouncedSearch.field}`]: debouncedSearch.value,
+        },
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -145,6 +197,29 @@ const SpacesTabledResults = () => {
         ),
       },
       {
+        accessorKey: "name",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Name
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original?.name || "-"}</div>,
+      },
+      {
         accessorKey: "email",
         header: ({ column }) => {
           return (
@@ -165,7 +240,7 @@ const SpacesTabledResults = () => {
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original?.person?.email|| "-"}</div>,
+        cell: ({ row }) => <div>{row.original?.person?.email || "-"}</div>,
       },
       {
         accessorKey: "location",
@@ -328,99 +403,117 @@ const SpacesTabledResults = () => {
   });
 
   return (
-    <div className="rounded-md border max-w-full overflow-x-auto w-auto">
-      {/* <Table>
-                     <TableCaption>Data of Spaces with there operators.</TableCaption> 
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[100px]">Branch</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead >Location</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>OpenTime</TableHead>
-                            <TableHead>CloseTime</TableHead>
-                            <TableHead>OpenDays</TableHead>
-                            <TableHead>Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
+    <div {...props} className={cn("", className)}>
+      {/* Search */}
+      <div className={cn("flex items-center py-4 gap-2")}>
+        <Input
+          placeholder={`Search by ${search.field.toLowerCase()}...`}
+          // value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          {...inputProps}
+          onChange={(e) => {
+            // table.getColumn("name")?.setFilterValue(e.target.value);
+            setSearch((prev) => ({
+              ...prev,
+              value: e.currentTarget.value.trim(),
+            }));
+            inputProps?.onChange?.(e);
+          }}
+          className={cn("max-w-sm", inputProps?.className)}
+        />
+        <SelectPicker
+          valueProps={{ defaultValue: "Name", placeholder: "Select a field" }}
+          wrapperProps={{
+            onValueChange(value) {
+              setSearch({ value: "", field: value });
+            },
+          }}
+          items={["Name", "City", "State"].map((s) => ({ label: s, value: s }))}
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns <ChevronDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="rounded-md border max-w-full overflow-x-auto w-auto">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="text-center">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
 
-  {table.getRowModel().rows.map((row) => (
-    <TableRow key={space.id}>
-      <TableCell className="font-medium">{space.branch}</TableCell>
-      <TableCell className="whitespace-normal">{space.name }</TableCell>
-      <TableCell className="whitespace-normal">{space.email}</TableCell>
-      <TableCell className="whitespace-normal">
-        {space.location.city}, {space.location.state}
-      </TableCell>
-      <TableCell className="whitespace-normal">{space.description}</TableCell>
-      <TableCell>{space.openTime}</TableCell>
-      <TableCell>{space.closeTime}</TableCell>
-      <TableCell>{space.openDays}</TableCell>
-      
-    </TableRow>
-  ))}               </TableBody>
-                    {/* <TableFooter>
-        <TableRow>
-          <TableCell colSpan={3}>Total</TableCell>
-          <TableCell className="text-right">$2,500.00</TableCell>
-        </TableRow>
-      </TableFooter> 
-                </Table> */}
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="text-center">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
+          <TableBody>
+            {isFetching ? (
+              Array(5)
+                .fill(null)
+                .map((_, i) => (
+                  <TableRow key={i}>
+                    {table.getAllLeafColumns().map((col) => (
+                      <TableCell key={col.id}>
+                        <Skeleton className="w-full rounded-sm" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+            ) : table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="whitespace-normal">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
                       )}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-
-        <TableBody>
-          {isFetching ? (
-            Array(5)
-              .fill(null)
-              .map((_, i) => (
-                <TableRow key={i}>
-                  {table.getAllLeafColumns().map((col) => (
-                    <TableCell key={col.id}>
-                      <Skeleton className="w-full rounded-sm" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-          ) : table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="whitespace-normal">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-4 font-medium"
+                >
+                  No spaces found
+                </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="text-center py-4 font-medium"
-              >
-                No spaces found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

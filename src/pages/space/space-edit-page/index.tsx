@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,12 +9,14 @@ import { getSpaceById, updateSpace } from "@/services/apis/admin/spaces";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
+import { days } from "@/utils/data/days";
 import { Checkbox } from "@/components/ui/checkbox";
 import FormField from "@/components/form/field";
 import { SelectPicker } from "@/components/select";
 import GroupsSelectPicker from "@/components/groups-selector";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ActionButton from "@/components/buttons/action-btn";
+import type { Operator } from "@/types/data/operators";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -36,7 +38,19 @@ const SpaceEditPage = () => {
     formState: { errors, defaultValues },
     watch,
     setValue,
-  } = useForm({ resolver: zodResolver(spaceSchema), defaultValues: { openTime: defaultTime, closeTime: defaultTime } });
+  } = useForm({
+    resolver: zodResolver(spaceSchema),
+    defaultValues: { openTime: defaultTime, closeTime: defaultTime },
+  });
+
+  const operatorData = useMemo(
+    () =>
+      (res?.data?.data?.references?.operator as
+        | Partial<Operator>
+        | null
+        | undefined) || null,
+    [res?.data],
+  );
 
   // useEffect(() => {
   //   if (data) {
@@ -51,31 +65,31 @@ const SpaceEditPage = () => {
         "createdAt",
         "updatedAt",
       ]);
-      reset({ openTime: defaultTime, closeTime: defaultTime, ...modified } as NonNullable<typeof modified>);
+      reset({
+        openTime: defaultTime,
+        closeTime: defaultTime,
+        ...modified,
+      } as NonNullable<typeof modified>);
     }
   }, [res]);
 
-  const {
-    mutateAsync,
-    isPending: updateLoading,
-  } = useMutation({
+  const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationFn: updateSpace,
   });
 
   const onSubmit = async (body: SpaceSchema) => {
     try {
-      console.log("Space edit body", body)
+      console.log("Space edit body", body);
 
       await mutateAsync({
         url: id,
         body,
       });
-      console.log("Space edit body", body)
+      console.log("Space edit body", body);
 
       toast.success("Space updated successfully");
 
       navigate("/spaces");
-
     } catch (err) {
       toast.error("Failed to update space");
     }
@@ -88,8 +102,12 @@ const SpaceEditPage = () => {
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
-        <form onSubmit={handleSubmit(onSubmit)} className="auto-form-grid">
-
+        <form
+          onSubmit={handleSubmit(onSubmit, (errors) => {
+            console.log("Space edit form error", errors);
+          })}
+          className="auto-form-grid"
+        >
           {/* Name */}
           <FormField
             label="Space Name"
@@ -116,31 +134,63 @@ const SpaceEditPage = () => {
           />
 
           {/* Branch */}
-          <FormField
+          {/* <FormField
             label="Branch"
             {...register("branch")}
             readOnly
             disabled
             error={errors.branch}
-          />
+          /> */}
 
           {/* Operator */}
           <FormField
             label="Operator"
-            {...register("operator")}
+            value={operatorData?.name || "None"}
+            // {...register("operator")}
             readOnly
             disabled
             error={errors.operator}
           />
 
+          {/* Person Data */}
+          <FormField
+            label="Person Name"
+            placeholder="John Doe"
+            {...register("person.name")}
+            error={errors?.person?.name}
+          />
+          <FormField
+            label="Person Email"
+            type="email"
+            placeholder="john.doe@example.com"
+            {...register("person.email")}
+            error={errors?.person?.email}
+          />
+          <FormField
+            label="Person Contact No"
+            type="tel"
+            inputMode="tel"
+            placeholder="1234567890"
+            {...register("person.contactNo")}
+            error={errors?.person?.contactNo}
+          />
+          {/*  */}
+
           {/* Open Time */}
           <FormField
             label="Open Time"
             type="time"
-            defaultValue={defaultValues?.openTime ? moment(defaultValues?.openTime).format("HH:mm") : undefined}
+            key={defaultValues?.openTime?.toISOString()}
+            defaultValue={
+              defaultValues?.openTime
+                ? moment(defaultValues?.openTime).format("HH:mm")
+                : undefined
+            }
             onChange={(e) => {
-              const val = e.currentTarget.value
-              setValue("openTime", moment(val, "HH:mm", true).toDate(), { shouldValidate: true })
+              const val = e.currentTarget.value;
+              setValue("openTime", moment(val, "HH:mm", true).toDate(), {
+                shouldValidate: true,
+              });
             }}
             error={errors.openTime}
           />
@@ -149,10 +199,17 @@ const SpaceEditPage = () => {
           <FormField
             label="Close Time"
             type="time"
-            defaultValue={defaultValues?.closeTime ? moment(defaultValues?.closeTime).format("HH:mm") : undefined}
+            key={defaultValues?.closeTime?.toISOString()}
+            defaultValue={
+              defaultValues?.closeTime
+                ? moment(defaultValues?.closeTime).format("HH:mm")
+                : undefined
+            }
             onChange={(e) => {
-              const val = e.currentTarget.value
-              setValue("closeTime", moment(val, "HH:mm", true).toDate(), { shouldValidate: true })
+              const val = e.currentTarget.value;
+              setValue("closeTime", moment(val, "HH:mm", true).toDate(), {
+                shouldValidate: true,
+              });
             }}
             error={errors.closeTime}
           />
@@ -185,15 +242,7 @@ const SpaceEditPage = () => {
               key={`days-${defaultValues?.openDays?.length}`}
               type="multiple"
               defaultSelected={defaultValues?.openDays}
-              items={[
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-              ].map((dt, i) => ({
+              items={days.map((dt, i) => ({
                 label: dt,
                 value: i + 1,
               }))}
@@ -289,6 +338,7 @@ const SpaceEditPage = () => {
           <div className="flex items-center gap-4">
             <label className="text-white text-sm">Active</label>
             <Checkbox
+              key={defaultValues?.isActive ? "active" : "inactive"}
               defaultChecked={!!defaultValues?.isActive}
               {...register("isActive")}
             />
@@ -297,6 +347,7 @@ const SpaceEditPage = () => {
           <div className="flex items-center gap-4">
             <label className="text-white text-sm">Verified</label>
             <Checkbox
+              key={defaultValues?.isVerified ? "verified" : "unverified"}
               defaultChecked={!!defaultValues?.isVerified}
               {...register("isVerified")}
             />
@@ -313,7 +364,6 @@ const SpaceEditPage = () => {
               Update Space
             </ActionButton>
           </div>
-
         </form>
       </div>
       {/* <UserCreateModal /> */}

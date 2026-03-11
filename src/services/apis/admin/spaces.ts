@@ -21,6 +21,7 @@ type SpacesRes = GeneralResponseWithError<
     }>
   >
 >;
+type References = Partial<{ [k: string]: Record<string, any> | null }>;
 
 // 🔹 Get All Spaces (Paginated)
 export const getSpaces = APIBodyValidationWrapper({
@@ -42,10 +43,9 @@ export const getSpaceById = APIBodyValidationWrapper({
       (param?.url || "") +
       queryToString(param?.query)
     ).replace(/\/+/g, "/");
-    const res = await ADMIN_SPACE.get<GeneralResponseWithError<Space>>(
-      url,
-      config,
-    );
+    const res = await ADMIN_SPACE.get<
+      GeneralResponseWithError<Space & Partial<{ references: References }>>
+    >(url, config);
 
     return res;
   },
@@ -59,10 +59,9 @@ export const getSpaceData = APIBodyValidationWrapper({
       (param?.url || "") +
       queryToString(param?.query)
     ).replace(/\/+/g, "/");
-    const res = await ADMIN_SPACE.get<GeneralResponseWithError<Space>>(
-      url,
-      config,
-    );
+    const res = await ADMIN_SPACE.get<
+      GeneralResponseWithError<Space & Partial<{ references: References }>>
+    >(url, config);
     return res;
   },
 });
@@ -90,7 +89,7 @@ export const updateSpace = APIBodyValidationWrapper({
     const res = await ADMIN_SPACE.put<GeneralResponseWithError<Space>>(
       url,
       param?.body,
-      config
+      config,
     );
 
     return res;
