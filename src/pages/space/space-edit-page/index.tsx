@@ -68,6 +68,7 @@ const SpaceEditPage = () => {
       reset({
         openTime: defaultTime,
         closeTime: defaultTime,
+        slug: modified?.references?.operator?.slug,
         ...modified,
       } as NonNullable<typeof modified>);
     }

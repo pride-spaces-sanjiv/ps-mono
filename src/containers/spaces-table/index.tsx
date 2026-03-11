@@ -54,6 +54,7 @@ import { SelectPicker } from "@/components/select";
 
 type Props = {
   id: string | null;
+  operatorId: string | null;
   tableWrapperProps: React.JSX.IntrinsicElements["div"];
   tableProps: React.ComponentProps<"table">;
   tableHeaderProps: React.ComponentProps<"thead">;
@@ -70,6 +71,7 @@ type Props = {
 
 const SpacesTabledResults = ({
   id,
+  operatorId,
   className,
   pagination = true,
   tableWrapperProps,
@@ -89,11 +91,6 @@ const SpacesTabledResults = ({
 
   // Catch operator id from location state
   const { state: locState } = useLocation();
-  const operatorId = useMemo<string | null>(
-    () =>
-      typeof locState === "object" && locState ? locState.operatorId : null,
-    [locState],
-  );
 
   const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
@@ -414,7 +411,10 @@ const SpacesTabledResults = ({
             // table.getColumn("name")?.setFilterValue(e.target.value);
             setSearch((prev) => ({
               ...prev,
-              value: e.currentTarget.value.trim(),
+              value: e.currentTarget.value
+                .trim()
+                .toLowerCase()
+                .replace(/ +/g, " "),
             }));
             inputProps?.onChange?.(e);
           }}
