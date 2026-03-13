@@ -12,8 +12,6 @@ import { queryKeys } from "@/utils/query-keys";
 import { days } from "@/utils/data/days";
 import { Checkbox } from "@/components/ui/checkbox";
 import FormField from "@/components/form/field";
-import { SelectPicker } from "@/components/select";
-import GroupsSelectPicker from "@/components/groups-selector";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";

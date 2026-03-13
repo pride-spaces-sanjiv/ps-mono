@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import {
@@ -95,7 +95,7 @@ const SpacesTabledResults = ({
   const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
 
-  const { data: res, isFetching } = usePaginatedQuery({
+  const { data: res, isFetching, page, setPage } = usePaginatedQuery({
     limit: 10,
     queryKey: [
       queryKeys.SPACES,
@@ -103,9 +103,11 @@ const SpacesTabledResults = ({
       debouncedSearch.value,
       operatorId,
     ],
-    queryFn: () =>
+    queryFn: (page, limit) =>
       getSpaces({
         query: {
+          page: page + 1,
+          limit: limit,
           withOperator: true,
           ...((operatorId && { operator: operatorId || "" }) || null),
           [`s${debouncedSearch.field}`]: debouncedSearch.value,
@@ -128,9 +130,10 @@ const SpacesTabledResults = ({
         .filter(Boolean),
     [res?.data?.data],
   );
+ 
   // const spaces = res?.data?.data?.results || [];
   //         const spaces = [
-  //   {
+    //   {
   //     id: "1",
   //     branch: "BR001",
   //     enterprise: "ENT001",
@@ -158,7 +161,7 @@ const SpacesTabledResults = ({
   //   },
   // ];
   console.log("spaces", spaces);
-
+//  const spaceId = spaces
   // Columns definition
   const columns: ColumnDef<Space>[] = useMemo(
     () => [
@@ -397,7 +400,33 @@ const SpacesTabledResults = ({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: (updater) => {
+      const newState =
+        typeof updater === "function"
+          ? updater({
+            pageIndex: page,
+            pageSize: res?.data?.data?.metrics?.count || 10,
+          })
+          : updater;
+      setPage(newState.pageIndex);
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      pagination: {
+        pageIndex: page,
+        pageSize: res?.data?.data?.metrics?.count || 10,
+      },
+    },
+    manualPagination: true,
+    rowCount: res?.data?.data?.metrics?.total || 1,
   });
+
+  useEffect(() => {
+    setPage(0);
+  }, [ debouncedSearch]);
 
   return (
     <div {...props} className={cn("", className)}>
@@ -466,9 +495,9 @@ const SpacesTabledResults = ({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -514,6 +543,43 @@ const SpacesTabledResults = ({
           </TableBody>
         </Table>
       </div>
+            <div className="flex items-center justify-between space-x-2 py-4">
+              {/* <div className="text-muted-foreground text-sm">
+                {table.getFilteredSelectedRowModel().rows?.length} of{" "}
+                {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
+              </div> */}
+              <p className="text-lg font-medium">Page : {page + 1}</p>
+              {!!pagination && (
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!table.getCanPreviousPage()}
+                    {...prevButtonProps}
+                    className={cn("", prevButtonProps?.className)}
+                    onClick={(e) => {
+                      table.previousPage();
+                      prevButtonProps?.onClick?.(e);
+                    }}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!table.getCanNextPage()}
+                    {...nextButtonProps}
+                    className={cn("", nextButtonProps?.className)}
+                    onClick={(e) => {
+                      table.nextPage();
+                      nextButtonProps?.onClick?.(e);
+                    }}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </div>
     </div>
   );
 };

@@ -25,10 +25,13 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  ChevronDown,
   MoreHorizontal,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/utils/className";
 import { queryKeys } from "@/utils/query-keys";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { formatOpenDays } from "@/utils/data/days";
@@ -36,6 +39,7 @@ import { keepPreviousData } from "@tanstack/react-query";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -46,28 +50,75 @@ import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 // import { operators } from "./operator";
 import type { Operator } from "@/types/data/operators";
 import { getOperators } from "@/services/apis/admin/operators";
+import { SelectPicker } from "@/components/select";
 
-const OperatorsTabledResults = () => {
+type Props = {
+  id: string | null;
+  operatorId: string | null;
+  tableWrapperProps: React.JSX.IntrinsicElements["div"];
+  tableProps: React.ComponentProps<"table">;
+  tableHeaderProps: React.ComponentProps<"thead">;
+  tableBodyProps: React.ComponentProps<"tbody">;
+  tableRowProps: React.ComponentProps<"tr">;
+  tableHeadProps: React.ComponentProps<"th">;
+  tableCellProps: React.ComponentProps<"td">;
+  skeletonProps: Partial<SkeletonProps>;
+  pagination: boolean;
+  prevButtonProps: Parameters<typeof Button>[0];
+  nextButtonProps: Parameters<typeof Button>[0];
+  inputProps: Parameters<typeof Input>[0];
+} & React.JSX.IntrinsicElements["div"];
+
+
+const OperatorsTabledResults = ({
+  id,
+  operatorId,
+  className,
+  pagination = true,
+  tableWrapperProps,
+  tableProps,
+  tableHeaderProps,
+  tableBodyProps,
+  tableRowProps,
+  tableHeadProps,
+  tableCellProps,
+  prevButtonProps,
+  nextButtonProps,
+  inputProps,
+  skeletonProps,
+  ...props }: Partial<Props>) => {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState({ field: "Name", value: "" });
 
   const debouncedSearch = useDebouncer(search, 500);
 
-const {
-  data: res,
-  isFetching,
-} = usePaginatedQuery({
-  limit: 10,
-  queryKey: [queryKeys.OPERATORS],
-  queryFn: () => getOperators(),
-  placeholderData: keepPreviousData,
-});
+  const {
+    data: res,
+    isFetching,
+    page,
+    setPage
+  } = usePaginatedQuery({
+    limit: 10,
+    queryKey: [queryKeys.OPERATORS, debouncedSearch.field,
+    debouncedSearch.value,
+    ],
+    queryFn: (page, limit) => getOperators({
+      query: {
+        page: page + 1,
+        limit: limit,
+        withOperator: true,
+        ...((operatorId && { operator: operatorId || "" }) || null),
+        [`s${debouncedSearch.field}`]: debouncedSearch.value,
+      },
+    }),
+    placeholderData: keepPreviousData,
+  });
 
-const operators: Operator[] = useMemo(
-  () =>
-    ((res?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
-  [res?.data?.data?.results]
-);
+  const operators: Operator[] = useMemo(
+    () =>
+      ((res?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
+    [res?.data?.data?.results]
+  );
   console.log("operators", operators);
 
   // Columns definition
@@ -119,81 +170,81 @@ const operators: Operator[] = useMemo(
         },
         cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
       },
-{
-  accessorKey: "headquarter.address",
-  header: ({ column }) => {
-    return (
-      <Button
-        variant="ghost"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
-        Headquarter
-        {column.getIsSorted() === "asc" ? (
-          <ArrowDown />
-        ) : column.getIsSorted() === "desc" ? (
-          <ArrowUp />
-        ) : (
-          <ArrowUpDown />
-        )}
-      </Button>
-    );
-  },
-  cell: ({ row }) => (
-    <div>{row.original.headquarter?.address || "-"}</div>
-  ),
-},
-{
-  accessorKey: "person.name",
-  header: ({ column }) => {
-    return (
-      <Button
-        variant="ghost"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
-        Person Name
-        {column.getIsSorted() === "asc" ? (
-          <ArrowDown />
-        ) : column.getIsSorted() === "desc" ? (
-          <ArrowUp />
-        ) : (
-          <ArrowUpDown />
-        )}
-      </Button>
-    );
-  },
-  cell: ({ row }) => (
-    <div>{row.original.person?.name || "-"}</div>
-  ),
-},
-{
-  accessorKey: "person.email",
-  header: ({ column }) => {
-    return (
-      <Button
-        variant="ghost"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
-        Person Email
-        {column.getIsSorted() === "asc" ? (
-          <ArrowDown />
-        ) : column.getIsSorted() === "desc" ? (
-          <ArrowUp />
-        ) : (
-          <ArrowUpDown />
-        )}
-      </Button>
-    );
-  },
-  cell: ({ row }) => (
-    <div>{row.original.person?.email || "-"}</div>
-  ),
-},
+      {
+        accessorKey: "headquarter.address",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Headquarter
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{row.original.headquarter?.address || "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "person.name",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Person Name
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{row.original.person?.name || "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "person.email",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Person Email
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{row.original.person?.email || "-"}</div>
+        ),
+      },
       {
         id: "actions",
         enableHiding: false,
@@ -245,70 +296,186 @@ const operators: Operator[] = useMemo(
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: (updater) => {
+      const newState =
+        typeof updater === "function"
+          ? updater({
+            pageIndex: page,
+            pageSize: res?.data?.data?.metrics?.count || 10,
+          })
+          : updater;
+      setPage(newState.pageIndex);
+    },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      pagination: {
+        pageIndex: page,
+        pageSize: res?.data?.data?.metrics?.count || 10,
+      },
+    },
+    manualPagination: true,
+    rowCount: res?.data?.data?.metrics?.total || 1,
   });
 
   return (
-    <div
+    <div {...props} className={cn("", className)}>
+      {/* Search  */}
+      <div className={cn("flex items-center py-4 gap-2")}>
+        <Input
+          placeholder={`Search by ${search.field.toLowerCase()}...`}
+          {...inputProps}
+          onChange={(e) => {
+            setSearch((prev) => ({
+              ...prev,
+              value: e.currentTarget.value
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, " "),
+            }));
+            inputProps?.onChange?.(e);
+          }}
+          className={cn("max-w-sm", inputProps?.className)}
+        />
 
-      className=
-      "rounded-md border max-w-full overflow-x-auto w-auto"
-    >
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="text-center">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
+        <SelectPicker
+          valueProps={{ defaultValue: "Name", placeholder: "Select a field" }}
+          wrapperProps={{
+            onValueChange(value) {
+              setSearch({ value: "", field: value });
+            },
+          }}
+          items={["Name", "Headquarter", "Person Name"].map((s) => ({ label: s, value: s }))}
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns <ChevronDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div
 
-        <TableBody>
-          {isFetching ? (
-            Array(5)
-              .fill(null)
-              .map((_, i) => (
-                <TableRow key={i}>
-                  {table.getAllLeafColumns().map((col) => (
-                    <TableCell key={col.id}>
-                      <Skeleton className="w-full rounded-sm" />
+        className=
+        "rounded-md border max-w-full overflow-x-auto w-auto"
+      >
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="text-center">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+
+          <TableBody>
+            {isFetching ? (
+              Array(5)
+                .fill(null)
+                .map((_, i) => (
+                  <TableRow key={i}>
+                    {table.getAllLeafColumns().map((col) => (
+                      <TableCell key={col.id}>
+                        <Skeleton className="w-full rounded-sm" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+            ) : table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="whitespace-normal">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-          ) : table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="whitespace-normal">
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </TableCell>
-                ))}
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-4 font-medium"
+                >
+                  No operators found
+                </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className="text-center py-4 font-medium"
-              >
-                No operators found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            )}
+          </TableBody>
+        </Table>
+
+      </div>
+      <div className="flex items-center justify-between space-x-2 py-4">
+        {/* <div className="text-muted-foreground text-sm">
+                {table.getFilteredSelectedRowModel().rows?.length} of{" "}
+                {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
+              </div> */}
+        <p className="text-lg font-medium">Page : {page + 1}</p>
+        {!!pagination && (
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!table.getCanPreviousPage()}
+              {...prevButtonProps}
+              className={cn("", prevButtonProps?.className)}
+              onClick={(e) => {
+                table.previousPage();
+                prevButtonProps?.onClick?.(e);
+              }}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!table.getCanNextPage()}
+              {...nextButtonProps}
+              className={cn("", nextButtonProps?.className)}
+              onClick={(e) => {
+                table.nextPage();
+                nextButtonProps?.onClick?.(e);
+              }}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
