@@ -2,7 +2,11 @@ import { Model } from "mongoose";
 import { NextFunction } from "express";
 import { Admin } from "@/database/models/user.js";
 import { ResponseHandler } from "./request.js";
-import { AdminLevel, compareAdminLevels } from "@/utils/data/admin.js";
+import {
+  AdminLevel,
+  adminLevels,
+  compareAdminLevels,
+} from "@/utils/data/admin.js";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 
 // Check user exists by field value, then pass/exit
@@ -159,6 +163,52 @@ export const authorizeAdminDetailsByParam = <K extends string = "id">({
             message: `You are not authorized to this ${levelErrorMsgKey}`,
           });
         }
+      }
+      return next();
+    } catch (err) {
+      ResponseHandler.handleError(res, {
+        errorType: `check-${levelErrorKey}-error`,
+        message: `Failed to check ${levelErrorMsgKey}`,
+      });
+    }
+  };
+  return handler;
+};
+
+export const allowAdminLevelsToPass = <K extends AdminLevel>({
+  // @ts-ignore
+  allowedLevels = adminLevels,
+  levelErrorKey = "admin-level",
+  levelErrorMsgKey = "admin-level",
+  notFoundKey = "admin",
+  notFoundMsgKey = "admin",
+}: Partial<{
+  field: K;
+  levelErrorKey: string;
+  levelErrorMsgKey: string;
+  notFoundKey: string;
+  notFoundMsgKey: string;
+  allowedLevels: [...K[]];
+}> = {}) => {
+  const handler = async (
+    req: ManagedRequest,
+    res: ManagedResponse,
+    next: NextFunction,
+  ) => {
+    try {
+      const selfLevel = req.session.user?.userType;
+
+      if (!selfLevel?.trim()) {
+        return ResponseHandler.handleNotFound(res, {
+          errorType: `${levelErrorKey}-empty`,
+          message: `${levelErrorMsgKey} is empty`,
+        });
+      }
+      if (!allowedLevels.includes(selfLevel as any)) {
+        return ResponseHandler.handleUnauthorized(res, {
+          errorType: `${levelErrorKey}-unauthorized`,
+          message: `You are not authorized to this ${levelErrorMsgKey}`,
+        });
       }
       return next();
     } catch (err) {

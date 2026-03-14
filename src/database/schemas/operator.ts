@@ -6,6 +6,7 @@ import {
   getPhoneSchema,
   getSlugSchema,
 } from "./string.js";
+import { approvalSchema } from "./dump.js";
 
 // 1. Head Quarter Person
 export const headQuarterPersonSchema = z.object({
@@ -32,6 +33,7 @@ export const operatorSchema = z.object({
   slug: getSlugSchema({ keyName: "Operator Slug" }),
   headquarter: headQuarterSchema,
   person: headQuarterPersonSchema,
+  approval: approvalSchema,
 });
 
 export type OperatorSchema = z.infer<typeof operatorSchema>;

@@ -1,4 +1,5 @@
 import { Conn } from "@/database/mongoose.js";
+import { ApprovalSchema } from "./dump.js";
 import {
   appendGeneralFields,
   getFieldsOfModel,
@@ -30,6 +31,7 @@ const OperatorSchema = new Conn.Schema(
     slug: { type: String, required: true, unique: true },
     headquarter: { type: HeadQuarterSchema, required: true },
     person: { type: HeadQuarterPersonSchema, required: true },
+    approval: { type: ApprovalSchema },
   },
   { timestamps: true },
 );

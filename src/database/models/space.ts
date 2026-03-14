@@ -1,4 +1,5 @@
 import { Conn } from "@/database/mongoose.js";
+import { ApprovalSchema } from "./dump.js";
 import {
   appendGeneralFields,
   getFieldsOfModel,
@@ -48,6 +49,7 @@ const SpaceSchema = new Conn.Schema(
     bookedSeats: { type: Number, default: 0 },
     rating: { type: Number },
     reviews: { type: Number },
+    approval: { type: ApprovalSchema },
   },
   { timestamps: true },
 );

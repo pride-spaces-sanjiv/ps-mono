@@ -32,7 +32,7 @@ type AuthCookies = Partial<{ __aT__: string }>;
 type ValidatableSchema = z.core.$ZodLooseShape;
 type DefaultZodSchema = z.core.$ZodLooseShape;
 
-const extractOnlySchemaKeys = <T extends ValidatableSchema>(
+export const extractOnlySchemaKeys = <T extends ValidatableSchema>(
   data: { [k: string]: any } | null | undefined,
   schema: z.ZodObject<T>,
 ) => {

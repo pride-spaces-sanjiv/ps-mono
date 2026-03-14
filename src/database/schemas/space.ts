@@ -8,6 +8,7 @@ import {
 } from "./string.js";
 import { facilities } from "@/utils/data/facilties.js";
 import { spaceCategories } from "@/utils/data/category.js";
+import { approvalSchema } from "./dump.js";
 
 // Person Schema
 export const personSchema = z.object({
@@ -71,6 +72,7 @@ export const spaceSchema = z.object({
     .int("Booked seats must be a positive integer")
     .default(0),
   facilities: z.array(z.enum(facilities)).default([]),
+  approval: approvalSchema,
 });
 
 // TypeScript Types (Optional but recommended)
