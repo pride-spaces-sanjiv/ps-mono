@@ -59,6 +59,8 @@ export const login =
       req.session.user = {
         id: doc.id,
         // @ts-ignore
+        name: doc.name,
+        // @ts-ignore
         email: doc.email,
         // @ts-ignore
         userType: level || doc.level,

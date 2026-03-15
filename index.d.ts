@@ -5,15 +5,12 @@ declare module "express-session" {
   interface SessionData extends OldData {
     user?: Partial<{
       id: string;
+      name: string;
       email: string;
       userType: UserType;
     }>;
   }
   interface RequiredSessionData extends SessionData {
-    user: {
-      id: string;
-      email: string;
-      userType: UserType;
-    };
+    user: NonNullable<Required<SessionData["user"]>>;
   }
 }

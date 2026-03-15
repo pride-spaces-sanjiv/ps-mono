@@ -8,6 +8,7 @@ import {
   getDump,
   createDump,
   updateDump,
+  approveDump,
 } from "@/controllers/general/dump.js";
 import { getIdSchema } from "@/database/schemas/string.js";
 
@@ -42,6 +43,7 @@ router.put(
 router.get(
   "/approve/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  approveDump,
 );
 
 export { router as DumpRouter };

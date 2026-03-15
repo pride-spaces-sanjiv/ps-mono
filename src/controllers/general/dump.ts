@@ -236,20 +236,31 @@ export const approveDump = async (
         message: "Invalid dump data provided",
       });
     }
-    // const parsedData = await model?.findOneAndUpdate(
-    //   { _id: parsed.id },
-    //   parsed,
-    //   { new: true },
-    // );
+
+    const id = parsed.id;
+    delete parsed.id;
+    // @ts-ignore
+    const updatedDoc = await model?.findOneAndUpdate(
+      { _id: id },
+      {
+        ...parsed,
+        approval: {
+          name: req.session.user?.name,
+          level: req.session.user?.userType,
+          lastRequested: doc.updatedAt,
+        },
+      },
+      { new: true, projection: { password: 0 } },
+    );
 
     ResponseHandler.handleSuccess(res, {
-      message: "Got dump details",
-      data: data,
+      message: "Approved dump successfully",
+      data: convertDataToJSON(updatedDoc),
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
-      errorType: "get-dump-error-failure",
-      message: "Failed to get dump details",
+      errorType: "approve-dump-error-failure",
+      message: "Failed to approve dump",
     });
   }
 };

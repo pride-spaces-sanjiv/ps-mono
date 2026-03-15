@@ -127,13 +127,14 @@ export class RequestMiddleware {
       // If token is OK then fetch data from DB
       const data = await model.findOne(
         { _id: decodedToken.data.id.trim() },
-        { _id: 1, username: 1, email: 1, level: 1 },
+        { _id: 1, name: 1, username: 1, email: 1, level: 1 },
       );
       if (!data?.id) {
         throw new Error("Invalid data");
       }
       authData.user = {
         id: data.id,
+        name: data.name,
         email: data.email || undefined,
         userType: userType === "admin" ? data.level : userType,
       };
