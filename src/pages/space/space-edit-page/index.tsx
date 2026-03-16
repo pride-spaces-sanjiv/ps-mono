@@ -80,15 +80,16 @@ const SpaceEditPage = () => {
     try {
       console.log("Space edit body", body);
 
-      await mutateAsync({
+      const res = await mutateAsync({
         url: id,
         body,
       });
-      console.log("Space edit body", body);
-
-      toast.success("Space updated successfully");
-
-      navigate("/spaces");
+      if (res.status === 200) {
+        toast.success("Space updated successfully");
+        navigate("/spaces");
+        return;
+      }
+      throw new Error("Invalid response");
     } catch (err) {
       toast.error("Failed to update space");
     }
@@ -107,9 +108,11 @@ const SpaceEditPage = () => {
           })}
           className="auto-form-grid"
         >
+          {/* Space Details */}
           {/* Name */}
           <FormField
-            label="Space Name"
+            label="Name"
+            labelPosition="embedded"
             placeholder="My Space"
             {...register("name")}
             error={errors.name}
@@ -118,6 +121,7 @@ const SpaceEditPage = () => {
           {/* Slug */}
           <FormField
             label="Slug"
+            labelPosition="embedded"
             placeholder="my-space-slug"
             {...register("slug")}
             error={errors.slug}
@@ -126,6 +130,7 @@ const SpaceEditPage = () => {
           {/* Email */}
           <FormField
             label="Email"
+            labelPosition="embedded"
             type="email"
             placeholder="my-space@example.com"
             {...register("email")}
@@ -139,21 +144,24 @@ const SpaceEditPage = () => {
             readOnly
             disabled
             error={errors.branch}
-          /> */}
+            /> */}
 
           {/* Operator */}
           <FormField
             label="Operator"
+            labelPosition="embedded"
             value={operatorData?.name || "None"}
             // {...register("operator")}
             readOnly
             disabled
             error={errors.operator}
           />
+          {/*  */}
 
-          {/* Person Data */}
+          {/* Person Data, POC */}
           <FormField
             label="Person Name"
+            labelPosition="embedded"
             placeholder="John Doe"
             {...register("person.name")}
             error={errors?.person?.name}
@@ -161,16 +169,26 @@ const SpaceEditPage = () => {
           <FormField
             label="Person Email"
             type="email"
+            labelPosition="embedded"
             placeholder="john.doe@example.com"
             {...register("person.email")}
             error={errors?.person?.email}
           />
           <FormField
             label="Person Contact No"
+            labelPosition="embedded"
             type="tel"
+            inputType="phone"
             inputMode="tel"
             placeholder="1234567890"
-            {...register("person.contactNo")}
+            value={watch("person.contactNo", "")}
+            onChange={(val) => {
+              console.log(val);
+              setValue("person.contactNo", val?.toString() || "", {
+                shouldValidate: true,
+              });
+            }}
+            // {...register("person.contactNo")}
             error={errors?.person?.contactNo}
           />
           {/*  */}
@@ -178,6 +196,7 @@ const SpaceEditPage = () => {
           {/* Open Time */}
           <FormField
             label="Open Time"
+            labelPosition="embedded"
             type="time"
             key={defaultValues?.openTime?.toISOString()}
             defaultValue={
@@ -197,6 +216,7 @@ const SpaceEditPage = () => {
           {/* Close Time */}
           <FormField
             label="Close Time"
+            labelPosition="embedded"
             type="time"
             key={defaultValues?.closeTime?.toISOString()}
             defaultValue={
@@ -216,6 +236,7 @@ const SpaceEditPage = () => {
           {/* Total Seats */}
           <FormField
             label="Total Seats"
+            labelPosition="embedded"
             type="number"
             {...register("totalSeats", { valueAsNumber: true })}
             error={errors.totalSeats}
@@ -224,6 +245,7 @@ const SpaceEditPage = () => {
           {/* Booked Seats */}
           <FormField
             label="Booked Seats"
+            labelPosition="embedded"
             type="number"
             {...register("bookedSeats", { valueAsNumber: true })}
             error={errors.bookedSeats}
@@ -232,6 +254,7 @@ const SpaceEditPage = () => {
           {/* Open Days */}
           <FormField
             label="Open Days"
+            labelPosition="embedded"
             error={{
               message: errors.openDays?.message,
               type: errors.openDays?.type || "validate",
@@ -240,7 +263,11 @@ const SpaceEditPage = () => {
             <GroupedSearchSelect
               key={`days-${defaultValues?.openDays?.length}`}
               type="multiple"
-              defaultSelected={defaultValues?.openDays}
+              showSearch={false}
+              defaultSelected={
+                defaultValues?.openDays ||
+                days.map((_, i) => i + 1).filter((_, i) => i < 7)
+              }
               items={days.map((dt, i) => ({
                 label: dt,
                 value: i + 1,
@@ -249,8 +276,8 @@ const SpaceEditPage = () => {
                 children: (
                   <ActionButton
                     type="button"
-                    variant={"secondary"}
-                    className={"min-h-[40px]"}
+                    variant={"outline"}
+                    className={"min-h-[40px] grow-1 border-0"}
                   >
                     {watch("openDays", []).length > 0
                       ? watch("openDays", []).length
@@ -271,6 +298,7 @@ const SpaceEditPage = () => {
           {/* Description */}
           <FormField
             label="Description"
+            labelPosition="embedded"
             placeholder="Enter a description for your space"
             {...register("description")}
             error={errors.description}
@@ -281,6 +309,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="City"
+            labelPosition="embedded"
             placeholder="Enter the city"
             {...register("location.city")}
             error={errors.location?.city}
@@ -288,6 +317,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="State"
+            labelPosition="embedded"
             placeholder="Enter the state"
             {...register("location.state")}
             error={errors.location?.state}
@@ -295,6 +325,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Country"
+            labelPosition="embedded"
             placeholder="Enter the country"
             {...register("location.country")}
             error={errors.location?.country}
@@ -302,6 +333,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Postal Code"
+            labelPosition="embedded"
             placeholder="Postal Code"
             {...register("location.postalCode")}
             error={errors.location?.postalCode}
@@ -309,6 +341,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Latitude"
+            labelPosition="embedded"
             type="number"
             step="any"
             {...register("location.lat")}
@@ -317,6 +350,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Longitude"
+            labelPosition="embedded"
             type="number"
             step="any"
             {...register("location.lng")}
@@ -326,6 +360,7 @@ const SpaceEditPage = () => {
           {/* Address */}
           <FormField
             label="Address"
+            labelPosition="embedded"
             placeholder="Enter address"
             {...register("location.address")}
             error={errors.location?.address}

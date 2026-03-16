@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "pride-client-fe",
+      "name": "pride-admin-fe",
       "script": "./script.sh",
       "args": "--env-file .env.dev",
       "watch": ["dist"]

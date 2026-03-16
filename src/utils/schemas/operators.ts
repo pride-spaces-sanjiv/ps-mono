@@ -9,9 +9,14 @@ import {
 
 // 1. Head Quarter Person
 export const headQuarterPersonSchema = z.object({
-  name: getNameSchema({ keyName: "Person Name" }),
-  email: getEmailSchema({ keyName: "Person Email" }),
-  role: z.string().trim().min(1, "Role is required"),
+  name: getNameSchema({
+    keyName: "POC Name",
+    alphaRegexp: /^[A-Za-z0-9, ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
+  email: getEmailSchema({ keyName: "POC Email" }),
+  contactNo: getPhoneSchema({ keyName: "POC Contact Number" }),
+  role: z.string().trim().min(1, "POC Designation is required"),
 });
 
 export type HeadQuarterPersonSchema = z.infer<typeof headQuarterPersonSchema>;

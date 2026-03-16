@@ -12,12 +12,13 @@ import { spaceCategories } from "@/utils/data/category.js";
 // Person Schema
 export const personSchema = z.object({
   name: getNameSchema({
-    keyName: "Person Name",
+    keyName: "POC Name",
     alphaRegexp: /^[A-Za-z0-9, ]+$/,
     alphaRegexpMsg: "must only contain alpha numeric characters",
   }),
-  email: getEmailSchema({ keyName: "Person Email" }),
-  contactNo: getPhoneSchema({ keyName: "Person Contact Number" }),
+  email: getEmailSchema({ keyName: "POC Email" }),
+  contactNo: getPhoneSchema({ keyName: "POC Contact Number" }),
+  role: z.string().trim().min(1, "POC Designation is required"),
 });
 
 // --- Location Schema ---

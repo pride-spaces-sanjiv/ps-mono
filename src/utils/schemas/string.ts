@@ -1,4 +1,5 @@
 import { minLength, z } from "zod";
+import { isValidPhoneNumber } from "react-phone-number-input";
 
 type StringSchemaOptions = {
   keyName: string;
@@ -67,21 +68,23 @@ export const getEmailSchema = ({
 // Phone
 type PhoneSchemaOptions = StringSchemaOptions & {
   minLength: number;
-  telRegexp: RegExp;
+  // telRegexp: RegExp;
   telRegexpMsg: string;
 };
 export const getPhoneSchema = ({
   keyName = "Phone No",
   doTrim = true,
   minLength = 4,
-  telRegexp = /^[0-9]{9,13}$/,
   telRegexpMsg = "is an invalid phone number",
   schema = z.string(),
 }: Partial<PhoneSchemaOptions> = {}) => {
   if (doTrim) {
     schema = schema.trim();
   }
-  schema = schema.regex(telRegexp, `${keyName} ${telRegexpMsg}`);
+  schema = schema.refine(
+    (val) => isValidPhoneNumber(val),
+    `${keyName} ${telRegexpMsg}`,
+  );
   if (Number.isFinite(minLength)) {
     schema = schema.min(
       minLength,
