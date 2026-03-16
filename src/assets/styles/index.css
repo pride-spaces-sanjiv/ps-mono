@@ -1,7 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./react-loading-skeleton.css";
+/* @import url("./phone-input.css"); */
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark
+  (&: is(.dark *));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

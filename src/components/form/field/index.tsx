@@ -1,7 +1,8 @@
 import React from "react";
-import PhoneInput from "react-phone-number-input";
-import "react-phone-number-input/style.css";
+// import PhoneInput from "react-phone-number-input";
+// import "react-phone-number-input/style.css";
 import { Input, PasswordInput, TextArea } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils/className";
 import {
@@ -100,6 +101,9 @@ export default function FormField<
             <PhoneInput
               defaultCountry="IN"
               {...(props as Props<"phone">)}
+              countrySelectProps={{
+                triggerButtonProps: { className: "border-0" },
+              }}
               className={cn(
                 "min-h-[40px] h-auto",
                 labelPosition === "out"

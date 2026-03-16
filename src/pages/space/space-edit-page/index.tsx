@@ -11,10 +11,12 @@ import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
 import { days } from "@/utils/data/days";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import FormField from "@/components/form/field";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";
+import { DialogModal } from "@/components/dialog";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -31,7 +33,7 @@ const SpaceEditPage = () => {
   });
   console.log("space data", res?.data);
 
-  // form builder 
+  // form builder
   const {
     register,
     handleSubmit,
@@ -43,7 +45,6 @@ const SpaceEditPage = () => {
     resolver: zodResolver(spaceSchema),
     defaultValues: { openTime: defaultTime, closeTime: defaultTime },
   });
-
 
   const operatorData = useMemo(
     () =>
@@ -101,7 +102,6 @@ const SpaceEditPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold  w-full">
           Edit Centre: {watch("name", "")}
@@ -109,14 +109,12 @@ const SpaceEditPage = () => {
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
-
         <form
           onSubmit={handleSubmit(onSubmit, (errors) => {
             console.log("Space edit form error", errors);
           })}
           className="auto-form-grid"
         >
-
           {/* SECTION: Centre Details */}
 
           <div className="col-span-full  mb-6 ">
@@ -130,6 +128,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Name"
+            labelPosition="embedded"
             placeholder="My Centre"
             {...register("name")}
             error={errors.name}
@@ -137,6 +136,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Slug"
+            labelPosition="embedded"
             placeholder="my-centre-slug"
             {...register("slug")}
             error={errors.slug}
@@ -265,6 +265,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Description"
+            labelPosition="embedded"
             placeholder="Enter description"
             {...register("description")}
             error={errors.description}
@@ -275,18 +276,24 @@ const SpaceEditPage = () => {
 
           <FormField
             label="City"
+            labelPosition="embedded"
+            placeholder="Mumbai"
             {...register("location.city")}
             error={errors.location?.city}
           />
 
           <FormField
             label="State"
+            labelPosition="embedded"
+            placeholder="Maharashtra"
             {...register("location.state")}
             error={errors.location?.state}
           />
 
           <FormField
             label="Country"
+            labelPosition="embedded"
+            placeholder="India"
             {...register("location.country")}
             error={errors.location?.country}
           />
@@ -317,9 +324,10 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Address"
+            labelPosition="embedded"
+            inputType="textarea"
             {...register("location.address")}
             error={errors.location?.address}
-            inputType="textarea"
           />
 
           {/* SECTION: Centre Point of Contact */}
@@ -335,6 +343,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Name"
+            labelPosition="embedded"
             placeholder="John Doe"
             {...register("person.name")}
             error={errors?.person?.name}
@@ -342,6 +351,7 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Email"
+            labelPosition="embedded"
             type="email"
             placeholder="john.doe@example.com"
             {...register("person.email")}
@@ -350,26 +360,35 @@ const SpaceEditPage = () => {
 
           <FormField
             label="Telephone"
+            labelPosition="embedded"
             type="tel"
             inputMode="tel"
-            placeholder="1234567890"
-            {...register("person.contactNo")}
+            inputType="phone"
+            placeholder="+1-123-456-7890"
+            onChange={(val) => {
+              console.log(val);
+              setValue("person.contactNo", val?.toString() || "", {
+                shouldValidate: true,
+              });
+            }}
             error={errors?.person?.contactNo}
           />
 
           <FormField
-        label="Designation"
-        placeholder="Centre Manager"
-        // {...register("person.role")}
-        // error={errors?.person?.role}
-      />
+            label="Designation"
+            placeholder="Centre Manager"
+            labelPosition="embedded"
+            {...register("person.role")}
+            // error={errors?.person?.role}
+          />
 
           {/* Status */}
 
           <div className="flex items-center gap-4">
             <label className="text-white text-sm">Active</label>
-            <Checkbox
+            <Switch
               key={defaultValues?.isActive ? "active" : "inactive"}
+              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
               defaultChecked={!!defaultValues?.isActive}
               {...register("isActive")}
             />
@@ -377,7 +396,7 @@ const SpaceEditPage = () => {
 
           <div className="flex items-center gap-4">
             <label className="text-white text-sm">Verified</label>
-            <Checkbox
+            <Switch
               key={defaultValues?.isVerified ? "verified" : "unverified"}
               defaultChecked={!!defaultValues?.isVerified}
               {...register("isVerified")}
@@ -385,7 +404,6 @@ const SpaceEditPage = () => {
           </div>
 
           {/* Submit */}
-
           <div className="col-span-full flex justify-end">
             <ActionButton
               type="submit"
@@ -396,6 +414,30 @@ const SpaceEditPage = () => {
             </ActionButton>
           </div>
 
+          {/* Delete trigger */}
+          <div className="col-span-full flex justify-center pt-4">
+            <DialogModal
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"destructive"}
+                    loading={updateLoading}
+                    className="max-w-fit"
+                  >
+                    Delete Centre
+                  </ActionButton>
+                ),
+              }}
+              titleProps={{ children: "Centre Delete Confirmation" }}
+              descriptionProps={{
+                children:
+                  "Are you sure to delete this centre ? You cannot undo this action.",
+              }}
+            >
+              <ActionButton variant={"destructive"}>Delete Centre</ActionButton>
+            </DialogModal>
+          </div>
         </form>
       </div>
     </div>
