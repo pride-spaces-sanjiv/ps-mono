@@ -30,7 +30,7 @@ export const operatorSchema = z.object({
   slug: getSlugSchema({ keyName: "Operator Slug" }),
   headquarter: headQuarterSchema,
   person: headQuarterPersonSchema,
-  isActive: z.boolean().optional().default(false),
+  isActive: z.boolean().optional().default(true),
   // approval: approvalSchema,
 });
 
