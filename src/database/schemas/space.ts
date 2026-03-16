@@ -6,7 +6,7 @@ import {
   getSlugSchema,
   getPhoneSchema,
 } from "./string.js";
-import { facilities } from "@/utils/data/facilties.js";
+import { facilities } from "@/utils/data/facilities.js";
 import { spaceCategories } from "@/utils/data/category.js";
 import { approvalSchema } from "./dump.js";
 import { personSchema } from "./person.js";
