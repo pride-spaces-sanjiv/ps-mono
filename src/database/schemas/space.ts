@@ -72,7 +72,7 @@ export const spaceSchema = z.object({
     .int("Booked seats must be a positive integer")
     .default(0),
   facilities: z.array(z.enum(facilities)).default([]),
-  approval: approvalSchema,
+  // approval: approvalSchema,
 });
 
 // TypeScript Types (Optional but recommended)

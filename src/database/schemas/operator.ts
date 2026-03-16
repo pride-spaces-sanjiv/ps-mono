@@ -33,7 +33,7 @@ export const operatorSchema = z.object({
   slug: getSlugSchema({ keyName: "Operator Slug" }),
   headquarter: headQuarterSchema,
   person: headQuarterPersonSchema,
-  approval: approvalSchema,
+  // approval: approvalSchema,
 });
 
 export type OperatorSchema = z.infer<typeof operatorSchema>;
