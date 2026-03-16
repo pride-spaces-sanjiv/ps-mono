@@ -7,13 +7,10 @@ import {
   getSlugSchema,
 } from "./string.js";
 import { approvalSchema } from "./dump.js";
+import { personSchema } from "./person.js";
 
 // 1. Head Quarter Person
-export const headQuarterPersonSchema = z.object({
-  name: getNameSchema({ keyName: "Person Name" }),
-  email: getEmailSchema({ keyName: "Person Email" }),
-  role: z.string().trim().min(1, "Role is required"),
-});
+export const headQuarterPersonSchema = personSchema;
 
 export type HeadQuarterPersonSchema = z.infer<typeof headQuarterPersonSchema>;
 

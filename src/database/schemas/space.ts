@@ -9,17 +9,7 @@ import {
 import { facilities } from "@/utils/data/facilties.js";
 import { spaceCategories } from "@/utils/data/category.js";
 import { approvalSchema } from "./dump.js";
-
-// Person Schema
-export const personSchema = z.object({
-  name: getNameSchema({
-    keyName: "Person Name",
-    alphaRegexp: /^[A-Za-z0-9, ]+$/,
-    alphaRegexpMsg: "must only contain alpha numeric characters",
-  }),
-  email: getEmailSchema({ keyName: "Person Email" }),
-  contactNo: getPhoneSchema({ keyName: "Person Contact Number" }),
-});
+import { personSchema } from "./person.js";
 
 // --- Location Schema ---
 export const locationSchema = z.object({
