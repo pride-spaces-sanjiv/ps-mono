@@ -21,9 +21,9 @@ import {
   // type LoginSchema,
 } from "@/utils/schemas/user";
 import {
-  enterpriseSchema,
-  type EnterpriseSchema,
-} from "@/utils/schemas/enterprise";
+  operatorSchema,
+  type OperatorSchema,
+} from "@/utils/schemas/operators";
 import { reConfigureAuthToken } from "@/utils/axios/configure";
 import { handleAxiosErrorCases } from "@/utils/axios/error";
 import { datifyObjectValues } from "@/utils/object/datify";

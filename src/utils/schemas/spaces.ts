@@ -1,113 +1,79 @@
-import * as yup from "yup";
+import { z } from "zod";
+import {
+  getEmailSchema,
+  getIdSchema,
+  getNameSchema,
+  getSlugSchema,
+  getPhoneSchema,
+} from "./string.js";
+import { facilities } from "@/utils/data/facilities.js";
+import { spaceCategories } from "@/utils/data/category.js";
 
-export const locationSchema = yup.object().shape({
-  address: yup
-    .string()
-    .required("Address is required")
-    .trim("Address cannot be empty"),
-
-  city: yup
-    .string()
-    .required("City is required")
-    .trim("City cannot be empty"),
-
-  state: yup
-    .string()
-    .required("State is required")
-    .trim("State cannot be empty"),
-
-  postalCode: yup
-    .string()
-    .required("Postal Code is required")
-    .trim("Postal Code cannot be empty"),
-
-  country: yup
-    .string()
-    .required("Country is required")
-    .trim("Country cannot be empty"),
-
-  lat: yup
-    .number()
-    .required("Latitude is required"),
-
-  lng: yup
-    .number()
-    .required("Longitude is required"),
+// Person Schema
+export const personSchema = z.object({
+  name: getNameSchema({
+    keyName: "POC Name",
+    alphaRegexp: /^[A-Za-z0-9, ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
+  email: getEmailSchema({ keyName: "POC Email" }),
+  contactNo: getPhoneSchema({ keyName: "POC Contact Number" }),
+  role: z.string().trim().min(1, "POC Designation is required"),
 });
-export const spaceSchema = yup.object().shape({
-  branch: yup
-    .string()
-    .required("Branch ID is required")
-    .trim("Branch ID cannot be empty"),
 
-  enterprise: yup
-    .string()
-    .required("Enterprise ID is required")
-    .trim("Enterprise ID cannot be empty"),
-
-  name: yup
-    .string()
-    .required("Space Name is required")
-    .trim("Space Name cannot be empty")
-    .min(3, "Minimum 3 characters required")
-    .test(
-      "invalid-chars",
-      "Space Name must only contain alphabets",
-      (val) => !!val?.match(/^[A-z ]+$/)
-    ),
-
-  email: yup
-    .string()
-    .required("Email is required")
-    .email("Email is invalid")
-    .trim("Email cannot be empty"),
-
-  location: locationSchema.required("Location is required"),
-
-  description: yup.string().optional(),
-
-  openTime: yup.date().optional(),
-
-  closeTime: yup.date().optional(),
-
-  openDays: yup
-    .number()
-    .optional()
-    .min(1, "Minimum 1 day required")
-    .max(7, "Maximum 7 days allowed")
-    .integer("Open days must be integer"),
-
-  isVerified: yup.boolean().default(false),
-
-  isActive: yup.boolean().default(false),
-
-  rating: yup
-    .number()
-    .default(0)
-    .min(0, "Rating cannot be less than 0")
-    .max(5, "Rating cannot exceed 5"),
-
-  reviews: yup
-    .number()
-    .default(0)
-    .min(0, "Reviews cannot be negative")
-    .integer("Reviews must be integer"),
+// --- Location Schema ---
+export const locationSchema = z.object({
+  address: z.string().trim().min(1, "Address is required"),
+  city: z.string().trim().min(1, "City is required"),
+  state: z.string().trim().min(1, "State is required"),
+  postalCode: z.string().trim().min(1, "Postal code is required"),
+  country: z.string().trim().min(1, "Country is required"),
+  lat: z.number(),
+  lng: z.number(),
 });
-export const createSpaceSchema = spaceSchema.pick([
-  "branch",
-  "enterprise",
-  "name",
-  "email",
-  "location",
-  "description",
-  "openTime",
-  "closeTime",
-  "openDays",
-  "isVerified",
-  "isActive",
-  "rating",
-  "reviews",
-]);
 
+// --- Space Schema ---
+export const spaceSchema = z.object({
+  branch: getIdSchema({ keyName: "Branch ID" }),
+  operator: getIdSchema({ keyName: "Operator ID" }),
+  name: getNameSchema({
+    keyName: "Space Name",
+    alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
+  email: getEmailSchema(),
+  location: locationSchema,
+  person: personSchema,
+  slug: getSlugSchema({ keyName: "Space Slug" }),
+  category: z.enum(spaceCategories).default("Classic"),
+  description: z.string().optional(),
+  openTime: z.date().optional(),
+  closeTime: z.date().optional(),
+  openDays: z.array(
+    z
+      .number()
+      .int("Day must be an integer")
+      .positive("Day must be a positive integer")
+      .min(1, "Day must be atleast 1")
+      .max(7, "Day must be at most 7"),
+  ),
+  isVerified: z.boolean().optional().default(false),
+  isActive: z.boolean().optional().default(false),
+  rating: z.number().optional().default(0),
+  reviews: z.number().optional().default(0),
+  totalSeats: z
+    .number()
+    .min(0)
+    .int("Total seats must be a positive integer")
+    .default(0),
+  bookedSeats: z
+    .number()
+    .min(0)
+    .int("Booked seats must be a positive integer")
+    .default(0),
+  facilities: z.array(z.enum(facilities)).default([]),
+});
 
-export type CreateSpaceSchema = yup.InferType<typeof createSpaceSchema>;
+// TypeScript Types (Optional but recommended)
+export type LocationSchema = z.infer<typeof locationSchema>;
+export type SpaceSchema = z.infer<typeof spaceSchema>;

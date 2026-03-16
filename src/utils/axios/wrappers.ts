@@ -14,6 +14,7 @@ type HandleParams<
   query?: Q | null | undefined;
   // @ts-ignore
   body?: z.infer<z.ZodObject<T>> | null | undefined;
+  url?: string;
 };
 
 export const APIBodyValidationWrapper = <

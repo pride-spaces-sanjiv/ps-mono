@@ -30,13 +30,13 @@ const items = [
     icon: Home,
   },
   {
-    title: "Display",
-    url: "/display",
+    title: "Centres",
+    url: "/spaces",
     icon: Tv,
   },
   {
-    title: "Notfication",
-    url: "/notfication",
+    title: "Operators",
+    url: "/operators",
     icon: LogOutIcon,
   },
   {
@@ -50,14 +50,14 @@ const items = [
     icon: LogOutIcon,
   },
   {
-    title: "Users",
-    url: "/users",
-    icon: Users,
+    title: "Notfication",
+    url: "/notfication",
+    icon: LogOutIcon,
   },
   {
-    title: "Space Operator",
-    url: "/spaceoperator",
-    icon: LogOutIcon,
+    title: "Users",
+    url: "/deshboard",
+    icon: Users,
   },
   {
     title: "Settings",
@@ -106,7 +106,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="absolutet top-0 left-0">
+    <Sidebar className="fixed left-0 top-0 h-screen w-64 border-r">
       <SidebarContent>
         {/* Main Navigation */}
         <SidebarGroup className="gap-2 h-full bg-popover">

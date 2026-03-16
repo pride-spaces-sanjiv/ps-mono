@@ -1,7 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./react-loading-skeleton.css";
+/* @import url("./phone-input.css"); */
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark
+  (&: is(.dark *));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -152,6 +155,52 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .admin-page-shell {
+    @apply mx-auto w-full max-w-[1600px] px-4 py-4 sm:px-6 lg:px-8;
+  }
+
+  .admin-page-header {
+    @apply my-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .admin-table-toolbar {
+    @apply flex flex-col gap-2 py-4 lg:flex-row lg:items-center;
+  }
+
+  .admin-search-input {
+    @apply h-9 w-full text-sm md:max-w-sm;
+  }
+
+  .admin-filter-select {
+    @apply h-9 w-full sm:w-[170px];
+  }
+
+  .admin-columns-btn {
+    @apply h-9 w-full sm:w-auto lg:ml-auto;
+  }
+
+  .admin-table-frame {
+    @apply w-full overflow-x-auto rounded-md border;
+  }
+
+  .admin-data-table {
+    @apply w-full min-w-[900px] text-[13px] leading-5;
+  }
+
+  .admin-data-table thead th {
+    @apply h-9 px-2 py-2 text-xs font-semibold uppercase tracking-[0.02em] text-muted-foreground;
+  }
+
+  .admin-data-table tbody td {
+    @apply px-2 py-2 align-top whitespace-nowrap;
+  }
+
+  .admin-data-table th button {
+    @apply h-8 gap-1 px-2 text-[13px] font-semibold;
   }
 }
 

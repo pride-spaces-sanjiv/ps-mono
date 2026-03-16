@@ -1,8 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import moment from "moment";
-import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
-import { keepPreviousData } from "@tanstack/react-query";
+import React, { useMemo, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
+// import { getOperators } from "@/services/apis/admin/operators";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -15,18 +21,22 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  MoreHorizontal,
+} from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { cn } from "@/utils/className";
+import { queryKeys } from "@/utils/query-keys";
+import { datifyObjectValues } from "@/utils/object/datify";
+import { formatOpenDays } from "@/utils/data/days";
+import { keepPreviousData } from "@tanstack/react-query";
+import { useDebouncer } from "@/services/hooks/use-debouncer";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -36,23 +46,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronDown,
-  MoreHorizontal,
-} from "lucide-react";
-import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { useDebouncer } from "@/services/hooks/use-debouncer";
-import { getUsers, deleteUser } from "@/services/apis/users";
-import { queryKeys } from "@/utils/query-keys";
-import { datifyObjectValues } from "@/utils/object/datify";
-import { cn } from "@/utils/className";
-import type { DatifiedUser } from "@/types/data/user";
+import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
+// import { operators } from "./operator";
+import type { Operator } from "@/types/data/operators";
+import { getOperators } from "@/services/apis/admin/operators";
+import { SelectPicker } from "@/components/select";
 
 type Props = {
   id: string | null;
+  operatorId: string | null;
   tableWrapperProps: React.JSX.IntrinsicElements["div"];
   tableProps: React.ComponentProps<"table">;
   tableHeaderProps: React.ComponentProps<"thead">;
@@ -67,8 +69,10 @@ type Props = {
   inputProps: Parameters<typeof Input>[0];
 } & React.JSX.IntrinsicElements["div"];
 
-export default function UsersTabledResults({
+
+const OperatorsTabledResults = ({
   id,
+  operatorId,
   className,
   pagination = true,
   tableWrapperProps,
@@ -82,100 +86,44 @@ export default function UsersTabledResults({
   nextButtonProps,
   inputProps,
   skeletonProps,
-  ...props
-}: Partial<Props>) {
+  ...props }: Partial<Props>) => {
   const navigate = useNavigate();
-  const params = useParams();
+  const [search, setSearch] = useState({ field: "Name", value: "" });
 
-  const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncer(search, 500);
-
-  const userId = useMemo(
-    () => (id || params?.id)?.trim() || undefined,
-    [params?.id, id]
-  );
-
-  console.log("User", userId);
 
   const {
     data: res,
     isFetching,
     page,
-    setPage,
+    setPage
   } = usePaginatedQuery({
     limit: 10,
-    queryKey: [queryKeys.USERS, String(userId), `search=${debouncedSearch}`],
-    queryFn: (page, limit) =>
-      getUsers({
-        query: {
-          page: page + 1,
-          limit: limit,
-          id: userId,
-          search: debouncedSearch,
-        },
-      }),
+    queryKey: [queryKeys.OPERATORS, debouncedSearch.field,
+    debouncedSearch.value,
+    ],
+    queryFn: (page, limit) => getOperators({
+      query: {
+        page: page + 1,
+        limit: limit,
+        withOperator: true,
+        ...((operatorId && { operator: operatorId || "" }) || null),
+        [`s${debouncedSearch.field}`]: debouncedSearch.value,
+      },
+    }),
     placeholderData: keepPreviousData,
   });
 
-  const users = useMemo(
+  const operators: Operator[] = useMemo(
     () =>
-      (res?.data?.data?.results || [])
-        .map(
-          (dt) =>
-            datifyObjectValues(dt, [
-              "createdAt",
-              "updatedAt",
-              "expiry",
-              "testExpiry",
-            ]) as DatifiedUser
-        )
-        .filter((dt) => !!dt),
-    [res?.data?.data]
+      ((res?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
+    [res?.data?.data?.results]
   );
+  console.log("operators", operators);
 
   // Columns definition
-  const columns: ColumnDef<(typeof users)[number]>[] = useMemo(
+  const columns: ColumnDef<Operator>[] = useMemo(
     () => [
-      {
-        id: "accountType",
-        header: "Account Type",
-        cell: ({ row }) => (
-          <Badge
-            className={cn(
-              "capitalize",
-              row.original.level === 0 && "bg-green-600",
-              row.original.level === 1 && "bg-blue-600",
-              row.original.level === 2 && "bg-purple-600"
-            )}
-          >
-            {row.original.level === 0
-              ? "Customer"
-              : row.original.level === 1
-              ? "Reseller"
-              : "Admin"}
-          </Badge>
-        ),
-      },
-      {
-        id: "status",
-        header: "Status",
-        cell: ({ row }) => (
-          <Badge
-            variant={row.original.isActive ? "default" : "destructive"}
-            className={cn(
-              "capitalize",
-              row.original.isActive && "bg-green-700",
-              row.original.level !== 0 && "bg-transparent text-primary"
-            )}
-          >
-            {row.original.level === 0
-              ? row.original.isActive
-                ? "active"
-                : "inactive"
-              : "-"}
-          </Badge>
-        ),
-      },
       {
         accessorKey: "name",
         header: ({ column }) => {
@@ -200,18 +148,7 @@ export default function UsersTabledResults({
         cell: ({ row }) => <div>{row.getValue("name") || "-"}</div>,
       },
       {
-        accessorKey: "credits",
-        header: () => <div className="text-right">Credits</div>,
-        cell: ({ row }) => {
-          const credits =
-            Number(row.original.level ?? 0) >= 1
-              ? String(row.original.credits ?? 0)
-              : "-";
-          return <div className="font-medium">{credits}</div>;
-        },
-      },
-      {
-        accessorKey: "createdAt",
+        accessorKey: "email",
         header: ({ column }) => {
           return (
             <Button
@@ -220,7 +157,30 @@ export default function UsersTabledResults({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Creation Date
+              Email
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
+      },
+      {
+        accessorKey: "headquarter.address",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Headquarter
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -232,12 +192,11 @@ export default function UsersTabledResults({
           );
         },
         cell: ({ row }) => (
-          <div>{moment(row.original.createdAt).format("DD MMM YYYY")}</div>
+          <div>{row.original.headquarter?.address || "-"}</div>
         ),
       },
       {
-        id: "expiry",
-        accessorKey: "expiry",
+        accessorKey: "person.name",
         header: ({ column }) => {
           return (
             <Button
@@ -246,7 +205,7 @@ export default function UsersTabledResults({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Expires On
+              Person Name
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -258,11 +217,32 @@ export default function UsersTabledResults({
           );
         },
         cell: ({ row }) => (
-          <div>
-            {row.original.level === 0
-              ? moment(row.original.expiry).format("DD MMM YYYY")
-              : "-"}
-          </div>
+          <div>{row.original.person?.name || "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "person.email",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Person Email
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{row.original.person?.email || "-"}</div>
         ),
       },
       {
@@ -280,13 +260,13 @@ export default function UsersTabledResults({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={() => navigate(`/users/${row.original.id}`)}
+                  onClick={() => navigate(`/operators/${row.original.id}`)}
                 >
                   Show details
                 </DropdownMenuItem>
                 {/* <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
-                  Delete User
+                  Delete Operator
                 </DropdownMenuItem> */}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -294,7 +274,7 @@ export default function UsersTabledResults({
         },
       },
     ],
-    [users]
+    [navigate]
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -306,7 +286,7 @@ export default function UsersTabledResults({
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data: users,
+    data: operators,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -320,9 +300,9 @@ export default function UsersTabledResults({
       const newState =
         typeof updater === "function"
           ? updater({
-              pageIndex: page,
-              pageSize: res?.data?.data?.metrics?.count || 10,
-            })
+            pageIndex: page,
+            pageSize: res?.data?.data?.metrics?.count || 10,
+          })
           : updater;
       setPage(newState.pageIndex);
     },
@@ -340,23 +320,35 @@ export default function UsersTabledResults({
     rowCount: res?.data?.data?.metrics?.total || 1,
   });
 
-  useEffect(() => {
-    setPage(0);
-  }, [userId, debouncedSearch]);
-
   return (
     <div {...props} className={cn("", className)}>
+      {/* Search  */}
       <div className={cn("admin-table-toolbar")}>
         <Input
-          placeholder="Search by name..."
-          // value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          placeholder={`Search by ${search.field.toLowerCase()}...`}
           {...inputProps}
           onChange={(e) => {
-            // table.getColumn("name")?.setFilterValue(e.target.value);
-            setSearch(e.target.value.trim().toLowerCase());
+            setSearch((prev) => ({
+              ...prev,
+              value: e.currentTarget.value
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, " "),
+            }));
             inputProps?.onChange?.(e);
           }}
           className={cn("admin-search-input", inputProps?.className)}
+        />
+
+        <SelectPicker
+          className="admin-filter-select"
+          valueProps={{ defaultValue: "Name", placeholder: "Select a field" }}
+          wrapperProps={{
+            onValueChange(value) {
+              setSearch({ value: "", field: value });
+            },
+          }}
+          items={["Name", "Headquarter", "Person Name"].map((s) => ({ label: s, value: s }))}
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -385,91 +377,43 @@ export default function UsersTabledResults({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      <div
-        {...tableWrapperProps}
-        className={cn(
-          "admin-table-frame",
-          tableWrapperProps?.className
-        )}
-      >
-        <Table
-          {...tableProps}
-          className={cn(
-            "admin-data-table min-w-[980px] text-center",
-            tableProps?.className
-          )}
-        >
-          <TableHeader
-            {...tableHeaderProps}
-            className={cn("", tableHeaderProps?.className)}
-          >
+      <div className="admin-table-frame">
+        <Table className="admin-data-table min-w-[1120px]">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                {...tableRowProps}
-                className={cn("", tableRowProps?.className)}
-                key={headerGroup.id}
-              >
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      {...tableHeadProps}
-                      className={cn("text-center", tableHeadProps?.className)}
-                      key={header.id}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="text-center">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody
-            {...tableBodyProps}
-            className={cn("", tableBodyProps?.className)}
-          >
+
+          <TableBody>
             {isFetching ? (
               Array(5)
                 .fill(null)
                 .map((_, i) => (
                   <TableRow key={i}>
                     {table.getAllLeafColumns().map((col) => (
-                      <TableCell
-                        {...tableCellProps}
-                        className={cn("", tableCellProps?.className)}
-                        key={col.id}
-                      >
-                        <Skeleton
-                          count={1}
-                          {...skeletonProps}
-                          className={cn(
-                            "w-full rounded-sm",
-                            skeletonProps?.className
-                          )}
-                        />
+                      <TableCell key={col.id}>
+                        <Skeleton className="w-full rounded-sm" />
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
-            ) : table.getRowModel().rows?.length ? (
+            ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  {...tableRowProps}
-                  className={cn("", tableRowProps?.className)}
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      {...tableCellProps}
-                      className={cn("", tableCellProps?.className)}
-                      key={cell.id}
-                    >
+                    <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -479,30 +423,24 @@ export default function UsersTabledResults({
                 </TableRow>
               ))
             ) : (
-              <TableRow
-                {...tableRowProps}
-                className={cn("", tableRowProps?.className)}
-              >
+              <TableRow>
                 <TableCell
-                  colSpan={columns?.length ?? 0}
-                  {...tableCellProps}
-                  className={cn(
-                    "py-2 text-center font-medium",
-                    tableCellProps?.className
-                  )}
+                  colSpan={columns.length}
+                  className="text-center py-4 font-medium"
                 >
-                  No users found
+                  No operators found
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+
       </div>
       <div className="flex items-center justify-between space-x-2 py-4">
         {/* <div className="text-muted-foreground text-sm">
-          {table.getFilteredSelectedRowModel().rows?.length} of{" "}
-          {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
-        </div> */}
+                {table.getFilteredSelectedRowModel().rows?.length} of{" "}
+                {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
+              </div> */}
         <p className="text-lg font-medium">Page : {page + 1}</p>
         {!!pagination && (
           <div className="space-x-2">
@@ -537,4 +475,6 @@ export default function UsersTabledResults({
       </div>
     </div>
   );
-}
+};
+
+export default OperatorsTabledResults;

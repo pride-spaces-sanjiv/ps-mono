@@ -24,7 +24,7 @@ export default function GroupsSelectPicker({
     useAutoMediaDataFetch();
   const [groups, setGroups] = useState<string[]>(defaultItems || []);
 
-  const displaySelectedGroups = () => {
+  const spaceSelectedGroups = () => {
     if (groups.length) {
       const providers = commonGroupsState.value
         .filter((gr) => groups.includes(gr.id))
@@ -89,7 +89,7 @@ export default function GroupsSelectPicker({
             {...buttonProps}
             className={cn("min-h-[40px]", buttonProps?.className)}
           >
-            {displaySelectedGroups()}
+            {spaceSelectedGroups()}
           </ActionButton>
         ),
       }}

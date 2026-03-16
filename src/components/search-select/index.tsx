@@ -41,11 +41,12 @@ type Props<T extends any, M extends SelectMode = "single"> = {
   triggerProps: React.ComponentProps<typeof DropdownMenuTrigger>;
   inputProps: React.ComponentProps<typeof Input>;
   type: M;
+  showSearch: boolean;
 } & React.ComponentProps<typeof DropdownMenu>;
 
 export function GroupedSearchSelect<
   T extends any,
-  M extends SelectMode = "single"
+  M extends SelectMode = "single",
 >({
   onSelect,
   renderItem,
@@ -61,6 +62,7 @@ export function GroupedSearchSelect<
   inputProps,
   // @ts-ignore
   type = "single",
+  showSearch = true,
   ...props
 }: Partial<Props<T, M>>) {
   const [search, setSearch] = useState("");
@@ -69,7 +71,7 @@ export function GroupedSearchSelect<
       (type === "multiple"
         ? (defaultSelected as T[])
         : [(defaultSelected as Item<T>).value])) ||
-      []
+      [],
   );
 
   const filtered = useMemo(
@@ -80,24 +82,24 @@ export function GroupedSearchSelect<
             .toLowerCase()
             .trim()
             .includes(search) ||
-          String(dt.value).toLowerCase().trim().includes(search)
+          String(dt.value).toLowerCase().trim().includes(search),
       ),
-    [items, search]
+    [items, search],
   );
 
   const groupedItems = useMemo(
     () => ({
       general: filtered.filter(
-        (dt) => !groups.find((gr) => gr.value === dt.group)
+        (dt) => !groups.find((gr) => gr.value === dt.group),
       ),
       ...(Object.fromEntries(
         groups.map((gr) => [
           gr.value,
           filtered.filter((dt) => dt.group === gr.value),
-        ])
+        ]),
       ) as Record<string, Props<T>["items"]>),
     }),
-    [filtered, groups]
+    [filtered, groups],
   );
 
   // console.log(filtered, groupedItems);
@@ -126,16 +128,18 @@ export function GroupedSearchSelect<
         )}
         <div className="pt-1" />
         {/* Search input */}
-        <Input
-          type="text"
-          placeholder="Search group..."
-          {...inputProps}
-          className={cn("", inputProps?.className)}
-          onChange={(e) => {
-            setSearch(e.currentTarget.value?.trim().toLowerCase() || "");
-            inputProps?.onChange?.(e);
-          }}
-        />
+        {showSearch && (
+          <Input
+            type="text"
+            placeholder="Search group..."
+            {...inputProps}
+            className={cn("", inputProps?.className)}
+            onChange={(e) => {
+              setSearch(e.currentTarget.value?.trim().toLowerCase() || "");
+              inputProps?.onChange?.(e);
+            }}
+          />
+        )}
         <div className="pb-3" />
         {Object.entries(groupedItems).map(
           (pair, i) =>
@@ -170,7 +174,7 @@ export function GroupedSearchSelect<
                             ? selected.includes(item.value)
                               ? selected.filter((v) => v !== item.value)
                               : [...selected, item.value]
-                            : item
+                            : item,
                         );
                         itemProps?.onSelect?.(e);
                         setSelected((prev) =>
@@ -178,7 +182,7 @@ export function GroupedSearchSelect<
                             ? prev.includes(item.value)
                               ? prev.filter((v) => v !== item.value)
                               : [...prev, item.value]
-                            : [item.value]
+                            : [item.value],
                         );
                       }}
                     >
@@ -193,7 +197,7 @@ export function GroupedSearchSelect<
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
               </>
-            )
+            ),
         )}
         {/* <DropdownMenuGroup>
           <DropdownMenuItem>

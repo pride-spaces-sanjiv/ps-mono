@@ -54,8 +54,8 @@ export const ADMIN_ADMIN = ADMIN.create({
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
-export const ADMIN_BRANCH = ADMIN.create({
-  baseURL: baseUrl + "/admin/branches",
+export const ADMIN_OPERATOR = ADMIN.create({
+  baseURL: baseUrl + "/admin/operators",
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
