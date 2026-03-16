@@ -32,6 +32,7 @@ const OperatorSchema = new Conn.Schema(
     headquarter: { type: HeadQuarterSchema, required: true },
     person: { type: HeadQuarterPersonSchema, required: true },
     approval: { type: ApprovalSchema },
+    isActive: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
