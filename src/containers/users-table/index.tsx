@@ -346,7 +346,7 @@ export default function UsersTabledResults({
 
   return (
     <div {...props} className={cn("", className)}>
-      <div className={cn("flex items-center py-4")}>
+      <div className={cn("admin-table-toolbar")}>
         <Input
           placeholder="Search by name..."
           // value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -356,11 +356,11 @@ export default function UsersTabledResults({
             setSearch(e.target.value.trim().toLowerCase());
             inputProps?.onChange?.(e);
           }}
-          className={cn("max-w-sm", inputProps?.className)}
+          className={cn("admin-search-input", inputProps?.className)}
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
+            <Button variant="outline" className="admin-columns-btn">
               Columns <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
@@ -389,14 +389,14 @@ export default function UsersTabledResults({
       <div
         {...tableWrapperProps}
         className={cn(
-          "rounded-md border max-w-full overflow-x-auto w-auto",
+          "admin-table-frame",
           tableWrapperProps?.className
         )}
       >
         <Table
           {...tableProps}
           className={cn(
-            "text-center max-w-full overflow-x-auto",
+            "admin-data-table min-w-[980px] text-center",
             tableProps?.className
           )}
         >

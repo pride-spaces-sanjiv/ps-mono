@@ -264,10 +264,10 @@ const OperatorsTabledResults = ({
                 >
                   Show details
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {/* <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
                   Delete Operator
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </DropdownMenuContent>
             </DropdownMenu>
           );
@@ -323,7 +323,7 @@ const OperatorsTabledResults = ({
   return (
     <div {...props} className={cn("", className)}>
       {/* Search  */}
-      <div className={cn("flex items-center py-4 gap-2")}>
+      <div className={cn("admin-table-toolbar")}>
         <Input
           placeholder={`Search by ${search.field.toLowerCase()}...`}
           {...inputProps}
@@ -337,10 +337,11 @@ const OperatorsTabledResults = ({
             }));
             inputProps?.onChange?.(e);
           }}
-          className={cn("max-w-sm", inputProps?.className)}
+          className={cn("admin-search-input", inputProps?.className)}
         />
 
         <SelectPicker
+          className="admin-filter-select"
           valueProps={{ defaultValue: "Name", placeholder: "Select a field" }}
           wrapperProps={{
             onValueChange(value) {
@@ -351,7 +352,7 @@ const OperatorsTabledResults = ({
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
+            <Button variant="outline" className="admin-columns-btn">
               Columns <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
@@ -376,12 +377,8 @@ const OperatorsTabledResults = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div
-
-        className=
-        "rounded-md border max-w-full overflow-x-auto w-auto"
-      >
-        <Table>
+      <div className="admin-table-frame">
+        <Table className="admin-data-table min-w-[1120px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -416,7 +413,7 @@ const OperatorsTabledResults = ({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-normal">
+                    <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

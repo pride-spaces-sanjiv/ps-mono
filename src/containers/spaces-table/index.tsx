@@ -367,10 +367,10 @@ const SpacesTabledResults = ({
                 >
                   Show details
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {/* <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
                   Delete Space
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </DropdownMenuContent>
             </DropdownMenu>
           );

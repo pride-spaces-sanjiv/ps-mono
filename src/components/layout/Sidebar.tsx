@@ -30,7 +30,7 @@ const items = [
     icon: Home,
   },
   {
-    title: "Spaces",
+    title: "Centres",
     url: "/spaces",
     icon: Tv,
   },

@@ -21,6 +21,8 @@ const defaultTime = moment().hour(0).minute(0).toDate();
 const SpaceEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Fetch Data using Centre ID
   const { data: res, isFetching } = useQuery({
     queryKey: [queryKeys.SPACES, id],
     queryFn: () =>
@@ -29,6 +31,7 @@ const SpaceEditPage = () => {
   });
   console.log("space data", res?.data);
 
+  // form builder 
   const {
     register,
     handleSubmit,
@@ -40,6 +43,7 @@ const SpaceEditPage = () => {
     resolver: zodResolver(spaceSchema),
     defaultValues: { openTime: defaultTime, closeTime: defaultTime },
   });
+
 
   const operatorData = useMemo(
     () =>
@@ -97,103 +101,67 @@ const SpaceEditPage = () => {
 
   return (
     <div className="container mx-auto p-6">
+
       <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold"> Edit Space: {watch("name", "")}</h1>
+        <h1 className="text-2xl font-bold  w-full">
+          Edit Centre: {watch("name", "")}
+        </h1>
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
+
         <form
           onSubmit={handleSubmit(onSubmit, (errors) => {
             console.log("Space edit form error", errors);
           })}
           className="auto-form-grid"
         >
-          {/* Space Details */}
-          {/* Name */}
+
+          {/* SECTION: Centre Details */}
+
+          <div className="col-span-full  mb-6 ">
+            <div className="flex items-center gap-3">
+              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
+                Centre Details
+              </h1>
+              <div className="flex-1 border-t border-muted-foreground/20"></div>
+            </div>
+          </div>
+
           <FormField
             label="Name"
-            labelPosition="embedded"
-            placeholder="My Space"
+            placeholder="My Centre"
             {...register("name")}
             error={errors.name}
           />
 
-          {/* Slug */}
           <FormField
             label="Slug"
-            labelPosition="embedded"
-            placeholder="my-space-slug"
+            placeholder="my-centre-slug"
             {...register("slug")}
             error={errors.slug}
           />
 
-          {/* Email */}
           <FormField
             label="Email"
             labelPosition="embedded"
             type="email"
-            placeholder="my-space@example.com"
+            placeholder="centre@example.com"
             {...register("email")}
             error={errors.email}
           />
 
-          {/* Branch */}
-          {/* <FormField
-            label="Branch"
-            {...register("branch")}
-            readOnly
-            disabled
-            error={errors.branch}
-            /> */}
-
-          {/* Operator */}
           <FormField
             label="Operator"
             labelPosition="embedded"
             value={operatorData?.name || "None"}
-            // {...register("operator")}
             readOnly
             disabled
             error={errors.operator}
           />
-          {/*  */}
-
-          {/* Person Data, POC */}
-          <FormField
-            label="Person Name"
-            labelPosition="embedded"
-            placeholder="John Doe"
-            {...register("person.name")}
-            error={errors?.person?.name}
-          />
-          <FormField
-            label="Person Email"
-            type="email"
-            labelPosition="embedded"
-            placeholder="john.doe@example.com"
-            {...register("person.email")}
-            error={errors?.person?.email}
-          />
-          <FormField
-            label="Person Contact No"
-            labelPosition="embedded"
-            type="tel"
-            inputType="phone"
-            inputMode="tel"
-            placeholder="1234567890"
-            value={watch("person.contactNo", "")}
-            onChange={(val) => {
-              console.log(val);
-              setValue("person.contactNo", val?.toString() || "", {
-                shouldValidate: true,
-              });
-            }}
-            // {...register("person.contactNo")}
-            error={errors?.person?.contactNo}
-          />
-          {/*  */}
 
           {/* Open Time */}
+
           <FormField
             label="Open Time"
             labelPosition="embedded"
@@ -214,6 +182,7 @@ const SpaceEditPage = () => {
           />
 
           {/* Close Time */}
+
           <FormField
             label="Close Time"
             labelPosition="embedded"
@@ -233,7 +202,6 @@ const SpaceEditPage = () => {
             error={errors.closeTime}
           />
 
-          {/* Total Seats */}
           <FormField
             label="Total Seats"
             labelPosition="embedded"
@@ -242,7 +210,6 @@ const SpaceEditPage = () => {
             error={errors.totalSeats}
           />
 
-          {/* Booked Seats */}
           <FormField
             label="Booked Seats"
             labelPosition="embedded"
@@ -252,6 +219,7 @@ const SpaceEditPage = () => {
           />
 
           {/* Open Days */}
+
           <FormField
             label="Open Days"
             labelPosition="embedded"
@@ -295,46 +263,36 @@ const SpaceEditPage = () => {
             />
           </FormField>
 
-          {/* Description */}
           <FormField
             label="Description"
-            labelPosition="embedded"
-            placeholder="Enter a description for your space"
+            placeholder="Enter description"
             {...register("description")}
             error={errors.description}
             inputType="textarea"
           />
 
-          {/* Location Fields */}
+          {/* Location */}
 
           <FormField
             label="City"
-            labelPosition="embedded"
-            placeholder="Enter the city"
             {...register("location.city")}
             error={errors.location?.city}
           />
 
           <FormField
             label="State"
-            labelPosition="embedded"
-            placeholder="Enter the state"
             {...register("location.state")}
             error={errors.location?.state}
           />
 
           <FormField
             label="Country"
-            labelPosition="embedded"
-            placeholder="Enter the country"
             {...register("location.country")}
             error={errors.location?.country}
           />
 
           <FormField
             label="Postal Code"
-            labelPosition="embedded"
-            placeholder="Postal Code"
             {...register("location.postalCode")}
             error={errors.location?.postalCode}
           />
@@ -357,15 +315,54 @@ const SpaceEditPage = () => {
             error={errors.location?.lng}
           />
 
-          {/* Address */}
           <FormField
             label="Address"
-            labelPosition="embedded"
-            placeholder="Enter address"
             {...register("location.address")}
             error={errors.location?.address}
             inputType="textarea"
           />
+
+          {/* SECTION: Centre Point of Contact */}
+
+          <div className="col-span-full  mt-8 mb-6 ">
+            <div className="flex items-center gap-3">
+              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
+                Point of Contact Details
+              </h1>
+              <div className="flex-1 border-t border-muted-foreground/20"></div>
+            </div>
+          </div>
+
+          <FormField
+            label="Name"
+            placeholder="John Doe"
+            {...register("person.name")}
+            error={errors?.person?.name}
+          />
+
+          <FormField
+            label="Email"
+            type="email"
+            placeholder="john.doe@example.com"
+            {...register("person.email")}
+            error={errors?.person?.email}
+          />
+
+          <FormField
+            label="Telephone"
+            type="tel"
+            inputMode="tel"
+            placeholder="1234567890"
+            {...register("person.contactNo")}
+            error={errors?.person?.contactNo}
+          />
+
+          <FormField
+        label="Designation"
+        placeholder="Centre Manager"
+        // {...register("person.role")}
+        // error={errors?.person?.role}
+      />
 
           {/* Status */}
 
@@ -395,13 +392,12 @@ const SpaceEditPage = () => {
               loading={updateLoading}
               className="max-w-fit"
             >
-              Update Space
+              Update Centre
             </ActionButton>
           </div>
+
         </form>
       </div>
-      {/* <UserCreateModal /> */}
-      {/* <UsersTabledResults /> */}
     </div>
   );
 };

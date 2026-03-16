@@ -351,7 +351,7 @@ const UsersPage = () => {
   }, [res?.data?.data]);
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="admin-page-shell">
       {id.trim() &&
         id !== (userData?.id || "") &&
         (res?.data?.data?.id || isFetching ? (
