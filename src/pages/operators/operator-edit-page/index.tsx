@@ -72,18 +72,27 @@ const OperatorEditPage = () => {
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
       </div>
-
       <div className="w-full max-w-4xl mx-auto py-8">
         <form onSubmit={handleSubmit(onSubmit)} className="auto-form-grid">
-          {/* Name */}
+
+          {/* SECTION: Operator Details */}
+
+          <div className="col-span-full  mb-8 ">
+            <div className="flex items-center gap-3">
+              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
+                Operator Details
+              </h1>
+              <div className="flex-1 border-t border-muted-foreground/20"></div>
+            </div>
+          </div>
+
           <FormField
-            label="Operator Name"
+            label="Name"
             placeholder="Operator Name"
             {...register("name")}
             error={errors.name}
           />
 
-          {/* Slug */}
           <FormField
             label="Slug"
             placeholder="operator-slug"
@@ -91,69 +100,102 @@ const OperatorEditPage = () => {
             error={errors.slug}
           />
 
-          {/* Email */}
           <FormField
-            label="Operator Email"
+            label="Email"
             type="email"
             placeholder="operator@example.com"
             {...register("email")}
             error={errors.email}
           />
 
-          {/* Password */}
-          {/* <FormField
-          label="Password"
-          type="password"
-          placeholder="Enter password"
-          {...register("password")}
-          error={errors.password}
-        /> */}
+          {/* SECTION: Headquarter Details */}
 
-          {/* Headquarter Address */}
           <FormField
-            label="Headquarter Address"
+            label="HQ Address"
             placeholder="Enter headquarter address"
             {...register("headquarter.address")}
             error={errors.headquarter?.address}
             inputType="textarea"
           />
 
-          {/* Headquarter Contact */}
           <FormField
-            label="Headquarter Contact No"
+            label="HQ Telephone"
             placeholder="Enter contact number"
             {...register("headquarter.contactNo")}
             error={errors.headquarter?.contactNo}
           />
 
-          {/* Person Name */}
+          {/* SECTION: Operator Point of Contact */}
+
+          <div className="col-span-full mt-6 mb-8 ">
+            <div className="flex items-center gap-3">
+              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
+                Point of Contact Details
+              </h1>
+              <div className="flex-1 border-t border-muted-foreground/20"></div>
+            </div>
+          </div>
+
+
           <FormField
-            label="Contact Person Name"
+            label="Person"
             placeholder="Enter person name"
             {...register("person.name")}
             error={errors.person?.name}
           />
 
-          {/* Person Email */}
           <FormField
-            label="Contact Person Email"
+            label="Email"
             type="email"
             placeholder="person@example.com"
             {...register("person.email")}
             error={errors.person?.email}
           />
 
-          {/* Person Role */}
           <FormField
-            label="Contact Person Role"
+            label="Telephone"
+            type="tel"
+            inputMode="tel"
+            placeholder="1234567890"
+          // {...register("person.contactNo")}
+          // error={errors?.person?.contactNo}
+          />
+
+          <FormField
+            label="Designation"
             placeholder="Operations Head"
             {...register("person.role")}
             error={errors.person?.role}
           />
 
+          {/* SECTION: GST Details */}
+
+          <div className="col-span-full mt-6 mb-8 ">
+            <div className="flex items-center gap-3">
+              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
+                GST Details
+              </h1>
+              <div className="flex-1 border-t border-muted-foreground/20"></div>
+            </div>
+          </div>
+
+          <FormField
+            label="GST Number"
+            placeholder="Enter GST Number"
+          // {...register("gstNumber")}
+          // error={errors?.gstNumber}
+          />
+
+          <FormField
+            label="CIN Number"
+            placeholder="Enter CIN Number"
+          // {...register("cinNumber")}
+          // error={errors?.cinNumber}
+          />
+
           {/* Submit */}
 
-          <div className="col-span-full flex justify-end">
+          <div className="col-span-full mt-6 flex justify-end">
             <ActionButton
               type="submit"
               loading={updateLoading}
@@ -162,12 +204,13 @@ const OperatorEditPage = () => {
               Update Operator
             </ActionButton>
           </div>
+
         </form>
       </div>
 
       <div className="w-full max-w-6xl mx-auto">
         <div className="flex justify-between items-center my-2">
-          <h2 className="text-xl font-semibold">Spaces under this Operator</h2>
+          <h2 className="text-xl font-semibold">Centres under this Operator:</h2>
         </div>
 
         {/* Your existing spaces container/table goes here */}
