@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "ps-admin-fr",
+      "name": "ps-fr-admin",
       "script": "./script.sh",
       "args": "--env-file .env.dev",
       "watch": ["dist"]
