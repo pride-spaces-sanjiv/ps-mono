@@ -95,7 +95,12 @@ export default function FormField<
                 ...(props as Props<"select", V>)?.pickerProps,
               }}
               items={(props as Props<"select", V>)?.items}
-              className={className}
+              className={cn(
+                labelPosition === "out"
+                  ? ""
+                  : "border-0 focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-transparent",
+                className,
+              )}
             />
           ) : inputType === "phone" ? (
             <PhoneInput

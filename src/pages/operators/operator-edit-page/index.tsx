@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
+import { Switch } from "@/components/ui/switch";
 import { queryKeys } from "@/utils/query-keys";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
@@ -37,7 +38,7 @@ const OperatorEditPage = () => {
     watch,
     setValue,
   } = useForm({
-    resolver: zodResolver(operatorSchema),
+    resolver: zodResolver(operatorSchema.omit({ password: true })),
   });
 
   useEffect(() => {
@@ -50,7 +51,7 @@ const OperatorEditPage = () => {
     mutationFn: updateOperator,
   });
 
-  const onSubmit = async (body: OperatorSchema) => {
+  const onSubmit = async (body: Omit<OperatorSchema, "password">) => {
     try {
       console.log("Operator edit body", body);
 
@@ -73,8 +74,12 @@ const OperatorEditPage = () => {
         <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
-        <form onSubmit={handleSubmit(onSubmit)} className="auto-form-grid">
-
+        <form
+          onSubmit={handleSubmit(onSubmit, (errors) => {
+            console.log("Operator form err", errors);
+          })}
+          className="auto-form-grid"
+        >
           {/* SECTION: Operator Details */}
 
           <div className="col-span-full  mb-8 ">
@@ -89,12 +94,14 @@ const OperatorEditPage = () => {
           <FormField
             label="Name"
             placeholder="Operator Name"
+            labelPosition="embedded"
             {...register("name")}
             error={errors.name}
           />
 
           <FormField
             label="Slug"
+            labelPosition="embedded"
             placeholder="operator-slug"
             {...register("slug")}
             error={errors.slug}
@@ -102,6 +109,7 @@ const OperatorEditPage = () => {
 
           <FormField
             label="Email"
+            labelPosition="embedded"
             type="email"
             placeholder="operator@example.com"
             {...register("email")}
@@ -112,6 +120,7 @@ const OperatorEditPage = () => {
 
           <FormField
             label="HQ Address"
+            labelPosition="embedded"
             placeholder="Enter headquarter address"
             {...register("headquarter.address")}
             error={errors.headquarter?.address}
@@ -120,9 +129,20 @@ const OperatorEditPage = () => {
 
           <FormField
             label="HQ Telephone"
-            placeholder="Enter contact number"
-            {...register("headquarter.contactNo")}
+            labelPosition="embedded"
             error={errors.headquarter?.contactNo}
+            key={`hq-contact-${defaultValues?.headquarter?.contactNo}`}
+            type="tel"
+            inputMode="tel"
+            inputType="phone"
+            defaultValue={defaultValues?.headquarter?.contactNo}
+            placeholder="+1-123-456-7890"
+            onChange={(val) => {
+              console.log(val);
+              setValue("headquarter.contactNo", val?.toString() || "", {
+                shouldValidate: true,
+              });
+            }}
           />
 
           {/* SECTION: Operator Point of Contact */}
@@ -136,36 +156,47 @@ const OperatorEditPage = () => {
             </div>
           </div>
 
-
           <FormField
-            label="Person"
-            placeholder="Enter person name"
+            label="Name"
+            labelPosition="embedded"
+            placeholder="John Doe"
             {...register("person.name")}
-            error={errors.person?.name}
+            error={errors?.person?.name}
           />
 
           <FormField
             label="Email"
+            labelPosition="embedded"
             type="email"
-            placeholder="person@example.com"
+            placeholder="john.doe@example.com"
             {...register("person.email")}
-            error={errors.person?.email}
+            error={errors?.person?.email}
           />
 
           <FormField
+            key={`poc-${defaultValues?.person?.contactNo}`}
             label="Telephone"
+            labelPosition="embedded"
             type="tel"
             inputMode="tel"
-            placeholder="1234567890"
-          // {...register("person.contactNo")}
-          // error={errors?.person?.contactNo}
+            inputType="phone"
+            defaultValue={defaultValues?.person?.contactNo}
+            placeholder="+1-123-456-7890"
+            onChange={(val) => {
+              console.log(val);
+              setValue("person.contactNo", val?.toString() || "", {
+                shouldValidate: true,
+              });
+            }}
+            error={errors?.person?.contactNo}
           />
 
           <FormField
             label="Designation"
-            placeholder="Operations Head"
+            placeholder="Centre Manager"
+            labelPosition="embedded"
             {...register("person.role")}
-            error={errors.person?.role}
+            error={errors?.person?.role}
           />
 
           {/* SECTION: GST Details */}
@@ -181,17 +212,32 @@ const OperatorEditPage = () => {
 
           <FormField
             label="GST Number"
+            labelPosition="embedded"
             placeholder="Enter GST Number"
-          // {...register("gstNumber")}
-          // error={errors?.gstNumber}
+            {...register("gstNo")}
+            error={errors?.gstNo}
           />
 
           <FormField
             label="CIN Number"
+            labelPosition="embedded"
             placeholder="Enter CIN Number"
-          // {...register("cinNumber")}
-          // error={errors?.cinNumber}
+            {...register("cinNo")}
+            error={errors?.cinNo}
           />
+
+          {/* Status */}
+          <div className="col-span-full flex gap-8">
+            <div className="flex items-center gap-4">
+              <label className="text-white text-sm">{"Active Operator"}</label>
+              <Switch
+                key={defaultValues?.isActive ? "active" : "inactive"}
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
+                defaultChecked={!!defaultValues?.isActive}
+                {...register("isActive")}
+              />
+            </div>
+          </div>
 
           {/* Submit */}
 
@@ -204,13 +250,14 @@ const OperatorEditPage = () => {
               Update Operator
             </ActionButton>
           </div>
-
         </form>
       </div>
 
       <div className="w-full max-w-6xl mx-auto">
         <div className="flex justify-between items-center my-2">
-          <h2 className="text-xl font-semibold">Centres under this Operator:</h2>
+          <h2 className="text-xl font-semibold">
+            Centres under this Operator:
+          </h2>
         </div>
 
         {/* Your existing spaces container/table goes here */}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,8 @@ import { GroupedSearchSelect } from "@/components/search-select";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";
 import { DialogModal } from "@/components/dialog";
+import { facilities } from "@/utils/data/facilities";
+import { spaceCategories } from "@/utils/data/category";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -54,6 +56,7 @@ const SpaceEditPage = () => {
         | undefined) || null,
     [res?.data],
   );
+  const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
 
   // useEffect(() => {
   //   if (data) {
@@ -73,10 +76,16 @@ const SpaceEditPage = () => {
         closeTime: defaultTime,
         slug: modified?.references?.operator?.slug,
         ...modified,
+        person: {
+          ...(POCSameAsOperator
+            ? operatorData?.person
+            : res?.data?.data?.person),
+        },
       } as NonNullable<typeof modified>);
     }
-  }, [res]);
+  }, [res, POCSameAsOperator, operatorData]);
 
+  // Update Mutater
   const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationFn: updateSpace,
   });
@@ -158,6 +167,16 @@ const SpaceEditPage = () => {
             readOnly
             disabled
             error={errors.operator}
+          />
+
+          <FormField
+            key={`space-cat-${defaultValues?.category}`}
+            label="Category"
+            labelPosition="embedded"
+            inputType="select"
+            defaultValue={defaultValues?.category}
+            items={spaceCategories.map((cat) => ({ label: cat, value: cat }))}
+            error={errors.category}
           />
 
           {/* Open Time */}
@@ -263,6 +282,47 @@ const SpaceEditPage = () => {
             />
           </FormField>
 
+          {/* Amenities */}
+          <FormField
+            label="Amenities"
+            labelPosition="embedded"
+            error={{
+              message: errors.facilities?.message,
+              type: errors.facilities?.type || "validate",
+            }}
+          >
+            <GroupedSearchSelect
+              key={`amenities-${defaultValues?.facilities?.length}`}
+              type="multiple"
+              inputProps={{ placeholder: "Search Amenity" }}
+              defaultSelected={defaultValues?.facilities}
+              items={facilities.map((dt, i) => ({
+                label: dt,
+                value: dt,
+              }))}
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"outline"}
+                    className={"min-h-[40px] grow-1 border-0"}
+                  >
+                    {(watch("facilities", [])?.length || 0) > 0
+                      ? watch("facilities", [])?.length
+                      : "Select Amenities"}
+                  </ActionButton>
+                ),
+              }}
+              contentProps={{ className: "max-h-[300px]" }}
+              onSelect={(items) => {
+                setValue(
+                  "facilities",
+                  items.filter((val) => typeof val === "string"),
+                );
+              }}
+            />
+          </FormField>
+
           <FormField
             label="Description"
             labelPosition="embedded"
@@ -341,10 +401,22 @@ const SpaceEditPage = () => {
             </div>
           </div>
 
+          <div className="flex items-center gap-4">
+            <label className="text-white text-sm">Same As Operator</label>
+            <Switch
+              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+              onCheckedChange={(checked) => {
+                setPOCSameAsOperator(checked);
+              }}
+            />
+          </div>
+
           <FormField
             label="Name"
             labelPosition="embedded"
             placeholder="John Doe"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
             {...register("person.name")}
             error={errors?.person?.name}
           />
@@ -353,17 +425,23 @@ const SpaceEditPage = () => {
             label="Email"
             labelPosition="embedded"
             type="email"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
             placeholder="john.doe@example.com"
             {...register("person.email")}
             error={errors?.person?.email}
           />
 
           <FormField
+            key={`poc-same-${POCSameAsOperator}-${defaultValues?.person?.contactNo}`}
             label="Telephone"
             labelPosition="embedded"
             type="tel"
             inputMode="tel"
             inputType="phone"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            defaultValue={defaultValues?.person?.contactNo}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
               console.log(val);
@@ -378,29 +456,32 @@ const SpaceEditPage = () => {
             label="Designation"
             placeholder="Centre Manager"
             labelPosition="embedded"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
             {...register("person.role")}
-            // error={errors?.person?.role}
+            error={errors?.person?.role}
           />
 
           {/* Status */}
+          <div className="col-span-full flex gap-8">
+            <div className="flex items-center gap-4">
+              <label className="text-white text-sm">Active</label>
+              <Switch
+                key={defaultValues?.isActive ? "active" : "inactive"}
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+                defaultChecked={!!defaultValues?.isActive}
+                {...register("isActive")}
+              />
+            </div>
 
-          <div className="flex items-center gap-4">
-            <label className="text-white text-sm">Active</label>
-            <Switch
-              key={defaultValues?.isActive ? "active" : "inactive"}
-              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-              defaultChecked={!!defaultValues?.isActive}
-              {...register("isActive")}
-            />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <label className="text-white text-sm">Verified</label>
-            <Switch
-              key={defaultValues?.isVerified ? "verified" : "unverified"}
-              defaultChecked={!!defaultValues?.isVerified}
-              {...register("isVerified")}
-            />
+            <div className="flex items-center gap-4">
+              <label className="text-white text-sm">Verified</label>
+              <Switch
+                key={defaultValues?.isVerified ? "verified" : "unverified"}
+                defaultChecked={!!defaultValues?.isVerified}
+                {...register("isVerified")}
+              />
+            </div>
           </div>
 
           {/* Submit */}
