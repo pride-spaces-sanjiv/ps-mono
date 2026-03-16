@@ -28,6 +28,8 @@ export const operatorSchema = z.object({
   email: getEmailSchema(),
   password: getPasswordSchema(),
   slug: getSlugSchema({ keyName: "Operator Slug" }),
+  gstNo: z.string().trim().min(1, "GST number is required"),
+  cinNo: z.string().trim().min(1, "CIN number is required"),
   headquarter: headQuarterSchema,
   person: headQuarterPersonSchema,
   isActive: z.boolean().optional().default(true),

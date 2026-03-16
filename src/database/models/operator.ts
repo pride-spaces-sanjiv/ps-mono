@@ -31,6 +31,8 @@ const OperatorSchema = new Conn.Schema(
     slug: { type: String, required: true, unique: true },
     headquarter: { type: HeadQuarterSchema, required: true },
     person: { type: HeadQuarterPersonSchema, required: true },
+    gstNo: { type: String, required: true },
+    cinNo: { type: String, required: true },
     approval: { type: ApprovalSchema },
     isActive: { type: Boolean, default: true },
   },
