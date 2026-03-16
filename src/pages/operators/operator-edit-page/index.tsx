@@ -6,15 +6,16 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
 import { Switch } from "@/components/ui/switch";
-import { queryKeys } from "@/utils/query-keys";
-import FormField from "@/components/form/field";
-import ActionButton from "@/components/buttons/action-btn";
 import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
 import {
   getOperatorById,
   updateOperator,
 } from "@/services/apis/admin/operators";
+import { queryKeys } from "@/utils/query-keys";
+import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
+import FormField from "@/components/form/field";
+import ActionButton from "@/components/buttons/action-btn";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -264,6 +265,31 @@ const OperatorEditPage = () => {
 
         {/* <SpacesTableContainer operatorId={id} /> */}
         <SpacesTabledResults operatorId={res?.data?.data?.id} />
+
+        {/* Delete trigger */}
+        <div className="col-span-full flex justify-center pt-4">
+          <DialogModal
+            triggerProps={{
+              children: (
+                <ActionButton
+                  type="button"
+                  variant={"destructive"}
+                  loading={updateLoading}
+                  className="max-w-fit"
+                >
+                  Delete Operator
+                </ActionButton>
+              ),
+            }}
+            titleProps={{ children: "Operator Delete Confirmation" }}
+            descriptionProps={{
+              children:
+                "Are you sure to delete this operator ? You cannot undo this action.",
+            }}
+          >
+            <ActionButton variant={"destructive"}>Delete Operator</ActionButton>
+          </DialogModal>
+        </div>
       </div>
     </div>
   );
