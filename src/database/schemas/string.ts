@@ -1,5 +1,6 @@
 import { isObjectIdOrHexString } from "mongoose";
 import { minLength, z } from "zod";
+import { isValidPhoneNumber } from "libphonenumber-js/min";
 
 type StringSchemaOptions = {
   keyName: string;
@@ -71,7 +72,7 @@ export const getEmailSchema = ({
 // Phone
 type PhoneSchemaOptions = StringSchemaOptions & {
   minLength: number;
-  telRegexp: RegExp;
+  // telRegexp: RegExp;
   telRegexpMsg: string;
 };
 export const getPhoneSchema = ({
@@ -79,14 +80,17 @@ export const getPhoneSchema = ({
   doTrim = true,
   minLength = 4,
   // telRegexp = /^([0-2]|91)[0-9]{9,12}$/,
-  telRegexp = /^[0-9]{9,13}$/,
+  // telRegexp = /^[0-9]{9,13}$/,
   telRegexpMsg = "invalid phone number",
   schema = z.string(),
 }: Partial<PhoneSchemaOptions> = {}) => {
   if (doTrim) {
     schema = schema.trim();
   }
-  schema = schema.regex(telRegexp, `${keyName} ${telRegexpMsg}`);
+  schema = schema.refine(
+    (val) => isValidPhoneNumber(val),
+    `${keyName} ${telRegexpMsg}`,
+  );
   if (Number.isFinite(minLength)) {
     schema = schema.min(
       minLength,
