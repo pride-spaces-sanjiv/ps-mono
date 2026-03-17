@@ -13,7 +13,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { keepPreviousData } from "@tanstack/react-query";
+import { keepPreviousData, useMutation } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -43,7 +43,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { getSpaces } from "@/services/apis/admin/spaces";
+import { getSpaces, updateSpace } from "@/services/apis/admin/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { formatOpenDays } from "@/utils/data/days";
 import { queryKeys } from "@/utils/query-keys";
@@ -51,6 +51,8 @@ import { useDebouncer } from "@/services/hooks/use-debouncer";
 import type { Space } from "@/types/data/spaces";
 import { cn } from "@/utils/className";
 import { SelectPicker } from "@/components/select";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 type Props = {
   id: string | null;
@@ -95,7 +97,13 @@ const SpacesTabledResults = ({
   const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
 
-  const { data: res, isFetching, page, setPage } = usePaginatedQuery({
+  const {
+    data: res,
+    isFetching,
+    page,
+    setPage,
+    refetch,
+  } = usePaginatedQuery({
     limit: 10,
     queryKey: [
       queryKeys.SPACES,
@@ -116,6 +124,11 @@ const SpacesTabledResults = ({
     placeholderData: keepPreviousData,
   });
 
+  // Update Active status mutater
+  const { mutateAsync: updateMutater, isPending: isUpdating } = useMutation({
+    mutationFn: updateSpace,
+  });
+
   const spaces = useMemo(
     () =>
       ((res?.data?.data?.results ?? []) as Space[])
@@ -130,10 +143,10 @@ const SpacesTabledResults = ({
         .filter(Boolean),
     [res?.data?.data],
   );
- 
+
   // const spaces = res?.data?.data?.results || [];
   //         const spaces = [
-    //   {
+  //   {
   //     id: "1",
   //     branch: "BR001",
   //     enterprise: "ENT001",
@@ -161,7 +174,7 @@ const SpacesTabledResults = ({
   //   },
   // ];
   console.log("spaces", spaces);
-//  const spaceId = spaces
+  //  const spaceId = spaces
   // Columns definition
   const columns: ColumnDef<Space>[] = useMemo(
     () => [
@@ -274,7 +287,7 @@ const SpacesTabledResults = ({
         },
       },
       {
-        accessorKey: "description",
+        accessorKey: "active",
         header: ({ column }) => {
           return (
             <Button
@@ -283,7 +296,7 @@ const SpacesTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Description
+              Active Status
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -294,7 +307,32 @@ const SpacesTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("description") || "-"}</div>,
+        cell: ({ row }) => (
+          <div className="flex justify-center">
+            <Switch
+              key={row.original?.isActive ? "active" : "inactive"}
+              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
+              defaultChecked={!!row.original?.isActive}
+              disabled={isUpdating}
+              onCheckedChange={async (checked) => {
+                try {
+                  const res = await updateMutater({
+                    url: row.original.id,
+                    body: { isActive: checked },
+                  });
+                  if (res.status === 200) {
+                    toast.success("Space state changed");
+                    refetch();
+                    return;
+                  }
+                  throw new Error("Invalid response");
+                } catch (err) {
+                  toast.error("Failed to update space");
+                }
+              }}
+            />
+          </div>
+        ),
       },
       {
         accessorKey: "openTime",
@@ -404,9 +442,9 @@ const SpacesTabledResults = ({
       const newState =
         typeof updater === "function"
           ? updater({
-            pageIndex: page,
-            pageSize: res?.data?.data?.metrics?.count || 10,
-          })
+              pageIndex: page,
+              pageSize: res?.data?.data?.metrics?.count || 10,
+            })
           : updater;
       setPage(newState.pageIndex);
     },
@@ -426,7 +464,7 @@ const SpacesTabledResults = ({
 
   useEffect(() => {
     setPage(0);
-  }, [ debouncedSearch]);
+  }, [debouncedSearch]);
 
   return (
     <div {...props} className={cn("", className)}>
@@ -495,9 +533,9 @@ const SpacesTabledResults = ({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -543,43 +581,43 @@ const SpacesTabledResults = ({
           </TableBody>
         </Table>
       </div>
-            <div className="flex items-center justify-between space-x-2 py-4">
-              {/* <div className="text-muted-foreground text-sm">
+      <div className="flex items-center justify-between space-x-2 py-4">
+        {/* <div className="text-muted-foreground text-sm">
                 {table.getFilteredSelectedRowModel().rows?.length} of{" "}
                 {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
               </div> */}
-              <p className="text-lg font-medium">Page : {page + 1}</p>
-              {!!pagination && (
-                <div className="space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!table.getCanPreviousPage()}
-                    {...prevButtonProps}
-                    className={cn("", prevButtonProps?.className)}
-                    onClick={(e) => {
-                      table.previousPage();
-                      prevButtonProps?.onClick?.(e);
-                    }}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!table.getCanNextPage()}
-                    {...nextButtonProps}
-                    className={cn("", nextButtonProps?.className)}
-                    onClick={(e) => {
-                      table.nextPage();
-                      nextButtonProps?.onClick?.(e);
-                    }}
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
-            </div>
+        <p className="text-lg font-medium">Page : {page + 1}</p>
+        {!!pagination && (
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!table.getCanPreviousPage()}
+              {...prevButtonProps}
+              className={cn("", prevButtonProps?.className)}
+              onClick={(e) => {
+                table.previousPage();
+                prevButtonProps?.onClick?.(e);
+              }}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!table.getCanNextPage()}
+              {...nextButtonProps}
+              className={cn("", nextButtonProps?.className)}
+              onClick={(e) => {
+                table.nextPage();
+                nextButtonProps?.onClick?.(e);
+              }}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
