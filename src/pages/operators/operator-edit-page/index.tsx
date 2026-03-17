@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
+import { Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
 import {
@@ -257,8 +258,20 @@ const OperatorEditPage = () => {
       <div className="w-full max-w-6xl mx-auto">
         <div className="flex justify-between items-center my-2">
           <h2 className="text-xl font-semibold">
-            Centres under this Operator:
+            Centres under {res?.data?.data?.name || "Operator"}
           </h2>
+          <ActionButton
+            onClick={() => {
+              navigate("/spaces/new", {
+                state: { operatorData: res?.data?.data },
+              });
+            }}
+          >
+            <div className="flex gap-2 items-center">
+              List Centre
+              <Plus />
+            </div>
+          </ActionButton>
         </div>
 
         {/* Your existing spaces container/table goes here */}

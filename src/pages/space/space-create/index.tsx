@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -26,12 +26,17 @@ import type { Operator } from "@/types/data/operators";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
-type Props = {
+type LocState = {
   operatorData: Operator | null;
 };
 
-const SpaceCreatePage = ({ operatorData }: Partial<Props>) => {
+const SpaceCreatePage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const { operatorData } = useMemo(
+    () => location.state as Partial<LocState>,
+    [location.state],
+  );
 
   // form builder
   const {
