@@ -19,11 +19,16 @@ import Layout from "@/components/layout/Layout";
 import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
 import SpaceEditPage from "@/pages/space/space-edit-page";
-import OperatorEditPage from "@/pages/operators/operator-edit-page";
+// import OperatorEditPage from "@/pages/operators/operator-edit-page";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Space = lazy(() => import("@/pages/space"));
 const SpaceOperators = lazy(() => import("@/pages/operators"));
+const SpaceCreatePage = lazy(() => import("@/pages/space/space-create"));
+const OperatorCreate = lazy(() => import("@/pages/operators/operator-create"));
+const OperatorEditPage = lazy(
+  () => import("@/pages/operators/operator-edit-page"),
+);
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -104,8 +109,8 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
-                    <Route path="/spaces/:id" element={<SpaceEditPage />} /> 
-                    <Route path="/operators/:id" element={<OperatorEditPage />} /> 
+        <Route path="/spaces/:id" element={<SpaceEditPage />} />
+        <Route path="/spaces/new" element={<SpaceCreatePage />} />
 
         <Route
           path="/operators"
@@ -115,6 +120,8 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
+        <Route path="/operators/:id" element={<OperatorEditPage />} />
+        <Route path="/operators/new" element={<OperatorCreate />} />
 
         {/* Default redirect */}
         <Route path="/*" element={<Navigate to="/dashboard" />} />

@@ -5,12 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
 import {
   getOperatorById,
   updateOperator,
+  createOperator,
 } from "@/services/apis/admin/operators";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
@@ -20,17 +20,8 @@ import ActionButton from "@/components/buttons/action-btn";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
-const OperatorEditPage = () => {
-  const { id } = useParams();
+const OperatorCreatePage = () => {
   const navigate = useNavigate();
-
-  const { data: res, isFetching } = useQuery({
-    queryKey: [queryKeys.OPERATORS, id],
-    queryFn: () => getOperatorById({ url: `/${id}` }),
-    enabled: !!id,
-  });
-
-  console.log("operator data", res?.data);
 
   const {
     register,
@@ -40,33 +31,29 @@ const OperatorEditPage = () => {
     watch,
     setValue,
   } = useForm({
-    resolver: zodResolver(operatorSchema.omit({ password: true })),
+    resolver: zodResolver(operatorSchema),
+    defaultValues: { isActive: true },
   });
 
-  useEffect(() => {
-    if (res?.data.data) {
-      reset(res?.data.data);
-    }
-  }, [res]);
-
-  const { mutateAsync, isPending: updateLoading } = useMutation({
-    mutationFn: updateOperator,
+  const { mutateAsync, isPending: createLoading } = useMutation({
+    mutationFn: createOperator,
   });
 
-  const onSubmit = async (body: Omit<OperatorSchema, "password">) => {
+  const onSubmit = async (body: OperatorSchema) => {
     try {
-      console.log("Operator edit body", body);
-
-      await mutateAsync({
-        url: id,
+      console.log("Operator body", body);
+      const res = await mutateAsync({
         body,
       });
 
-      toast.success("Operator updated successfully");
-
-      navigate("/operators");
+      if (res.status === 201) {
+        toast.success("Operator created successfully");
+        navigate("/operators");
+        return;
+      }
+      throw new Error("Invalid response");
     } catch (err) {
-      toast.error("Failed to update operator");
+      toast.error("Failed to create operator");
     }
   };
 
@@ -116,6 +103,14 @@ const OperatorEditPage = () => {
             placeholder="operator@example.com"
             {...register("email")}
             error={errors.email}
+          />
+          <FormField
+            label="Password"
+            labelPosition="embedded"
+            inputType="password"
+            placeholder="••••••••"
+            {...register("password")}
+            error={errors.password}
           />
 
           {/* SECTION: Headquarter Details */}
@@ -246,66 +241,16 @@ const OperatorEditPage = () => {
           <div className="col-span-full mt-6 flex justify-end">
             <ActionButton
               type="submit"
-              loading={updateLoading}
+              loading={createLoading}
               className="max-w-fit"
             >
-              Update Operator
+              Create Operator
             </ActionButton>
           </div>
         </form>
-      </div>
-
-      <div className="w-full max-w-6xl mx-auto">
-        <div className="flex justify-between items-center my-2">
-          <h2 className="text-xl font-semibold">
-            Centres under {res?.data?.data?.name || "Operator"}
-          </h2>
-          <ActionButton
-            onClick={() => {
-              navigate("/spaces/new", {
-                state: { operatorData: res?.data?.data },
-              });
-            }}
-          >
-            <div className="flex gap-2 items-center">
-              List Centre
-              <Plus />
-            </div>
-          </ActionButton>
-        </div>
-
-        {/* Your existing spaces container/table goes here */}
-
-        {/* <SpacesTableContainer operatorId={id} /> */}
-        <SpacesTabledResults operatorId={res?.data?.data?.id} />
-
-        {/* Delete trigger */}
-        <div className="col-span-full flex justify-center pt-4">
-          <DialogModal
-            triggerProps={{
-              children: (
-                <ActionButton
-                  type="button"
-                  variant={"destructive"}
-                  loading={updateLoading}
-                  className="max-w-fit"
-                >
-                  Delete Operator
-                </ActionButton>
-              ),
-            }}
-            titleProps={{ children: "Operator Delete Confirmation" }}
-            descriptionProps={{
-              children:
-                "Are you sure to delete this operator ? You cannot undo this action.",
-            }}
-          >
-            <ActionButton variant={"destructive"}>Delete Operator</ActionButton>
-          </DialogModal>
-        </div>
       </div>
     </div>
   );
 };
 
-export default OperatorEditPage;
+export default OperatorCreatePage;

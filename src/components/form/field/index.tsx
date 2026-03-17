@@ -90,10 +90,12 @@ export default function FormField<
           (inputType === "select" ? (
             // @ts-ignore
             <SelectPicker
+              key={`picker-at-${props?.defaultValue}`}
               {...{
                 ...{ ...(props as Props<"select", V>), pickerProps: undefined },
                 ...(props as Props<"select", V>)?.pickerProps,
               }}
+              defaultValue={props?.defaultValue}
               items={(props as Props<"select", V>)?.items}
               className={cn(
                 labelPosition === "out"
@@ -124,15 +126,13 @@ export default function FormField<
                 ...(props as Props<"password">)?.fieldWrapperProps,
                 className: cn(
                   "min-h-[40px]",
+                  labelPosition === "out"
+                    ? ""
+                    : "border-0 focus-within:border-0 focus-within:ring-0 focus-within:ring-transparent",
                   (props as Props<"password">)?.fieldWrapperProps?.className,
                 ),
               }}
-              className={cn(
-                labelPosition === "out"
-                  ? ""
-                  : "border-0 focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-transparent",
-                className,
-              )}
+              className={cn(className)}
               type={type}
             />
           ) : inputType === "textarea" ? (

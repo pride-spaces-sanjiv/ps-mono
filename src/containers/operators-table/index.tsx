@@ -69,7 +69,6 @@ type Props = {
   inputProps: Parameters<typeof Input>[0];
 } & React.JSX.IntrinsicElements["div"];
 
-
 const OperatorsTabledResults = ({
   id,
   operatorId,
@@ -86,7 +85,8 @@ const OperatorsTabledResults = ({
   nextButtonProps,
   inputProps,
   skeletonProps,
-  ...props }: Partial<Props>) => {
+  ...props
+}: Partial<Props>) => {
   const navigate = useNavigate();
   const [search, setSearch] = useState({ field: "Name", value: "" });
 
@@ -96,28 +96,30 @@ const OperatorsTabledResults = ({
     data: res,
     isFetching,
     page,
-    setPage
+    setPage,
   } = usePaginatedQuery({
     limit: 10,
-    queryKey: [queryKeys.OPERATORS, debouncedSearch.field,
-    debouncedSearch.value,
+    queryKey: [
+      queryKeys.OPERATORS,
+      debouncedSearch.field,
+      debouncedSearch.value,
     ],
-    queryFn: (page, limit) => getOperators({
-      query: {
-        page: page + 1,
-        limit: limit,
-        withOperator: true,
-        ...((operatorId && { operator: operatorId || "" }) || null),
-        [`s${debouncedSearch.field}`]: debouncedSearch.value,
-      },
-    }),
+    queryFn: (page, limit) =>
+      getOperators({
+        query: {
+          page: page + 1,
+          limit: limit,
+          withOperator: true,
+          ...((operatorId && { operator: operatorId || "" }) || null),
+          [`s${debouncedSearch.field}`]: debouncedSearch.value,
+        },
+      }),
     placeholderData: keepPreviousData,
   });
 
   const operators: Operator[] = useMemo(
-    () =>
-      ((res?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
-    [res?.data?.data?.results]
+    () => ((res?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
+    [res?.data?.data?.results],
   );
   console.log("operators", operators);
 
@@ -216,9 +218,7 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => (
-          <div>{row.original.person?.name || "-"}</div>
-        ),
+        cell: ({ row }) => <div>{row.original.person?.name || "-"}</div>,
       },
       {
         accessorKey: "person.email",
@@ -241,9 +241,7 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => (
-          <div>{row.original.person?.email || "-"}</div>
-        ),
+        cell: ({ row }) => <div>{row.original.person?.email || "-"}</div>,
       },
       {
         id: "actions",
@@ -274,12 +272,12 @@ const OperatorsTabledResults = ({
         },
       },
     ],
-    [navigate]
+    [navigate],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -300,9 +298,9 @@ const OperatorsTabledResults = ({
       const newState =
         typeof updater === "function"
           ? updater({
-            pageIndex: page,
-            pageSize: res?.data?.data?.metrics?.count || 10,
-          })
+              pageIndex: page,
+              pageSize: res?.data?.data?.metrics?.count || 10,
+            })
           : updater;
       setPage(newState.pageIndex);
     },
@@ -348,7 +346,10 @@ const OperatorsTabledResults = ({
               setSearch({ value: "", field: value });
             },
           }}
-          items={["Name", "Headquarter", "Person Name"].map((s) => ({ label: s, value: s }))}
+          items={["Name", "Headquarter", "Person Name"].map((s) => ({
+            label: s,
+            value: s,
+          }))}
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -387,9 +388,9 @@ const OperatorsTabledResults = ({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -416,7 +417,7 @@ const OperatorsTabledResults = ({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -434,7 +435,6 @@ const OperatorsTabledResults = ({
             )}
           </TableBody>
         </Table>
-
       </div>
       <div className="flex items-center justify-between space-x-2 py-4">
         {/* <div className="text-muted-foreground text-sm">
