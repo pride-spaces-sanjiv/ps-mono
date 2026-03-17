@@ -118,9 +118,9 @@ type PasswordSchemaOptions = StringSchemaOptions & {
   regexps: typeof defaultPasswordSchemaRegexps;
 };
 export const getPasswordSchema = ({
-  keyName = "Name",
+  keyName = "Password",
   doTrim = true,
-  minLength = 4,
+  minLength = 8,
   regexps = defaultPasswordSchemaRegexps,
 }: Partial<PasswordSchemaOptions> = {}) => {
   let schema = z.string();
