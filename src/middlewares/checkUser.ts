@@ -142,7 +142,7 @@ export const authorizeAdminDetailsByParam = <K extends string = "id">({
 
       const selfDoc = await Admin.findOne({ _id: selfId }, { level: 1 });
       const otherDoc = await Admin.findOne(
-        { _id: req.params[field] },
+        { _id: req.params?.[field] },
         { level: 1 },
       );
 
@@ -152,7 +152,7 @@ export const authorizeAdminDetailsByParam = <K extends string = "id">({
           message: `No such ${notFoundMsgKey} exists`,
         });
       }
-      if (req.body[field]) {
+      if (req.params?.[field] || req.body?.[field]) {
         const comparison = compareAdminLevels(
           selfDoc?.level as AdminLevel,
           otherDoc?.level as AdminLevel,
@@ -164,7 +164,7 @@ export const authorizeAdminDetailsByParam = <K extends string = "id">({
           });
         }
       }
-      return next();
+      return next?.();
     } catch (err: any) {
       ResponseHandler.handleError(res, {
         errorType: `check-${levelErrorKey}-error`,
