@@ -65,6 +65,12 @@ router.put(
   "/:id/password/change",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
   allowAdminLevelsToPass({ allowedLevels: ["super-admin"] }),
+  RequestMiddleware.bodyValidator(passwordSchema, {
+    allowEmpty: false,
+    validateOnlyPresent: false,
+    overridePostValidation: true,
+    extractOnlyRequiredFields: true,
+  }),
   authorizeAdminDetailsByParam(),
   changePassword(Admin, { keyName: "admin" }),
 );
