@@ -165,10 +165,11 @@ export const authorizeAdminDetailsByParam = <K extends string = "id">({
         }
       }
       return next();
-    } catch (err) {
+    } catch (err: any) {
       ResponseHandler.handleError(res, {
         errorType: `check-${levelErrorKey}-error`,
         message: `Failed to check ${levelErrorMsgKey}`,
+        data: { message: err?.message },
       });
     }
   };
