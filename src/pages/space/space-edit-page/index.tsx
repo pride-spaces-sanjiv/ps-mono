@@ -15,6 +15,7 @@ import { days } from "@/utils/data/days";
 import { facilities } from "@/utils/data/facilities";
 import { spaceCategories } from "@/utils/data/category";
 import FormField from "@/components/form/field";
+import MapsField from "@/components/maps";
 import { GroupedSearchSelect } from "@/components/search-select";
 import { DialogModal } from "@/components/dialog";
 import ActionButton from "@/components/buttons/action-btn";
@@ -380,6 +381,13 @@ const SpaceEditPage = () => {
             step="any"
             {...register("location.lng")}
             error={errors.location?.lng}
+          />
+
+          {/* Maps */}
+          <MapsField
+            wrapperProps={{ className: "col-span-full flex flex-col gap-4" }}
+            mapProps={{ mapContainerClassName: "min-h-[300px] w-full" }}
+            buttonProps={{className: "w-fit"}}
           />
 
           <FormField
