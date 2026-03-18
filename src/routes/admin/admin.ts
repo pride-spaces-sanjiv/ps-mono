@@ -3,6 +3,7 @@ import { Admin } from "@/database/models/user.js";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import {
   allowAdminLevelByBody,
+  allowAdminLevelsToPass,
   authorizeAdminDetailsByParam,
   checkUserExistenceByBodyValue,
 } from "@/middlewares/checkUser.js";
@@ -13,6 +14,7 @@ import {
   getAdmins,
   updateAdmin,
 } from "@/controllers/admin/admin.js";
+import { changePassword, getPassword } from "@/controllers/general/password.js";
 import { adminSchema } from "@/database/schemas/user.js";
 import { getIdSchema } from "@/database/schemas/string.js";
 
@@ -48,6 +50,23 @@ router.put(
   }),
   allowAdminLevelByBody({ field: "level" }),
   updateAdmin,
+);
+
+// Password
+const passwordSchema = adminSchema.pick({ password: true });
+router.get(
+  "/:id/password",
+  RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  allowAdminLevelsToPass({ allowedLevels: ["super-admin"] }),
+  authorizeAdminDetailsByParam(),
+  getPassword(Admin, { keyName: "admin" }),
+);
+router.put(
+  "/:id/password/change",
+  RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  allowAdminLevelsToPass({ allowedLevels: ["super-admin"] }),
+  authorizeAdminDetailsByParam(),
+  changePassword(Admin, { keyName: "admin" }),
 );
 
 export { router as AdminRouter };

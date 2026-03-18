@@ -70,6 +70,7 @@ export const login =
 
       // Send, bearer, refresh token and other details
       ResponseHandler.handleSuccess(res, {
+        message: "Login successful",
         data: {
           token: token,
           refreshToken: refreshToken,

@@ -210,7 +210,7 @@ export const allowAdminLevelsToPass = <K extends AdminLevel>({
           message: `You are not authorized to this ${levelErrorMsgKey}`,
         });
       }
-      return next();
+      return next?.();
     } catch (err) {
       ResponseHandler.handleError(res, {
         errorType: `check-${levelErrorKey}-error`,
