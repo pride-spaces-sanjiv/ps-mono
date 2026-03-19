@@ -29,6 +29,7 @@ const OperatorSchema = new Conn.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
+    brandName: { type: String },
     headquarter: { type: HeadQuarterSchema, required: true },
     person: { type: HeadQuarterPersonSchema, required: true },
     gstNo: { type: String, required: true },

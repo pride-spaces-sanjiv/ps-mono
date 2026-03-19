@@ -5,6 +5,7 @@ import {
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
+import { spaceTypes, spaceGrades } from "@/utils/data/spaceTypes.js";
 
 const PersonSchema = new Conn.Schema(
   {
@@ -20,7 +21,7 @@ const LocationSchema = new Conn.Schema(
     address: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
-    postalCode: { type: String, required: true },
+    area: { type: String, required: true },
     country: { type: String, required: true },
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
@@ -37,16 +38,21 @@ const SpaceSchema = new Conn.Schema(
     location: { type: LocationSchema, required: true },
     person: { type: PersonSchema, required: true },
     slug: { type: String, required: true, unique: true },
+    area: { type: Number },
     description: { type: String },
     category: { type: String, default: "Classic" },
+    spaceType: { type: String, enum: spaceTypes, default: "Coworking" },
+    grade: { type: String, enum: spaceGrades, default: "B" },
     openTime: { type: Date },
     closeTime: { type: Date },
     openDays: { type: [Number] },
+    operationalHrs: { type: Number },
     facilities: { type: [String] },
     isVerified: { type: Boolean },
     isActive: { type: Boolean },
     totalSeats: { type: Number, default: 0 },
     bookedSeats: { type: Number, default: 0 },
+    price: { type: Number, default: 0 },
     rating: { type: Number },
     reviews: { type: Number },
     approval: { type: ApprovalSchema },
