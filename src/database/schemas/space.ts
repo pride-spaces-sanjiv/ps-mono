@@ -38,7 +38,7 @@ export const spaceSchema = z.object({
   slug: getSlugSchema({ keyName: "Space Slug" }),
   area: z.number().min(0, "Area must be a positive number").optional(),
   category: z.enum(spaceCategories).default("Classic"),
-  spaceType: z.enum(spaceTypes).default("Coworking"),
+  spaceType: z.enum(spaceTypes).default("Flex"),
   grade: z.enum(spaceGrades).default("B"),
   description: z.string().optional(),
   openTime: z.date().optional(),

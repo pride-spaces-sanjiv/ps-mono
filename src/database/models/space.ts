@@ -41,7 +41,7 @@ const SpaceSchema = new Conn.Schema(
     area: { type: Number },
     description: { type: String },
     category: { type: String, default: "Classic" },
-    spaceType: { type: String, enum: spaceTypes, default: "Coworking" },
+    spaceType: { type: String, enum: spaceTypes, default: "Flex" },
     grade: { type: String, enum: spaceGrades, default: "B" },
     openTime: { type: Date },
     closeTime: { type: Date },
