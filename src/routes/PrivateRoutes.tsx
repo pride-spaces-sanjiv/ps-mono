@@ -26,9 +26,10 @@ const Space = lazy(() => import("@/pages/space"));
 const SpaceOperators = lazy(() => import("@/pages/operators"));
 const SpaceCreatePage = lazy(() => import("@/pages/space/space-create"));
 const OperatorCreate = lazy(() => import("@/pages/operators/operator-create"));
-const OperatorEditPage = lazy(
+const OperatorEditPage = lazy( 
   () => import("@/pages/operators/operator-edit-page"),
 );
+const Amenities = lazy(() => import("@/pages/amenities")); 
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -122,7 +123,15 @@ const PrivateRoutes = () => {
         />
         <Route path="/operators/:id" element={<OperatorEditPage />} />
         <Route path="/operators/new" element={<OperatorCreate />} />
-
+          
+        <Route
+          path="/amenities"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<Amenities />} />
+            </SuspensedView>
+          }
+        />
         {/* Default redirect */}
         <Route path="/*" element={<Navigate to="/dashboard" />} />
       </Route>
