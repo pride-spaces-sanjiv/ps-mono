@@ -3,12 +3,17 @@ import {
   GoogleMap,
   useJsApiLoader,
   Autocomplete,
+  type Libraries,
 } from "@react-google-maps/api";
-import { MapPin } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import ActionButton from "../buttons/action-btn";
+import { MapPin, NotebookPenIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { useDebouncer } from "@/services/hooks/use-debouncer";
 import { cn } from "@/utils/className";
+import { geocodeLatLng } from "@/utils/data/geocode";
+import ActionButton from "../buttons/action-btn";
+
+const libs: Libraries = ["maps", "places", "marker"];
 
 type Props = {
   showCoords: boolean;
@@ -19,6 +24,8 @@ type Props = {
   wrapperProps: React.ComponentProps<"div">;
   buttonProps: React.ComponentProps<typeof ActionButton>;
   searchInputProps: React.ComponentProps<typeof Input>;
+  geocodeDebounceDelay: number;
+  onGeocodeLatLng: (result: Awaited<ReturnType<typeof geocodeLatLng>>, coords: { lat: number; lng: number }) => any;
 };
 
 export default function MapsField({
@@ -30,16 +37,21 @@ export default function MapsField({
   wrapperProps,
   buttonProps,
   searchInputProps,
+  geocodeDebounceDelay = 500,
+  onGeocodeLatLng,
 }: Partial<Props>) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: ["maps", "places", "marker"],
+    libraries: libs,
   });
 
   const inputRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState<{ lat: number; lng: number }>(
+    defaultCoords,
+  );
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>(
     defaultCoords,
   );
 
@@ -49,6 +61,7 @@ export default function MapsField({
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         // console.log(coords);
         setCenter(coords);
+        setCoords(coords);
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) {
@@ -72,6 +85,8 @@ export default function MapsField({
     return () => {};
   }, []);
 
+  useEffect(() => {});
+
   return (
     <div className={cn("", wrapperProps?.className)}>
       {isLoaded && (
@@ -93,13 +108,15 @@ export default function MapsField({
               mapProps?.mapContainerClassName,
             )}
             onCenterChanged={() => {
-              if (map?.getCenter()) {
+              const centered = map?.getCenter();
+              if (centered) {
                 const location = {
-                  lng: map?.getCenter()?.lng(),
-                  lat: map?.getCenter()?.lat(),
+                  lng: centered.lng(),
+                  lat: centered.lat(),
                 };
                 // setCoords(location);
-                onCoordsChange?.(location as { lat: number; lng: number });
+                onCoordsChange?.(location);
+                setCoords(location);
               }
               mapProps?.onCenterChanged?.();
             }}
@@ -124,17 +141,33 @@ export default function MapsField({
             )}
           </GoogleMap>
           {/* <p className="err">{error || ""}</p> */}
-
-          <ActionButton
-            type="button"
-            {...buttonProps}
-            className={cn("", buttonProps?.className)}
-            onClick={() => updateToCurrentLocation()}
-          >
-            <div className="flex gap-2 items-center">
-              <MapPin /> Current Location
-            </div>
-          </ActionButton>
+          <div className="flex gap-2 justify-end">
+            <ActionButton
+              type="button"
+              variant={"secondary"}
+              onClick={async () => {
+                try {
+                  const result = await geocodeLatLng(coords.lat, coords.lng);
+                  onGeocodeLatLng?.(result, coords);
+                } catch (err) {}
+              }}
+            >
+              <div className="flex gap-2 items-center">
+                <NotebookPenIcon />
+                Fill Location
+              </div>
+            </ActionButton>
+            <ActionButton
+              type="button"
+              {...buttonProps}
+              className={cn("", buttonProps?.className)}
+              onClick={() => updateToCurrentLocation()}
+            >
+              <div className="flex gap-2 items-center">
+                <MapPin /> Current Location
+              </div>
+            </ActionButton>
+          </div>
 
           {/* Inputs */}
           <div className={`map-inputs-wrap`}>
@@ -152,6 +185,7 @@ export default function MapsField({
                   const pos = { lat, lng };
                   //   setCoords(pos);
                   setCenter(pos);
+                  setCoords(pos);
                 }
               }}
             >

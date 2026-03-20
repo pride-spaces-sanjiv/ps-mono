@@ -387,7 +387,21 @@ const SpaceEditPage = () => {
           <MapsField
             wrapperProps={{ className: "col-span-full flex flex-col gap-4" }}
             mapProps={{ mapContainerClassName: "min-h-[300px] w-full" }}
-            buttonProps={{className: "w-fit"}}
+            buttonProps={{ className: "w-fit" }}
+            onGeocodeLatLng={(res, coords) => {
+              console.log(res);
+              const oldData = watch("location");
+              const data: SpaceSchema["location"] = {
+                address: res.address || oldData.address,
+                city: res.city || oldData.city,
+                state: res.state || oldData.state,
+                postalCode: res.postalCode || oldData.postalCode,
+                country: res.country || oldData.country,
+                lat: coords.lat || oldData.lat,
+                lng: coords.lng || oldData.lng,
+              };
+              setValue("location", data, { shouldValidate: true });
+            }}
           />
 
           <FormField
