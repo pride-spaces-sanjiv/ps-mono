@@ -12,6 +12,9 @@ import {
 } from "@/components/select";
 import { type FieldError } from "react-hook-form";
 
+export const embedInputClassName =
+  "border-0 focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-transparent";
+
 type InputType = "default" | "textarea" | "password" | "select" | "phone";
 type Props<
   T extends InputType = "default",
