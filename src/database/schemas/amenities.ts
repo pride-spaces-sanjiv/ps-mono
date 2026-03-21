@@ -1,11 +1,12 @@
 import z from "zod";
+import { getNameSchema } from "./string.js";
 
 // --- Amenities Schema ---
 export const amenitiesSchema = z.object({
-    name: z.string().trim().min(1, "Name is required"),
-    icon: z.string().trim().min(1, "Icon is required"),
-    type: z.string().trim().min(1, "Type is required"),
-    status: z.string().trim().min(1, "Status is required"),
-})
+  name: getNameSchema({ keyName: "Name" }),
+  icon: z.string().trim().min(1, "Icon is required"),
+  category: z.string().trim().min(1, "Category is required").optional(),
+  isActive: z.boolean().default(true),
+});
 
 export type AmenitiesSchema = z.infer<typeof amenitiesSchema>;
