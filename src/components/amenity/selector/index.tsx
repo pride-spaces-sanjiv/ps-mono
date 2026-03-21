@@ -37,38 +37,44 @@ const mappedIcons = Object.keys(Lucide)
       return false;
     }
   });
-console.log(mappedIcons);
+// console.log(mappedIcons);
 
 type Props = {
   onSelect: (key: string) => any;
-};
-export default function AmenityIconSelector({ onSelect }: Partial<Props>) {
+  inputProps: React.ComponentProps<typeof Input>;
+  dialogProps: React.ComponentProps<typeof DialogModal>;
+} & React.ComponentProps<"button">;
+export default function AmenityIconSelector({
+  onSelect,
+  inputProps,
+  dialogProps,
+  ...props
+}: Partial<Props>) {
   const dialogClose = useRef<HTMLButtonElement | null>(null);
   const triggerBtn = useRef<HTMLButtonElement | null>(null);
 
-  const [validIcons, setValidIcons] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncer(search.trim().toLowerCase(), 300);
   const [Selected, setSelected] = useState<
     (typeof Lucide)["AArrowDown"] | null
   >(null);
 
-  const { data: iconSlugs } = useQuery({
-    queryKey: ["icon-slugs"],
+  const { data: iconsData, isFetching: isLoading } = useQuery({
+    queryKey: ["set-icons-data"],
     queryFn: async () => {
       try {
         const res = await axios.get("https://lucide.dev/api/tags");
-        const iconSlugs: string[] =
+        const iconsData: { key: string; tags: string[] }[] =
           (res.status === 200 &&
             res.data &&
             typeof res.data === "object" &&
-            (Object.keys(res.data).map((s) =>
-              dashToUpperCased(s).trim().toLowerCase(),
-            ) as string[])) ||
+            Object.entries(res.data).map(([key, tags]) => ({
+              key: removeDashes(key).trim().toLowerCase(),
+              tags,
+            }))) ||
           [];
-        if (iconSlugs.length >= 10) {
-          setValidIcons(iconSlugs);
-          return iconSlugs;
+        if (iconsData.length >= 10) {
+          return iconsData;
         }
         throw new Error("Invalid response");
       } catch (err) {
@@ -80,28 +86,27 @@ export default function AmenityIconSelector({ onSelect }: Partial<Props>) {
   });
 
   const searchedIcons = useMemo(() => {
-    if (debouncedSearch.length >= 3 && iconSlugs) {
+    if (debouncedSearch.length >= 1 && iconsData) {
+      const iconsDataKeys = iconsData.map((dt) => dt.key);
       return mappedIcons
-        .filter((dt) => iconSlugs.includes(dt.value.toLowerCase().trim()))
-        .filter((dt) =>
-          dt.value.toLowerCase().trim().includes(debouncedSearch),
+        .filter((dt) => iconsDataKeys.includes(dt.value.trim().toLowerCase()))
+        .filter(
+          (dt) =>
+            dt.value.toLowerCase().trim().includes(debouncedSearch) ||
+            !!iconsData
+              .find((icon) => icon.key === dt.value.trim().toLowerCase())
+              ?.tags?.some((tag) => tag.includes(debouncedSearch)),
         );
     }
     return [];
-  }, [debouncedSearch, iconSlugs]);
+  }, [debouncedSearch, iconsData]);
 
   return (
     <DialogModal
-      onOpenChange={(open) => {
-        // reset states on closed
-        if (!open) {
-          setSearch("");
-        }
-      }}
       closeProps={{ ref: dialogClose }}
       triggerProps={{
         children: (
-          <ActionButton ref={triggerBtn}>
+          <ActionButton ref={triggerBtn} loading={isLoading}>
             {Selected ? (
               <Selected className="text-white size-[18px]" />
             ) : (
@@ -111,21 +116,35 @@ export default function AmenityIconSelector({ onSelect }: Partial<Props>) {
         ),
       }}
       titleProps={{ children: "" }}
+      {...dialogProps}
+      contentProps={{
+        ...dialogProps?.contentProps,
+        className: cn("max-h-[80dvh]"),
+      }}
+      onOpenChange={(open) => {
+        // reset states on closed
+        if (!open) {
+          setSearch("");
+        }
+        dialogProps?.onOpenChange?.(open);
+      }}
     >
       <div className="flex items-center gap-1 rounded-md border border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] px-2 py-1">
         <Lucide.SearchIcon />
         <Input
-          className={cn(embedInputClassName)}
           placeholder="Search an Icon"
+          {...inputProps}
           onChange={(e) => {
             const val = e.currentTarget.value.trim().toLowerCase();
             setSearch(val);
+            inputProps?.onChange?.(e);
           }}
+          className={cn(embedInputClassName, inputProps?.className)}
         />
       </div>
       {/* Render elements */}
       {!!searchedIcons.length && (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap h-full overflow-y-scroll">
           {searchedIcons.map((dt, i) => {
             const Icon = dt.icon as React.ForwardRefExoticComponent<
               Omit<Lucide.LucideProps, "ref"> &
