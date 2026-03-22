@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Home, LogOutIcon, Settings, Tv, Users } from "lucide-react";
+import { HomeIcon, LogOut, Settings, TvIcon, Users } from "lucide-react";
 import { tokenStore, userStore } from "@/services/store/user";
 import { useUser } from "@/services/hooks/use-user";
 import { logoutAPI } from "@/services/apis/auth";
@@ -27,37 +27,37 @@ const items = [
   {
     title: "Dashboard",
     url: "/dashboard",
-    icon: Home,
+    icon: HomeIcon,
   },
   {
     title: "Centres",
     url: "/spaces",
-    icon: Tv,
+    icon: TvIcon,
   },
   {
     title: "Operators",
     url: "/operators",
-    icon: LogOutIcon,
+    icon: LogOut,
   },
   {
     title: "Amenities",
     url: "/amenities",
-    icon: LogOutIcon,
+    icon: LogOut,
   },
   {
     title: "Migrate Offices",
     url: "/migration",
-    icon: LogOutIcon,
+    icon: LogOut,
   },
   {
     title: "List Finite Offices",
     url: "/listfiniteoffices",
-    icon: LogOutIcon,
+    icon: LogOut,
   },
   {
     title: "Notfication",
     url: "/notfication",
-    icon: LogOutIcon,
+    icon: LogOut,
   },
   {
     title: "Users",
@@ -152,7 +152,7 @@ export function AppSidebar() {
                   "Login"
                 ) : (
                   <> */}
-                <LogOutIcon /> Logout
+                <LogOut /> Logout
                 {/* </>
                 )} */}
               </div>
