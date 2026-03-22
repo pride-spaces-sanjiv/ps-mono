@@ -25,7 +25,7 @@ export const getSpaceOperatorsData = async (operators: string[]) => {
     ).map((item) => [item._id, item.totalSpaces]) as [string, number][],
   );
   let results = (await Operator.find({ _id: { $in: operators } })).map(
-    (doc) => ({ ...doc, totalSpaces: spaceCounts[doc.id] || 0 }),
+    (doc) => ({ ...doc.toObject(), totalSpaces: spaceCounts[doc.id] || 0 }),
   );
   // const results = (await Operator.aggregate([
   //   {
