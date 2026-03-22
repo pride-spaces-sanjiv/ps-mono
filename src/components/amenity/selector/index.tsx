@@ -47,19 +47,24 @@ type Props = {
   onSelect: (key: string) => any;
   inputProps: React.ComponentProps<typeof Input>;
   dialogProps: React.ComponentProps<typeof DialogModal>;
+  defaultIconKey: string;
 };
 export default function AmenityIconSelector({
   onSelect,
   inputProps,
   dialogProps,
+  defaultIconKey,
   ...props
 }: Partial<Props> &
   Partial<Omit<React.ComponentProps<"button">, keyof Props>>) {
   const dialogClose = useRef<HTMLButtonElement | null>(null);
   const triggerBtn = useRef<HTMLButtonElement | null>(null);
 
+  const [itemsOffset, setItemsOffset] = useState(0);
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncer(search.trim().toLowerCase(), 300);
+  const debouncedSearch = useDebouncer(search.trim().toLowerCase(), 500, () => {
+    setItemsOffset(0);
+  });
   const [Selected, setSelected] = useState<
     (typeof Lucide)["AArrowDown"] | null
   >(null);
@@ -90,11 +95,16 @@ export default function AmenityIconSelector({
     staleTime: 30000,
   });
 
+  const iconsDataKeys = useMemo(
+    () => iconsData?.map((dt) => dt.key) || [],
+    [iconsData],
+  );
   const searchedIcons = useMemo(() => {
     if (debouncedSearch.length >= 1 && iconsData) {
-      const iconsDataKeys = iconsData.map((dt) => dt.key);
       return mappedIcons
-        .filter((dt) => iconsDataKeys.includes(dt.value.trim().toLowerCase()))
+        .filter((dt, i) =>
+          iconsDataKeys.includes(dt.value.trim().toLowerCase()),
+        )
         .filter(
           (dt) =>
             dt.value.toLowerCase().trim().includes(debouncedSearch) ||
@@ -104,7 +114,24 @@ export default function AmenityIconSelector({
         );
     }
     return [];
-  }, [debouncedSearch, iconsData]);
+  }, [debouncedSearch, iconsData, itemsOffset, iconsDataKeys]);
+
+  useEffect(() => {
+    const key =
+      defaultIconKey &&
+      iconsDataKeys.find((k) =>
+        k.includes(removeDashes(defaultIconKey).toLowerCase().trim()),
+      );
+    // console.log("Selected from default icon", key);
+    if (iconsDataKeys.length > 0 && defaultIconKey && key) {
+      const Icon = mappedIcons.find(
+        (dt) => dt.value.toLowerCase().trim() === key,
+      )?.icon as LucideIconComponent | undefined;
+      // console.log("Selected from default icon", defaultIconKey, Icon);
+      // @ts-ignore
+      Icon && setSelected((prev: LucideIconComponent) => prev || Icon);
+    }
+  }, [iconsDataKeys, defaultIconKey]);
 
   return (
     <DialogModal
@@ -116,6 +143,7 @@ export default function AmenityIconSelector({
           <ActionButton
             ref={triggerBtn}
             loading={isLoading}
+            variant={"secondary"}
             {...props}
             className={cn("", props?.className)}
           >
@@ -155,30 +183,45 @@ export default function AmenityIconSelector({
       </div>
       {/* Render elements */}
       {!!searchedIcons.length && (
-        <div className="flex gap-2 flex-wrap h-full overflow-y-scroll">
-          {searchedIcons.map((dt, i) => {
-            const Icon = dt.icon as LucideIconComponent;
-            return (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <ActionButton
-                    variant={"secondary"}
-                    className="rounded-lg px-2 py-2 bg-secondary"
-                    key={`icon-${i}`}
-                    onClick={() => {
-                      dialogClose?.current?.click?.();
-                      onSelect?.(dt.key);
-                      setSelected(Icon);
-                    }}
-                  >
-                    <Icon className="size-[18px] text-white" />
-                  </ActionButton>
-                </TooltipTrigger>
-                <TooltipContent>{dt.key}</TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
+        <>
+          <div className="flex gap-2 flex-wrap self-stretch overflow-y-auto">
+            {searchedIcons
+              .filter((_, i) => i < 20 * (itemsOffset + 1))
+              .map((dt, i) => {
+                const Icon = dt.icon as LucideIconComponent;
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <ActionButton
+                        variant={"secondary"}
+                        className="rounded-lg px-2 py-2 bg-secondary"
+                        key={`icon-${i}`}
+                        onClick={() => {
+                          dialogClose?.current?.click?.();
+                          onSelect?.(dt.key);
+                          setSelected(Icon);
+                        }}
+                      >
+                        <Icon className="size-[18px] text-white" />
+                      </ActionButton>
+                    </TooltipTrigger>
+                    <TooltipContent>{dt.key}</TooltipContent>
+                  </Tooltip>
+                );
+              })}
+          </div>
+          {20 * (itemsOffset + 1) < searchedIcons.length && (
+            <ActionButton
+              variant={"secondary"}
+              className="w-fit"
+              onClick={() => {
+                setItemsOffset((prev) => prev + 1);
+              }}
+            >
+              View More
+            </ActionButton>
+          )}
+        </>
       )}
     </DialogModal>
   );

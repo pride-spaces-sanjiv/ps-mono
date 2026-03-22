@@ -21,16 +21,20 @@ import ActionButton from "@/components/buttons/action-btn";
 // import OperatorEditPage from "@/pages/operators/operator-edit-page";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
+// Space
 const Space = lazy(() => import("@/pages/space"));
 const SpaceOperators = lazy(() => import("@/pages/operators"));
 const SpaceCreatePage = lazy(() => import("@/pages/space/space-create"));
 const SpaceEditPage = lazy(() => import("@/pages/space/space-edit-page"));
+// Operator
 const OperatorCreate = lazy(() => import("@/pages/operators/operator-create"));
 const OperatorEditPage = lazy(
   () => import("@/pages/operators/operator-edit-page"),
 );
+// Amenity
 const Amenities = lazy(() => import("@/pages/amenities"));
 const CreateAmenity = lazy(() => import("@/pages/amenities/create"));
+const EditAmenity = lazy(() => import("@/pages/amenities/edit"));
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -138,6 +142,14 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <AutoNavigateRender El={<CreateAmenity />} />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path="/amenities/:id"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<EditAmenity />} />
             </SuspensedView>
           }
         />

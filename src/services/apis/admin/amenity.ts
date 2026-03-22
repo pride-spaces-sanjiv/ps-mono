@@ -1,5 +1,5 @@
 import { ADMIN_AMENITY } from "../config";
-import { spaceSchema } from "@/utils/schemas/spaces";
+import { amenitySchema } from "@/utils/schemas/amenity";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
 // types
@@ -18,7 +18,7 @@ type AmenitiesRes = GeneralResponseWithError<
 >;
 // type References = Partial<{ [k: string]: Record<string, any> | null }>;
 
-// 🔹 Get All Spaces (Paginated)
+// 🔹 Get All (Paginated)
 export const getAmenities = APIBodyValidationWrapper({
   handle: async (param, config) => {
     const url = (
@@ -49,7 +49,7 @@ export const getAmenity = APIBodyValidationWrapper({
 
 // 🔹 Create
 export const createAmenity = APIBodyValidationWrapper({
-  schema: spaceSchema,
+  schema: amenitySchema,
   handle: async (param, config) => {
     const url = "/";
     const res = await ADMIN_AMENITY.post<GeneralResponseWithError<Amenity>>(
@@ -63,7 +63,7 @@ export const createAmenity = APIBodyValidationWrapper({
 
 // 🔹 Update
 export const updateAmenity = APIBodyValidationWrapper({
-  schema: spaceSchema.partial(),
+  schema: amenitySchema.partial(),
   handle: async (param, config) => {
     const url = `/${param?.url}`;
 

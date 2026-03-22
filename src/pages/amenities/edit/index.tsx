@@ -1,19 +1,21 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { createAmenity } from "@/services/apis/admin/amenity";
+import { updateAmenity, getAmenity } from "@/services/apis/admin/amenity";
 import { amenitySchema, type AmenitySchema } from "@/utils/schemas/amenity";
 import { queryKeys } from "@/utils/query-keys";
 import AmenityIconSelector from "@/components/amenity/selector";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import { datifyObjectValues } from "@/utils/object/datify";
 
-export default function CreateAmenity() {
+export default function EditAmenity() {
   const navigate = useNavigate();
+  const { id = "" } = useParams();
 
   const {
     register,
@@ -27,9 +29,14 @@ export default function CreateAmenity() {
     defaultValues: { isActive: true },
   });
 
-  const { mutateAsync, isPending: createLoading } = useMutation({
-    mutationKey: [queryKeys.AMENITIES, "create"],
-    mutationFn: createAmenity,
+  const { data: res, isFetching } = useQuery({
+    queryKey: [queryKeys.AMENITIES, "update", id],
+    queryFn: () => getAmenity({ url: id }),
+  });
+
+  const { mutateAsync, isPending: isUpdating } = useMutation({
+    mutationKey: [queryKeys.AMENITIES, "update", id],
+    mutationFn: updateAmenity,
   });
 
   const onSubmit = async (body: AmenitySchema) => {
@@ -39,16 +46,26 @@ export default function CreateAmenity() {
         body,
       });
 
-      if (res.status === 201) {
-        toast.success("Amenity created successfully");
+      if (res.status === 200) {
+        toast.success("Amenity updated successfully");
         navigate("/amenities");
         return;
       }
       throw new Error("Invalid response");
     } catch (err) {
-      toast.error("Failed to create amenity");
+      toast.error("Failed to update amenity");
     }
   };
+
+  useEffect(() => {
+    if (res?.data) {
+      const modified = datifyObjectValues(res.data?.data, [
+        "createdAt",
+        "updatedAt",
+      ]);
+      reset({ ...defaultValues, ...modified });
+    }
+  }, [res?.data]);
 
   return (
     <div className="container mx-auto p-6">
@@ -83,6 +100,7 @@ export default function CreateAmenity() {
 
           <FormField label="Icon" error={errors.icon}>
             <AmenityIconSelector
+              defaultIconKey={defaultValues?.icon}
               onSelect={(key) => {
                 setValue("icon", key, { shouldValidate: true });
               }}
@@ -106,10 +124,10 @@ export default function CreateAmenity() {
           <div className="col-span-full mt-6 flex justify-end">
             <ActionButton
               type="submit"
-              loading={createLoading}
+              loading={isUpdating || isFetching}
               className="max-w-fit"
             >
-              Create Amenity
+              Update Amenity
             </ActionButton>
           </div>
         </form>
