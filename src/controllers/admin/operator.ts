@@ -11,8 +11,8 @@ import {
 } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
+import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 import { encodeCrypto } from "@/utils/crypto.js";
-import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { OperatorSchema } from "@/database/schemas/operator.js";
 
@@ -22,8 +22,6 @@ export const getOperators = async (
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
-    const lowerLevels = getAdminLowerLevels(selfLevel as AdminLevel);
-    console.log(lowerLevels);
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -64,10 +62,25 @@ export const getOperators = async (
       return;
     }
 
-    const data = cleanPaginatedData({ results, page, metrics, err, errored });
+    const spaceCounts = await getSpaceCountsOfOperator(
+      results.map((r) => r.id),
+    );
+    const data = cleanPaginatedData({
+      results: results,
+      page,
+      metrics,
+      err,
+      errored,
+    });
     ResponseHandler.handleSuccess(res, {
       message: "Got operators list",
-      data: data,
+      data: {
+        ...data,
+        results: data.results.map((r) => ({
+          ...r,
+          totalSpaces: spaceCounts[r.id] || 0,
+        })),
+      },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -97,7 +110,11 @@ export const getOperator = async (
       return;
     }
 
-    const data = convertDataToJSON(doc);
+    const spaceCounts = await getSpaceCountsOfOperator([doc.id]);
+    const data = {
+      ...convertDataToJSON(doc),
+      totalSpaces: spaceCounts[doc.id] || 0,
+    };
     ResponseHandler.handleSuccess(res, {
       data: data,
     });
@@ -162,7 +179,11 @@ export const updateOperator = async (
       return;
     }
 
-    const data = convertDataToJSON(doc);
+    const spaceCounts = await getSpaceCountsOfOperator([doc.id]);
+    const data = {
+      ...convertDataToJSON(doc),
+      totalSpaces: spaceCounts[doc.id] || 0,
+    };
     ResponseHandler.handleSuccess(res, {
       data: data,
     });
