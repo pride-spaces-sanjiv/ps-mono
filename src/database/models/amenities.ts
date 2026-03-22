@@ -6,11 +6,12 @@ import { Conn } from "../mongoose.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 
 // --- Amenities Schema ---
-const AmenitiesSchema = new Conn.Schema(
+const AmenitySchema = new Conn.Schema(
   {
     name: {
       type: String,
       required: true,
+      unique: true,
       trim: true,
     },
     icon: {
@@ -30,12 +31,14 @@ const AmenitiesSchema = new Conn.Schema(
 );
 
 // Model Instances
-export const Amenities = Conn.model("Amenities", AmenitiesSchema, "amenities");
-indexFieldsFromSchema(AmenitiesSchema, { singleFields: ["name", "category"] });
-Amenities.syncIndexes();
+export const Amenity = Conn.model("Amenity", AmenitySchema, "amenities");
+indexFieldsFromSchema(AmenitySchema, {
+  singleFields: ["category", "icon"],
+});
+Amenity.syncIndexes();
 
 // Field Names
-export const amenitiesFields = getFieldsOfModel(Amenities, {
+export const amenityFields = getFieldsOfModel(Amenity, {
   timestamps: false,
 });
-export const allAmenitiesFieldsEnabled = appendGeneralFields(amenitiesFields);
+export const allAmenityFieldsEnabled = appendGeneralFields(amenityFields);
