@@ -46,7 +46,7 @@ const testSave = async <T extends Record<string, any>, M extends Model<any>>(
   }
 };
 
-await dropColl(Amenity);
+// await dropColl(Amenity);
 let savedCount = 0;
 for (const amenity of amenities) {
   const done = await testSave(amenity, Amenity);

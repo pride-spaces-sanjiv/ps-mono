@@ -8,6 +8,7 @@ import { OperatorRouter } from "./operator.js";
 import { UserRouter } from "./user.js";
 import { SpaceRouter } from "./space.js";
 import { BranchRouter } from "./branch.js";
+import { AmenityRouter } from "./amenity.js";
 import { DataRouter } from "./data.js";
 import { DumpRouter } from "./dump.js";
 
@@ -23,6 +24,7 @@ router.use("/operators", OperatorRouter);
 router.use("/users", UserRouter);
 router.use("/spaces", SpaceRouter);
 router.use("/branches", BranchRouter);
+router.use("/amenities", AmenityRouter);
 router.use("/dumps", DumpRouter);
 
 export { router as AdminRouter };

@@ -1,5 +1,5 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Amenities, amenitiesFields } from "@/database/models/amenities.js";
+import { Amenity, amenityFields } from "@/database/models/amenities.js";
 import {
   cleanPaginatedData,
   paginatedResults,
@@ -12,40 +12,37 @@ import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-
+import { AmenitySchema } from "@/database/schemas/amenities.js";
 
 export const getAmenities = async (
   req: ManagedRequest<any>,
-  res: ManagedResponse
+  res: ManagedResponse,
 ) => {
   try {
     const { fields, projectors } = getFieldsandProjectors(
       req,
-      Amenities,
-      amenitiesFields
+      Amenity,
+      amenityFields,
     );
 
-    const searchFilters = getSearchFilters<typeof Amenities>(req, {
+    const searchFilters = getSearchFilters<typeof Amenity>(req, {
       fieldMaps: {
         Name: "name",
         Category: "category",
+        Icon: "icon",
       },
     });
 
-    const { page, metrics, results, errored, err } =
-      await paginatedResults(
-        req,
-        Amenities,
-        amenitiesFields,
-        { limit: 10 },
-        {
-          projection: projectors,
-          filter: cleanObject(
-            { ...searchFilters },
-            { excludeByValues: [""] }
-          ),
-        }
-      );
+    const { page, metrics, results, errored, err } = await paginatedResults(
+      req,
+      Amenity,
+      amenityFields,
+      { limit: 10 },
+      {
+        projection: projectors,
+        filter: cleanObject({ ...searchFilters }, { excludeByValues: [""] }),
+      },
+    );
 
     if (errored && err) {
       ResponseHandler.handleError(res, {
@@ -78,24 +75,12 @@ export const getAmenities = async (
   }
 };
 
-
 //  GET SINGLE Amenities
-export const getAmenity = async (
-  req: ManagedRequest,
-  res: ManagedResponse
-) => {
+export const getAmenity = async (req: ManagedRequest, res: ManagedResponse) => {
   try {
-    const { projectors } = getFieldsandProjectors(
-      req,
-      Amenities,
-      amenitiesFields
-    );
+    const { projectors } = getFieldsandProjectors(req, Amenity, amenityFields);
 
-    const doc = await Amenities.findOne(
-      { _id: req.params.id },
-      projectors
-    );
-
+    const doc = await Amenity.findOne({ _id: req.params.id }, projectors);
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "amenity-not-found",
@@ -117,16 +102,15 @@ export const getAmenity = async (
   }
 };
 
-
 //  CREATE Amenities
 export const createAmenity = async (
-  req: ManagedRequest,
-  res: ManagedResponse
+  req: ManagedRequest<AmenitySchema>,
+  res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
 
-    const doc = new Amenities(body);
+    const doc = new Amenity(body);
     await doc.save();
 
     const data = convertDataToJSON(doc);
@@ -153,20 +137,17 @@ export const createAmenity = async (
   }
 };
 
-
 //  UPDATE Amenities
 export const updateAmenity = async (
-  req: ManagedRequest,
-  res: ManagedResponse
+  req: ManagedRequest<Partial<AmenitySchema>>,
+  res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
 
-    const doc = await Amenities.findOneAndUpdate(
-      { _id: req.params.id },
-      body,
-      { new: true, runValidators: true }
-    );
+    const doc = await Amenity.findOneAndUpdate({ _id: req.params.id }, body, {
+      new: true,
+    });
 
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
@@ -198,14 +179,13 @@ export const updateAmenity = async (
   }
 };
 
-
 //  DELETE Amenities
 export const deleteAmenity = async (
   req: ManagedRequest,
-  res: ManagedResponse
+  res: ManagedResponse,
 ) => {
   try {
-    const doc = await Amenities.findOneAndDelete({
+    const doc = await Amenity.findOneAndDelete({
       _id: req.params.id,
     });
 
