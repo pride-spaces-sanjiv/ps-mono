@@ -64,6 +64,11 @@ export const ADMIN_SPACE = ADMIN.create({
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
+export const ADMIN_AMENITY = ADMIN.create({
+  baseURL: baseUrl + "/admin/amenities",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
 
 // Enterprise
 

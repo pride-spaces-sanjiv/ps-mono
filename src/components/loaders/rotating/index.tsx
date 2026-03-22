@@ -26,7 +26,7 @@ const variants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
 
 type Props = React.JSX.IntrinsicElements["div"] & {
@@ -50,9 +50,9 @@ export default function RotatingLoader({
           size,
           className: cn(
             visible ? "opacity-100" : "opacity-0 absolute size-0",
-            className
+            className,
           ),
-        })
+        }),
       )}
     >
       <span className="sr-only">{"Loading........"}</span>

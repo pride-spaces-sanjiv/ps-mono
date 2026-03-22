@@ -1,27 +1,32 @@
-import ActionButton from "@/components/buttons/action-btn";
-import AmenitiesTabledResults from "@/containers/amenities-table";
-import { Plus } from "lucide-react";
+import { lazy } from "react";
 import { useNavigate } from "react-router-dom";
+import { PlusIcon } from "lucide-react";
+import { SuspensedView } from "@/components/suspensed-view";
+import ActionButton from "@/components/buttons/action-btn";
 
-export default function Amenities() {
-      const navigate = useNavigate();
+const AmenitiesTable = lazy(() => import("@/containers/amenities/table"));
 
-    return (
-        <div className="container mx-auto p-6">
-            <div className="flex justify-between items-center my-4">
-                <h1 className="text-2xl font-bold">This is Amenities Page!</h1>
-                        <ActionButton
+const Amenities = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center my-4">
+        <h1 className="text-2xl font-bold">This is Amenities Page!</h1>
+        <ActionButton
           onClick={() => {
-            navigate("/operators/new");
+            navigate("/amenities/new");
           }}
         >
           <div className="flex gap-2 items-center">
-            Add Amenities
-            <Plus />
+            List Amenity
+            <PlusIcon />
           </div>
         </ActionButton>
-            </div>
-            <AmenitiesTabledResults />
-        </div>
-    )
+      </div>
+      <SuspensedView>
+        <AmenitiesTable />
+      </SuspensedView>
+    </div>
+  );
 };
+export default Amenities;

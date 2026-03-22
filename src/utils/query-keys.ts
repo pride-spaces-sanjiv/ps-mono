@@ -8,6 +8,7 @@ const keys = [
   "credits",
   "spaces",
   "operators",
+  "amenities",
 ] as const;
 
 type QueryKey = (typeof keys)[number];
