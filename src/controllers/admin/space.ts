@@ -83,7 +83,9 @@ export const getSpaces = async (
           await getSpaceOperatorsData(
             data.results.map((space) => space.operator),
           )
-        ).map((d) => convertDataToJSON(d))
+        )
+          // @ts-ignore
+          .map((d) => convertDataToJSON(d))
       : [];
     ResponseHandler.handleSuccess(res, {
       message: "Got spaces list",
@@ -132,6 +134,7 @@ export const getSpace = async (
     const data = convertDataToJSON(doc);
     const operators = withOperator
       ? (await getSpaceOperatorsData([data?.operator as string])).map((d) =>
+          // @ts-ignore
           convertDataToJSON(d),
         )
       : [];
