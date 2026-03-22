@@ -40,6 +40,11 @@ const items = [
     icon: LogOutIcon,
   },
   {
+    title: "Amenities",
+    url: "/amenities",
+    icon: LogOutIcon,
+  },
+  {
     title: "Migrate Offices",
     url: "/migration",
     icon: LogOutIcon,

@@ -49,7 +49,10 @@ export function DialogModal({
       </DialogTrigger>
       <DialogContent
         {...contentProps}
-        className={cn("sm:max-w-[425px]", contentProps?.className)}
+        className={cn(
+          "sm:max-w-[425px] grid-rows-[auto_1fr]",
+          contentProps?.className,
+        )}
       >
         {!!showHeader && (
           <DialogHeader
