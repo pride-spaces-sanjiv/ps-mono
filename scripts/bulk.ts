@@ -13,8 +13,8 @@ import {
 } from "../src/database/schemas/operator";
 import { Space } from "../src/database/models/space";
 import { Operator } from "../src/database/models/operator";
-import { facilities } from "../src/utils/data/facilties";
-
+import { facilities } from "../src/utils/data/facilities";
+import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 const { default: parsedData } = await import("../data/parsed-data.json", {
   assert: { type: "json" },
 });
@@ -40,16 +40,22 @@ const rows: any[] = [];
 //     console.log(rows);
 //     fs.writeFileSync("./parsed-data.json", JSON.stringify(rows, null, 2));
 //   });
+let counter = 0;
+
+const operatorId = "69b08adb22a9fe9d0e91127a";
+
+const counts = await getSpaceCountsOfOperator([operatorId]);
+
+counter = counts[operatorId] || 0;
 
 const convertData = (data: (typeof parsedData)[number]) => {
+  counter++;
+
   const converted: SpaceSchema = {
     name: data["Centre Name"].trim(),
     branch: new Types.ObjectId().toHexString(),
     operator: "69b08adb22a9fe9d0e91127a",
-    slug: data["Centre Name"]
-      .trim()
-      .replace(/[^a-zA-Z0-9]+/g, "-")
-      .toLowerCase(),
+   slug: generateSlug(data["Centre Name"], counter),
     isActive: true,
     isVerified: false,
     email: "randommail@gmail.com",
@@ -132,3 +138,14 @@ let saves = 0;
 //   const doc = new Operator({ ...data, password: encodeCrypto(data?.password) });
 //   await doc.save();
 // }
+const generateSlug = (name: string, count: number) => {
+  const firstWord = name
+    .trim()
+    .split(" ")[0]
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toLowerCase();
+
+  const padded = String(count).padStart(4, "0");
+
+  return `${firstWord}-${padded}`;
+};
