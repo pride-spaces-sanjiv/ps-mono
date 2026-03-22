@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import * as Lucide from "lucide-react";
+import axios from "axios";
 import { isValidElementType } from "react-is";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
 import { cn } from "@/utils/className";
 import {
@@ -13,14 +19,8 @@ import {
 import { embedInputClassName } from "@/components/form/field";
 import { DialogModal } from "@/components/dialog";
 import ActionButton from "@/components/buttons/action-btn";
-import axios from "axios";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
-const mappedIcons = Object.keys(Lucide)
+export const mappedIcons = Object.keys(Lucide)
   .map((val) => ({
     key: upperCasedToDash(val.replace(/ +/g, "")),
     value: val,
@@ -39,17 +39,22 @@ const mappedIcons = Object.keys(Lucide)
   });
 // console.log(mappedIcons);
 
+export type LucideIconComponent = React.ForwardRefExoticComponent<
+  Omit<Lucide.LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
+>;
+
 type Props = {
   onSelect: (key: string) => any;
   inputProps: React.ComponentProps<typeof Input>;
   dialogProps: React.ComponentProps<typeof DialogModal>;
-} & React.ComponentProps<"button">;
+};
 export default function AmenityIconSelector({
   onSelect,
   inputProps,
   dialogProps,
   ...props
-}: Partial<Props>) {
+}: Partial<Props> &
+  Partial<Omit<React.ComponentProps<"button">, keyof Props>>) {
   const dialogClose = useRef<HTMLButtonElement | null>(null);
   const triggerBtn = useRef<HTMLButtonElement | null>(null);
 
@@ -103,23 +108,29 @@ export default function AmenityIconSelector({
 
   return (
     <DialogModal
-      closeProps={{ ref: dialogClose }}
+      {...dialogProps}
+      closeProps={{ ref: dialogClose, ...dialogProps?.closeProps }}
       triggerProps={{
+        ...dialogProps?.triggerProps,
         children: (
-          <ActionButton ref={triggerBtn} loading={isLoading}>
+          <ActionButton
+            ref={triggerBtn}
+            loading={isLoading}
+            {...props}
+            className={cn("", props?.className)}
+          >
             {Selected ? (
               <Selected className="text-white size-[18px]" />
             ) : (
-              "Select"
+              props?.children || "Select"
             )}
           </ActionButton>
         ),
       }}
-      titleProps={{ children: "" }}
-      {...dialogProps}
+      titleProps={{ children: "", ...dialogProps?.titleProps }}
       contentProps={{
         ...dialogProps?.contentProps,
-        className: cn("max-h-[80dvh]"),
+        className: cn("max-h-[80dvh]", dialogProps?.contentProps?.className),
       }}
       onOpenChange={(open) => {
         // reset states on closed
@@ -146,10 +157,7 @@ export default function AmenityIconSelector({
       {!!searchedIcons.length && (
         <div className="flex gap-2 flex-wrap h-full overflow-y-scroll">
           {searchedIcons.map((dt, i) => {
-            const Icon = dt.icon as React.ForwardRefExoticComponent<
-              Omit<Lucide.LucideProps, "ref"> &
-                React.RefAttributes<SVGSVGElement>
-            >;
+            const Icon = dt.icon as LucideIconComponent;
             return (
               <Tooltip>
                 <TooltipTrigger asChild>
