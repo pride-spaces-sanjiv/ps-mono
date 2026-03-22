@@ -15,7 +15,7 @@ export const getSpaceOperatorsData = async (operators: string[]) => {
       $lookup: {
         from: Space.collection.name, // The collection name in your DB
         localField: "_id", // Operator ID
-        foreignField: "operatorId", // Reference field in Space model
+        foreignField: "operator", // Reference field in Space model
         pipeline: [{ $count: "count" }], // ONLY calculate the count inside MongoDB
         as: "spaceCountData",
       },
