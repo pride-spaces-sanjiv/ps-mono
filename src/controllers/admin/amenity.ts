@@ -12,7 +12,7 @@ import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { AmenitySchema } from "@/database/schemas/amenities.js";
+import { AmenitySchema } from "@/database/schemas/amenity.js";
 
 export const getAmenities = async (
   req: ManagedRequest<any>,

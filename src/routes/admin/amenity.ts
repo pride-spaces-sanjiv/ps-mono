@@ -5,7 +5,7 @@ import { Amenity } from "@/database/models/amenities.js";
 import {
   amenitySchema,
   type AmenitySchema,
-} from "@/database/schemas/amenities.js";
+} from "@/database/schemas/amenity.js";
 
 import { getIdSchema } from "@/database/schemas/string.js";
 import {
