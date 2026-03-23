@@ -40,6 +40,30 @@ export const locationSchema = z.object({
   lng: z.number(),
 });
 
+// --- Pricing
+export const pricingSchema = z.object({
+  dayPass: z
+    .number()
+    .min(0, "Day pass price must be a positive number")
+    .default(0),
+  perSeat: z
+    .number()
+    .min(0, "Per seat price must be a positive number")
+    .default(0),
+  dedicatedDesk: z
+    .number()
+    .min(0, "Dedicated desk price must be a positive number")
+    .default(0),
+  flexiDesk: z
+    .number()
+    .min(0, "Flexi desk price must be a positive number")
+    .default(0),
+  privateCabin: z
+    .number()
+    .min(0, "Private cabin price must be a positive number")
+    .default(0),
+});
+
 // --- Space Schema ---
 export const spaceSchema = z.object({
   branch: getIdSchema({ keyName: "Branch ID" }),
@@ -94,9 +118,11 @@ export const spaceSchema = z.object({
     .int("Price must be a positive integer"),
   facilities: z.array(getIdSchema({ keyName: "Facility" })).default([]),
   workingSizes: z.array(z.enum(workingSizes)).default([]),
+  pricing: pricingSchema,
   // approval: approvalSchema,
 });
 
 // TypeScript Types (Optional but recommended)
 export type LocationSchema = z.infer<typeof locationSchema>;
 export type SpaceSchema = z.infer<typeof spaceSchema>;
+export type PricingSchema = z.infer<typeof pricingSchema>;

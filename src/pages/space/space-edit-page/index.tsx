@@ -408,7 +408,7 @@ const SpaceEditPage = () => {
               showSearch={false}
               defaultSelected={defaultValues?.workingSizes}
               items={workingSizes.map((dt, i) => ({
-                label: dt + "mm",
+                label: dt + " mm",
                 value: dt,
               }))}
               triggerProps={{
@@ -421,7 +421,11 @@ const SpaceEditPage = () => {
                     }
                   >
                     {(watch("workingSizes", [])?.length || 0) > 0 ? (
-                      <ChippedElements elements={watch("workingSizes", [])} />
+                      <ChippedElements
+                        elements={watch("workingSizes", [])?.map(
+                          (s) => s + " mm",
+                        )}
+                      />
                     ) : (
                       "Select Working Sizes"
                     )}
