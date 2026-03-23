@@ -12,6 +12,7 @@ const PersonSchema = new Conn.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true },
     contactNo: { type: String, required: true },
+    role: { type: String, required: true },
   },
   { _id: false },
 );
@@ -21,8 +22,9 @@ const LocationSchema = new Conn.Schema(
     address: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
-    area: { type: String, required: true },
     country: { type: String, required: true },
+    area: { type: String, required: true },
+    postalCode: { type: String },
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
   },
