@@ -5,21 +5,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { useAmenities } from "@/services/hooks/useAmenities";
 import { getSpaceById, updateSpace } from "@/services/apis/admin/spaces";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
-import { facilities } from "@/utils/data/facilities";
 import { spaceCategories } from "@/utils/data/category";
+import { workingSizes, type WorkingSize } from "@/types/data/workingSizes";
 import { labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
 import FormField from "@/components/form/field";
 import MapsField from "@/components/maps";
 import { GroupedSearchSelect } from "@/components/search-select";
 import { DialogModal } from "@/components/dialog";
 import ChippedElements from "@/components/chips";
+import SelectAmenities from "@/containers/amenities/select-dialog";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";
 
@@ -28,6 +29,8 @@ const defaultTime = moment().hour(0).minute(0).toDate();
 const SpaceEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const { amenitiesData } = useAmenities();
 
   // Fetch Data using Centre ID
   const { data: res, isFetching } = useQuery({
@@ -349,17 +352,63 @@ const SpaceEditPage = () => {
             label="Amenities"
             labelPosition="embedded"
             error={{
-              message: errors.facilities?.message,
-              type: errors.facilities?.type || "validate",
+              message:
+                errors.facilities?.[0]?.message || errors?.facilities?.message,
+              type:
+                errors.facilities?.[0]?.type ||
+                errors?.facilities?.type ||
+                "validate",
+            }}
+          >
+            <SelectAmenities
+              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
+              defaultAmenities={
+                defaultValues?.facilities as string[] | undefined
+              }
+              onSelect={(amenities) => {
+                console.log(amenities);
+                setValue(
+                  "facilities",
+                  // @ts-ignore
+                  amenities.map((a) => a.id),
+                  { shouldValidate: true },
+                );
+              }}
+            >
+              {(watch("facilities", [])?.length || 0) > 0 ? (
+                <ChippedElements
+                  className=""
+                  elements={amenitiesData
+                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
+                    .map((dt) => dt.name)}
+                />
+              ) : (
+                "Select Amenities"
+              )}
+            </SelectAmenities>
+          </FormField>
+
+          {/* Working Sizes */}
+          <FormField
+            label="Working Sizes"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.workingSizes?.[0]?.message ||
+                errors?.workingSizes?.message,
+              type:
+                errors.workingSizes?.[0]?.type ||
+                errors?.workingSizes?.type ||
+                "validate",
             }}
           >
             <GroupedSearchSelect
-              key={`amenities-${defaultValues?.facilities?.length}`}
+              key={`working-sizes-${defaultValues?.workingSizes?.length}`}
               type="multiple"
-              inputProps={{ placeholder: "Search Amenities" }}
-              defaultSelected={defaultValues?.facilities}
-              items={facilities.map((dt, i) => ({
-                label: dt,
+              showSearch={false}
+              defaultSelected={defaultValues?.workingSizes}
+              items={workingSizes.map((dt, i) => ({
+                label: dt + "mm",
                 value: dt,
               }))}
               triggerProps={{
@@ -371,10 +420,10 @@ const SpaceEditPage = () => {
                       "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
                     }
                   >
-                    {(watch("facilities", [])?.length || 0) > 0 ? (
-                      <ChippedElements elements={watch("facilities", [])} />
+                    {(watch("workingSizes", [])?.length || 0) > 0 ? (
+                      <ChippedElements elements={watch("workingSizes", [])} />
                     ) : (
-                      "Select Amenities"
+                      "Select Working Sizes"
                     )}
                   </ActionButton>
                 ),
@@ -382,8 +431,10 @@ const SpaceEditPage = () => {
               contentProps={{ className: "max-h-[300px]" }}
               onSelect={(items) => {
                 setValue(
-                  "facilities",
-                  items.filter((val) => typeof val === "string"),
+                  "workingSizes",
+                  items.filter(
+                    (val) => typeof val === "string",
+                  ) as WorkingSize[],
                 );
               }}
             />
@@ -425,7 +476,17 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            label="Postal Code"
+            label="Area"
+            labelPosition="embedded"
+            placeholder="Panvel"
+            {...register("location.area")}
+            error={errors.location?.area}
+          />
+
+          <FormField
+            label="Zip Code"
+            labelPosition="embedded"
+            placeholder="349203"
             {...register("location.postalCode")}
             error={errors.location?.postalCode}
           />
@@ -462,6 +523,7 @@ const SpaceEditPage = () => {
                 state: res.state || oldData.state,
                 postalCode: res.postalCode || oldData.postalCode,
                 country: res.country || oldData.country,
+                area: res.area || oldData.area,
                 lat: coords.lat || oldData.lat,
                 lng: coords.lng || oldData.lng,
               };
@@ -529,9 +591,10 @@ const SpaceEditPage = () => {
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
             defaultValue={defaultValues?.person?.contactNo}
+            value={watch("person.contactNo")}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
-              console.log(val);
+              console.log("POC contact number:", val);
               setValue("person.contactNo", val?.toString() || "", {
                 shouldValidate: true,
               });

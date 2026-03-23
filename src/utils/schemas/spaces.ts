@@ -9,6 +9,7 @@ import {
 import { facilities } from "@/utils/data/facilities.js";
 import { spaceCategories } from "@/utils/data/category.js";
 import { spaceTypes, spaceGrades } from "../data/spaceTypes.js";
+import { workingSizes } from "@/types/data/workingSizes.js";
 
 // Person Schema
 export const personSchema = z.object({
@@ -27,8 +28,14 @@ export const locationSchema = z.object({
   address: z.string().trim().min(1, "Address is required"),
   city: z.string().trim().min(1, "City is required"),
   state: z.string().trim().min(1, "State is required"),
-  postalCode: z.string().trim().min(1, "Postal code is required"),
   country: z.string().trim().min(1, "Country is required"),
+  area: z.string().trim().min(1, "Area is required"),
+  postalCode: z
+    .string("Postal Code is required")
+    .trim()
+    .min(3, "Postal Code must be min 3 chars")
+    .transform((arg) => arg.replace(/[^A-Za-z0-9]/g, ""))
+    .refine((val) => /^[A-Za-z0-9]+$/.test(val), "Postal Code is invalid"),
   lat: z.number(),
   lng: z.number(),
 });
@@ -85,7 +92,8 @@ export const spaceSchema = z.object({
     .number()
     .min(0, "Price must be a positive number")
     .int("Price must be a positive integer"),
-  facilities: z.array(z.enum(facilities)).default([]),
+  facilities: z.array(getIdSchema({ keyName: "Facility" })).default([]),
+  workingSizes: z.array(z.enum(workingSizes)).default([]),
   // approval: approvalSchema,
 });
 

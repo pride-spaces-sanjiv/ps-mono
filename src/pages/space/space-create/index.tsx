@@ -5,19 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import {
-  createSpace,
-  getSpaceById,
-  updateSpace,
-} from "@/services/apis/admin/spaces";
+import { useAmenities } from "@/services/hooks/useAmenities";
+import { createSpace } from "@/services/apis/admin/spaces";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
-import { datifyObjectValues } from "@/utils/object/datify";
 import { generateSlug } from "@/utils/string/slug";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
-import { facilities } from "@/utils/data/facilities";
 import { spaceCategories } from "@/utils/data/category";
 import {
   spaceTypes,
@@ -26,10 +20,11 @@ import {
 } from "@/utils/data/spaceTypes";
 import FormField from "@/components/form/field";
 import { GroupedSearchSelect } from "@/components/search-select";
-import { DialogModal } from "@/components/dialog";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";
+import SelectAmenities from "@/containers/amenities/select-dialog";
+import { workingSizes, type WorkingSize } from "@/types/data/workingSizes";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -44,6 +39,8 @@ const SpaceCreatePage = () => {
     () => location.state as Partial<LocState>,
     [location.state],
   );
+
+  const { amenitiesData } = useAmenities();
 
   // form builder
   const {
@@ -338,13 +335,55 @@ const SpaceCreatePage = () => {
               type: errors.facilities?.type || "validate",
             }}
           >
+            <SelectAmenities
+              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
+              defaultAmenities={
+                defaultValues?.facilities as string[] | undefined
+              }
+              onSelect={(amenities) => {
+                console.log(amenities);
+                setValue(
+                  "facilities",
+                  // @ts-ignore
+                  amenities.map((a) => a.id),
+                  { shouldValidate: true },
+                );
+              }}
+            >
+              {(watch("facilities", [])?.length || 0) > 0 ? (
+                <ChippedElements
+                  className=""
+                  elements={amenitiesData
+                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
+                    .map((dt) => dt.name)}
+                />
+              ) : (
+                "Select Amenities"
+              )}
+            </SelectAmenities>
+          </FormField>
+
+          {/* Working Sizes */}
+          <FormField
+            label="Working Sizes"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.workingSizes?.[0]?.message ||
+                errors?.workingSizes?.message,
+              type:
+                errors.workingSizes?.[0]?.type ||
+                errors?.workingSizes?.type ||
+                "validate",
+            }}
+          >
             <GroupedSearchSelect
-              key={`amenities-${defaultValues?.facilities?.length}`}
+              key={`working-sizes-${defaultValues?.workingSizes?.length}`}
               type="multiple"
-              inputProps={{ placeholder: "Search Amenity" }}
-              defaultSelected={defaultValues?.facilities}
-              items={facilities.map((dt, i) => ({
-                label: dt,
+              showSearch={false}
+              defaultSelected={defaultValues?.workingSizes}
+              items={workingSizes.map((dt, i) => ({
+                label: dt + "mm",
                 value: dt,
               }))}
               triggerProps={{
@@ -356,10 +395,10 @@ const SpaceCreatePage = () => {
                       "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
                     }
                   >
-                    {(watch("facilities", [])?.length || 0) > 0 ? (
-                      <ChippedElements elements={watch("facilities", [])} />
+                    {(watch("workingSizes", [])?.length || 0) > 0 ? (
+                      <ChippedElements elements={watch("workingSizes", [])} />
                     ) : (
-                      "Select Amenities"
+                      "Select Working Sizes"
                     )}
                   </ActionButton>
                 ),
@@ -367,8 +406,10 @@ const SpaceCreatePage = () => {
               contentProps={{ className: "max-h-[300px]" }}
               onSelect={(items) => {
                 setValue(
-                  "facilities",
-                  items.filter((val) => typeof val === "string"),
+                  "workingSizes",
+                  items.filter(
+                    (val) => typeof val === "string",
+                  ) as WorkingSize[],
                 );
               }}
             />
@@ -410,7 +451,17 @@ const SpaceCreatePage = () => {
           />
 
           <FormField
-            label="Postal Code"
+            label="Area"
+            labelPosition="embedded"
+            placeholder="Panvel"
+            {...register("location.area")}
+            error={errors.location?.area}
+          />
+
+          <FormField
+            label="Zip Code"
+            labelPosition="embedded"
+            placeholder="349203"
             {...register("location.postalCode")}
             error={errors.location?.postalCode}
           />
