@@ -11,7 +11,7 @@ import { getSpaceById, updateSpace } from "@/services/apis/admin/spaces";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
-import { days } from "@/utils/data/days";
+import { days, shortDays } from "@/utils/data/days";
 import { facilities } from "@/utils/data/facilities";
 import { spaceCategories } from "@/utils/data/category";
 import { labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
@@ -19,6 +19,7 @@ import FormField from "@/components/form/field";
 import MapsField from "@/components/maps";
 import { GroupedSearchSelect } from "@/components/search-select";
 import { DialogModal } from "@/components/dialog";
+import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";
 
@@ -287,48 +288,61 @@ const SpaceEditPage = () => {
 
           {/* Open Days */}
 
-          <FormField
-            label="Open Days"
-            labelPosition="embedded"
-            error={{
-              message: errors.openDays?.message,
-              type: errors.openDays?.type || "validate",
-            }}
-          >
-            <GroupedSearchSelect
-              key={`days-${defaultValues?.openDays?.length}`}
-              type="multiple"
-              showSearch={false}
-              defaultSelected={
-                defaultValues?.openDays ||
-                days.map((_, i) => i + 1).filter((_, i) => i < 7)
-              }
-              items={days.map((dt, i) => ({
-                label: dt,
-                value: i + 1,
-              }))}
-              triggerProps={{
-                children: (
-                  <ActionButton
-                    type="button"
-                    variant={"outline"}
-                    className={"min-h-[40px] grow-1 border-0"}
-                  >
-                    {watch("openDays", []).length > 0
-                      ? watch("openDays", []).length
-                      : "Select Days"}
-                  </ActionButton>
-                ),
+          {watch("spaceType", "Flex") !== "MOS" && (
+            <FormField
+              label="Operational Days"
+              labelPosition="embedded"
+              // embeddedWrapperProps={{className: "max-w-full"}}
+              error={{
+                message: errors.openDays?.message,
+                type: errors.openDays?.type || "validate",
               }}
-              contentProps={{ className: "max-h-[300px]" }}
-              onSelect={(items) => {
-                setValue(
-                  "openDays",
-                  items.filter((val) => typeof val === "number"),
-                );
-              }}
-            />
-          </FormField>
+            >
+              <GroupedSearchSelect
+                key={`days-${defaultValues?.openDays?.length}`}
+                type="multiple"
+                showSearch={false}
+                defaultSelected={
+                  defaultValues?.openDays ||
+                  days.map((_, i) => i + 1).filter((_, i) => i < 7)
+                }
+                items={days.map((dt, i) => ({
+                  label: dt,
+                  value: i + 1,
+                }))}
+                triggerProps={{
+                  children: (
+                    <ActionButton
+                      type="button"
+                      variant={"outline"}
+                      className={
+                        "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                      }
+                    >
+                      {watch("openDays", []).length > 0 ? (
+                        <ChippedElements
+                          className=""
+                          elements={watch("openDays", [])
+                            .sort((a, b) => a - b)
+                            .map((s) => shortDays[s - 1])
+                            .filter((v) => !!v)}
+                        />
+                      ) : (
+                        "Select Days"
+                      )}
+                    </ActionButton>
+                  ),
+                }}
+                contentProps={{ className: "max-h-[300px]" }}
+                onSelect={(items) => {
+                  setValue(
+                    "openDays",
+                    items.filter((val) => typeof val === "number"),
+                  );
+                }}
+              />
+            </FormField>
+          )}
 
           {/* Amenities */}
           <FormField
@@ -342,7 +356,7 @@ const SpaceEditPage = () => {
             <GroupedSearchSelect
               key={`amenities-${defaultValues?.facilities?.length}`}
               type="multiple"
-              inputProps={{ placeholder: "Search Amenity" }}
+              inputProps={{ placeholder: "Search Amenities" }}
               defaultSelected={defaultValues?.facilities}
               items={facilities.map((dt, i) => ({
                 label: dt,
@@ -353,11 +367,15 @@ const SpaceEditPage = () => {
                   <ActionButton
                     type="button"
                     variant={"outline"}
-                    className={"min-h-[40px] grow-1 border-0"}
+                    className={
+                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                    }
                   >
-                    {(watch("facilities", [])?.length || 0) > 0
-                      ? watch("facilities", [])?.length
-                      : "Select Amenities"}
+                    {(watch("facilities", [])?.length || 0) > 0 ? (
+                      <ChippedElements elements={watch("facilities", [])} />
+                    ) : (
+                      "Select Amenities"
+                    )}
                   </ActionButton>
                 ),
               }}
