@@ -544,6 +544,7 @@ const SpaceCreatePage = () => {
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
             defaultValue={defaultValues?.person?.contactNo}
+            value={watch("person.contactNo")}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
               console.log(val);
