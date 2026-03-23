@@ -9,7 +9,7 @@ import {
 import { facilities } from "@/utils/data/facilities.js";
 import { spaceCategories } from "@/utils/data/category.js";
 import { spaceTypes, spaceGrades } from "../data/spaceTypes.js";
-import { workingSizes } from "@/types/data/workingSizes.js";
+import { workingSizes } from "@/utils/data/workingSizes.js";
 
 // Person Schema
 export const personSchema = z.object({

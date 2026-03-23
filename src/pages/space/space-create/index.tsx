@@ -18,13 +18,14 @@ import {
   spaceGrades,
   labelledSpaceTypes,
 } from "@/utils/data/spaceTypes";
+import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
+import MapsField from "@/components/maps";
 import FormField from "@/components/form/field";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
-import type { Operator } from "@/types/data/operators";
 import SelectAmenities from "@/containers/amenities/select-dialog";
-import { workingSizes, type WorkingSize } from "@/types/data/workingSizes";
+import type { Operator } from "@/types/data/operators";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -482,6 +483,28 @@ const SpaceCreatePage = () => {
             step="any"
             {...register("location.lng")}
             error={errors.location?.lng}
+          />
+
+          {/* Maps */}
+          <MapsField
+            wrapperProps={{ className: "col-span-full flex flex-col gap-4" }}
+            mapProps={{ mapContainerClassName: "min-h-[300px] w-full" }}
+            buttonProps={{ className: "w-fit" }}
+            onGeocodeLatLng={(res, coords) => {
+              console.log(res);
+              const oldData = watch("location");
+              const data: SpaceSchema["location"] = {
+                address: res.address || oldData.address,
+                city: res.city || oldData.city,
+                state: res.state || oldData.state,
+                postalCode: res.postalCode || oldData.postalCode,
+                country: res.country || oldData.country,
+                area: res.area || oldData.area,
+                lat: coords.lat || oldData.lat,
+                lng: coords.lng || oldData.lng,
+              };
+              setValue("location", data, { shouldValidate: true });
+            }}
           />
 
           <FormField

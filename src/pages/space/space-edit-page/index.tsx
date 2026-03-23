@@ -13,7 +13,7 @@ import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
-import { workingSizes, type WorkingSize } from "@/types/data/workingSizes";
+import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
 import { labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
 import FormField from "@/components/form/field";
 import MapsField from "@/components/maps";
