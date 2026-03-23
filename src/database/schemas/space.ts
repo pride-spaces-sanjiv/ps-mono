@@ -81,7 +81,7 @@ export const spaceSchema = z.object({
     .number()
     .min(0, "Price must be a positive number")
     .int("Price must be a positive integer"),
-  facilities: z.array(z.enum(facilities)).default([]),
+  facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
   // approval: approvalSchema,
 });
 
