@@ -6,6 +6,7 @@ import {
 } from "@/utils/mongoose/fields.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 import { spaceTypes, spaceGrades } from "@/utils/data/spaceTypes.js";
+import { workingSizes } from "@/utils/data/workingSizes.js";
 
 const PersonSchema = new Conn.Schema(
   {
@@ -50,6 +51,7 @@ const SpaceSchema = new Conn.Schema(
     openDays: { type: [Number] },
     operationalHrs: { type: Number },
     facilities: { type: [String] },
+    workingSizes: { type: [{ type: String, enum: workingSizes }], default: [] },
     isVerified: { type: Boolean },
     isActive: { type: Boolean },
     totalSeats: { type: Number, default: 0 },
@@ -70,6 +72,7 @@ indexFieldsFromSchema(SpaceSchema, {
     "location.city",
     "location.country",
     "location.state",
+    "location.area",
     "person.name",
     "person.email",
   ],

@@ -11,6 +11,7 @@ import { spaceCategories } from "@/utils/data/category.js";
 import { approvalSchema } from "./dump.js";
 import { personSchema } from "./person.js";
 import { spaceGrades, spaceTypes } from "@/utils/data/spaceTypes.js";
+import { workingSizes } from "@/utils/data/workingSizes.js";
 
 // --- Location Schema ---
 export const locationSchema = z.object({
@@ -82,6 +83,7 @@ export const spaceSchema = z.object({
     .min(0, "Price must be a positive number")
     .int("Price must be a positive integer"),
   facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
+  workingSizes: z.array(z.enum(workingSizes)).default([]),
   // approval: approvalSchema,
 });
 
