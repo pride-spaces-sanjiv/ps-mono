@@ -32,6 +32,17 @@ const LocationSchema = new Conn.Schema(
   { _id: false },
 );
 
+const PricingSchema = new Conn.Schema(
+  {
+    dayPass: { type: Number, required: true, default: 0 },
+    perSeat: { type: Number, required: true, default: 0 },
+    dedicatedDesk: { type: Number, required: true, default: 0 },
+    flexiDesk: { type: Number, required: true, default: 0 },
+    privateCabin: { type: Number, required: true, default: 0 },
+  },
+  { _id: false },
+);
+
 const SpaceSchema = new Conn.Schema(
   {
     branch: { type: String, required: true },
@@ -57,6 +68,7 @@ const SpaceSchema = new Conn.Schema(
     totalSeats: { type: Number, default: 0 },
     bookedSeats: { type: Number, default: 0 },
     price: { type: Number, default: 0 },
+    pricing: { type: PricingSchema, required: true },
     rating: { type: Number },
     reviews: { type: Number },
     approval: { type: ApprovalSchema },
