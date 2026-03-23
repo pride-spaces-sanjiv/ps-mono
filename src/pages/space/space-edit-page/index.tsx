@@ -14,6 +14,7 @@ import { queryKeys } from "@/utils/query-keys";
 import { days } from "@/utils/data/days";
 import { facilities } from "@/utils/data/facilities";
 import { spaceCategories } from "@/utils/data/category";
+import { labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
 import FormField from "@/components/form/field";
 import MapsField from "@/components/maps";
 import { GroupedSearchSelect } from "@/components/search-select";
@@ -148,6 +149,8 @@ const SpaceEditPage = () => {
             label="Slug"
             labelPosition="embedded"
             placeholder="my-centre-slug"
+            disabled
+            readOnly
             {...register("slug")}
             error={errors.slug}
           />
@@ -175,9 +178,53 @@ const SpaceEditPage = () => {
             label="Category"
             labelPosition="embedded"
             inputType="select"
-            defaultValue={defaultValues?.category}
             items={spaceCategories.map((cat) => ({ label: cat, value: cat }))}
             error={errors.category}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.category,
+                onValueChange: (val) =>
+                  setValue("category", val as SpaceSchema["category"], {
+                    shouldValidate: true,
+                  }),
+              },
+            }}
+          />
+
+          <FormField
+            key={`space-type-${defaultValues?.spaceType}`}
+            label="Space Type"
+            labelPosition="embedded"
+            inputType="select"
+            items={labelledSpaceTypes}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.spaceType,
+                onValueChange: (val) =>
+                  setValue("spaceType", val as SpaceSchema["spaceType"], {
+                    shouldValidate: true,
+                  }),
+              },
+            }}
+            error={errors.spaceType}
+          />
+
+          <FormField
+            key={`space-grade-${defaultValues?.grade}`}
+            label="Grade"
+            labelPosition="embedded"
+            inputType="select"
+            items={spaceGrades.map((grade) => ({ label: grade, value: grade }))}
+            error={errors.grade}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.grade,
+                onValueChange: (val) =>
+                  setValue("grade", val as SpaceSchema["grade"], {
+                    shouldValidate: true,
+                  }),
+              },
+            }}
           />
 
           {/* Open Time */}
