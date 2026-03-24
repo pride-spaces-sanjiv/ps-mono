@@ -474,6 +474,18 @@ const SpaceEditPage = () => {
             />
           </FormField>
 
+          {/* Area in sq.ft */}
+          <FormField
+            label="Centre Area (in sq.ft)"
+            labelPosition="embedded"
+            placeholder="500"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("area")}
+            error={errors.area}
+          />
+
           <FormField
             label="Description"
             labelPosition="embedded"
@@ -537,6 +549,7 @@ const SpaceEditPage = () => {
           />
 
           {/* Location */}
+          <FormSectionTitle>Location Details</FormSectionTitle>
 
           <FormField
             label="City"
