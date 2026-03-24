@@ -27,6 +27,7 @@ import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import type { Operator } from "@/types/data/operators";
+import { validateNumber } from "@/utils/number";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -78,7 +79,10 @@ const SpaceCreatePage = () => {
     reset({
       ...defaultValues,
       slug: operatorData?.slug
-        ? generateSlug(operatorData?.slug, operatorData?.totalSpaces || 0)
+        ? generateSlug(
+            operatorData?.slug,
+            validateNumber(operatorData?.totalSpaces, { invalidValue: -1 }) + 1,
+          )
         : defaultValues?.slug,
       person: {
         ...(POCSameAsOperator ? operatorData?.person : defaultValues?.person),
