@@ -33,7 +33,7 @@ npm i && echo "Installation Status ✅" || echo "Installation Status ❌"
 echo "Making directory for storing old build........"
 mkdir -p old-dist && echo "Created old build directory ✅" || echo "Cannot create old build directory ❌" 
 echo "Copying files to old build directory........"
-cp -r "dist/*" "old-dist" && echo "Files copied successfully ✅" || echo "Failed to copy files ❌"
+cp -r "dist" "old-dist" && echo "Files copied successfully ✅" || echo "Failed to copy files ❌"
 echo "Delete dist directory........"
 rm -rf dist && echo "Dist directory deleted successfully ✅" || echo "Failed to delete dist directory ❌"
 echo "Building packages using npm run $SCRIPT........ 🟢🟢🟢"
@@ -48,7 +48,7 @@ else
 
     echo "Reverting old build........"
     mkdir -p "dist" && echo "Created dist directory ✅" || echo "Cannot create dist directory ❌" 
-    if cp -r "old-dist/*" "dist"; then
+    if cp -r "old-dist" "dist"; then
         echo "Files restored successfully ✅"
         echo "Deleting old build........"
         rm -rf "old-dist" && echo "Old Dist directory deleted successfully ✅" || echo "Failed to delete old dist directory ❌"
