@@ -73,7 +73,7 @@ const AdminCreatePage = () => {
         >
           {/* SECTION: Admin Details */}
 
-          <FormSectionTitle>Operator Details</FormSectionTitle>
+          <FormSectionTitle>Member Details</FormSectionTitle>
 
           <FormField
             label="Name"
