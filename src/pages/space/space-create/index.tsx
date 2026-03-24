@@ -21,6 +21,7 @@ import {
 import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
 import MapsField from "@/components/maps";
 import FormField from "@/components/form/field";
+import FormSectionTitle from "@/components/form/section/title";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
@@ -60,7 +61,15 @@ const SpaceCreatePage = () => {
       grade: "B",
       openTime: defaultTime,
       closeTime: defaultTime,
+      operationalHrs: 0,
       isActive: true,
+      pricing: {
+        dayPass: 0,
+        dedicatedDesk: 0,
+        perSeat: 0,
+        flexiDesk: 0,
+        privateCabin: 0,
+      },
     },
   });
   const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
@@ -187,10 +196,11 @@ const SpaceCreatePage = () => {
             pickerProps={{
               wrapperProps: {
                 defaultValue: defaultValues?.spaceType,
-                onValueChange: (val) =>
+                onValueChange: (val) => {
                   setValue("spaceType", val as SpaceSchema["spaceType"], {
                     shouldValidate: true,
-                  }),
+                  });
+                },
               },
             }}
             error={errors.spaceType}
@@ -206,10 +216,11 @@ const SpaceCreatePage = () => {
             pickerProps={{
               wrapperProps: {
                 defaultValue: defaultValues?.grade,
-                onValueChange: (val) =>
+                onValueChange: (val) => {
                   setValue("grade", val as SpaceSchema["grade"], {
                     shouldValidate: true,
-                  }),
+                  });
+                },
               },
             }}
           />
@@ -272,7 +283,6 @@ const SpaceCreatePage = () => {
           />
 
           {/* Open Days */}
-
           {watch("spaceType", "Flex") !== "MOS" && (
             <FormField
               label="Operational Days"
@@ -325,6 +335,20 @@ const SpaceCreatePage = () => {
                 }}
               />
             </FormField>
+          )}
+
+          {/* Operational Hours */}
+          {watch("spaceType", "Flex") !== "Flex" && (
+            <FormField
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={24}
+              label="Operational Hours"
+              labelPosition="embedded"
+              error={errors.operationalHrs}
+              {...register("operationalHrs")}
+            />
           )}
 
           {/* Amenities */}
@@ -427,6 +451,59 @@ const SpaceCreatePage = () => {
             {...register("description")}
             error={errors.description}
             inputType="textarea"
+          />
+
+          {/* Pricing Details */}
+          <FormSectionTitle>Pricing Details</FormSectionTitle>
+          <FormField
+            label="Day Pass"
+            labelPosition="embedded"
+            placeholder="300"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.dayPass")}
+            error={errors.pricing?.dayPass}
+          />
+          <FormField
+            label="Per Seat"
+            labelPosition="embedded"
+            placeholder="300"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.perSeat")}
+            error={errors.pricing?.perSeat}
+          />
+          <FormField
+            label="Dedicated Desk"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.dedicatedDesk")}
+            error={errors.pricing?.dedicatedDesk}
+          />
+          <FormField
+            label="Flexi Desk"
+            labelPosition="embedded"
+            placeholder="1500"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.flexiDesk")}
+            error={errors.pricing?.flexiDesk}
+          />
+          <FormField
+            label="Private Cabin"
+            labelPosition="embedded"
+            placeholder="4000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.privateCabin")}
+            error={errors.pricing?.privateCabin}
           />
 
           {/* Location */}

@@ -15,12 +15,13 @@ import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
 import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
 import { labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
-import FormField from "@/components/form/field";
-import MapsField from "@/components/maps";
 import { GroupedSearchSelect } from "@/components/search-select";
-import { DialogModal } from "@/components/dialog";
-import ChippedElements from "@/components/chips";
 import SelectAmenities from "@/containers/amenities/select-dialog";
+import { DialogModal } from "@/components/dialog";
+import FormField from "@/components/form/field";
+import FormSectionTitle from "@/components/form/section/title";
+import MapsField from "@/components/maps";
+import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";
 
@@ -51,7 +52,22 @@ const SpaceEditPage = () => {
     setValue,
   } = useForm({
     resolver: zodResolver(spaceSchema),
-    defaultValues: { openTime: defaultTime, closeTime: defaultTime },
+    defaultValues: {
+      openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
+      category: "Classic",
+      spaceType: "Flex",
+      grade: "B",
+      openTime: defaultTime,
+      closeTime: defaultTime,
+      operationalHrs: 0,
+      pricing: {
+        dayPass: 0,
+        dedicatedDesk: 0,
+        perSeat: 0,
+        flexiDesk: 0,
+        privateCabin: 0,
+      },
+    },
   });
 
   const operatorData = useMemo(
@@ -347,6 +363,20 @@ const SpaceEditPage = () => {
             </FormField>
           )}
 
+          {/* Operational Hours */}
+          {watch("spaceType", "Flex") !== "Flex" && (
+            <FormField
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={24}
+              label="Operational Hours"
+              labelPosition="embedded"
+              error={errors.operationalHrs}
+              {...register("operationalHrs")}
+            />
+          )}
+
           {/* Amenities */}
           <FormField
             label="Amenities"
@@ -451,6 +481,59 @@ const SpaceEditPage = () => {
             {...register("description")}
             error={errors.description}
             inputType="textarea"
+          />
+
+          {/* Pricing Details */}
+          <FormSectionTitle>Pricing Details</FormSectionTitle>
+          <FormField
+            label="Day Pass"
+            labelPosition="embedded"
+            placeholder="300"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.dayPass")}
+            error={errors.pricing?.dayPass}
+          />
+          <FormField
+            label="Per Seat"
+            labelPosition="embedded"
+            placeholder="300"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.perSeat")}
+            error={errors.pricing?.perSeat}
+          />
+          <FormField
+            label="Dedicated Desk"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.dedicatedDesk")}
+            error={errors.pricing?.dedicatedDesk}
+          />
+          <FormField
+            label="Flexi Desk"
+            labelPosition="embedded"
+            placeholder="1500"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.flexiDesk")}
+            error={errors.pricing?.flexiDesk}
+          />
+          <FormField
+            label="Private Cabin"
+            labelPosition="embedded"
+            placeholder="4000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.privateCabin")}
+            error={errors.pricing?.privateCabin}
           />
 
           {/* Location */}
