@@ -13,7 +13,18 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Home, LogOutIcon, Settings, Tv, Users } from "lucide-react";
+import {
+  BellIcon,
+  BuildingIcon,
+  GlobeIcon,
+  HardDriveIcon,
+  Home,
+  LogOutIcon,
+  Settings,
+  Tv,
+  UserIcon,
+  UsersIcon,
+} from "lucide-react";
 import { tokenStore, userStore } from "@/services/store/user";
 import { useUser } from "@/services/hooks/use-user";
 import { logoutAPI } from "@/services/apis/auth";
@@ -30,14 +41,14 @@ const items = [
     icon: Home,
   },
   {
-    title: "Centres",
-    url: "/spaces",
-    icon: Tv,
-  },
-  {
     title: "Operators",
     url: "/operators",
-    icon: LogOutIcon,
+    icon: GlobeIcon,
+  },
+  {
+    title: "Centres",
+    url: "/spaces",
+    icon: BuildingIcon,
   },
   {
     title: "Amenities",
@@ -47,22 +58,22 @@ const items = [
   {
     title: "Migrate Offices",
     url: "/migration",
-    icon: LogOutIcon,
-  },
-  {
-    title: "List Finite Offices",
-    url: "/listfiniteoffices",
-    icon: LogOutIcon,
+    icon: HardDriveIcon,
   },
   {
     title: "Notfication",
     url: "/notfication",
-    icon: LogOutIcon,
+    icon: BellIcon,
+  },
+  {
+    title: "Team",
+    url: "/team",
+    icon: UsersIcon,
   },
   {
     title: "Users",
-    url: "/deshboard",
-    icon: Users,
+    url: "/users",
+    icon: UserIcon,
   },
   {
     title: "Settings",
@@ -76,7 +87,7 @@ export function AppSidebar() {
   const userState = userStore();
   const { userLevel } = useUser();
   const validItems = useMemo(
-    () => (userLevel ? items : items.filter((d) => d.url !== "/users")),
+    () => (userLevel ? items : items.filter((d) => d.url !== "")),
     [userLevel],
   );
 
