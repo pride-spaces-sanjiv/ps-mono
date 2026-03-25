@@ -18,6 +18,7 @@ import { getCssVariableValue } from "@/utils/css-variable";
 import Layout from "@/components/layout/Layout";
 import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
+import EditAdmin from "@/pages/admins/edit";
 // import OperatorEditPage from "@/pages/operators/operator-edit-page";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
@@ -170,6 +171,14 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <AutoNavigateRender El={<AdminCreatePage />} />
+            </SuspensedView>
+          }
+        />
+                <Route
+          path="/team/:id"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<EditAdmin />} />
             </SuspensedView>
           }
         />

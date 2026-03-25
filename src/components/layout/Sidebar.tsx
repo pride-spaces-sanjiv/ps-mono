@@ -21,7 +21,6 @@ import {
   Home,
   LogOutIcon,
   Settings,
-  Tv,
   UserIcon,
   UsersIcon,
 } from "lucide-react";
@@ -38,7 +37,7 @@ const items = [
   {
     title: "Dashboard",
     url: "/dashboard",
-    icon: HomeIcon,
+    icon: Home,
   },
   {
     title: "Operators",
@@ -53,7 +52,7 @@ const items = [
   {
     title: "Amenities",
     url: "/amenities",
-    icon: LogOut,
+    icon: LogOutIcon,
   },
   {
     title: "Migrate Offices",
@@ -163,7 +162,7 @@ export function AppSidebar() {
                   "Login"
                 ) : (
                   <> */}
-                <LogOut /> Logout
+                <LogOutIcon /> Logout
                 {/* </>
                 )} */}
               </div>
