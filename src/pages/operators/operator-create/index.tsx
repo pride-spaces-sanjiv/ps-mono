@@ -12,6 +12,7 @@ import {
   updateOperator,
   createOperator,
 } from "@/services/apis/admin/operators";
+import { generatePassword } from "@/utils/string/password";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
@@ -32,7 +33,7 @@ const OperatorCreatePage = () => {
     setValue,
   } = useForm({
     resolver: zodResolver(operatorSchema),
-    defaultValues: { isActive: true },
+    defaultValues: { isActive: true, password: generatePassword() },
   });
 
   const { mutateAsync, isPending: createLoading } = useMutation({
@@ -97,7 +98,7 @@ const OperatorCreatePage = () => {
           />
 
           <FormField
-            label="Email"
+            label="Admin Email"
             labelPosition="embedded"
             type="email"
             placeholder="operator@example.com"

@@ -110,7 +110,7 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="Email"
+            label="Admin Email"
             labelPosition="embedded"
             type="email"
             placeholder="operator@example.com"

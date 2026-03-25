@@ -25,7 +25,10 @@ type Props = {
   buttonProps: React.ComponentProps<typeof ActionButton>;
   searchInputProps: React.ComponentProps<typeof Input>;
   geocodeDebounceDelay: number;
-  onGeocodeLatLng: (result: Awaited<ReturnType<typeof geocodeLatLng>>, coords: { lat: number; lng: number }) => any;
+  onGeocodeLatLng: (
+    result: Awaited<ReturnType<typeof geocodeLatLng>>,
+    coords: { lat: number; lng: number },
+  ) => any;
 };
 
 export default function MapsField({

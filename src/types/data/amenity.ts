@@ -4,4 +4,4 @@ import type { AmenitySchema } from "@/utils/schemas/amenity";
 
 export type Amenity = GeneralData & Omit<Partial<AmenitySchema>, "password">;
 
-export type DatifiedSpace = Datified<Amenity, ["createdAt", "updatedAt"]>;
+export type DatifiedAmenity = Datified<Amenity, ["createdAt", "updatedAt"]>;

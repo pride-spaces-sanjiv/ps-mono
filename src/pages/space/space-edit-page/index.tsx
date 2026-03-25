@@ -5,19 +5,23 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { useAmenities } from "@/services/hooks/useAmenities";
 import { getSpaceById, updateSpace } from "@/services/apis/admin/spaces";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
-import { days } from "@/utils/data/days";
-import { facilities } from "@/utils/data/facilities";
+import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
-import FormField from "@/components/form/field";
-import MapsField from "@/components/maps";
+import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
+import { labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
 import { GroupedSearchSelect } from "@/components/search-select";
+import SelectAmenities from "@/containers/amenities/select-dialog";
 import { DialogModal } from "@/components/dialog";
+import FormField from "@/components/form/field";
+import FormSectionTitle from "@/components/form/section/title";
+import MapsField from "@/components/maps";
+import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";
 
@@ -26,6 +30,8 @@ const defaultTime = moment().hour(0).minute(0).toDate();
 const SpaceEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const { amenitiesData } = useAmenities();
 
   // Fetch Data using Centre ID
   const { data: res, isFetching } = useQuery({
@@ -46,7 +52,22 @@ const SpaceEditPage = () => {
     setValue,
   } = useForm({
     resolver: zodResolver(spaceSchema),
-    defaultValues: { openTime: defaultTime, closeTime: defaultTime },
+    defaultValues: {
+      openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
+      category: "Classic",
+      spaceType: "Flex",
+      grade: "B",
+      openTime: defaultTime,
+      closeTime: defaultTime,
+      operationalHrs: 0,
+      pricing: {
+        dayPass: 0,
+        dedicatedDesk: 0,
+        perSeat: 0,
+        flexiDesk: 0,
+        privateCabin: 0,
+      },
+    },
   });
 
   const operatorData = useMemo(
@@ -149,6 +170,8 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             disabled
             placeholder="my-centre-slug"
+            disabled
+            readOnly
             {...register("slug")}
             error={errors.slug}
           />
@@ -176,9 +199,53 @@ const SpaceEditPage = () => {
             label="Category"
             labelPosition="embedded"
             inputType="select"
-            defaultValue={defaultValues?.category}
             items={spaceCategories.map((cat) => ({ label: cat, value: cat }))}
             error={errors.category}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.category,
+                onValueChange: (val) =>
+                  setValue("category", val as SpaceSchema["category"], {
+                    shouldValidate: true,
+                  }),
+              },
+            }}
+          />
+
+          <FormField
+            key={`space-type-${defaultValues?.spaceType}`}
+            label="Space Type"
+            labelPosition="embedded"
+            inputType="select"
+            items={labelledSpaceTypes}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.spaceType,
+                onValueChange: (val) =>
+                  setValue("spaceType", val as SpaceSchema["spaceType"], {
+                    shouldValidate: true,
+                  }),
+              },
+            }}
+            error={errors.spaceType}
+          />
+
+          <FormField
+            key={`space-grade-${defaultValues?.grade}`}
+            label="Grade"
+            labelPosition="embedded"
+            inputType="select"
+            items={spaceGrades.map((grade) => ({ label: grade, value: grade }))}
+            error={errors.grade}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.grade,
+                onValueChange: (val) =>
+                  setValue("grade", val as SpaceSchema["grade"], {
+                    shouldValidate: true,
+                  }),
+              },
+            }}
           />
 
           {/* Open Time */}
@@ -241,65 +308,138 @@ const SpaceEditPage = () => {
 
           {/* Open Days */}
 
-          <FormField
-            label="Open Days"
-            labelPosition="embedded"
-            error={{
-              message: errors.openDays?.message,
-              type: errors.openDays?.type || "validate",
-            }}
-          >
-            <GroupedSearchSelect
-              key={`days-${defaultValues?.openDays?.length}`}
-              type="multiple"
-              showSearch={false}
-              defaultSelected={
-                defaultValues?.openDays ||
-                days.map((_, i) => i + 1).filter((_, i) => i < 7)
-              }
-              items={days.map((dt, i) => ({
-                label: dt,
-                value: i + 1,
-              }))}
-              triggerProps={{
-                children: (
-                  <ActionButton
-                    type="button"
-                    variant={"outline"}
-                    className={"min-h-[40px] grow-1 border-0"}
-                  >
-                    {watch("openDays", []).length > 0
-                      ? watch("openDays", []).length
-                      : "Select Days"}
-                  </ActionButton>
-                ),
+          {watch("spaceType", "Flex") !== "MOS" && (
+            <FormField
+              label="Operational Days"
+              labelPosition="embedded"
+              // embeddedWrapperProps={{className: "max-w-full"}}
+              error={{
+                message: errors.openDays?.message,
+                type: errors.openDays?.type || "validate",
               }}
-              contentProps={{ className: "max-h-[300px]" }}
-              onSelect={(items) => {
-                setValue(
-                  "openDays",
-                  items.filter((val) => typeof val === "number"),
-                );
-              }}
+            >
+              <GroupedSearchSelect
+                key={`days-${defaultValues?.openDays?.length}`}
+                type="multiple"
+                showSearch={false}
+                defaultSelected={
+                  defaultValues?.openDays ||
+                  days.map((_, i) => i + 1).filter((_, i) => i < 7)
+                }
+                items={days.map((dt, i) => ({
+                  label: dt,
+                  value: i + 1,
+                }))}
+                triggerProps={{
+                  children: (
+                    <ActionButton
+                      type="button"
+                      variant={"outline"}
+                      className={
+                        "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                      }
+                    >
+                      {watch("openDays", []).length > 0 ? (
+                        <ChippedElements
+                          className=""
+                          elements={watch("openDays", [])
+                            .sort((a, b) => a - b)
+                            .map((s) => shortDays[s - 1])
+                            .filter((v) => !!v)}
+                        />
+                      ) : (
+                        "Select Days"
+                      )}
+                    </ActionButton>
+                  ),
+                }}
+                contentProps={{ className: "max-h-[300px]" }}
+                onSelect={(items) => {
+                  setValue(
+                    "openDays",
+                    items.filter((val) => typeof val === "number"),
+                  );
+                }}
+              />
+            </FormField>
+          )}
+
+          {/* Operational Hours */}
+          {watch("spaceType", "Flex") !== "Flex" && (
+            <FormField
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={24}
+              label="Operational Hours"
+              labelPosition="embedded"
+              error={errors.operationalHrs}
+              {...register("operationalHrs")}
             />
-          </FormField>
+          )}
 
           {/* Amenities */}
           <FormField
             label="Amenities"
             labelPosition="embedded"
             error={{
-              message: errors.facilities?.message,
-              type: errors.facilities?.type || "validate",
+              message:
+                errors.facilities?.[0]?.message || errors?.facilities?.message,
+              type:
+                errors.facilities?.[0]?.type ||
+                errors?.facilities?.type ||
+                "validate",
+            }}
+          >
+            <SelectAmenities
+              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
+              defaultAmenities={
+                defaultValues?.facilities as string[] | undefined
+              }
+              onSelect={(amenities) => {
+                console.log(amenities);
+                setValue(
+                  "facilities",
+                  // @ts-ignore
+                  amenities.map((a) => a.id),
+                  { shouldValidate: true },
+                );
+              }}
+            >
+              {(watch("facilities", [])?.length || 0) > 0 ? (
+                <ChippedElements
+                  className=""
+                  elements={amenitiesData
+                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
+                    .map((dt) => dt.name)}
+                />
+              ) : (
+                "Select Amenities"
+              )}
+            </SelectAmenities>
+          </FormField>
+
+          {/* Working Sizes */}
+          <FormField
+            label="Working Sizes"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.workingSizes?.[0]?.message ||
+                errors?.workingSizes?.message,
+              type:
+                errors.workingSizes?.[0]?.type ||
+                errors?.workingSizes?.type ||
+                "validate",
             }}
           >
             <GroupedSearchSelect
-              key={`amenities-${defaultValues?.facilities?.length}`}
+              key={`working-sizes-${defaultValues?.workingSizes?.length}`}
               type="multiple"
-              inputProps={{ placeholder: "Search Amenity" }}
-              defaultSelected={defaultValues?.facilities}
-              items={facilities.map((dt, i) => ({
-                label: dt,
+              showSearch={false}
+              defaultSelected={defaultValues?.workingSizes}
+              items={workingSizes.map((dt, i) => ({
+                label: dt + " mm",
                 value: dt,
               }))}
               triggerProps={{
@@ -307,23 +447,45 @@ const SpaceEditPage = () => {
                   <ActionButton
                     type="button"
                     variant={"outline"}
-                    className={"min-h-[40px] grow-1 border-0"}
+                    className={
+                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                    }
                   >
-                    {(watch("facilities", [])?.length || 0) > 0
-                      ? watch("facilities", [])?.length
-                      : "Select Amenities"}
+                    {(watch("workingSizes", [])?.length || 0) > 0 ? (
+                      <ChippedElements
+                        elements={watch("workingSizes", [])?.map(
+                          (s) => s + " mm",
+                        )}
+                      />
+                    ) : (
+                      "Select Working Sizes"
+                    )}
                   </ActionButton>
                 ),
               }}
               contentProps={{ className: "max-h-[300px]" }}
               onSelect={(items) => {
                 setValue(
-                  "facilities",
-                  items.filter((val) => typeof val === "string"),
+                  "workingSizes",
+                  items.filter(
+                    (val) => typeof val === "string",
+                  ) as WorkingSize[],
                 );
               }}
             />
           </FormField>
+
+          {/* Area in sq.ft */}
+          <FormField
+            label="Centre Area (in sq.ft)"
+            labelPosition="embedded"
+            placeholder="500"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("area")}
+            error={errors.area}
+          />
 
           <FormField
             label="Description"
@@ -334,7 +496,61 @@ const SpaceEditPage = () => {
             inputType="textarea"
           />
 
+          {/* Pricing Details */}
+          <FormSectionTitle>Pricing Details</FormSectionTitle>
+          <FormField
+            label="Day Pass"
+            labelPosition="embedded"
+            placeholder="300"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.dayPass")}
+            error={errors.pricing?.dayPass}
+          />
+          <FormField
+            label="Per Seat"
+            labelPosition="embedded"
+            placeholder="300"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.perSeat")}
+            error={errors.pricing?.perSeat}
+          />
+          <FormField
+            label="Dedicated Desk"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.dedicatedDesk")}
+            error={errors.pricing?.dedicatedDesk}
+          />
+          <FormField
+            label="Flexi Desk"
+            labelPosition="embedded"
+            placeholder="1500"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.flexiDesk")}
+            error={errors.pricing?.flexiDesk}
+          />
+          <FormField
+            label="Private Cabin"
+            labelPosition="embedded"
+            placeholder="4000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.privateCabin")}
+            error={errors.pricing?.privateCabin}
+          />
+
           {/* Location */}
+          <FormSectionTitle>Location Details</FormSectionTitle>
 
           <FormField
             label="City"
@@ -361,7 +577,17 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            label="Postal Code"
+            label="Area"
+            labelPosition="embedded"
+            placeholder="Panvel"
+            {...register("location.area")}
+            error={errors.location?.area}
+          />
+
+          <FormField
+            label="Zip Code"
+            labelPosition="embedded"
+            placeholder="349203"
             {...register("location.postalCode")}
             error={errors.location?.postalCode}
           />
@@ -398,6 +624,7 @@ const SpaceEditPage = () => {
                 state: res.state || oldData.state,
                 postalCode: res.postalCode || oldData.postalCode,
                 country: res.country || oldData.country,
+                area: res.area || oldData.area,
                 lat: coords.lat || oldData.lat,
                 lng: coords.lng || oldData.lng,
               };
@@ -465,9 +692,10 @@ const SpaceEditPage = () => {
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
             defaultValue={defaultValues?.person?.contactNo}
+            value={watch("person.contactNo")}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
-              console.log(val);
+              console.log("POC contact number:", val);
               setValue("person.contactNo", val?.toString() || "", {
                 shouldValidate: true,
               });

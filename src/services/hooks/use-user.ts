@@ -54,6 +54,11 @@ export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
     }
   }, [res?.data?.data?.id]);
 
+  useEffect(() => {
+    // @ts-ignore
+    setUserLevel(userData?.level || userStoreState.level);
+  }, [userData]);
+
   useEffect(() => {}, [queryState.fetchStatus]);
 
   return {

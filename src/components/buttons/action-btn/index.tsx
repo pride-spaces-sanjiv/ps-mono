@@ -24,7 +24,7 @@ export default function ActionButton({
       className={cn(
         "relative flex gap-2 items-center cursor-pointer",
         "disabled:cursor-default",
-        className
+        className,
       )}
     >
       {!!showLoader && (
@@ -38,17 +38,19 @@ export default function ActionButton({
             props?.variant && props?.variant === "default"
               ? "text-foreground"
               : props?.variant === "destructive"
-              ? "text-foreground"
-              : props?.variant === "outline"
-              ? "text-card-foreground"
-              : "",
-            loaderProps?.className
+                ? "text-foreground"
+                : props?.variant === "outline"
+                  ? "text-card-foreground"
+                  : "",
+            loaderProps?.className,
           )}
         >
           <span className="sr-only">Loading...</span>
         </div>
       )}
-      <div className={cn("", loading ? "opacity-0" : "")}>{children}</div>
+      <div className={cn("max-w-full", loading ? "opacity-0" : "")}>
+        {children}
+      </div>
     </Button>
   );
 }

@@ -35,6 +35,9 @@ const OperatorEditPage = lazy(
 const Amenities = lazy(() => import("@/pages/amenities"));
 const CreateAmenity = lazy(() => import("@/pages/amenities/create"));
 const EditAmenity = lazy(() => import("@/pages/amenities/edit"));
+// Team
+const Admins = lazy(() => import("@/pages/admins"));
+const AdminCreatePage = lazy(() => import("@/pages/admins/create"));
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -128,7 +131,7 @@ const PrivateRoutes = () => {
         />
         <Route path="/operators/:id" element={<OperatorEditPage />} />
         <Route path="/operators/new" element={<OperatorCreate />} />
-
+        {/* Amenities */}
         <Route
           path="/amenities"
           element={
@@ -150,6 +153,23 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <AutoNavigateRender El={<EditAmenity />} />
+            </SuspensedView>
+          }
+        />
+        {/* Team */}
+        <Route
+          path="/team"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<Admins />} />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path="/team/new"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<AdminCreatePage />} />
             </SuspensedView>
           }
         />
