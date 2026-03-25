@@ -2,13 +2,13 @@ import { ADMIN_ADMIN } from "../config";
 import { amenitySchema } from "@/utils/schemas/amenity";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
+import { adminSchema, type AdminSchema } from "@/utils/schemas/user";
 // types
 import type {
   GeneralResponseWithError,
   PaginatedResponse,
 } from "@/types/axios/response";
 import type { Admin } from "@/types/data/user";
-import { adminSchema } from "@/utils/schemas/user";
 
 type AdminsRes = GeneralResponseWithError<
   PaginatedResponse<
@@ -87,6 +87,41 @@ export const deleteAdmin = APIBodyValidationWrapper({
     ).replace(/\/+/g, "/");
     const res = await ADMIN_ADMIN.delete<
       GeneralResponseWithError<Pick<Admin, "id">>
+    >(url, config);
+    return res;
+  },
+});
+
+// Password
+// Get
+export const getAdminPassword = APIBodyValidationWrapper({
+  handle: async (param, config) => {
+    const url =
+      `/${param?.url || ""}/password${queryToString(param?.query)}`.replace(
+        /\/+/g,
+        "/",
+      );
+    const res = await ADMIN_ADMIN.get<
+      GeneralResponseWithError<
+        Pick<Admin, "id"> & Pick<Partial<AdminSchema>, "password">
+      >
+    >(url, config);
+    return res;
+  },
+});
+
+export const changeAdminPassword = APIBodyValidationWrapper({
+  schema: adminSchema.pick({ password: true }),
+  handle: async (param, config) => {
+    const url =
+      `/${param?.url || ""}/password/change${queryToString(param?.query)}`.replace(
+        /\/+/g,
+        "/",
+      );
+    const res = await ADMIN_ADMIN.put<
+      GeneralResponseWithError<
+        Pick<Admin, "id"> & Pick<Partial<AdminSchema>, "password">
+      >
     >(url, config);
     return res;
   },
