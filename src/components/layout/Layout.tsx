@@ -8,7 +8,7 @@ export default function Layout({
   children,
   ...props
 }: React.JSX.IntrinsicElements["main"]) {
-  const [open, setOpen] = useState<boolean>();
+  const [open, setOpen] = useState<boolean>(true);
   return (
     <SidebarProvider
       onOpenChange={(open) => {
@@ -21,7 +21,7 @@ export default function Layout({
         <SidebarTrigger
           className={cn(
             "fixed bg-background max-[500px]:right-0 transition ease-in-out",
-            open ? "hidden" : "",
+            open ? "" : "",
           )}
         />
         <Outlet />
