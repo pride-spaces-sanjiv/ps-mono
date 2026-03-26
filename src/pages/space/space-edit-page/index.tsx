@@ -168,6 +168,7 @@ const SpaceEditPage = () => {
           <FormField
             label="Slug"
             labelPosition="embedded"
+            disabled
             placeholder="my-centre-slug"
             disabled
             readOnly

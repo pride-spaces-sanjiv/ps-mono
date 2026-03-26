@@ -22,7 +22,6 @@ import {
   Home,
   LogOutIcon,
   Settings,
-  Tv,
   UserIcon,
   UsersIcon,
 } from "lucide-react";
