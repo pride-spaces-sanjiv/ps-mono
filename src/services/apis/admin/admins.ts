@@ -103,7 +103,8 @@ export const getAdminPassword = APIBodyValidationWrapper({
       );
     const res = await ADMIN_ADMIN.get<
       GeneralResponseWithError<
-        Pick<Admin, "id"> & Pick<Partial<AdminSchema>, "password">
+        Pick<Admin, "id"> &
+          Partial<Pick<AdminSchema, "password"> & { decodedPassword: string }>
       >
     >(url, config);
     return res;
@@ -122,7 +123,7 @@ export const changeAdminPassword = APIBodyValidationWrapper({
       GeneralResponseWithError<
         Pick<Admin, "id"> & Pick<Partial<AdminSchema>, "password">
       >
-    >(url, config);
+    >(url, param?.body, config);
     return res;
   },
 });

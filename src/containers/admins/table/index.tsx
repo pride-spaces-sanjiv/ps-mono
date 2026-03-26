@@ -182,7 +182,7 @@ const AdminsTable = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Level
+              Member Type
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (

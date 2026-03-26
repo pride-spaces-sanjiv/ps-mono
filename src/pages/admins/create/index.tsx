@@ -57,7 +57,7 @@ const AdminCreatePage = () => {
     () => (userLevel ? getAdminLowerLevels(userLevel as any) : []),
     [userLevel],
   );
-  console.log(levels, userLevel);
+  // console.log(levels, userLevel);
 
   return (
     <div className="container mx-auto p-6">
@@ -90,6 +90,14 @@ const AdminCreatePage = () => {
             placeholder="support@example.com"
             {...register("email")}
             error={errors.email}
+          />
+
+          <FormField
+            label="Username"
+            labelPosition="embedded"
+            placeholder="user-234"
+            {...register("username")}
+            error={errors.username}
           />
 
           <FormField
