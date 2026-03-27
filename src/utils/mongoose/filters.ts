@@ -128,6 +128,7 @@ export const getSortOptions = <
     }
     throw new Error("No match for sort field");
   } catch (err) {
+    console.error("Get sort options err :", err);
     return null;
   }
 };
