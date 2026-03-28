@@ -18,8 +18,6 @@ import { getCssVariableValue } from "@/utils/css-variable";
 import Layout from "@/components/layout/Layout";
 import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
-import EditAdmin from "@/pages/admins/edit";
-// import OperatorEditPage from "@/pages/operators/operator-edit-page";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 // Space
@@ -39,6 +37,7 @@ const EditAmenity = lazy(() => import("@/pages/amenities/edit"));
 // Team
 const Admins = lazy(() => import("@/pages/admins"));
 const AdminCreatePage = lazy(() => import("@/pages/admins/create"));
+const AdminEditPage = lazy(() => import("@/pages/admins/edit"));
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -174,11 +173,11 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
-                <Route
+        <Route
           path="/team/:id"
           element={
             <SuspensedView>
-              <AutoNavigateRender El={<EditAdmin />} />
+              <AutoNavigateRender El={<AdminEditPage />} />
             </SuspensedView>
           }
         />

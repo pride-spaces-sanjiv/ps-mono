@@ -44,6 +44,7 @@ export default function EditAmenity() {
       console.log("Amenity body", body);
       const res = await mutateAsync({
         body,
+        url: id,
       });
 
       if (res.status === 200) {

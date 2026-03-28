@@ -1,6 +1,8 @@
 #!/bin/sh
 
+# Pass the script name from the format `npm run <script-name>` using --script|-sc flag
 SCRIPT=""
+# Stores build status - 0 for failed, 1 for success
 BUILD_STATUS=0
 
 # parse arguments
