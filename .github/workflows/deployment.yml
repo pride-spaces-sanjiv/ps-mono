@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       pm2_name: "ps-fr-admin"
-      project_dir: "/home/${{ secrets.USERNAME }}/htdocs/pridespaces/frontend/admin-fr"
+      project_dir: "/home/${{ secrets.USERNAME }}/htdocs/pridespaces/frontend/admin"
       script-name: "build-dev"
 
     steps:
@@ -28,9 +28,11 @@ jobs:
             echo "SSH actions starting...🔰🔰🔰"
             cd "${{env.project_dir}}" && echo "Moved to directory"
             git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
+            git fetch origin "${{github.ref_name}}" && git checkout "${{github.ref_name}}" && echo "Fetched latest changes ✅" || echo "Fetch latest changes failed ❌"
             git pull origin "${{github.ref_name}}" && echo "Pulled latest ✅" || echo "Pull latest failed ❌"
             chmod +x build-script.sh && echo "Build script executable set ✅" || echo "Failed to set build script executable ❌"
             ./build-script.sh --script "${{ env.script-name }}"
+            git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
             pm2 restart "${{ env.pm2_name }}" && echo "PM2 restarted ✅" || echo "PM2 restart failed ❌"
             echo "${{ secrets.PASSWORD }}" | sudo -S systemctl restart nginx && echo "Nginx restarted ✅" || echo "Nginx restart failed ❌"
             echo "SSH actions Ended ✅"
