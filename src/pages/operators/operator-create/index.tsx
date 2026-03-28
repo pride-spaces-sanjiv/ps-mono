@@ -82,13 +82,19 @@ const OperatorCreatePage = () => {
           </div>
 
           <FormField
-            label="Name"
-            placeholder="Operator Name"
+            label="Register Name"
+            placeholder="Register Name"
             labelPosition="embedded"
             {...register("name")}
             error={errors.name}
           />
-
+          <FormField
+            label="Brand Name"
+            placeholder="Brand Name"
+            labelPosition="embedded"
+            {...register("brandName")}
+            error={errors.brandName}
+          />
           <FormField
             label="Slug"
             labelPosition="embedded"
@@ -145,17 +151,17 @@ const OperatorCreatePage = () => {
 
           {/* SECTION: Operator Point of Contact */}
 
-          <div className="col-span-full mt-6 mb-8 ">
+          {/* <div className="col-span-full mt-6 mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
                 Point of Contact Details
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
-          </div>
+          </div> */}
 
           <FormField
-            label="Name"
+            label="POC Name"
             labelPosition="embedded"
             placeholder="John Doe"
             {...register("person.name")}
@@ -163,7 +169,7 @@ const OperatorCreatePage = () => {
           />
 
           <FormField
-            label="Email"
+            label="POC Email"
             labelPosition="embedded"
             type="email"
             placeholder="john.doe@example.com"
@@ -173,7 +179,7 @@ const OperatorCreatePage = () => {
 
           <FormField
             key={`poc-${defaultValues?.person?.contactNo}`}
-            label="Telephone"
+            label="POC Mobile No"
             labelPosition="embedded"
             type="tel"
             inputMode="tel"
@@ -190,7 +196,7 @@ const OperatorCreatePage = () => {
           />
 
           <FormField
-            label="Designation"
+            label="POC Designation"
             placeholder="Centre Manager"
             labelPosition="embedded"
             {...register("person.role")}
@@ -199,14 +205,14 @@ const OperatorCreatePage = () => {
 
           {/* SECTION: GST Details */}
 
-          <div className="col-span-full mt-6 mb-8 ">
+          {/* <div className="col-span-full mt-6 mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
                 GST Details
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
-          </div>
+          </div> */}
 
           <FormField
             label="GST Number"

@@ -12,6 +12,20 @@ import {
   getOperatorById,
   updateOperator,
 } from "@/services/apis/admin/operators";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Field, FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button"
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
@@ -94,11 +108,19 @@ const OperatorEditPage = () => {
           </div>
 
           <FormField
-            label="Name"
+            label="Register Name"
             placeholder="Operator Name"
             labelPosition="embedded"
             {...register("name")}
             error={errors.name}
+          />
+
+          <FormField
+            label="Brand Name"
+            placeholder="Brand Name"
+            labelPosition="embedded"
+            {...register("brandName")}
+            error={errors.brandName}
           />
 
           <FormField
@@ -149,17 +171,17 @@ const OperatorEditPage = () => {
 
           {/* SECTION: Operator Point of Contact */}
 
-          <div className="col-span-full mt-6 mb-8 ">
+          {/* <div className="col-span-full mt-6 mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
                 Point of Contact Details
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
-          </div>
+          </div> */}
 
           <FormField
-            label="Name"
+            label="POC Name"
             labelPosition="embedded"
             placeholder="John Doe"
             {...register("person.name")}
@@ -167,7 +189,7 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="Email"
+            label="POC Email"
             labelPosition="embedded"
             type="email"
             placeholder="john.doe@example.com"
@@ -177,7 +199,7 @@ const OperatorEditPage = () => {
 
           <FormField
             key={`poc-${defaultValues?.person?.contactNo}`}
-            label="Telephone"
+            label="POC Mobile No."
             labelPosition="embedded"
             type="tel"
             inputMode="tel"
@@ -194,7 +216,7 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="Designation"
+            label="POC Designation"
             placeholder="Centre Manager"
             labelPosition="embedded"
             {...register("person.role")}
@@ -202,7 +224,7 @@ const OperatorEditPage = () => {
           />
 
           {/* SECTION: GST Details */}
-
+          {/* 
           <div className="col-span-full mt-6 mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
@@ -210,7 +232,7 @@ const OperatorEditPage = () => {
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
-          </div>
+          </div> */}
 
           <FormField
             label="GST Number"
@@ -229,7 +251,7 @@ const OperatorEditPage = () => {
           />
 
           {/* Status */}
-          <div className="col-span-full flex gap-8">
+          <div className="col-span-full flex gap-8 justify-end">
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">{"Active Operator"}</label>
               <Switch
@@ -241,16 +263,87 @@ const OperatorEditPage = () => {
             </div>
           </div>
 
-          {/* Submit */}
+          {/* <div className="col-span-full mt-6 flex justify-start">
 
-          <div className="col-span-full mt-6 flex justify-end">
+          </div> */}
+          {/* Submit */}
+          <div className="col-span-full mt-6 flex justify-between items-center">
+
+            {/* LEFT SIDE */}
+            <Dialog>
+              <form>
+                <DialogTrigger asChild>
+                  <ActionButton
+                    variant="outline"
+                    type="button"
+                    loading={updateLoading}
+                    className="flex items-center gap-2 h-10 px-4"
+                  >
+                    <div className="flex gap-2 items-center">
+                      Add a state <Plus />
+                    </div>
+                  </ActionButton>
+                </DialogTrigger>
+
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Add a state:</DialogTitle>
+                    {/* <DialogDescription>
+                      Add description here!
+                    </DialogDescription> */}
+                  </DialogHeader>
+
+                  <FieldGroup>
+                    <FormField
+                      label="State"
+                      labelPosition="embedded"
+                      placeholder="Maharashtra"
+                    // {...register("state")}
+                    // error={errors?.state}
+                    />
+
+                    <FormField
+                      label="City"
+                      labelPosition="embedded"
+                      placeholder="Mumbai"
+                    //  {...register("city")}
+                    //  error={errors?.city}
+                    />
+                    <FormField
+                      label="Branch Address"
+                      labelPosition="embedded"
+                      inputType="textarea"
+                    // {...register("location.branchAddress")}
+                    // error={errors.location?.branchAddress}
+                    />
+                    <FormField
+                      label="GST Number"
+                      labelPosition="embedded"
+                      placeholder="Enter GST Number"
+                      {...register("gstNo")}
+                      error={errors?.gstNo}
+                    />
+                  </FieldGroup>
+
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button type="submit">Save changes</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </form>
+            </Dialog>
+
+            {/* RIGHT SIDE */}
             <ActionButton
               type="submit"
               loading={updateLoading}
-              className="max-w-fit"
+              className="h-10 px-4"
             >
               Update Operator
             </ActionButton>
+
           </div>
         </form>
       </div>

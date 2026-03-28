@@ -35,6 +35,7 @@ export const operatorSchema = z.object({
   email: getEmailSchema(),
   password: getPasswordSchema(),
   slug: getSlugSchema({ keyName: "Operator Slug" }),
+  brandName: getNameSchema({ keyName: "Brand Name" }),
   gstNo: z
     .string()
     .trim()
