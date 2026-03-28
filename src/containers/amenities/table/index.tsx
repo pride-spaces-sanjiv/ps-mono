@@ -118,6 +118,8 @@ const AmenitiesTable = ({
           page: page + 1,
           limit: limit,
           [`s${debouncedSearch.field}`]: debouncedSearch.value,
+          sortBy: "name",
+          sortOrder: "asc",
         },
       }),
     placeholderData: keepPreviousData,

@@ -18,7 +18,6 @@ import { getCssVariableValue } from "@/utils/css-variable";
 import Layout from "@/components/layout/Layout";
 import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
-// import OperatorEditPage from "@/pages/operators/operator-edit-page";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 // Space
@@ -35,6 +34,10 @@ const OperatorEditPage = lazy(
 const Amenities = lazy(() => import("@/pages/amenities"));
 const CreateAmenity = lazy(() => import("@/pages/amenities/create"));
 const EditAmenity = lazy(() => import("@/pages/amenities/edit"));
+// Team
+const Admins = lazy(() => import("@/pages/admins"));
+const AdminCreatePage = lazy(() => import("@/pages/admins/create"));
+const AdminEditPage = lazy(() => import("@/pages/admins/edit"));
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -128,7 +131,7 @@ const PrivateRoutes = () => {
         />
         <Route path="/operators/:id" element={<OperatorEditPage />} />
         <Route path="/operators/new" element={<OperatorCreate />} />
-
+        {/* Amenities */}
         <Route
           path="/amenities"
           element={
@@ -150,6 +153,31 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <AutoNavigateRender El={<EditAmenity />} />
+            </SuspensedView>
+          }
+        />
+        {/* Team */}
+        <Route
+          path="/team"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<Admins />} />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path="/team/new"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<AdminCreatePage />} />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path="/team/:id"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<AdminEditPage />} />
             </SuspensedView>
           }
         />

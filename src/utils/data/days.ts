@@ -8,7 +8,7 @@ export const days = [
   "Sunday",
 ] as const;
 
-const shortDays = days.map((s) => s.slice(0, 3));
+export const shortDays = days.map((s) => s.slice(0, 3));
 
 export const formatOpenDays = (openDays?: number[]) => {
   if (!openDays || openDays.length === 0) return "-";

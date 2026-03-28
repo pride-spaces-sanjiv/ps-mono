@@ -119,6 +119,8 @@ const SpacesTabledResults = ({
           withOperator: true,
           ...((operatorId && { operator: operatorId || "" }) || null),
           [`s${debouncedSearch.field}`]: debouncedSearch.value,
+          sortBy: "name",
+          sortOrder: "asc",
         },
       }),
     placeholderData: keepPreviousData,

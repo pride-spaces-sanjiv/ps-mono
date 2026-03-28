@@ -8,6 +8,7 @@ const keys = [
   "credits",
   "spaces",
   "operators",
+  "admins",
   "amenities",
 ] as const;
 

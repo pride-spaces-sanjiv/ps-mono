@@ -1,56 +1,21 @@
-import React, { useMemo, useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-// import { getOperators } from "@/services/apis/admin/operators";
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
-  type VisibilityState,
-} from "@tanstack/react-table";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronDown,
-  MoreHorizontal,
-} from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/utils/className";
-import { queryKeys } from "@/utils/query-keys";
-import { datifyObjectValues } from "@/utils/object/datify";
-import { formatOpenDays } from "@/utils/data/days";
-import { keepPreviousData } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
-// import { operators } from "./operator";
-import type { Operator } from "@/types/data/operators";
+import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
 import { getOperators } from "@/services/apis/admin/operators";
+import { keepPreviousData } from "@tanstack/react-query";
+import type { Operator } from "@/types/data/operators";
+import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type ColumnFiltersState, type SortingState, type VisibilityState } from "@tanstack/react-table";
+import React from "react";
+import { cn } from "@/utils/className";
 import { SelectPicker } from "@/components/select";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, MoreHorizontal, Table } from "lucide-react";
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { queryKeys } from "@/utils/query-keys";
 
 type Props = {
   id: string | null;
@@ -69,8 +34,10 @@ type Props = {
   inputProps: Parameters<typeof Input>[0];
 } & React.JSX.IntrinsicElements["div"];
 
-const OperatorsTabledResults = ({
-  id,
+
+
+const AmenitiesTabledResults = ({
+      id,
   operatorId,
   className,
   pagination = true,
@@ -91,8 +58,7 @@ const OperatorsTabledResults = ({
   const [search, setSearch] = useState({ field: "Name", value: "" });
 
   const debouncedSearch = useDebouncer(search, 500);
-
-  const {
+    const {
     data: res,
     isFetching,
     page,
@@ -112,8 +78,6 @@ const OperatorsTabledResults = ({
           withOperator: true,
           ...((operatorId && { operator: operatorId || "" }) || null),
           [`s${debouncedSearch.field}`]: debouncedSearch.value,
-          sortBy: "name",
-          sortOrder: "asc",
         },
       }),
     placeholderData: keepPreviousData,
@@ -152,7 +116,7 @@ const OperatorsTabledResults = ({
         cell: ({ row }) => <div>{row.getValue("name") || "-"}</div>,
       },
       {
-        accessorKey: "email",
+        accessorKey: "icon",
         header: ({ column }) => {
           return (
             <Button
@@ -161,7 +125,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Email
+              Icon
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -172,10 +136,10 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
+        cell: ({ row }) => <div>{row.getValue("icon") || "-"}</div>,
       },
       {
-        accessorKey: "headquarter.address",
+        accessorKey: "type",
         header: ({ column }) => {
           return (
             <Button
@@ -184,7 +148,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Headquarter
+              Type
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -196,11 +160,11 @@ const OperatorsTabledResults = ({
           );
         },
         cell: ({ row }) => (
-          <div>{row.original.headquarter?.address || "-"}</div>
+          <div>{row.getValue("type") || "-"}</div>
         ),
       },
       {
-        accessorKey: "person.name",
+        accessorKey: "createdAt",
         header: ({ column }) => {
           return (
             <Button
@@ -209,7 +173,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Person Name
+              Created At
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -220,10 +184,10 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original.person?.name || "-"}</div>,
+        cell: ({ row }) => <div>{row.getValue("createdAt") || "-"}</div>,
       },
       {
-        accessorKey: "person.email",
+        accessorKey: "status",
         header: ({ column }) => {
           return (
             <Button
@@ -232,7 +196,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Person Email
+              Status
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -243,7 +207,7 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original.person?.email || "-"}</div>,
+        cell: ({ row }) => <div>{row.getValue("status") || "-"}</div>,
       },
       {
         id: "actions",
@@ -276,7 +240,7 @@ const OperatorsTabledResults = ({
     ],
     [navigate],
   );
-
+  
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -284,7 +248,6 @@ const OperatorsTabledResults = ({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-
   const table = useReactTable({
     data: operators,
     columns,
@@ -320,7 +283,8 @@ const OperatorsTabledResults = ({
     rowCount: res?.data?.data?.metrics?.total || 1,
   });
 
-  return (
+
+    return(
     <div {...props} className={cn("", className)}>
       {/* Search  */}
       <div className={cn("admin-table-toolbar")}>
@@ -476,7 +440,9 @@ const OperatorsTabledResults = ({
         )}
       </div>
     </div>
-  );
-};
+        
+    )
+}
 
-export default OperatorsTabledResults;
+
+export default AmenitiesTabledResults;

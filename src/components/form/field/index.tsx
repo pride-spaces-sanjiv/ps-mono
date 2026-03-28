@@ -36,6 +36,7 @@ type Props<
   Partial<{
     labelPosition: "out" | "embedded";
     labelProps: Parameters<typeof Label>[0];
+    embeddedWrapperProps: React.ComponentProps<"div">;
     errorProps: React.JSX.IntrinsicElements["p"];
     wrapperProps: React.JSX.IntrinsicElements["p"];
     inputType: T;
@@ -58,6 +59,7 @@ export default function FormField<
   label,
   errorProps,
   wrapperProps,
+  embeddedWrapperProps,
   error = null,
   showRequired = true,
   ...props
@@ -68,11 +70,13 @@ export default function FormField<
       className={cn("flex flex-col gap-2", wrapperProps?.className)}
     >
       <div
+        {...embeddedWrapperProps}
         className={cn(
           "",
           labelPosition === "out"
             ? "flex flex-col gap-2"
             : "flex items-center gap-1 rounded-md border border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+          embeddedWrapperProps?.className,
         )}
       >
         <Label

@@ -7,7 +7,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
 // import { getOperators } from "@/services/apis/admin/operators";
 import {
   type ColumnDef,
@@ -29,14 +28,19 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/utils/className";
-import { queryKeys } from "@/utils/query-keys";
-import { datifyObjectValues } from "@/utils/object/datify";
-import { formatOpenDays } from "@/utils/data/days";
 import { keepPreviousData } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
+import { Input } from "@/components/ui/input";
+import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
+import { useUser } from "@/services/hooks/use-user";
+import { getAdmins } from "@/services/apis/admin/admins";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
+import { datifyObjectValues } from "@/utils/object/datify";
+import { cn } from "@/utils/className";
+import { dashToUpperCased } from "@/utils/string/dashed";
+import { formatOpenDays } from "@/utils/data/days";
+import { queryKeys } from "@/utils/query-keys";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -46,15 +50,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
-// import { operators } from "./operator";
-import type { Operator } from "@/types/data/operators";
-import { getOperators } from "@/services/apis/admin/operators";
 import { SelectPicker } from "@/components/select";
+import type { Admin } from "@/types/data/user";
 
 type Props = {
   id: string | null;
-  operatorId: string | null;
   tableWrapperProps: React.JSX.IntrinsicElements["div"];
   tableProps: React.ComponentProps<"table">;
   tableHeaderProps: React.ComponentProps<"thead">;
@@ -69,9 +69,8 @@ type Props = {
   inputProps: Parameters<typeof Input>[0];
 } & React.JSX.IntrinsicElements["div"];
 
-const OperatorsTabledResults = ({
+const AdminsTable = ({
   id,
-  operatorId,
   className,
   pagination = true,
   tableWrapperProps,
@@ -88,6 +87,9 @@ const OperatorsTabledResults = ({
   ...props
 }: Partial<Props>) => {
   const navigate = useNavigate();
+
+  const { userLevel, fetchCount, userData } = useUser();
+
   const [search, setSearch] = useState({ field: "Name", value: "" });
 
   const debouncedSearch = useDebouncer(search, 500);
@@ -105,28 +107,24 @@ const OperatorsTabledResults = ({
       debouncedSearch.value,
     ],
     queryFn: (page, limit) =>
-      getOperators({
+      getAdmins({
         query: {
           page: page + 1,
           limit: limit,
-          withOperator: true,
-          ...((operatorId && { operator: operatorId || "" }) || null),
           [`s${debouncedSearch.field}`]: debouncedSearch.value,
-          sortBy: "name",
-          sortOrder: "asc",
         },
       }),
     placeholderData: keepPreviousData,
   });
 
-  const operators: Operator[] = useMemo(
-    () => ((res?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
+  const admins: Admin[] = useMemo(
+    () => ((res?.data?.data?.results ?? []) as Admin[]).filter(Boolean),
     [res?.data?.data?.results],
   );
-  console.log("operators", operators);
+  console.log("admins", admins);
 
   // Columns definition
-  const columns: ColumnDef<Operator>[] = useMemo(
+  const columns: ColumnDef<Admin>[] = useMemo(
     () => [
       {
         accessorKey: "name",
@@ -172,10 +170,10 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
+        cell: ({ row }) => <div>{row.original?.email || "-"}</div>,
       },
       {
-        accessorKey: "headquarter.address",
+        accessorKey: "memberType",
         header: ({ column }) => {
           return (
             <Button
@@ -184,7 +182,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Headquarter
+              Member Type
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -196,54 +194,8 @@ const OperatorsTabledResults = ({
           );
         },
         cell: ({ row }) => (
-          <div>{row.original.headquarter?.address || "-"}</div>
+          <div>{dashToUpperCased(row.original.level || "", " ") || "-"}</div>
         ),
-      },
-      {
-        accessorKey: "person.name",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Person Name
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.original.person?.name || "-"}</div>,
-      },
-      {
-        accessorKey: "person.email",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Person Email
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.original.person?.email || "-"}</div>,
       },
       {
         id: "actions",
@@ -260,7 +212,7 @@ const OperatorsTabledResults = ({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
-                  onClick={() => navigate(`/operators/${row.original.id}`)}
+                  onClick={() => navigate(`/team/${row.original.id}`)}
                 >
                   Show details
                 </DropdownMenuItem>
@@ -286,7 +238,7 @@ const OperatorsTabledResults = ({
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data: operators,
+    data: admins,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -348,7 +300,7 @@ const OperatorsTabledResults = ({
               setSearch({ value: "", field: value });
             },
           }}
-          items={["Name", "Headquarter", "Person Name"].map((s) => ({
+          items={["Name", "Email"].map((s) => ({
             label: s,
             value: s,
           }))}
@@ -431,7 +383,7 @@ const OperatorsTabledResults = ({
                   colSpan={columns.length}
                   className="text-center py-4 font-medium"
                 >
-                  No operators found
+                  No team members found
                 </TableCell>
               </TableRow>
             )}
@@ -479,4 +431,4 @@ const OperatorsTabledResults = ({
   );
 };
 
-export default OperatorsTabledResults;
+export default AdminsTable;

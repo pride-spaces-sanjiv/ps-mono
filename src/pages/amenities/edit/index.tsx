@@ -44,6 +44,7 @@ export default function EditAmenity() {
       console.log("Amenity body", body);
       const res = await mutateAsync({
         body,
+        url: id,
       });
 
       if (res.status === 200) {
@@ -84,7 +85,7 @@ export default function EditAmenity() {
           <div className="col-span-full  mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Create a New Amenity
+                Edit Amenity
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
