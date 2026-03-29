@@ -14,10 +14,11 @@ import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
 //   validateConnection,
 // } from "@/middlewares/connections.js";
 // Controllers
-import { getTokenInfo } from "./controllers/tokenInfo.js";
+import { getTokenInfo } from "@/controllers/tokenInfo.js";
 // Routers
 import { AdminRouter } from "@/routes/admin/route.js";
-import { OperatorRouter } from "./routes/operator/route.js";
+import { OperatorRouter } from "@/routes/operator/route.js";
+import { StatesRouter } from "@/routes/general/states/route.js";
 // import { PlaylistRouter } from "@/routes/playlist.js";
 // import { JioRouter } from "./routes/jio.js";
 // import { ZeeRouter } from "@/routes/zee.js";
@@ -285,6 +286,8 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
 //   validateConnection(),
 //   HotstarRouter,
 // );
+
+app.use("/states", StatesRouter);
 
 // Independent cache routes
 app.use((req, res: ManagedResponseWithLocalUrl, next) => {
