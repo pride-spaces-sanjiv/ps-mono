@@ -512,6 +512,26 @@ export class RequestMiddleware {
       });
     }
   };
+
+  static updateCacheOptions =
+    (options: Partial<SetOptions>) =>
+    (
+      req: ManagedRequest,
+      res: ManagedResponseWithLocalUrl,
+      next: NextFunction,
+    ) => {
+      try {
+        if (typeof res.locals === "object") {
+          res.locals.cacheOptions = options;
+        }
+        next?.();
+      } catch (err) {
+        ResponseHandler.handleError(res, {
+          errorType: "system-error-copts",
+          message: "Error handling system",
+        });
+      }
+    };
 }
 
 export class ResponseHandler {
@@ -690,7 +710,7 @@ export class ResponseHandler {
               "",
             ),
             str,
-            { EX: 20, ...cacheOptions },
+            { EX: 20, ...res.locals?.cacheOptions, ...cacheOptions },
           );
         }
       }

@@ -185,7 +185,9 @@ export const pushStatesAndCities = async () => {
     metrics.states = stateMetrics;
 
     // Cities for state
-    for (const state of statesData) {
+    const startStateInd = statesData.findIndex((dt) => dt.isoCode === "UP");
+    console.log("State ind", startStateInd + 1, statesData.length);
+    for (const state of statesData.filter((_, i) => i >= startStateInd + 1)) {
       //   let totalCities = 0;
       //   const { data, metadata = null } = await getStates(statesData.length);
       //   console.log("States data:", data);

@@ -1,6 +1,7 @@
 import { Request, RequestHandler, Response } from "express";
 import { ParsedQs } from "qs";
 import { OverrideObject } from "./object-override.js";
+import { SetOptions } from "redis";
 
 export type ManagedRequestHandler<
   B extends any = any,
@@ -32,6 +33,7 @@ export type ManagedResponseWithLocalUrl<
     // @ts-ignore
     (P extends true ? Partial<{ url: string }> : { url: string }) & {
       cacheUser?: string;
+      cacheOptions?: Partial<SetOptions>;
     }
   >
 >;
@@ -49,6 +51,7 @@ export type ManagedResponseWithLocalUrlIP<
     (P extends true ? Partial<{ url: string }> : { url: string }) & {
       cacheUser?: string;
       cacheIP?: string;
+      cacheOptions?: Partial<SetOptions>;
     }
   >
 >;
