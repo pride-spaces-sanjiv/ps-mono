@@ -6,12 +6,14 @@ import {
 } from "@/utils/mongoose/fields.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 import { spaceTypes, spaceGrades } from "@/utils/data/spaceTypes.js";
+import { workingSizes } from "@/utils/data/workingSizes.js";
 
 const PersonSchema = new Conn.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
     contactNo: { type: String, required: true },
+    role: { type: String, required: true },
   },
   { _id: false },
 );
@@ -21,10 +23,22 @@ const LocationSchema = new Conn.Schema(
     address: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
-    area: { type: String, required: true },
     country: { type: String, required: true },
+    area: { type: String, required: true },
+    postalCode: { type: String },
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
+const PricingSchema = new Conn.Schema(
+  {
+    dayPass: { type: Number, required: true, default: 0 },
+    perSeat: { type: Number, required: true, default: 0 },
+    dedicatedDesk: { type: Number, required: true, default: 0 },
+    flexiDesk: { type: Number, required: true, default: 0 },
+    privateCabin: { type: Number, required: true, default: 0 },
   },
   { _id: false },
 );
@@ -48,11 +62,13 @@ const SpaceSchema = new Conn.Schema(
     openDays: { type: [Number] },
     operationalHrs: { type: Number },
     facilities: { type: [String] },
+    workingSizes: { type: [{ type: String, enum: workingSizes }], default: [] },
     isVerified: { type: Boolean },
     isActive: { type: Boolean },
     totalSeats: { type: Number, default: 0 },
     bookedSeats: { type: Number, default: 0 },
     price: { type: Number, default: 0 },
+    pricing: { type: PricingSchema, required: true },
     rating: { type: Number },
     reviews: { type: Number },
     approval: { type: ApprovalSchema },
@@ -68,6 +84,7 @@ indexFieldsFromSchema(SpaceSchema, {
     "location.city",
     "location.country",
     "location.state",
+    "location.area",
     "person.name",
     "person.email",
   ],

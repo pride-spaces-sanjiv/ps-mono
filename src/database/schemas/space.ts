@@ -11,16 +11,47 @@ import { spaceCategories } from "@/utils/data/category.js";
 import { approvalSchema } from "./dump.js";
 import { personSchema } from "./person.js";
 import { spaceGrades, spaceTypes } from "@/utils/data/spaceTypes.js";
+import { workingSizes } from "@/utils/data/workingSizes.js";
 
 // --- Location Schema ---
 export const locationSchema = z.object({
   address: z.string().trim().min(1, "Address is required"),
   city: z.string().trim().min(1, "City is required"),
   state: z.string().trim().min(1, "State is required"),
-  area: z.string().trim().min(1, "Area is required"),
   country: z.string().trim().min(1, "Country is required"),
+  area: z.string().trim().min(1, "Area is required"),
+  postalCode: z
+    .string("Postal Code is required")
+    .trim()
+    .min(3, "Postal Code must be min 3 chars")
+    .transform((arg) => arg.replace(/[^A-Za-z0-9]/g, ""))
+    .refine((val) => /^[A-Za-z0-9]+$/.test(val), "Postal Code is invalid"),
   lat: z.number(),
   lng: z.number(),
+});
+
+// --- Pricing
+export const pricingSchema = z.object({
+  dayPass: z
+    .number()
+    .min(0, "Day pass price must be a positive number")
+    .default(0),
+  perSeat: z
+    .number()
+    .min(0, "Per seat price must be a positive number")
+    .default(0),
+  dedicatedDesk: z
+    .number()
+    .min(0, "Dedicated desk price must be a positive number")
+    .default(0),
+  flexiDesk: z
+    .number()
+    .min(0, "Flexi desk price must be a positive number")
+    .default(0),
+  privateCabin: z
+    .number()
+    .min(0, "Private cabin price must be a positive number")
+    .default(0),
 });
 
 // --- Space Schema ---
@@ -78,10 +109,13 @@ export const spaceSchema = z.object({
     .number()
     .min(0, "Price must be a positive number")
     .int("Price must be a positive integer"),
-  facilities: z.array(z.enum(facilities)).default([]),
+  pricing: pricingSchema,
+  facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
+  workingSizes: z.array(z.enum(workingSizes)).default([]),
   // approval: approvalSchema,
 });
 
 // TypeScript Types (Optional but recommended)
 export type LocationSchema = z.infer<typeof locationSchema>;
+export type PricingSchema = z.infer<typeof pricingSchema>;
 export type SpaceSchema = z.infer<typeof spaceSchema>;

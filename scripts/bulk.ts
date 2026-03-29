@@ -55,7 +55,7 @@ const convertData = (data: (typeof parsedData)[number]) => {
     name: data["Centre Name"].trim(),
     branch: new Types.ObjectId().toHexString(),
     operator: "69b08adb22a9fe9d0e91127a",
-   slug: generateSlug(data["Centre Name"], counter),
+    slug: generateSlug(data["Centre Name"], counter),
     isActive: true,
     isVerified: false,
     email: "randommail@gmail.com",

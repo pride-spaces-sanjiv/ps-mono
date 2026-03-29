@@ -64,7 +64,10 @@ export const paginatedResults = async <
       acceptedFields || [],
     );
     const { sortBy = "", sortOrder = "" } =
-      getSortOptions(req, sorterOptions) || {};
+      getSortOptions(req, {
+        allowOnly: acceptedFields || [],
+        ...sorterOptions,
+      }) || {};
 
     const total = await model.countDocuments(args?.filter);
     const next = await model.countDocuments(args?.filter, {
