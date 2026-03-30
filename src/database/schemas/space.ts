@@ -88,6 +88,9 @@ export const spaceSchema = z.object({
     .min(0, "Operational hours must be a positive number")
     .max(24, "Operational hours must be at most 24")
     .default(0),
+  trainingRoom: z.number().optional().default(0),
+  meetingRoom: z.number().optional().default(0),
+  conferenceRoom: z.number().optional().default(0),
   isVerified: z.boolean().optional().default(false),
   isActive: z.boolean().optional().default(false),
   rating: z.number().optional().default(0),
