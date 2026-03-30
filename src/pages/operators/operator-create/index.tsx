@@ -8,16 +8,14 @@ import moment from "moment";
 import { Switch } from "@/components/ui/switch";
 import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
 import {
-  getOperatorById,
-  updateOperator,
   createOperator,
 } from "@/services/apis/admin/operators";
+
+
 import { generatePassword } from "@/utils/string/password";
-import { queryKeys } from "@/utils/query-keys";
-import { DialogModal } from "@/components/dialog";
-import SpacesTabledResults from "@/containers/spaces-table";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import MultiState from "@/containers/multi-state-dialog";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -231,7 +229,7 @@ const OperatorCreatePage = () => {
           />
 
           {/* Status */}
-          <div className="col-span-full flex gap-8">
+          <div className="col-span-full justify-end flex gap-8">
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">{"Active Operator"}</label>
               <Switch
@@ -244,8 +242,22 @@ const OperatorCreatePage = () => {
           </div>
 
           {/* Submit */}
+<div className="col-span-full mt-6 flex justify-between items-center">
 
-          <div className="col-span-full mt-6 flex justify-end">
+            {/* LEFT SIDE */}
+          <MultiState/>
+
+            {/* RIGHT SIDE */}
+            {/* <ActionButton
+              type="submit"
+              loading={updateLoading}
+              className="px-5 py-5"
+            >
+              Update Operator
+            </ActionButton> */}
+
+          {/* </div>
+          <div className="col-span-full mt-6 flex justify-end"> */}
             <ActionButton
               type="submit"
               loading={createLoading}

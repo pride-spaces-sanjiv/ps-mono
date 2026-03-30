@@ -12,25 +12,12 @@ import {
   getOperatorById,
   updateOperator,
 } from "@/services/apis/admin/operators";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Field, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button"
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import MultiState from "@/containers/multi-state-dialog";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -270,76 +257,13 @@ const OperatorEditPage = () => {
           <div className="col-span-full mt-6 flex justify-between items-center">
 
             {/* LEFT SIDE */}
-            <Dialog>
-              <form>
-                <DialogTrigger asChild>
-                  <ActionButton
-                    variant="outline"
-                    type="button"
-                    loading={updateLoading}
-                    className="flex items-center gap-2 h-10 px-4"
-                  >
-                    <div className="flex gap-2 items-center">
-                      Add a state <Plus />
-                    </div>
-                  </ActionButton>
-                </DialogTrigger>
-
-                <DialogContent className="sm:max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle>Add a state:</DialogTitle>
-                    {/* <DialogDescription>
-                      Add description here!
-                    </DialogDescription> */}
-                  </DialogHeader>
-
-                  <FieldGroup>
-                    <FormField
-                      label="State"
-                      labelPosition="embedded"
-                      placeholder="Maharashtra"
-                    // {...register("state")}
-                    // error={errors?.state}
-                    />
-
-                    <FormField
-                      label="City"
-                      labelPosition="embedded"
-                      placeholder="Mumbai"
-                    //  {...register("city")}
-                    //  error={errors?.city}
-                    />
-                    <FormField
-                      label="Branch Address"
-                      labelPosition="embedded"
-                      inputType="textarea"
-                    // {...register("location.branchAddress")}
-                    // error={errors.location?.branchAddress}
-                    />
-                    <FormField
-                      label="GST Number"
-                      labelPosition="embedded"
-                      placeholder="Enter GST Number"
-                      {...register("gstNo")}
-                      error={errors?.gstNo}
-                    />
-                  </FieldGroup>
-
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit">Save changes</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </form>
-            </Dialog>
+<MultiState/>
 
             {/* RIGHT SIDE */}
             <ActionButton
               type="submit"
               loading={updateLoading}
-              className="h-10 px-4"
+              className="px-5 py-5"
             >
               Update Operator
             </ActionButton>

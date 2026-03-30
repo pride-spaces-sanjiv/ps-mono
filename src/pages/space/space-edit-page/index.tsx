@@ -485,7 +485,33 @@ const SpaceEditPage = () => {
             {...register("area")}
             error={errors.area}
           />
-
+          <FormField
+            label="Training Room"
+            labelPosition="embedded"
+            placeholder="20 (pax)"
+            type="number"
+            min={0}
+          {...register("trainingRoom")}
+          error={errors.trainingRoom}
+          />
+          <FormField
+            label="Meeting Room"
+            labelPosition="embedded"
+            placeholder="4 (pax)"
+            type="number"
+            min={0}
+          {...register("meetingRoom")}
+          error={errors.meetingRoom}
+          />
+          <FormField
+            label="Conference Room"
+            labelPosition="embedded"
+            placeholder="10 (pax)"
+            type="number"
+            min={0}
+          {...register("conferenceRoom")}
+          error={errors.conferenceRoom}
+          />
           <FormField
             label="Description"
             labelPosition="embedded"
@@ -650,16 +676,6 @@ const SpaceEditPage = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <label className="text-white text-sm">Same As Operator</label>
-            <Switch
-              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-              onCheckedChange={(checked) => {
-                setPOCSameAsOperator(checked);
-              }}
-            />
-          </div>
-
           <FormField
             label="Name"
             labelPosition="embedded"
@@ -724,7 +740,7 @@ const SpaceEditPage = () => {
               />
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center  gap-4">
               <label className="text-white text-sm">Verified</label>
               <Switch
                 key={defaultValues?.isVerified ? "verified" : "unverified"}
@@ -732,8 +748,16 @@ const SpaceEditPage = () => {
                 {...register("isVerified")}
               />
             </div>
+          <div className="flex items-center gap-4">
+            <label className="text-white text-sm">Same As Operator</label>
+            <Switch
+              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+              onCheckedChange={(checked) => {
+                setPOCSameAsOperator(checked);
+              }}
+            />
           </div>
-
+          </div>
           {/* Submit */}
           <div className="col-span-full flex justify-end">
             <ActionButton
