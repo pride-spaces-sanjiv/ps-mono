@@ -15,7 +15,10 @@ export const tokenStore = create<ZustandStore<TokenData | null>>((set) => ({
       ) as TokenData,
       ["expiry"],
     ) || null,
-  setter: (update) => set({ value: update }),
+  setter: (val) =>
+    set((state) => ({
+      value: typeof val === "function" ? val(state.value) : val,
+    })),
 }));
 
 type UserStoreExtras = {
@@ -33,7 +36,10 @@ export const userStore = create<
   value: null,
   level: null,
   setLevel: (level: UserStoreExtras["level"] = null) => set({ level }),
-  setter: (update) => set({ value: update }),
+  setter: (val) =>
+    set((state) => ({
+      value: typeof val === "function" ? val(state.value) : val,
+    })),
   setterAndPersist: (update: DatifiedAdmin | DatifiedOperator | null) => {
     secureStorage.localStorage.setItem("__uD__", update);
     set({ value: update });

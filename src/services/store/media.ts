@@ -9,19 +9,28 @@ import type {
 export const providersStore = create<ZustandStore<DatifiedProvider[]>>(
   (set) => ({
     value: [],
-    setter: (val) => set({ value: val }),
-  })
+    setter: (val) =>
+      set((state) => ({
+        value: typeof val === "function" ? val(state.value) : val,
+      })),
+  }),
 );
 
 export const commonGroupsStore = create<ZustandStore<DatifiedGroup[]>>(
   (set) => ({
     value: [],
-    setter: (val) => set({ value: val }),
-  })
+    setter: (val) =>
+      set((state) => ({
+        value: typeof val === "function" ? val(state.value) : val,
+      })),
+  }),
 );
 export const userGroupsStore = create<ZustandStore<DatifiedUserGroup[]>>(
   (set) => ({
     value: [],
-    setter: (val) => set({ value: val }),
-  })
+    setter: (val) =>
+      set((state) => ({
+        value: typeof val === "function" ? val(state.value) : val,
+      })),
+  }),
 );

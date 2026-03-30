@@ -13,7 +13,10 @@ type Extras = {
 export const amenityStore = create<ZustandStore<DatifiedAmenity[], Extras>>(
   (set) => ({
     value: [],
-    setter: (update) => set({ value: update }),
+    setter: (val) =>
+      set((state) => ({
+        value: typeof val === "function" ? val(state.value) : val,
+      })),
     // level: null,
     // setLevel: (level: UserStoreExtras["level"] = null) => set({ level }),
     fetchCount: 0,

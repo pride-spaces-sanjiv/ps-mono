@@ -125,7 +125,7 @@ export function useStatesCities() {
 
   useEffect(() => {
     if (
-      !statesQueryState.isPending &&
+      !statesQueryState.isFetching &&
       statesQueryState.data?.data?.data?.results?.length
     ) {
       if (statesQueryState.data?.data?.data?.metrics?.next) {
@@ -157,48 +157,38 @@ export function useStatesCities() {
       );
       statesStoreState.setter(updated);
     }
-  }, [statesQueryState.isPending]);
+  }, [statesQueryState.isFetching]);
 
   useEffect(() => {
     if (
-      !citiesQueryState.isPending &&
-      citiesQueryState.data?.data?.data?.results?.length
-    ) {
-      if (citiesQueryState.data?.data?.data?.metrics?.next) {
-        const timer = setTimeout(() => {
-          citiesQueryState.setPage((prev) => prev + 1);
-        }, 500);
-        return () => {
-          timer && clearTimeout(timer);
-        };
-      }
-      citiesStoreState.setter(
-        unifier(
-          sortByField(
-            [
-              ...citiesStoreState.value,
-              ...citiesQueryState.data?.data?.data?.results.map(
-                (dt) =>
-                  datifyObjectValues(dt, [
-                    "createdAt",
-                    "updatedAt",
-                  ]) as DatifiedCity,
-              ),
-            ].filter(
-              (dt) =>
-                dt.state &&
-                statesStoreState.value?.find(
-                  (state) => state.code === dt.state,
-                ),
-            ),
-            "name",
-            "string",
-          ),
-          "rId",
+      citiesQueryState.status !== "success" ||
+      !citiesQueryState.data?.data?.data?.results?.length
+    )
+      return;
+
+    const results = citiesQueryState.data?.data?.data?.results;
+    citiesStoreState.setter((prev) => {
+      const merged = [
+        ...prev,
+        ...results.map(
+          (dt) =>
+            datifyObjectValues(dt, ["createdAt", "updatedAt"]) as DatifiedCity,
         ),
-      );
+      ];
+      const sorted = sortByField(merged, "name", "string");
+      const unified = unifier(sorted, "rId");
+      return unified;
+    });
+
+    if (citiesQueryState.data?.data?.data?.metrics?.next) {
+      const timer = setTimeout(() => {
+        citiesQueryState.setPage((prev) => prev + 1);
+      }, 500);
+      return () => {
+        timer && clearTimeout(timer);
+      };
     }
-  }, [citiesQueryState.isPending, statesStoreState.value]);
+  }, [citiesQueryState.status, citiesQueryState.data]);
 
   return {
     statesQueryState,
