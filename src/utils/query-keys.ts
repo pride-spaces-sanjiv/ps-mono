@@ -10,6 +10,8 @@ const keys = [
   "operators",
   "admins",
   "amenities",
+  "states",
+  "cities",
 ] as const;
 
 type QueryKey = (typeof keys)[number];
