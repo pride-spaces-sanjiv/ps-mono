@@ -18,7 +18,6 @@ router.use("/auth", AuthRouter);
 // Authorized routes
 // @ts-ignore
 router.use(RequestMiddleware.authenticateUser(Admin, "admin"));
-router.use("/", DataRouter);
 router.use("/admins", AdminRouter);
 router.use("/operators", OperatorRouter);
 router.use("/users", UserRouter);
@@ -26,5 +25,6 @@ router.use("/spaces", SpaceRouter);
 router.use("/branches", BranchRouter);
 router.use("/amenities", AmenityRouter);
 router.use("/dumps", DumpRouter);
+router.use("/", DataRouter);
 
 export { router as AdminRouter };

@@ -15,7 +15,7 @@ router.use(
     expiration: { type: "EX", value: 5 * 60 },
   }),
 );
-router.use("/", DataRouter);
 router.use("/cities", CitiesRouter);
+router.use("/", DataRouter);
 
 export { router as StatesRouter };

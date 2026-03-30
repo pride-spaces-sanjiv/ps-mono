@@ -16,10 +16,10 @@ router.use("/auth", AuthRouter);
 // Authorized routes
 // @ts-ignore
 router.use(RequestMiddleware.authenticateUser(Operator, "operator"));
-router.use("/", DataRouter);
 // router.use("/users", UserRouter);
 router.use("/spaces", SpaceRouter);
 router.use("/branches", BranchRouter);
 router.use("/dumps", DumpRouter);
+router.use("/", DataRouter);
 
 export { router as OperatorRouter };
