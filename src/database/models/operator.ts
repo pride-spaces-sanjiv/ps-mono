@@ -10,6 +10,7 @@ const HeadQuarterPersonSchema = new Conn.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
+    contactNo: { type: String, required: true },
     role: { type: String, required: true },
   },
   { _id: false },
@@ -21,6 +22,45 @@ const HeadQuarterSchema = new Conn.Schema(
     contactNo: { type: String, required: true, default: "" },
   },
   { _id: false },
+);
+
+export const BranchSchema = new Conn.Schema(
+  {
+    code: {
+      type: String,
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    address: {
+      type: String,
+      required: true,
+    },
+    city: {
+      type: String,
+      required: true,
+    },
+    postalCode: {
+      type: String,
+      required: true,
+    },
+    gstNo: {
+      type: String,
+      required: true,
+    },
+    person: {
+      type: HeadQuarterPersonSchema,
+    },
+    isPrimary: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    _id: false,
+  },
 );
 
 const OperatorSchema = new Conn.Schema(
@@ -36,6 +76,7 @@ const OperatorSchema = new Conn.Schema(
     cinNo: { type: String, required: true },
     approval: { type: ApprovalSchema },
     isActive: { type: Boolean, default: true },
+    branches: { type: [BranchSchema] },
   },
   { timestamps: true },
 );
