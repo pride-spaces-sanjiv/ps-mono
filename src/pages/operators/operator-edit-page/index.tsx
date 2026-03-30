@@ -21,7 +21,7 @@ import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
-import MultiStateDialog from "@/containers/multi-state/multi-state-dialog";
+import MultiStateDialog from "@/containers/operator/multi-state-dialog";
 import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
 import type { MultiStateItem } from "@/containers/multi-state/types";
 
@@ -271,9 +271,20 @@ const OperatorEditPage = () => {
 
           <div className="col-span-full mt-6">
             <MultiStateCard
-              states={states}
-              onEdit={handleEditState}
-              onDelete={handleDeleteState}
+              // @ts-ignore
+              branches={watch("branches", []) || []}
+              onEdit={(branch, i) => {
+                const branches = watch("branches", []) || [];
+                if (branches[i]) {
+                  branches[i] = branch;
+                }
+                setValue("branches", branches, { shouldValidate: true });
+              }}
+              onDelete={(branch, i) => {
+                const branches =
+                  watch("branches", [])?.filter((_, idx) => idx !== i) || [];
+                setValue("branches", branches, { shouldValidate: true });
+              }}
             />
           </div>
 
@@ -303,8 +314,10 @@ const OperatorEditPage = () => {
                   setEditingState(null);
                 }
               }}
-              onSave={handleSaveState}
-              editingState={editingState}
+              onSave={(data) => {
+                setValue("branches", [data], { shouldValidate: true });
+              }}
+              isEditing={false}
             />
 
             {/* RIGHT SIDE */}

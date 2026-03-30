@@ -10,15 +10,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, MapPin, Pencil, Trash2 } from "lucide-react";
 import type { MultiStateItem } from "../types";
+import type { BranchSchema } from "@/utils/schemas/operators";
+import MultiStateDialog from "@/containers/operator/multi-state-dialog";
+import ActionButton from "@/components/buttons/action-btn";
 
 type MultiStateCardProps = {
-  states: MultiStateItem[];
-  onEdit: (state: MultiStateItem) => void;
-  onDelete: (id: string) => void;
+  branches: BranchSchema[];
+  onEdit: (branch: BranchSchema, i: number) => void;
+  onDelete: (branch: BranchSchema, i: number) => void;
 };
 
 export function MultiStateCard({
-  states,
+  branches,
   onEdit,
   onDelete,
 }: MultiStateCardProps) {
@@ -32,7 +35,7 @@ export function MultiStateCard({
     );
   };
 
-  if (!states.length) {
+  if (!branches.length) {
     return (
       <Card className="w-full border-dashed">
         <CardContent className="py-10 text-center text-sm text-muted-foreground">
@@ -44,18 +47,18 @@ export function MultiStateCard({
 
   return (
     <div className="auto-form-grid gap-4 ">
-      {states.map((item) => {
-        const isExpanded = expandedIds.includes(item.id);
+      {branches.map((item, i) => {
+        const isExpanded = expandedIds.includes(item.code);
 
         return (
-          <Card key={item.id} className="w-full h-fit">
+          <Card key={item.code} className="w-full h-fit">
             <CardHeader>
               <div className="flex items-start gap-3">
                 <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <MapPin className="size-4" />
                 </div>
                 <div className="space-y-1">
-                  <CardTitle>{item.state}</CardTitle>
+                  <CardTitle>{item.name}</CardTitle>
                   <p className="text-sm text-muted-foreground">{item.city}</p>
                 </div>
               </div>
@@ -64,11 +67,11 @@ export function MultiStateCard({
                   variant="ghost"
                   size="icon"
                   type="button"
-                  onClick={() => toggleExpanded(item.id)}
+                  onClick={() => toggleExpanded(item.code)}
                   aria-label={
                     isExpanded
-                      ? `Hide ${item.state} details`
-                      : `Show ${item.state} details`
+                      ? `Hide ${item.name} details`
+                      : `Show ${item.name} details`
                   }
                 >
                   {isExpanded ? (
@@ -86,7 +89,7 @@ export function MultiStateCard({
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       Branch Address
                     </p>
-                    <p className="text-sm leading-6">{item.branchAddress}</p>
+                    <p className="text-sm leading-6">{item.address}</p>
                   </div>
 
                   <div className="space-y-1">
@@ -97,18 +100,31 @@ export function MultiStateCard({
                   </div>
                 </CardContent>
                 <CardFooter className="justify-end gap-2 border-t pt-4">
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={() => onEdit(item)}
-                  >
-                    <Pencil className="size-4" />
-                    Edit
-                  </Button>
+                  <MultiStateDialog
+                    defaultData={item}
+                    dialogModalProps={{
+                      triggerProps: {
+                        children: (
+                          <ActionButton type="button" variant={"outline"}>
+                            <div className="flex items-center gap-2">
+                              <Pencil className="size-4" />
+                              Edit{" "}
+                            </div>
+                          </ActionButton>
+                        ),
+                      },
+                    }}
+                    onSave={(data) => {
+                      console.log(data);
+                      onEdit?.(data, i);
+                    }}
+                    isEditing={true}
+                  />
+
                   <Button
                     variant="destructive"
                     type="button"
-                    onClick={() => onDelete(item.id)}
+                    onClick={() => onDelete(item, i)}
                   >
                     <Trash2 className="size-4" />
                     Delete

@@ -6,10 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
-import {
-  createOperator,
-} from "@/services/apis/admin/operators";
-
+import { createOperator } from "@/services/apis/admin/operators";
 
 import { generatePassword } from "@/utils/string/password";
 import FormField from "@/components/form/field";
@@ -254,58 +251,54 @@ const OperatorCreatePage = () => {
 
           {/* Status */}
 
-
-<div className="col-span-full mt-6">
-  <MultiStateCard
-    states={states}
-    onEdit={handleEditState}
-    onDelete={handleDeleteState}
-  />
-</div>
+          <div className="col-span-full mt-6">
+            <MultiStateCard
+              states={states}
+              onEdit={handleEditState}
+              onDelete={handleDeleteState}
+            />
+          </div>
 
           {/* Submit */}
-<div className="col-span-full mt-6 flex justify-between items-center">
+          <div className="col-span-full mt-6 flex justify-between items-center">
+            {/* LEFT SIDE */}
+            <MultiStateDialog
+              open={isStateDialogOpen}
+              onOpenChange={(open) => {
+                setIsStateDialogOpen(open);
+                if (!open) {
+                  setEditingState(null);
+                }
+              }}
+              onSave={handleSaveState}
+              editingState={editingState}
+            />
 
-  {/* LEFT SIDE */}
-  <MultiStateDialog
-    open={isStateDialogOpen}
-    onOpenChange={(open) => {
-      setIsStateDialogOpen(open);
-      if (!open) {
-        setEditingState(null);
-      }
-    }}
-    onSave={handleSaveState}
-    editingState={editingState}
-  />
+            {/* RIGHT SIDE */}
+            <div className="flex items-center gap-4">
+              {/* Toggle */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground">
+                  Active Operator
+                </label>
+                <Switch
+                  key={defaultValues?.isActive ? "active" : "inactive"}
+                  className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
+                  defaultChecked={!!defaultValues?.isActive}
+                  {...register("isActive")}
+                />
+              </div>
 
-  {/* RIGHT SIDE */}
-  <div className="flex items-center gap-4">
-
-    {/* Toggle */}
-    <div className="flex items-center gap-2">
-      <label className="text-sm text-muted-foreground">
-        Active Operator
-      </label>
-      <Switch
-        key={defaultValues?.isActive ? "active" : "inactive"}
-        className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
-        defaultChecked={!!defaultValues?.isActive}
-        {...register("isActive")}
-      />
-    </div>
-
-    {/* Button */}
-    <ActionButton
-      type="submit"
-      loading={createLoading}
-      className="h-10 px-4"
-    >
-      Create Operator
-    </ActionButton>
-
-  </div>
-</div>
+              {/* Button */}
+              <ActionButton
+                type="submit"
+                loading={createLoading}
+                className="h-10 px-4"
+              >
+                Create Operator
+              </ActionButton>
+            </div>
+          </div>
         </form>
       </div>
     </div>
