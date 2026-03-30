@@ -1,10 +1,9 @@
-import { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import moment from "moment";
 import { Switch } from "@/components/ui/switch";
 import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
 import {
@@ -15,17 +14,19 @@ import {
 import { generatePassword } from "@/utils/string/password";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
-import MultiState from "@/containers/multi-state-dialog";
-
-const defaultTime = moment().hour(0).minute(0).toDate();
+import MultiStateDialog from "@/containers/multi-state/multi-state-dialog";
+import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
+import type { MultiStateItem } from "@/containers/multi-state/types";
 
 const OperatorCreatePage = () => {
   const navigate = useNavigate();
+  const [states, setStates] = useState<MultiStateItem[]>([]);
+  const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
+  const [editingState, setEditingState] = useState<MultiStateItem | null>(null);
 
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, defaultValues },
     watch,
     setValue,
@@ -56,8 +57,31 @@ const OperatorCreatePage = () => {
     }
   };
 
+  const handleSaveState = (state: MultiStateItem) => {
+    setStates((prev) => {
+      const exists = prev.some((item) => item.id === state.id);
+      if (exists) {
+        return prev.map((item) => (item.id === state.id ? state : item));
+      }
+
+      return [...prev, state];
+    });
+
+    setEditingState(null);
+  };
+
+  const handleEditState = (state: MultiStateItem) => {
+    setEditingState(state);
+    setIsStateDialogOpen(true);
+  };
+
+  const handleDeleteState = (id: string) => {
+    setStates((prev) => prev.filter((item) => item.id !== id));
+    setEditingState((prev) => (prev?.id === id ? null : prev));
+  };
+
   return (
-    <div className="container mx-auto p-6">
+    <div className="container px-auto w-full p-6">
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
       </div>
@@ -229,43 +253,59 @@ const OperatorCreatePage = () => {
           />
 
           {/* Status */}
-          <div className="col-span-full justify-end flex gap-8">
-            <div className="flex items-center gap-4">
-              <label className="text-white text-sm">{"Active Operator"}</label>
-              <Switch
-                key={defaultValues?.isActive ? "active" : "inactive"}
-                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
-                defaultChecked={!!defaultValues?.isActive}
-                {...register("isActive")}
-              />
-            </div>
-          </div>
+
+
+<div className="col-span-full mt-6">
+  <MultiStateCard
+    states={states}
+    onEdit={handleEditState}
+    onDelete={handleDeleteState}
+  />
+</div>
 
           {/* Submit */}
 <div className="col-span-full mt-6 flex justify-between items-center">
 
-            {/* LEFT SIDE */}
-          <MultiState/>
+  {/* LEFT SIDE */}
+  <MultiStateDialog
+    open={isStateDialogOpen}
+    onOpenChange={(open) => {
+      setIsStateDialogOpen(open);
+      if (!open) {
+        setEditingState(null);
+      }
+    }}
+    onSave={handleSaveState}
+    editingState={editingState}
+  />
 
-            {/* RIGHT SIDE */}
-            {/* <ActionButton
-              type="submit"
-              loading={updateLoading}
-              className="px-5 py-5"
-            >
-              Update Operator
-            </ActionButton> */}
+  {/* RIGHT SIDE */}
+  <div className="flex items-center gap-4">
 
-          {/* </div>
-          <div className="col-span-full mt-6 flex justify-end"> */}
-            <ActionButton
-              type="submit"
-              loading={createLoading}
-              className="max-w-fit"
-            >
-              Create Operator
-            </ActionButton>
-          </div>
+    {/* Toggle */}
+    <div className="flex items-center gap-2">
+      <label className="text-sm text-muted-foreground">
+        Active Operator
+      </label>
+      <Switch
+        key={defaultValues?.isActive ? "active" : "inactive"}
+        className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
+        defaultChecked={!!defaultValues?.isActive}
+        {...register("isActive")}
+      />
+    </div>
+
+    {/* Button */}
+    <ActionButton
+      type="submit"
+      loading={createLoading}
+      className="h-10 px-4"
+    >
+      Create Operator
+    </ActionButton>
+
+  </div>
+</div>
         </form>
       </div>
     </div>

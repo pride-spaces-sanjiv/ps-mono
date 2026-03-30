@@ -1,10 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import moment from "moment";
 import { Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Field, FieldGroup } from "@/components/ui/field";
@@ -22,17 +21,20 @@ import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
-import MultiState from "@/containers/multi-state-dialog";
-
-const defaultTime = moment().hour(0).minute(0).toDate();
+import MultiStateDialog from "@/containers/multi-state/multi-state-dialog";
+import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
+import type { MultiStateItem } from "@/containers/multi-state/types";
 
 const OperatorEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const { statesData, groupedCities, citiesData } = useStatesCities();
+  const [states, setStates] = useState<MultiStateItem[]>([]);
+  const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
+  const [editingState, setEditingState] = useState<MultiStateItem | null>(null);
 
-  const { data: res, isFetching } = useQuery({
+  const { data: res } = useQuery({
     queryKey: [queryKeys.OPERATORS, id],
     queryFn: () => getOperatorById({ url: `/${id}` }),
     enabled: !!id,
@@ -76,6 +78,29 @@ const OperatorEditPage = () => {
     } catch (err) {
       toast.error("Failed to update operator");
     }
+  };
+
+  const handleSaveState = (state: MultiStateItem) => {
+    setStates((prev) => {
+      const exists = prev.some((item) => item.id === state.id);
+      if (exists) {
+        return prev.map((item) => (item.id === state.id ? state : item));
+      }
+
+      return [...prev, state];
+    });
+
+    setEditingState(null);
+  };
+
+  const handleEditState = (state: MultiStateItem) => {
+    setEditingState(state);
+    setIsStateDialogOpen(true);
+  };
+
+  const handleDeleteState = (id: string) => {
+    setStates((prev) => prev.filter((item) => item.id !== id));
+    setEditingState((prev) => (prev?.id === id ? null : prev));
   };
 
   return (
@@ -244,6 +269,14 @@ const OperatorEditPage = () => {
             error={errors?.cinNo}
           />
 
+          <div className="col-span-full mt-6">
+            <MultiStateCard
+              states={states}
+              onEdit={handleEditState}
+              onDelete={handleDeleteState}
+            />
+          </div>
+
           {/* Status */}
           <div className="col-span-full flex gap-8 justify-end">
             <div className="flex items-center gap-4">
@@ -262,7 +295,17 @@ const OperatorEditPage = () => {
           </div> */}
           <div className="col-span-full mt-6 flex justify-between items-center">
             {/* LEFT SIDE */}
-<MultiState/>
+            <MultiStateDialog
+              open={isStateDialogOpen}
+              onOpenChange={(open) => {
+                setIsStateDialogOpen(open);
+                if (!open) {
+                  setEditingState(null);
+                }
+              }}
+              onSave={handleSaveState}
+              editingState={editingState}
+            />
 
             {/* RIGHT SIDE */}
             {/* Submit */}
