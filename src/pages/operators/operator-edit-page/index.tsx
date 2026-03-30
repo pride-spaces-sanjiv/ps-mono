@@ -22,6 +22,7 @@ import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import MultiState from "@/containers/multi-state-dialog";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -261,14 +262,14 @@ const OperatorEditPage = () => {
           </div> */}
           <div className="col-span-full mt-6 flex justify-between items-center">
             {/* LEFT SIDE */}
-            
+<MultiState/>
 
             {/* RIGHT SIDE */}
             {/* Submit */}
             <ActionButton
               type="submit"
               loading={updateLoading}
-              className="h-10 px-4"
+              className="px-5 py-5"
             >
               Update Operator
             </ActionButton>
