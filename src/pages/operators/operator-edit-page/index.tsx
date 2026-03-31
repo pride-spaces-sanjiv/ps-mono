@@ -11,18 +11,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useStatesCities } from "@/services/hooks/use-states-cities";
-import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
+import {
+  operatorSchema,
+  type BranchSchema,
+  type OperatorSchema,
+} from "@/utils/schemas/operators";
 import {
   getOperatorById,
   updateOperator,
 } from "@/services/apis/admin/operators";
+import { setSinglePrimaryBranch } from "@/utils/data/branches";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
-import FormField from "@/components/form/field";
-import ActionButton from "@/components/buttons/action-btn";
 import MultiStateDialog from "@/containers/operator/multi-state-dialog";
 import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
+import FormField from "@/components/form/field";
+import ActionButton from "@/components/buttons/action-btn";
 import type { MultiStateItem } from "@/containers/multi-state/types";
 
 const OperatorEditPage = () => {
@@ -278,12 +283,27 @@ const OperatorEditPage = () => {
                 if (branches[i]) {
                   branches[i] = branch;
                 }
-                setValue("branches", branches, { shouldValidate: true });
+
+                setValue(
+                  "branches",
+                  setSinglePrimaryBranch(
+                    (branches as BranchSchema[]) || [],
+                    branch,
+                  ),
+                  { shouldValidate: true },
+                );
               }}
               onDelete={(branch, i) => {
                 const branches =
                   watch("branches", [])?.filter((_, idx) => idx !== i) || [];
-                setValue("branches", branches, { shouldValidate: true });
+                setValue(
+                  "branches",
+                  setSinglePrimaryBranch(
+                    (branches as BranchSchema[]) || [],
+                    branches?.[0] as BranchSchema,
+                  ),
+                  { shouldValidate: true },
+                );
               }}
             />
           </div>
@@ -315,7 +335,16 @@ const OperatorEditPage = () => {
                 }
               }}
               onSave={(data) => {
-                setValue("branches", [data], { shouldValidate: true });
+                setValue(
+                  "branches",
+                  setSinglePrimaryBranch(
+                    [...(watch("branches", []) || [])] as BranchSchema[],
+                    data,
+                  ),
+                  {
+                    shouldValidate: true,
+                  },
+                );
               }}
               isEditing={false}
             />

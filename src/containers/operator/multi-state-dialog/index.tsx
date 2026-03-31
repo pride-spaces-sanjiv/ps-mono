@@ -10,6 +10,7 @@ import { DialogModal } from "@/components/dialog";
 import { GroupedSearchSelect } from "@/components/search-select";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import { Switch } from "@/components/ui/switch";
 
 type Props = {
   dialogModalProps: React.ComponentProps<typeof DialogModal>;
@@ -40,6 +41,7 @@ export default function MultiState({
     setValue,
     reset,
     trigger,
+    getValues,
   } = useForm({
     resolver: zodResolver(branchSchema),
   });
@@ -92,8 +94,8 @@ export default function MultiState({
             type="button"
             onClick={async () => {
               const valid = await trigger();
-              valid && onSave?.(watch());
-              dialogClose?.current?.click();
+              valid && onSave?.(getValues());
+              valid && dialogClose?.current?.click();
             }}
           >
             {isEditing ? "Update" : "Save"} changes
@@ -227,6 +229,16 @@ export default function MultiState({
           {...register("gstNo")}
           error={errors?.gstNo}
         />
+
+        <div className="flex items-center gap-4">
+          <label className="text-white text-sm">{"Active Operator"}</label>
+          <Switch
+            key={defaultValues?.isPrimary ? "active" : "inactive"}
+            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
+            defaultChecked={!!defaultValues?.isPrimary}
+            {...register("isPrimary")}
+          />
+        </div>
       </FieldGroup>
     </DialogModal>
   );
