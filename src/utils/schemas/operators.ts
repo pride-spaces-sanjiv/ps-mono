@@ -7,6 +7,15 @@ import {
   getSlugSchema,
 } from "./string.js";
 
+const gstNoSchema = z
+  .string()
+  .trim()
+  .min(1, "GST number is required")
+  .refine(
+    (v) => v.match(/^[A-Za-z0-9]{15}$/),
+    "GST number must be 15 characters long",
+  );
+
 // 1. Head Quarter Person
 export const headQuarterPersonSchema = z.object({
   name: getNameSchema({
@@ -29,20 +38,33 @@ export const headQuarterSchema = z.object({
 
 export type HeadQuarterSchema = z.infer<typeof headQuarterSchema>;
 
-// 3. Operator
+// 3. Branch
+export const branchSchema = z.object({
+  code: z.string().trim().min(1, "State Code is required"),
+  name: z.string().trim().min(1, "State Name is required"),
+  address: z.string().trim().min(1, "Branch Address is required"),
+  city: z.string().trim().min(1, "City is required"),
+  gstNo: gstNoSchema.optional(),
+  postalCode: z
+    .string("Postal Code is required")
+    .trim()
+    .min(3, "Postal Code must be min 3 chars")
+    .transform((arg) => arg.replace(/[^A-Za-z0-9]/g, ""))
+    .refine((val) => /^[A-Za-z0-9]+$/.test(val), "Postal Code is invalid"),
+  person: headQuarterPersonSchema.partial().optional(),
+  isPrimary: z.boolean().default(false),
+});
+
+export type BranchSchema = z.infer<typeof branchSchema>;
+
+// 4. Operator
 export const operatorSchema = z.object({
   name: getNameSchema(),
   email: getEmailSchema(),
   password: getPasswordSchema(),
   slug: getSlugSchema({ keyName: "Operator Slug" }),
-  gstNo: z
-    .string()
-    .trim()
-    .min(1, "GST number is required")
-    .refine(
-      (v) => v.match(/^[A-Za-z0-9]{15}$/),
-      "GST number must be 15 characters long",
-    ),
+  brandName: getNameSchema({ keyName: "Brand Name" }),
+  gstNo: gstNoSchema,
   cinNo: z
     .string()
     .trim()
@@ -52,8 +74,10 @@ export const operatorSchema = z.object({
       "CIN number must be 21 characters long",
     ),
   headquarter: headQuarterSchema,
+  branches: z.array(branchSchema).optional(),
   person: headQuarterPersonSchema,
   isActive: z.boolean().optional().default(true),
+  // approval: approvalSchema,
 });
 
 export type OperatorSchema = z.infer<typeof operatorSchema>;

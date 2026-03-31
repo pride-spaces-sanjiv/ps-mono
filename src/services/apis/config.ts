@@ -102,3 +102,15 @@ export const ENTERPRISE_SPACE = ENTERPRISE.create({
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
+
+// General
+export const STATES = ENTERPRISE.create({
+  baseURL: baseUrl + "/states",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const CITIES = ENTERPRISE.create({
+  baseURL: baseUrl + "/states/cities",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});

@@ -112,6 +112,9 @@ export const spaceSchema = z.object({
     .min(0)
     .int("Booked seats must be a positive integer")
     .default(0),
+  trainingRoom: z.number().optional().default(0),
+  meetingRoom: z.number().optional().default(0),
+  conferenceRoom: z.number().optional().default(0),
   price: z
     .number()
     .min(0, "Price must be a positive number")

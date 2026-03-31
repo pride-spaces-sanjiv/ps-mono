@@ -1,33 +1,29 @@
-import { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import moment from "moment";
 import { Switch } from "@/components/ui/switch";
 import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
-import {
-  getOperatorById,
-  updateOperator,
-  createOperator,
-} from "@/services/apis/admin/operators";
+import { createOperator } from "@/services/apis/admin/operators";
+
 import { generatePassword } from "@/utils/string/password";
-import { queryKeys } from "@/utils/query-keys";
-import { DialogModal } from "@/components/dialog";
-import SpacesTabledResults from "@/containers/spaces-table";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
-
-const defaultTime = moment().hour(0).minute(0).toDate();
+import MultiStateDialog from "@/containers/multi-state/multi-state-dialog";
+import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
+import type { MultiStateItem } from "@/containers/multi-state/types";
 
 const OperatorCreatePage = () => {
   const navigate = useNavigate();
+  const [states, setStates] = useState<MultiStateItem[]>([]);
+  const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
+  const [editingState, setEditingState] = useState<MultiStateItem | null>(null);
 
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, defaultValues },
     watch,
     setValue,
@@ -58,8 +54,31 @@ const OperatorCreatePage = () => {
     }
   };
 
+  const handleSaveState = (state: MultiStateItem) => {
+    setStates((prev) => {
+      const exists = prev.some((item) => item.id === state.id);
+      if (exists) {
+        return prev.map((item) => (item.id === state.id ? state : item));
+      }
+
+      return [...prev, state];
+    });
+
+    setEditingState(null);
+  };
+
+  const handleEditState = (state: MultiStateItem) => {
+    setEditingState(state);
+    setIsStateDialogOpen(true);
+  };
+
+  const handleDeleteState = (id: string) => {
+    setStates((prev) => prev.filter((item) => item.id !== id));
+    setEditingState((prev) => (prev?.id === id ? null : prev));
+  };
+
   return (
-    <div className="container mx-auto p-6">
+    <div className="container px-auto w-full p-6">
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
       </div>
@@ -82,13 +101,19 @@ const OperatorCreatePage = () => {
           </div>
 
           <FormField
-            label="Name"
-            placeholder="Operator Name"
+            label="Register Name"
+            placeholder="Register Name"
             labelPosition="embedded"
             {...register("name")}
             error={errors.name}
           />
-
+          <FormField
+            label="Brand Name"
+            placeholder="Brand Name"
+            labelPosition="embedded"
+            {...register("brandName")}
+            error={errors.brandName}
+          />
           <FormField
             label="Slug"
             labelPosition="embedded"
@@ -145,17 +170,17 @@ const OperatorCreatePage = () => {
 
           {/* SECTION: Operator Point of Contact */}
 
-          <div className="col-span-full mt-6 mb-8 ">
+          {/* <div className="col-span-full mt-6 mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
                 Point of Contact Details
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
-          </div>
+          </div> */}
 
           <FormField
-            label="Name"
+            label="POC Name"
             labelPosition="embedded"
             placeholder="John Doe"
             {...register("person.name")}
@@ -163,7 +188,7 @@ const OperatorCreatePage = () => {
           />
 
           <FormField
-            label="Email"
+            label="POC Email"
             labelPosition="embedded"
             type="email"
             placeholder="john.doe@example.com"
@@ -173,7 +198,7 @@ const OperatorCreatePage = () => {
 
           <FormField
             key={`poc-${defaultValues?.person?.contactNo}`}
-            label="Telephone"
+            label="POC Mobile No"
             labelPosition="embedded"
             type="tel"
             inputMode="tel"
@@ -190,7 +215,7 @@ const OperatorCreatePage = () => {
           />
 
           <FormField
-            label="Designation"
+            label="POC Designation"
             placeholder="Centre Manager"
             labelPosition="embedded"
             {...register("person.role")}
@@ -199,14 +224,14 @@ const OperatorCreatePage = () => {
 
           {/* SECTION: GST Details */}
 
-          <div className="col-span-full mt-6 mb-8 ">
+          {/* <div className="col-span-full mt-6 mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
                 GST Details
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
-          </div>
+          </div> */}
 
           <FormField
             label="GST Number"
@@ -225,28 +250,54 @@ const OperatorCreatePage = () => {
           />
 
           {/* Status */}
-          <div className="col-span-full flex gap-8">
-            <div className="flex items-center gap-4">
-              <label className="text-white text-sm">{"Active Operator"}</label>
-              <Switch
-                key={defaultValues?.isActive ? "active" : "inactive"}
-                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
-                defaultChecked={!!defaultValues?.isActive}
-                {...register("isActive")}
-              />
-            </div>
+
+          <div className="col-span-full mt-6">
+            <MultiStateCard
+              states={states}
+              onEdit={handleEditState}
+              onDelete={handleDeleteState}
+            />
           </div>
 
           {/* Submit */}
+          <div className="col-span-full mt-6 flex justify-between items-center">
+            {/* LEFT SIDE */}
+            <MultiStateDialog
+              open={isStateDialogOpen}
+              onOpenChange={(open) => {
+                setIsStateDialogOpen(open);
+                if (!open) {
+                  setEditingState(null);
+                }
+              }}
+              onSave={handleSaveState}
+              editingState={editingState}
+            />
 
-          <div className="col-span-full mt-6 flex justify-end">
-            <ActionButton
-              type="submit"
-              loading={createLoading}
-              className="max-w-fit"
-            >
-              Create Operator
-            </ActionButton>
+            {/* RIGHT SIDE */}
+            <div className="flex items-center gap-4">
+              {/* Toggle */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground">
+                  Active Operator
+                </label>
+                <Switch
+                  key={defaultValues?.isActive ? "active" : "inactive"}
+                  className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
+                  defaultChecked={!!defaultValues?.isActive}
+                  {...register("isActive")}
+                />
+              </div>
+
+              {/* Button */}
+              <ActionButton
+                type="submit"
+                loading={createLoading}
+                className="h-10 px-4"
+              >
+                Create Operator
+              </ActionButton>
+            </div>
           </div>
         </form>
       </div>

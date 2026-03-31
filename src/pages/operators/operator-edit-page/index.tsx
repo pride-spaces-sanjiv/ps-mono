@@ -1,30 +1,51 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import moment from "moment";
 import { Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
+import { useStatesCities } from "@/services/hooks/use-states-cities";
+import {
+  operatorSchema,
+  type BranchSchema,
+  type OperatorSchema,
+} from "@/utils/schemas/operators";
 import {
   getOperatorById,
   updateOperator,
 } from "@/services/apis/admin/operators";
+import { setSinglePrimaryBranch } from "@/utils/data/branches";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
+import MultiStateDialog from "@/containers/operator/multi-state-dialog";
+import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import type { MultiStateItem } from "@/containers/multi-state/types";
+import FormSectionTitle from "@/components/form/section/title";
 
-const defaultTime = moment().hour(0).minute(0).toDate();
+const notifyPrimarySingleBranch = (
+  branches: BranchSchema[],
+  branch: BranchSchema,
+) => {
+  if (!branch.isPrimary && branches.length === 1) {
+    toast.warning("Single Branches are by default primary");
+  }
+};
 
 const OperatorEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: res, isFetching } = useQuery({
+  const { statesData, groupedCities, citiesData } = useStatesCities();
+  const [states, setStates] = useState<MultiStateItem[]>([]);
+  const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
+  const [editingState, setEditingState] = useState<MultiStateItem | null>(null);
+
+  const { data: res } = useQuery({
     queryKey: [queryKeys.OPERATORS, id],
     queryFn: () => getOperatorById({ url: `/${id}` }),
     enabled: !!id,
@@ -50,8 +71,19 @@ const OperatorEditPage = () => {
   }, [res]);
 
   const { mutateAsync, isPending: updateLoading } = useMutation({
+    mutationKey: [queryKeys.OPERATORS, id],
     mutationFn: updateOperator,
   });
+
+  const { mutateAsync: branchesMutater, isPending: branchesLoading } =
+    useMutation({
+      mutationKey: [queryKeys.OPERATORS, id, "branches"],
+      mutationFn: (branches: BranchSchema[]) =>
+        updateOperator({
+          body: { branches: branches },
+          url: id,
+        }),
+    });
 
   const onSubmit = async (body: Omit<OperatorSchema, "password">) => {
     try {
@@ -70,6 +102,43 @@ const OperatorEditPage = () => {
     }
   };
 
+  const handleBranchesUpdate = async (branches: BranchSchema[]) => {
+    try {
+      const res = await branchesMutater(branches);
+      if (res.status === 200 && res.data?.data?.branches) {
+        toast.success("Updated state branches");
+        return;
+      }
+      throw new Error("Invalid response");
+    } catch (err: any) {
+      console.error("Error state branches update :", err);
+      toast.error("Failed to update state branches");
+    }
+  };
+
+  const handleSaveState = (state: MultiStateItem) => {
+    setStates((prev) => {
+      const exists = prev.some((item) => item.id === state.id);
+      if (exists) {
+        return prev.map((item) => (item.id === state.id ? state : item));
+      }
+
+      return [...prev, state];
+    });
+
+    setEditingState(null);
+  };
+
+  const handleEditState = (state: MultiStateItem) => {
+    setEditingState(state);
+    setIsStateDialogOpen(true);
+  };
+
+  const handleDeleteState = (id: string) => {
+    setStates((prev) => prev.filter((item) => item.id !== id));
+    setEditingState((prev) => (prev?.id === id ? null : prev));
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center my-4">
@@ -84,21 +153,22 @@ const OperatorEditPage = () => {
         >
           {/* SECTION: Operator Details */}
 
-          <div className="col-span-full  mb-8 ">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Operator Details
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Operator Details</FormSectionTitle>
 
           <FormField
-            label="Name"
+            label="Register Name"
             placeholder="Operator Name"
             labelPosition="embedded"
             {...register("name")}
             error={errors.name}
+          />
+
+          <FormField
+            label="Brand Name"
+            placeholder="Brand Name"
+            labelPosition="embedded"
+            {...register("brandName")}
+            error={errors.brandName}
           />
 
           <FormField
@@ -149,17 +219,17 @@ const OperatorEditPage = () => {
 
           {/* SECTION: Operator Point of Contact */}
 
-          <div className="col-span-full mt-6 mb-8 ">
+          {/* <div className="col-span-full mt-6 mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
                 Point of Contact Details
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
-          </div>
+          </div> */}
 
           <FormField
-            label="Name"
+            label="POC Name"
             labelPosition="embedded"
             placeholder="John Doe"
             {...register("person.name")}
@@ -167,7 +237,7 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="Email"
+            label="POC Email"
             labelPosition="embedded"
             type="email"
             placeholder="john.doe@example.com"
@@ -177,7 +247,7 @@ const OperatorEditPage = () => {
 
           <FormField
             key={`poc-${defaultValues?.person?.contactNo}`}
-            label="Telephone"
+            label="POC Mobile No."
             labelPosition="embedded"
             type="tel"
             inputMode="tel"
@@ -194,7 +264,7 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="Designation"
+            label="POC Designation"
             placeholder="Centre Manager"
             labelPosition="embedded"
             {...register("person.role")}
@@ -202,7 +272,7 @@ const OperatorEditPage = () => {
           />
 
           {/* SECTION: GST Details */}
-
+          {/* 
           <div className="col-span-full mt-6 mb-8 ">
             <div className="flex items-center gap-3">
               <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
@@ -210,7 +280,7 @@ const OperatorEditPage = () => {
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
-          </div>
+          </div> */}
 
           <FormField
             label="GST Number"
@@ -228,8 +298,44 @@ const OperatorEditPage = () => {
             error={errors?.cinNo}
           />
 
+          {/* Multi State Cards */}
+          <div className="col-span-full mt-6">
+            <MultiStateCard
+              // @ts-ignore
+              branches={watch("branches", []) || []}
+              onEdit={(branch, i) => {
+                const branches = (watch("branches", []) ||
+                  []) as BranchSchema[];
+
+                setValue(
+                  "branches",
+                  setSinglePrimaryBranch(branches || [], branch),
+                  { shouldValidate: true },
+                );
+
+                notifyPrimarySingleBranch(branches, branch);
+                handleBranchesUpdate(branches);
+              }}
+              onDelete={(branch, i) => {
+                const branches = (watch("branches", [])?.filter(
+                  (_, idx) => idx !== i,
+                ) || []) as BranchSchema[];
+                setValue(
+                  "branches",
+                  setSinglePrimaryBranch(
+                    branches || [],
+                    branches?.[0] as BranchSchema,
+                  ),
+                  { shouldValidate: true },
+                );
+
+                handleBranchesUpdate(branches);
+              }}
+            />
+          </div>
+
           {/* Status */}
-          <div className="col-span-full flex gap-8">
+          <div className="col-span-full flex gap-8 justify-end">
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">{"Active Operator"}</label>
               <Switch
@@ -241,13 +347,39 @@ const OperatorEditPage = () => {
             </div>
           </div>
 
-          {/* Submit */}
+          {/* <div className="col-span-full mt-6 flex justify-start"> </div> */}
+          <div className="col-span-full mt-6 flex justify-between items-center">
+            {/* LEFT SIDE - Add State Branch */}
+            <MultiStateDialog
+              disAllowedStates={watch("branches")?.map((br) => br.code) || []}
+              open={isStateDialogOpen}
+              onOpenChange={(open) => {
+                setIsStateDialogOpen(open);
+                if (!open) {
+                  setEditingState(null);
+                }
+              }}
+              onSave={(data) => {
+                const branches = setSinglePrimaryBranch(
+                  [...(watch("branches", []) || [])] as BranchSchema[],
+                  data,
+                );
+                setValue("branches", branches, {
+                  shouldValidate: true,
+                });
+                handleBranchesUpdate(branches);
+                notifyPrimarySingleBranch(branches, data);
+              }}
+              isEditing={false}
+              triggerButtonProps={{ loading: branchesLoading }}
+            />
 
-          <div className="col-span-full mt-6 flex justify-end">
+            {/* RIGHT SIDE */}
+            {/* Submit */}
             <ActionButton
               type="submit"
-              loading={updateLoading}
-              className="max-w-fit"
+              loading={updateLoading || branchesLoading}
+              className="px-5 py-5"
             >
               Update Operator
             </ActionButton>

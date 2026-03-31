@@ -45,7 +45,7 @@ type Props<T extends any, M extends SelectMode = "single"> = {
 } & React.ComponentProps<typeof DropdownMenu>;
 
 export function GroupedSearchSelect<
-  T extends any,
+  T extends any = any,
   M extends SelectMode = "single",
 >({
   onSelect,

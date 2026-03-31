@@ -10,11 +10,13 @@ import {
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import TopBarProgress from "react-topbar-progress-indicator";
 import { toast } from "sonner";
-
+// Hooks
 import { useUser } from "@/services/hooks/use-user";
+import { useStatesCities } from "@/services/hooks/use-states-cities";
+// Utils
 import { validateNumber } from "@/utils/number";
 import { getCssVariableValue } from "@/utils/css-variable";
-
+// Custom components
 import Layout from "@/components/layout/Layout";
 import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
@@ -47,6 +49,7 @@ const PrivateRoutes = () => {
   const navigate = useNavigate();
 
   const { data: res, isFetching, tokenStoreState } = useUser();
+  const {} = useStatesCities();
 
   const AutoNavigateRender = useCallback(
     ({ El }: { El?: ReactNode }) => El,

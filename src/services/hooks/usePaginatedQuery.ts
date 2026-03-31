@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   QueryClient,
   useQuery,
@@ -11,7 +11,7 @@ type Params<
   TQueryFnData = any,
   TError = Error,
   TData = TQueryFnData,
-  TQueryKey extends QueryKey = readonly any[]
+  TQueryKey extends QueryKey = readonly any[],
 > = {
   page: number;
   limit: number;
@@ -22,7 +22,7 @@ type Params<
     queryFn?: (
       page: number,
       limit: number,
-      context: Parameters<QueryFunction<TQueryFnData, TQueryKey>>[0]
+      context: Parameters<QueryFunction<TQueryFnData, TQueryKey>>[0],
     ) => ReturnType<QueryFunction<TQueryFnData, TQueryKey>>;
   };
 
@@ -30,10 +30,10 @@ export function usePaginatedQuery<
   TQueryFnData = any,
   TError = Error,
   TData = TQueryFnData,
-  TQueryKey extends QueryKey = readonly any[]
+  TQueryKey extends QueryKey = readonly any[],
 >(
   params: Partial<Params<TQueryFnData, TError, TData, TQueryKey>> | null,
-  queryClient?: QueryClient
+  queryClient?: QueryClient,
 ) {
   const allParams = useMemo(() => ({ ...params }), [params]);
   const onlyQueryOptions = useMemo(
@@ -42,8 +42,8 @@ export function usePaginatedQuery<
         ...allParams,
         page: undefined,
         limit: undefined,
-      } as Partial<Omit<Params, "page" | "undefined">>),
-    [allParams]
+      }) as Partial<Omit<Params, "page" | "undefined">>,
+    [allParams],
   );
 
   const [page, setPage] = useState(allParams.page ?? 0);
@@ -56,8 +56,18 @@ export function usePaginatedQuery<
       queryKey: [...(onlyQueryOptions?.queryKey || []), page],
       queryFn: (context) => onlyQueryOptions?.queryFn?.(page, limit, context),
     },
-    queryClient
+    queryClient,
   );
 
-  return { page, setPage, limit, setLimit, ...query };
+  const [pagedResults, setPagedResults] = useState<(typeof query.data)[]>([]);
+
+  useEffect(() => {}, [query.data, page]);
+
+  return {
+    page,
+    setPage,
+    limit,
+    setLimit,
+    ...query,
+  };
 }
