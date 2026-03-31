@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { Field, FieldGroup } from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
 import { useStatesCities } from "@/services/hooks/use-states-cities";
 import { branchSchema, type BranchSchema } from "@/utils/schemas/operators";
 import { cn } from "@/utils/className";
@@ -10,7 +11,6 @@ import { DialogModal } from "@/components/dialog";
 import { GroupedSearchSelect } from "@/components/search-select";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
-import { Switch } from "@/components/ui/switch";
 
 type Props = {
   dialogModalProps: React.ComponentProps<typeof DialogModal>;
@@ -21,6 +21,10 @@ type Props = {
   defaultData: BranchSchema;
   hideTrigger: boolean;
   isEditing: boolean;
+  /**
+   * List of states that are not allowed to be selected in their `ISO-CODE`
+   */
+  disAllowedStates: string[];
 };
 
 export default function MultiState({
@@ -30,6 +34,7 @@ export default function MultiState({
   defaultData,
   hideTrigger,
   isEditing = false,
+  disAllowedStates = [],
 }: Partial<Props>) {
   const { statesData, groupedCities, citiesData } = useStatesCities();
 
@@ -48,10 +53,11 @@ export default function MultiState({
 
   const dialogClose = useRef<HTMLButtonElement | null>(null);
 
+  const formData = useMemo(() => watch(), [watch()]);
   const stateOnlyCities = useMemo(() => {
     // console.log(citiesData, watch("code", ""));
-    return citiesData.filter((city) => city.state === watch("code", ""));
-  }, [watch("code", ""), citiesData]);
+    return citiesData.filter((city) => city.state === formData.code);
+  }, [formData.code, citiesData]);
 
   useEffect(() => {
     defaultData && reset(defaultData);
@@ -59,8 +65,10 @@ export default function MultiState({
 
   // Reset city on state change
   useEffect(() => {
-    reset({ ...watch(), city: undefined });
-  }, [watch(["code", "name"])]);
+    console.log("Multi State Form", formData);
+    formData.code !== defaultData?.code &&
+      reset({ ...formData, city: undefined });
+  }, [formData.code]);
 
   return (
     <DialogModal
@@ -98,9 +106,14 @@ export default function MultiState({
           <ActionButton
             type="button"
             onClick={async () => {
-              const valid = await trigger();
-              valid && onSave?.(getValues());
-              valid && dialogClose?.current?.click();
+              try {
+                const valid = await trigger();
+                valid && onSave?.(getValues() as BranchSchema);
+                valid && dialogClose?.current?.click();
+                !valid && console.error("Multi state form err :", errors);
+              } catch (err) {
+                console.error("Multi state form err :", err);
+              }
             }}
           >
             {isEditing ? "Update" : "Save"} changes
@@ -136,7 +149,9 @@ export default function MultiState({
                 value: st.code as string,
                 searchValue: st.name,
               }))
-              .filter((item) => item.value)}
+              .filter(
+                (item) => item.value && !disAllowedStates.includes(item.value),
+              )}
             defaultSelected={{
               label: "",
               value: defaultValues?.code,
@@ -149,7 +164,7 @@ export default function MultiState({
             triggerProps={{
               children: (
                 <ActionButton variant={"outline"}>
-                  {watch("name") || "Select State"}
+                  {formData.name || "Select State"}
                 </ActionButton>
               ),
             }}
@@ -157,48 +172,47 @@ export default function MultiState({
           ></GroupedSearchSelect>
         </FormField>
 
-        {
-          <FormField
-            key={`cities-${watch("code", "")}-${stateOnlyCities.length}`}
-            label="City"
-            labelPosition="embedded"
-            error={errors?.city}
-          >
-            <GroupedSearchSelect
-              items={stateOnlyCities
-                .map((city) => ({
-                  label: city.name,
-                  value: city.name as string,
-                  searchValue: city.name,
-                }))
-                .filter((item) => item.value)}
-              onSelect={(item) => {
-                setValue("city", item.label as string, {
-                  shouldValidate: true,
-                });
-              }}
-              triggerProps={{
-                children: (
-                  <ActionButton
-                    variant={"outline"}
-                    disabled={!watch("name") || !watch("code", "")}
-                  >
-                    {((!watch("name") || !watch("code", "")) &&
-                      "Select State first") ||
-                      watch("city") ||
-                      "Select City"}
-                  </ActionButton>
-                ),
-              }}
-              defaultSelected={{
-                label: "",
-                value: defaultValues?.city,
-                searchValue: "",
-              }}
-              inputProps={{ placeholder: "Search City" }}
-            ></GroupedSearchSelect>
-          </FormField>
-        }
+        {/* Cities */}
+        <FormField
+          key={`cities-${formData.code}-${stateOnlyCities.length}`}
+          label="City"
+          labelPosition="embedded"
+          error={errors?.city}
+        >
+          <GroupedSearchSelect
+            items={stateOnlyCities
+              .map((city) => ({
+                label: city.name,
+                value: city.name as string,
+                searchValue: city.name,
+              }))
+              .filter((item) => item.value)}
+            onSelect={(item) => {
+              setValue("city", item.label as string, {
+                shouldValidate: true,
+              });
+            }}
+            triggerProps={{
+              children: (
+                <ActionButton
+                  variant={"outline"}
+                  disabled={!formData.name || !formData.code}
+                >
+                  {((!formData.name || !formData.code) &&
+                    "Select State first") ||
+                    formData.city ||
+                    "Select City"}
+                </ActionButton>
+              ),
+            }}
+            defaultSelected={{
+              label: "",
+              value: defaultValues?.city,
+              searchValue: "",
+            }}
+            inputProps={{ placeholder: "Search City" }}
+          ></GroupedSearchSelect>
+        </FormField>
 
         <FormField
           label="Zip/Postal Code"
@@ -244,7 +258,7 @@ export default function MultiState({
         />
 
         <div className="flex items-center gap-4">
-          <label className="text-white text-sm">{"Active Operator"}</label>
+          <label className="text-white text-sm">{"Set as Primary"}</label>
           <Switch
             key={defaultValues?.isPrimary ? "active" : "inactive"}
             className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"

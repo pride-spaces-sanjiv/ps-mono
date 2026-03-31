@@ -13,6 +13,7 @@ import type { MultiStateItem } from "../types";
 import type { BranchSchema } from "@/utils/schemas/operators";
 import MultiStateDialog from "@/containers/operator/multi-state-dialog";
 import ActionButton from "@/components/buttons/action-btn";
+import { Badge } from "@/components/ui/badge";
 
 type MultiStateCardProps = {
   branches: BranchSchema[];
@@ -51,7 +52,12 @@ export function MultiStateCard({
         const isExpanded = expandedIds.includes(item.code);
 
         return (
-          <Card key={item.code} className="w-full h-fit">
+          <Card key={item.code} className="w-full h-fit relative">
+            {!!item.isPrimary && (
+              <Badge className="bg-orange-400 absolute right-[5px] top-[5px] rounded-full">
+                Primary HQ
+              </Badge>
+            )}
             <CardHeader>
               <div className="flex items-start gap-3">
                 <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -101,6 +107,10 @@ export function MultiStateCard({
                 </CardContent>
                 <CardFooter className="justify-end gap-2 border-t pt-4">
                   <MultiStateDialog
+                    // Disallow other states listed
+                    disAllowedStates={branches
+                      .map((b) => b.code)
+                      .filter((br) => br !== item.code)}
                     defaultData={item}
                     dialogModalProps={{
                       triggerProps: {

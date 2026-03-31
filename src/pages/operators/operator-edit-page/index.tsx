@@ -6,10 +6,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Field, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { useStatesCities } from "@/services/hooks/use-states-cities";
 import {
   operatorSchema,
@@ -30,6 +26,15 @@ import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 import type { MultiStateItem } from "@/containers/multi-state/types";
 import FormSectionTitle from "@/components/form/section/title";
+
+const notifyPrimarySingleBranch = (
+  branches: BranchSchema[],
+  branch: BranchSchema,
+) => {
+  if (!branch.isPrimary && branches.length === 1) {
+    toast.warning("Single Branches are by default primary");
+  }
+};
 
 const OperatorEditPage = () => {
   const { id } = useParams();
@@ -66,8 +71,19 @@ const OperatorEditPage = () => {
   }, [res]);
 
   const { mutateAsync, isPending: updateLoading } = useMutation({
+    mutationKey: [queryKeys.OPERATORS, id],
     mutationFn: updateOperator,
   });
+
+  const { mutateAsync: branchesMutater, isPending: branchesLoading } =
+    useMutation({
+      mutationKey: [queryKeys.OPERATORS, id, "branches"],
+      mutationFn: (branches: BranchSchema[]) =>
+        updateOperator({
+          body: { branches: branches },
+          url: id,
+        }),
+    });
 
   const onSubmit = async (body: Omit<OperatorSchema, "password">) => {
     try {
@@ -83,6 +99,20 @@ const OperatorEditPage = () => {
       navigate("/operators");
     } catch (err) {
       toast.error("Failed to update operator");
+    }
+  };
+
+  const handleBranchesUpdate = async (branches: BranchSchema[]) => {
+    try {
+      const res = await branchesMutater(branches);
+      if (res.status === 200 && res.data?.data?.branches) {
+        toast.success("Updated state branches");
+        return;
+      }
+      throw new Error("Invalid response");
+    } catch (err: any) {
+      console.error("Error state branches update :", err);
+      toast.error("Failed to update state branches");
     }
   };
 
@@ -268,36 +298,38 @@ const OperatorEditPage = () => {
             error={errors?.cinNo}
           />
 
+          {/* Multi State Cards */}
           <div className="col-span-full mt-6">
             <MultiStateCard
               // @ts-ignore
               branches={watch("branches", []) || []}
               onEdit={(branch, i) => {
-                const branches = watch("branches", []) || [];
-                if (branches[i]) {
-                  branches[i] = branch;
-                }
+                const branches = (watch("branches", []) ||
+                  []) as BranchSchema[];
 
                 setValue(
                   "branches",
-                  setSinglePrimaryBranch(
-                    (branches as BranchSchema[]) || [],
-                    branch,
-                  ),
+                  setSinglePrimaryBranch(branches || [], branch),
                   { shouldValidate: true },
                 );
+
+                notifyPrimarySingleBranch(branches, branch);
+                handleBranchesUpdate(branches);
               }}
               onDelete={(branch, i) => {
-                const branches =
-                  watch("branches", [])?.filter((_, idx) => idx !== i) || [];
+                const branches = (watch("branches", [])?.filter(
+                  (_, idx) => idx !== i,
+                ) || []) as BranchSchema[];
                 setValue(
                   "branches",
                   setSinglePrimaryBranch(
-                    (branches as BranchSchema[]) || [],
+                    branches || [],
                     branches?.[0] as BranchSchema,
                   ),
                   { shouldValidate: true },
                 );
+
+                handleBranchesUpdate(branches);
               }}
             />
           </div>
@@ -315,12 +347,11 @@ const OperatorEditPage = () => {
             </div>
           </div>
 
-          {/* <div className="col-span-full mt-6 flex justify-start">
-
-          </div> */}
+          {/* <div className="col-span-full mt-6 flex justify-start"> </div> */}
           <div className="col-span-full mt-6 flex justify-between items-center">
-            {/* LEFT SIDE */}
+            {/* LEFT SIDE - Add State Branch */}
             <MultiStateDialog
+              disAllowedStates={watch("branches")?.map((br) => br.code) || []}
               open={isStateDialogOpen}
               onOpenChange={(open) => {
                 setIsStateDialogOpen(open);
@@ -329,25 +360,25 @@ const OperatorEditPage = () => {
                 }
               }}
               onSave={(data) => {
-                setValue(
-                  "branches",
-                  setSinglePrimaryBranch(
-                    [...(watch("branches", []) || [])] as BranchSchema[],
-                    data,
-                  ),
-                  {
-                    shouldValidate: true,
-                  },
+                const branches = setSinglePrimaryBranch(
+                  [...(watch("branches", []) || [])] as BranchSchema[],
+                  data,
                 );
+                setValue("branches", branches, {
+                  shouldValidate: true,
+                });
+                handleBranchesUpdate(branches);
+                notifyPrimarySingleBranch(branches, data);
               }}
               isEditing={false}
+              triggerButtonProps={{ loading: branchesLoading }}
             />
 
             {/* RIGHT SIDE */}
             {/* Submit */}
             <ActionButton
               type="submit"
-              loading={updateLoading}
+              loading={updateLoading || branchesLoading}
               className="px-5 py-5"
             >
               Update Operator
