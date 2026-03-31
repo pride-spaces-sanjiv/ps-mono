@@ -57,6 +57,11 @@ export default function MultiState({
     defaultData && reset(defaultData);
   }, [defaultData]);
 
+  // Reset city on state change
+  useEffect(() => {
+    reset({ ...watch(), city: undefined });
+  }, [watch(["code", "name"])]);
+
   return (
     <DialogModal
       {...dialogModalProps}
@@ -152,7 +157,7 @@ export default function MultiState({
           ></GroupedSearchSelect>
         </FormField>
 
-        {!!watch("name") && watch("code", "") && (
+        {
           <FormField
             key={`cities-${watch("code", "")}-${stateOnlyCities.length}`}
             label="City"
@@ -174,8 +179,14 @@ export default function MultiState({
               }}
               triggerProps={{
                 children: (
-                  <ActionButton variant={"outline"}>
-                    {watch("city") || "Select City"}
+                  <ActionButton
+                    variant={"outline"}
+                    disabled={!watch("name") || !watch("code", "")}
+                  >
+                    {((!watch("name") || !watch("code", "")) &&
+                      "Select State first") ||
+                      watch("city") ||
+                      "Select City"}
                   </ActionButton>
                 ),
               }}
@@ -187,10 +198,11 @@ export default function MultiState({
               inputProps={{ placeholder: "Search City" }}
             ></GroupedSearchSelect>
           </FormField>
-        )}
+        }
 
         <FormField
           label="Zip/Postal Code"
+          placeholder="450192"
           labelPosition="embedded"
           {...register("postalCode")}
           error={errors.postalCode}
@@ -198,6 +210,7 @@ export default function MultiState({
 
         <FormField
           label="HQ State Branch Address"
+          placeholder="25 Street Manhaven, Georgia"
           labelPosition="embedded"
           inputType="textarea"
           {...register("address")}
