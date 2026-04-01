@@ -200,7 +200,7 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="HQ Telephone"
+            label="HQ Landline/Customer Care No"
             labelPosition="embedded"
             error={errors.headquarter?.contactNo}
             key={`hq-contact-${defaultValues?.headquarter?.contactNo}`}
