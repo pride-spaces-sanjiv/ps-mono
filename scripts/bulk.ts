@@ -14,6 +14,10 @@ import {
 import { Space } from "../src/database/models/space";
 import { Operator } from "../src/database/models/operator";
 import { facilities } from "../src/utils/data/facilities";
+import {
+  parseBulkOperatorsData,
+  pushBulkOperatorsData,
+} from "../src/utils/scripts/bulk/operator";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 const { default: parsedData } = await import("../data/parsed-data.json", {
   assert: { type: "json" },
@@ -26,7 +30,10 @@ const { default: convertedParsed } = await import(
 );
 // console.log(parsedData);
 
-const csvFile = "C:\\Users\\Sanjiv\\OneDrive\\Documents\\ps-dump-data.csv";
+const csvFile =
+  "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
+
+// npm run test scripts/bulk -- --env=dev
 
 const rows: any[] = [];
 // fs.createReadStream(path.resolve(csvFile))
@@ -99,13 +106,23 @@ const convertData = (data: (typeof parsedData)[number]) => {
   return parsed.data;
 };
 
-const convertedSpaces = parsedData
-  .map(convertData)
-  .filter((v): v is NonNullable<typeof v> => !!v);
+// const convertedSpaces = parsedData
+//   .map(convertData)
+//   .filter((v): v is NonNullable<typeof v> => !!v);
+// fs.writeFileSync(
+//   "./data/converted-spaces.json",
+//   JSON.stringify(convertedSpaces, null, 2),
+// );
+console.time("Scripting Time :");
+const bulkedOperators = await parseBulkOperatorsData(csvFile);
 fs.writeFileSync(
-  "./data/converted-spaces.json",
-  JSON.stringify(convertedSpaces, null, 2),
+  "./data/bulked-operators.json",
+  JSON.stringify(bulkedOperators, null, 2),
 );
+console.timeEnd("Scripting Time :");
+console.time("Push Time :");
+bulkedOperators && (await pushBulkOperatorsData(bulkedOperators));
+console.timeEnd("Push Time :");
 
 let saves = 0;
 // await Space.deleteMany();

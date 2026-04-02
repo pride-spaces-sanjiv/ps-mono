@@ -48,10 +48,11 @@ export const BranchSchema = new Conn.Schema(
     },
     gstNo: {
       type: String,
-      required: true,
     },
     person: {
-      type: HeadQuarterPersonSchema,
+      type: HeadQuarterPersonSchema.eachPath((path, sType) =>
+        sType.required(false),
+      ),
     },
     isPrimary: {
       type: Boolean,
@@ -70,10 +71,12 @@ const OperatorSchema = new Conn.Schema(
     password: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     brandName: { type: String },
-    headquarter: { type: HeadQuarterSchema, required: true },
+    headquarter: {
+      type: HeadQuarterSchema.eachPath((path, sType) => sType.required(false)),
+    },
     person: { type: HeadQuarterPersonSchema, required: true },
-    gstNo: { type: String, required: true },
-    cinNo: { type: String, required: true },
+    gstNo: { type: String },
+    cinNo: { type: String },
     approval: { type: ApprovalSchema },
     isActive: { type: Boolean, default: true },
     branches: { type: [BranchSchema] },
