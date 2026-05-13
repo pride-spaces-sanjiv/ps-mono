@@ -293,6 +293,7 @@ export default function MultiState({
           type="tel"
           inputMode="tel"
           inputType="phone"
+          value={watch("person.contactNo") || defaultValues?.person?.contactNo || ""}
           defaultValue={defaultValues?.person?.contactNo}
           placeholder="+1-123-456-7890"
           onChange={(val) => {
