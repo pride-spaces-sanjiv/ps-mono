@@ -20,6 +20,7 @@ type MultiStateDialogProps = {
   onSave?: (state: MultiStateItem) => void;
   editingState?: MultiStateItem | null;
   hideTrigger?: boolean;
+  triggerElement?: React.ReactNode;
 };
 
 const emptyForm = {
@@ -27,6 +28,9 @@ const emptyForm = {
   city: "",
   branchAddress: "",
   gstNo: "",
+  hqPocName: "",
+  hqPocEmail: "",
+  designation: "",
 };
 
 export default function MultiStateDialog({
@@ -47,6 +51,9 @@ export default function MultiStateDialog({
               city: editingState.city,
               branchAddress: editingState.branchAddress,
               gstNo: editingState.gstNo,
+              hqPocName: editingState.hqPocName ?? "",
+              hqPocEmail: editingState.hqPocEmail ?? "",
+              designation: editingState.designation ?? "",
             }
           : emptyForm,
       );
@@ -64,6 +71,9 @@ export default function MultiStateDialog({
       city: form.city.trim(),
       branchAddress: form.branchAddress.trim(),
       gstNo: form.gstNo.trim(),
+      hqPocName: form.hqPocName.trim(),
+      hqPocEmail: form.hqPocEmail.trim(),
+      designation: form.designation.trim(),
     });
 
     onOpenChange?.(false);
@@ -72,7 +82,9 @@ export default function MultiStateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {!hideTrigger && (
+      {triggerElement ? (
+        <DialogTrigger asChild>{triggerElement}</DialogTrigger>
+      ) : !hideTrigger ? (
         <DialogTrigger asChild>
           <ActionButton
             variant="outline"
@@ -84,15 +96,15 @@ export default function MultiStateDialog({
             </div>
           </ActionButton>
         </DialogTrigger>
-      )}
+      ) : null}
 
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="max-w-2xl sm:max-w-3xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit state" : "Add state"}</DialogTitle>
           </DialogHeader>
 
-          <FieldGroup>
+          <FieldGroup className="grid-cols-1 sm:grid-cols-2">
             <FormField
               label="State"
               labelPosition="embedded"
@@ -118,6 +130,7 @@ export default function MultiStateDialog({
               label="Branch Address"
               labelPosition="embedded"
               inputType="textarea"
+              wrapperProps={{ className: "sm:col-span-2" }}
               value={form.branchAddress}
               onChange={(event) =>
                 setForm((prev) => ({
@@ -126,6 +139,35 @@ export default function MultiStateDialog({
                 }))
               }
               required
+            />
+            <FormField
+              label="HQ POC Name"
+              labelPosition="embedded"
+              placeholder="John Doe"
+              value={form.hqPocName}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, hqPocName: event.target.value }))
+              }
+            />
+            <FormField
+              label="HQ POC Email"
+              labelPosition="embedded"
+              type="email"
+              wrapperProps={{ className: "sm:col-span-2" }}
+              placeholder="john.doe@example.com"
+              value={form.hqPocEmail}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, hqPocEmail: event.target.value }))
+              }
+            />
+            <FormField
+              label="Designation"
+              labelPosition="embedded"
+              placeholder="Manager"
+              value={form.designation}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, designation: event.target.value }))
+              }
             />
             <FormField
               label="GST Number"

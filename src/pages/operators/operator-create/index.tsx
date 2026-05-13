@@ -253,9 +253,9 @@ const OperatorCreatePage = () => {
 
           <div className="col-span-full mt-6">
             <MultiStateCard
-              states={states}
-              onEdit={handleEditState}
-              onDelete={handleDeleteState}
+              branches={states}
+              onEdit={(branch) => handleEditState(branch as MultiStateItem)}
+              onDelete={(branch) => handleDeleteState((branch as MultiStateItem).id)}
             />
           </div>
 

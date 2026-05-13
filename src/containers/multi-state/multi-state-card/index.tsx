@@ -11,15 +11,60 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, MapPin, Pencil, Trash2 } from "lucide-react";
 import type { MultiStateItem } from "../types";
 import type { BranchSchema } from "@/utils/schemas/operators";
-import MultiStateDialog from "@/containers/operator/multi-state-dialog";
+import OperatorMultiStateDialog from "@/containers/operator/multi-state-dialog";
+import AddStateDialog from "@/containers/multi-state/multi-state-dialog";
 import ActionButton from "@/components/buttons/action-btn";
 import { Badge } from "@/components/ui/badge";
 
 type MultiStateCardProps = {
-  branches: BranchSchema[];
-  onEdit: (branch: BranchSchema, i: number) => void;
-  onDelete: (branch: BranchSchema, i: number) => void;
+  branches: Array<BranchSchema | MultiStateItem>;
+  onEdit: (branch: BranchSchema | MultiStateItem, i: number) => void;
+  onDelete: (branch: BranchSchema | MultiStateItem, i: number) => void;
 };
+
+type RenderBranch = {
+  id: string;
+  code: string;
+  name: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  gstNo?: string;
+  isPrimary: boolean;
+  hqPocName?: string;
+  hqPocEmail?: string;
+  hqPocMobile?: string;
+  designation?: string;
+  original: BranchSchema | MultiStateItem;
+};
+
+const isMultiStateItem = (
+  branch: BranchSchema | MultiStateItem,
+): branch is MultiStateItem => "state" in branch && !("code" in branch);
+
+const normalizeBranch = (branch: BranchSchema | MultiStateItem): RenderBranch => ({
+  id: isMultiStateItem(branch) ? branch.id : branch.code,
+  code: isMultiStateItem(branch) ? branch.state : branch.code,
+  name: isMultiStateItem(branch) ? branch.state : branch.name,
+  address: isMultiStateItem(branch) ? branch.branchAddress : branch.address,
+  city: branch.city,
+  postalCode: isMultiStateItem(branch) ? "" : branch.postalCode,
+  gstNo: branch.gstNo ?? "",
+  isPrimary: isMultiStateItem(branch) ? false : branch.isPrimary ?? false,
+  hqPocName: isMultiStateItem(branch)
+    ? branch.hqPocName
+    : branch.person?.name,
+  hqPocEmail: isMultiStateItem(branch)
+    ? branch.hqPocEmail
+    : branch.person?.email,
+  hqPocMobile: isMultiStateItem(branch)
+    ? undefined
+    : branch.person?.contactNo,
+  designation: isMultiStateItem(branch)
+    ? branch.designation
+    : branch.person?.role,
+  original: branch,
+});
 
 export function MultiStateCard({
   branches,
@@ -27,6 +72,9 @@ export function MultiStateCard({
   onDelete,
 }: MultiStateCardProps) {
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
+  const [activeEditIndex, setActiveEditIndex] = useState<number | null>(null);
+
+  const normalizedBranches = branches.map(normalizeBranch);
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) =>
@@ -36,7 +84,7 @@ export function MultiStateCard({
     );
   };
 
-  if (!branches.length) {
+  if (!normalizedBranches.length) {
     return (
       <Card className="w-full border-dashed">
         <CardContent className="py-10 text-center text-sm text-muted-foreground">
@@ -47,13 +95,16 @@ export function MultiStateCard({
   }
 
   return (
-    <div className="auto-form-grid gap-4 ">
-      {branches.map((item, i) => {
-        const isExpanded = expandedIds.includes(item.code);
+    <div className="auto-form-grid gap-4">
+      {normalizedBranches.map((item, i) => {
+        const isExpanded = expandedIds.includes(item.id);
+        const isEditing = activeEditIndex === i;
+        const original = item.original;
+        const isItemMultiState = isMultiStateItem(original);
 
         return (
-          <Card key={item.code} className="w-full h-fit relative">
-            {!!item.isPrimary && (
+          <Card key={item.id} className="w-full h-fit relative">
+            {item.isPrimary && (
               <Badge className="bg-orange-400 absolute right-[5px] top-[5px] rounded-full">
                 Primary HQ
               </Badge>
@@ -66,6 +117,11 @@ export function MultiStateCard({
                 <div className="space-y-1">
                   <CardTitle>{item.name}</CardTitle>
                   <p className="text-sm text-muted-foreground">{item.city}</p>
+                  {item.hqPocName && (
+                    <p className="text-xs text-muted-foreground">
+                      POC: {item.hqPocName}
+                    </p>
+                  )}
                 </div>
               </div>
               <CardAction>
@@ -73,7 +129,7 @@ export function MultiStateCard({
                   variant="ghost"
                   size="icon"
                   type="button"
-                  onClick={() => toggleExpanded(item.code)}
+                  onClick={() => toggleExpanded(item.id)}
                   aria-label={
                     isExpanded
                       ? `Hide ${item.name} details`
@@ -104,37 +160,83 @@ export function MultiStateCard({
                     </p>
                     <p className="text-sm">{item.gstNo}</p>
                   </div>
+
+                  {(item.hqPocName || item.hqPocEmail || item.designation) && (
+                    <div className="space-y-3 rounded-lg border border-border bg-muted p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        HQ POC Details
+                      </p>
+                      {item.hqPocName && (
+                        <p className="text-sm">
+                          <span className="font-medium">Name:</span> {item.hqPocName}
+                        </p>
+                      )}
+                      {item.hqPocEmail && (
+                        <p className="text-sm">
+                          <span className="font-medium">Email:</span> {item.hqPocEmail}
+                        </p>
+                      )}
+                      {item.hqPocMobile && (
+                        <p className="text-sm">
+                          <span className="font-medium">Mobile:</span> {item.hqPocMobile}
+                        </p>
+                      )}
+                      {item.designation && (
+                        <p className="text-sm">
+                          <span className="font-medium">Designation:</span> {item.designation}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="justify-end gap-2 border-t pt-4">
-                  <MultiStateDialog
-                    // Disallow other states listed
-                    disAllowedStates={branches
-                      .map((b) => b.code)
-                      .filter((br) => br !== item.code)}
-                    defaultData={item}
-                    dialogModalProps={{
-                      triggerProps: {
-                        children: (
-                          <ActionButton type="button" variant={"outline"}>
-                            <div className="flex items-center gap-2">
-                              <Pencil className="size-4" />
-                              Edit{" "}
-                            </div>
-                          </ActionButton>
-                        ),
-                      },
-                    }}
-                    onSave={(data) => {
-                      console.log(data);
-                      onEdit?.(data, i);
-                    }}
-                    isEditing={true}
-                  />
+                  {isItemMultiState ? (
+                    <AddStateDialog
+                      hideTrigger
+                      triggerElement={
+                        <ActionButton type="button" variant="outline">
+                          <div className="flex items-center gap-2">
+                            <Pencil className="size-4" />
+                            Edit
+                          </div>
+                        </ActionButton>
+                      }
+                      open={isEditing}
+                      onOpenChange={(open) => setActiveEditIndex(open ? i : null)}
+                      editingState={original}
+                      onSave={(data) => {
+                        onEdit?.(data, i);
+                        setActiveEditIndex(null);
+                      }}
+                    />
+                  ) : (
+                    <OperatorMultiStateDialog
+                      open={isEditing}
+                      onOpenChange={(open) => setActiveEditIndex(open ? i : null)}
+                      defaultData={original}
+                      dialogModalProps={{
+                        triggerProps: {
+                          children: (
+                            <ActionButton type="button" variant="outline">
+                              <div className="flex items-center gap-2">
+                                <Pencil className="size-4" />
+                                Edit
+                              </div>
+                            </ActionButton>
+                          ),
+                        },
+                      }}
+                      onSave={(data) => {
+                        onEdit?.(data, i);
+                      }}
+                      isEditing={true}
+                    />
+                  )}
 
                   <Button
                     variant="destructive"
                     type="button"
-                    onClick={() => onDelete(item, i)}
+                    onClick={() => onDelete(item.original, i)}
                   >
                     <Trash2 className="size-4" />
                     Delete

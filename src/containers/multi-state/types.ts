@@ -4,4 +4,7 @@ export type MultiStateItem = {
   city: string;
   branchAddress: string;
   gstNo: string;
+  hqPocName?: string;
+  hqPocEmail?: string;
+  designation?: string;
 };
