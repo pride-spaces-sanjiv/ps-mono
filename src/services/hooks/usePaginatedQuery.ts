@@ -15,6 +15,7 @@ type Params<
 > = {
   page: number;
   limit: number;
+  initialPageOnLimitChange: boolean;
 } & Omit<
   DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>,
   "queryFn"
@@ -53,7 +54,7 @@ export function usePaginatedQuery<
     {
       ...onlyQueryOptions,
       // @ts-ignore
-      queryKey: [...(onlyQueryOptions?.queryKey || []), page],
+      queryKey: [...(onlyQueryOptions?.queryKey || []), page, limit],
       queryFn: (context) => onlyQueryOptions?.queryFn?.(page, limit, context),
     },
     queryClient,
@@ -62,6 +63,10 @@ export function usePaginatedQuery<
   const [pagedResults, setPagedResults] = useState<(typeof query.data)[]>([]);
 
   useEffect(() => {}, [query.data, page]);
+
+  useEffect(() => {
+    allParams.initialPageOnLimitChange !== false && setPage?.(0);
+  }, [allParams.initialPageOnLimitChange, limit]);
 
   return {
     page,

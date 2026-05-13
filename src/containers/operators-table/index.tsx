@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -51,6 +51,7 @@ import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import type { Operator } from "@/types/data/operators";
 import { getOperators } from "@/services/apis/admin/operators";
 import { SelectPicker } from "@/components/select";
+import LimitSelector from "@/components/table/limit-selector";
 
 type Props = {
   id: string | null;
@@ -97,8 +98,10 @@ const OperatorsTabledResults = ({
     isFetching,
     page,
     setPage,
+    setLimit,
+    limit,
   } = usePaginatedQuery({
-    limit: 10,
+    limit: 20,
     queryKey: [
       queryKeys.OPERATORS,
       debouncedSearch.field,
@@ -128,6 +131,29 @@ const OperatorsTabledResults = ({
   // Columns definition
   const columns: ColumnDef<Operator>[] = useMemo(
     () => [
+      {
+        accessorKey: "serialNo",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Serial No
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{page * 10 + (row.index + 1) || "-"}</div>,
+      },
       {
         accessorKey: "name",
         header: ({ column }) => {
@@ -274,7 +300,7 @@ const OperatorsTabledResults = ({
         },
       },
     ],
-    [navigate],
+    [navigate, page],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -319,6 +345,10 @@ const OperatorsTabledResults = ({
     manualPagination: true,
     rowCount: res?.data?.data?.metrics?.total || 1,
   });
+
+  useEffect(() => {
+    table?.setPageSize(res?.data?.data?.metrics?.count || 10);
+  }, [res?.data?.data?.metrics?.count]);
 
   return (
     <div {...props} className={cn("", className)}>
@@ -443,35 +473,53 @@ const OperatorsTabledResults = ({
                 {table.getFilteredSelectedRowModel().rows?.length} of{" "}
                 {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
               </div> */}
-        <p className="text-lg font-medium">Page : {page + 1}</p>
+        <div className="flex gap-2 items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!table.getCanPreviousPage()}
+            {...prevButtonProps}
+            className={cn("", prevButtonProps?.className)}
+            onClick={(e) => {
+              table.previousPage();
+              prevButtonProps?.onClick?.(e);
+            }}
+          >
+            Previous
+          </Button>
+          <p className="text-lg font-medium">
+            Page :{" "}
+            {!isFetching && (
+              <>
+                {page + 1} / {table.getPageCount()}
+              </>
+            )}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!table.getCanNextPage()}
+            {...nextButtonProps}
+            className={cn("", nextButtonProps?.className)}
+            onClick={(e) => {
+              table.nextPage();
+              nextButtonProps?.onClick?.(e);
+            }}
+          >
+            Next
+          </Button>
+        </div>
         {!!pagination && (
           <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!table.getCanPreviousPage()}
-              {...prevButtonProps}
-              className={cn("", prevButtonProps?.className)}
-              onClick={(e) => {
-                table.previousPage();
-                prevButtonProps?.onClick?.(e);
-              }}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!table.getCanNextPage()}
-              {...nextButtonProps}
-              className={cn("", nextButtonProps?.className)}
-              onClick={(e) => {
-                table.nextPage();
-                nextButtonProps?.onClick?.(e);
-              }}
-            >
-              Next
-            </Button>
+            <div className="flex gap-2 items-center">
+              Limit Records :
+              <LimitSelector
+                defaultLimit={20}
+                onLimitChange={(limit) => {
+                  setLimit(limit);
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
