@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -26,7 +26,6 @@ import {
   ArrowUp,
   ArrowUpDown,
   ChevronDown,
-  MoreHorizontal,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -41,9 +40,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
@@ -51,6 +47,7 @@ import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import type { Operator } from "@/types/data/operators";
 import { getOperators } from "@/services/apis/admin/operators";
 import { SelectPicker } from "@/components/select";
+import LimitSelector from "@/components/table/limit-selector";
 
 type Props = {
   id: string | null;
@@ -97,8 +94,10 @@ const OperatorsTabledResults = ({
     isFetching,
     page,
     setPage,
+    setLimit,
+    limit,
   } = usePaginatedQuery({
-    limit: 10,
+    limit: 20,
     queryKey: [
       queryKeys.OPERATORS,
       debouncedSearch.field,
@@ -129,6 +128,29 @@ const OperatorsTabledResults = ({
   const columns: ColumnDef<Operator>[] = useMemo(
     () => [
       {
+        accessorKey: "serialNo",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Serial No
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{page * 10 + (row.index + 1) || "-"}</div>,
+      },
+      {
         accessorKey: "name",
         header: ({ column }) => {
           return (
@@ -138,7 +160,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Name
+              Operator Registered Name
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -149,10 +171,17 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("name") || "-"}</div>,
+        cell: ({ row }) => (
+          <div
+            className="cursor-pointer rounded-sm border border-transparent px-2 py-1 text-white font-semibold transition duration-150 hover:border-slate-300"
+            onClick={() => navigate(`/operators/${row.original.id}`)}
+          >
+            {row.getValue("name") || "-"}
+          </div>
+        ),
       },
       {
-        accessorKey: "email",
+        accessorKey: "gstNo",
         header: ({ column }) => {
           return (
             <Button
@@ -161,7 +190,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Email
+              GST
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -172,7 +201,30 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
+        cell: ({ row }) => <div>{row.getValue("gstNo") || "-"}</div>,
+      },
+      {
+        accessorKey: "brandName",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Operator Brand Name
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("brandName") || "-"}</div>,
       },
       {
         accessorKey: "headquarter.address",
@@ -184,7 +236,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Headquarter
+              Operator HQ Address
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -200,6 +252,81 @@ const OperatorsTabledResults = ({
         ),
       },
       {
+        accessorKey: "branches[0].name",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              State
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{row.original.branches?.[0]?.name || "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "branches[0].city",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              City
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{row.original.branches?.[0]?.city || "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "branches[0].postalCode",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Zip/Pin Code
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{row.original.branches?.[0]?.postalCode || "-"}</div>
+        ),
+      },
+      {
         accessorKey: "person.name",
         header: ({ column }) => {
           return (
@@ -209,7 +336,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Person Name
+              HQ POC Name
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -232,7 +359,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Person Email
+              HQ POC Email
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -246,35 +373,124 @@ const OperatorsTabledResults = ({
         cell: ({ row }) => <div>{row.original.person?.email || "-"}</div>,
       },
       {
-        id: "actions",
-        enableHiding: false,
-        cell: ({ row }) => {
+        accessorKey: "email",
+        header: ({ column }) => {
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={() => navigate(`/operators/${row.original.id}`)}
-                >
-                  Show details
-                </DropdownMenuItem>
-                {/* <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  Delete Operator
-                </DropdownMenuItem> */}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Company Email (For Admin User Login)
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
           );
         },
+        cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
+      },
+      {
+        accessorKey: "person.contactNo",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              HQ POC Mobile No
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.person?.contactNo || "-"}</div>,
+      },
+      {
+        accessorKey: "headquarter.contactNo",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              HQ Landline/Customer Care No
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div>{row.original.headquarter?.contactNo || "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "person.role",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              HQ POC Designation
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.person?.role || "-"}</div>,
+      },
+      {
+        accessorKey: "cinNo",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              CIN/LLPIN
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("cinNo") || "-"}</div>,
       },
     ],
-    [navigate],
+    [navigate, page],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -320,6 +536,10 @@ const OperatorsTabledResults = ({
     rowCount: res?.data?.data?.metrics?.total || 1,
   });
 
+  useEffect(() => {
+    table?.setPageSize(res?.data?.data?.metrics?.count || 10);
+  }, [res?.data?.data?.metrics?.count]);
+
   return (
     <div {...props} className={cn("", className)}>
       {/* Search  */}
@@ -341,14 +561,14 @@ const OperatorsTabledResults = ({
         />
 
         <SelectPicker
-          className="admin-filter-select"
+          className=""
           valueProps={{ defaultValue: "Name", placeholder: "Select a field" }}
           wrapperProps={{
             onValueChange(value) {
               setSearch({ value: "", field: value });
             },
           }}
-          items={["Name", "Headquarter", "Person Name"].map((s) => ({
+          items={["Operator Registered Name", "Operator HQ Address", "HQ POC Name"].map((s) => ({
             label: s,
             value: s,
           }))}
@@ -381,7 +601,7 @@ const OperatorsTabledResults = ({
         </DropdownMenu>
       </div>
       <div className="admin-table-frame">
-        <Table className="admin-data-table min-w-[1120px]">
+        <Table className="">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -443,35 +663,53 @@ const OperatorsTabledResults = ({
                 {table.getFilteredSelectedRowModel().rows?.length} of{" "}
                 {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
               </div> */}
-        <p className="text-lg font-medium">Page : {page + 1}</p>
+        <div className="flex gap-2 items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!table.getCanPreviousPage()}
+            {...prevButtonProps}
+            className={cn("", prevButtonProps?.className)}
+            onClick={(e) => {
+              table.previousPage();
+              prevButtonProps?.onClick?.(e);
+            }}
+          >
+            Previous
+          </Button>
+          <p className="text-lg font-medium">
+            Page :{" "}
+            {!isFetching && (
+              <>
+                {page + 1} / {table.getPageCount()}
+              </>
+            )}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!table.getCanNextPage()}
+            {...nextButtonProps}
+            className={cn("", nextButtonProps?.className)}
+            onClick={(e) => {
+              table.nextPage();
+              nextButtonProps?.onClick?.(e);
+            }}
+          >
+            Next
+          </Button>
+        </div>
         {!!pagination && (
           <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!table.getCanPreviousPage()}
-              {...prevButtonProps}
-              className={cn("", prevButtonProps?.className)}
-              onClick={(e) => {
-                table.previousPage();
-                prevButtonProps?.onClick?.(e);
-              }}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!table.getCanNextPage()}
-              {...nextButtonProps}
-              className={cn("", nextButtonProps?.className)}
-              onClick={(e) => {
-                table.nextPage();
-                nextButtonProps?.onClick?.(e);
-              }}
-            >
-              Next
-            </Button>
+            <div className="flex gap-2 items-center">
+              Limit Records :
+              <LimitSelector
+                defaultLimit={20}
+                onLimitChange={(limit) => {
+                  setLimit(limit);
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
