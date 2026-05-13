@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
+import { DialogClose } from "@/components/ui/dialog";
 import { useStatesCities } from "@/services/hooks/use-states-cities";
 import { branchSchema, type BranchSchema } from "@/utils/schemas/operators";
 import { cn } from "@/utils/className";
@@ -31,6 +32,8 @@ export default function MultiState({
   dialogModalProps,
   triggerButtonProps,
   onSave,
+  open,
+  onOpenChange,
   defaultData,
   hideTrigger,
   isEditing = false,
@@ -49,6 +52,7 @@ export default function MultiState({
     getValues,
   } = useForm({
     resolver: zodResolver(branchSchema),
+    defaultValues: defaultData,
   });
 
   const dialogClose = useRef<HTMLButtonElement | null>(null);
@@ -60,30 +64,27 @@ export default function MultiState({
   }, [formData.code, citiesData]);
 
   useEffect(() => {
-    defaultData && reset(defaultData);
-  }, [defaultData]);
+    if (open && defaultData) {
+      reset(defaultData);
+    }
+  }, [open, defaultData, reset]);
 
   // Reset city on state change
   useEffect(() => {
-    console.log("Multi State Form", formData);
-    formData.code !== defaultData?.code &&
+    if (formData.code !== defaultData?.code) {
       reset({ ...formData, city: undefined });
-  }, [formData.code]);
+    }
+  }, [formData.code, defaultData, reset, formData]);
 
   return (
     <DialogModal
       {...dialogModalProps}
-      onOpenChange={(open) => {
-        open && reset(defaultData);
-        !open && reset(branchSchema.partial().safeParse({}).data);
-      }}
-      titleProps={{
-        children: `Operator State ${isEditing ? "Edit" : "Addon"}`,
-        ...dialogModalProps?.titleProps,
-      }}
-      descriptionProps={{
-        children: `Fill the details to ${isEditing ? "edit" : "add"} ${isEditing ? "the" : "a"} state branch for the operator`,
-        ...dialogModalProps?.descriptionProps,
+      showClose={false}
+      contentProps={{
+        className: cn(
+          dialogModalProps?.contentProps?.className,
+          "max-w-2xl sm:max-w-3xl",
+        ),
       }}
       triggerProps={{
         children: (
@@ -94,7 +95,7 @@ export default function MultiState({
             className="flex items-center gap-2 h-10 px-4"
           >
             <div className="flex gap-2 items-center">
-              {isEditing ? "Edit" : "Add a"} state <PlusIcon />
+              {isEditing ? "Edit" : "Add"} state <PlusIcon />
             </div>
           </ActionButton>
         ),
@@ -103,26 +104,42 @@ export default function MultiState({
       closeProps={{ ref: dialogClose, ...dialogModalProps?.closeProps }}
       footerProps={{
         children: (
-          <ActionButton
-            type="button"
-            onClick={async () => {
-              try {
-                const valid = await trigger();
-                valid && onSave?.(getValues() as BranchSchema);
-                valid && dialogClose?.current?.click();
-                !valid && console.error("Multi state form err :", errors);
-              } catch (err) {
-                console.error("Multi state form err :", err);
-              }
-            }}
-          >
-            {isEditing ? "Update" : "Save"} changes
-          </ActionButton>
+          <div className="flex justify-between items-center w-full">
+            <div className="flex items-center gap-4">
+              <label className="text-white text-sm">{"Set as Primary"}</label>
+              <Switch
+                key={defaultValues?.isPrimary ? "active" : "inactive"}
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
+                defaultChecked={!!defaultValues?.isPrimary}
+                {...register("isPrimary")}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <DialogClose asChild>
+                <ActionButton variant="outline">Cancel</ActionButton>
+              </DialogClose>
+              <ActionButton
+                type="button"
+                onClick={async () => {
+                  try {
+                    const valid = await trigger();
+                    valid && onSave?.(getValues() as BranchSchema);
+                    valid && dialogClose?.current?.click();
+                    !valid && console.error("Multi state form err :", errors);
+                  } catch (err) {
+                    console.error("Multi state form err :", err);
+                  }
+                }}
+              >
+                {isEditing ? "Update" : "Save"} changes
+              </ActionButton>
+            </div>
+          </div>
         ),
         ...dialogModalProps?.footerProps,
       }}
     >
-      <FieldGroup>
+      <FieldGroup className="grid-cols-1 sm:grid-cols-2">
         <FormField
           key={`states-${statesData.length}`}
           label="State"
@@ -223,12 +240,49 @@ export default function MultiState({
         />
 
         <FormField
+          label="GST Number"
+          labelPosition="embedded"
+          placeholder="Enter GST Number"
+          {...register("gstNo")}
+          error={errors?.gstNo}
+        />
+
+        <FormField
           label="HQ State Branch Address"
           placeholder="25 Street Manhaven, Georgia"
           labelPosition="embedded"
           inputType="textarea"
+          wrapperProps={{ className: "sm:col-span-2" }}
           {...register("address")}
           error={errors.address}
+        />
+
+        <FormField
+          label="POC Name"
+          labelPosition="embedded"
+          {...register("person.name")}
+          error={errors.person?.name}
+          defaultValue={defaultValues?.person?.name}
+          placeholder="John Doe"
+        />
+
+        <FormField
+          label="Designation"
+          labelPosition="embedded"
+          {...register("person.role")}
+          error={errors.person?.role}
+          defaultValue={defaultValues?.person?.role}
+          placeholder="Manager"
+        />
+
+        <FormField
+          label="POC Email"
+          labelPosition="embedded"
+          type="email"
+          {...register("person.email")}
+          error={errors.person?.email}
+          defaultValue={defaultValues?.person?.email}
+          placeholder="john.doe@example.com"
         />
 
         <FormField
@@ -239,6 +293,7 @@ export default function MultiState({
           type="tel"
           inputMode="tel"
           inputType="phone"
+          value={watch("person.contactNo") || defaultValues?.person?.contactNo || ""}
           defaultValue={defaultValues?.person?.contactNo}
           placeholder="+1-123-456-7890"
           onChange={(val) => {
@@ -248,24 +303,6 @@ export default function MultiState({
             });
           }}
         />
-
-        <FormField
-          label="GST Number"
-          labelPosition="embedded"
-          placeholder="Enter GST Number"
-          {...register("gstNo")}
-          error={errors?.gstNo}
-        />
-
-        <div className="flex items-center gap-4">
-          <label className="text-white text-sm">{"Set as Primary"}</label>
-          <Switch
-            key={defaultValues?.isPrimary ? "active" : "inactive"}
-            className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
-            defaultChecked={!!defaultValues?.isPrimary}
-            {...register("isPrimary")}
-          />
-        </div>
       </FieldGroup>
     </DialogModal>
   );

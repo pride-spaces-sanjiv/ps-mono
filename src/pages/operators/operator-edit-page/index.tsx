@@ -66,9 +66,23 @@ const OperatorEditPage = () => {
 
   useEffect(() => {
     if (res?.data.data) {
-      reset(res?.data.data);
+      const operatorData = res.data.data;
+      const mergedBranches = operatorData.branches?.map((branch) => ({
+        ...branch,
+        person: {
+          ...branch.person,
+          name: branch.person?.name ?? operatorData.person?.name,
+          email: branch.person?.email ?? operatorData.person?.email,
+          role: branch.person?.role ?? operatorData.person?.role,
+        },
+      }));
+
+      reset({
+        ...operatorData,
+        branches: mergedBranches,
+      });
     }
-  }, [res]);
+  }, [res, reset]);
 
   const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationKey: [queryKeys.OPERATORS, id],
@@ -180,7 +194,13 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="Admin Email"
+            label={
+              <>
+                Company Email
+                <br />
+                (For Admin User Login)
+              </>
+            }
             labelPosition="embedded"
             type="email"
             placeholder="operator@example.com"
@@ -229,7 +249,7 @@ const OperatorEditPage = () => {
           </div> */}
 
           <FormField
-            label="POC Name"
+            label="HQ POC Name"
             labelPosition="embedded"
             placeholder="John Doe"
             {...register("person.name")}
@@ -237,7 +257,7 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="POC Email"
+            label="HQ POC Email"
             labelPosition="embedded"
             type="email"
             placeholder="john.doe@example.com"
@@ -247,11 +267,12 @@ const OperatorEditPage = () => {
 
           <FormField
             key={`poc-${defaultValues?.person?.contactNo}`}
-            label="POC Mobile No."
+            label="HQ POC Mobile No."
             labelPosition="embedded"
             type="tel"
             inputMode="tel"
             inputType="phone"
+            value={watch("person.contactNo") || defaultValues?.person?.contactNo || ""}
             defaultValue={defaultValues?.person?.contactNo}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
@@ -264,7 +285,7 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="POC Designation"
+            label="Designation"
             placeholder="Centre Manager"
             labelPosition="embedded"
             {...register("person.role")}
@@ -306,30 +327,32 @@ const OperatorEditPage = () => {
               onEdit={(branch, i) => {
                 const branches = (watch("branches", []) ||
                   []) as BranchSchema[];
+              const updatedBranches = setSinglePrimaryBranch(branches || [], branch);
 
                 setValue(
                   "branches",
-                  setSinglePrimaryBranch(branches || [], branch),
+                  updatedBranches,
                   { shouldValidate: true },
                 );
 
-                notifyPrimarySingleBranch(branches, branch);
-                handleBranchesUpdate(branches);
+                notifyPrimarySingleBranch(updatedBranches, branch);
+                handleBranchesUpdate(updatedBranches);
               }}
               onDelete={(branch, i) => {
                 const branches = (watch("branches", [])?.filter(
                   (_, idx) => idx !== i,
                 ) || []) as BranchSchema[];
+                const updatedBranches = setSinglePrimaryBranch(
+                  branches || [],
+                  branches?.[0] as BranchSchema,
+                );
                 setValue(
                   "branches",
-                  setSinglePrimaryBranch(
-                    branches || [],
-                    branches?.[0] as BranchSchema,
-                  ),
+                  updatedBranches,
                   { shouldValidate: true },
                 );
 
-                handleBranchesUpdate(branches);
+                handleBranchesUpdate(updatedBranches);
               }}
             />
           </div>
