@@ -371,7 +371,7 @@ const OperatorsTabledResults = ({
         />
 
         <SelectPicker
-          className="admin-filter-select"
+          className=""
           valueProps={{ defaultValue: "Name", placeholder: "Select a field" }}
           wrapperProps={{
             onValueChange(value) {
@@ -411,7 +411,7 @@ const OperatorsTabledResults = ({
         </DropdownMenu>
       </div>
       <div className="admin-table-frame">
-        <Table className="admin-data-table min-w-[1120px]">
+        <Table className="">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

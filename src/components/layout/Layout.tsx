@@ -14,10 +14,13 @@ export default function Layout({
       onOpenChange={(open) => {
         setOpen(open);
       }}
-      className="relative"
+      className="relative h-full"
     >
       <AppSidebar />
-      <main {...props} className={cn("w-full relative", props?.className)}>
+      <main
+        {...props}
+        className={cn("relative h-full w-full grow-0", props?.className)}
+      >
         <SidebarTrigger
           className={cn(
             "fixed bg-background max-[500px]:right-0 transition ease-in-out",
