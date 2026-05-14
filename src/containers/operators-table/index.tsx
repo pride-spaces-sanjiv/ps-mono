@@ -21,12 +21,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronDown,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -151,6 +146,29 @@ const OperatorsTabledResults = ({
         cell: ({ row }) => <div>{page * 10 + (row.index + 1) || "-"}</div>,
       },
       {
+        accessorKey: "slug",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Slug
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.slug || "-"}</div>,
+      },
+      {
         accessorKey: "name",
         header: ({ column }) => {
           return (
@@ -172,12 +190,7 @@ const OperatorsTabledResults = ({
           );
         },
         cell: ({ row }) => (
-          <div
-            className="cursor-pointer rounded-sm border border-transparent px-2 py-1 text-white font-semibold transition duration-150 hover:border-slate-300"
-            onClick={() => navigate(`/operators/${row.original.id}`)}
-          >
-            {row.getValue("name") || "-"}
-          </div>
+          <div className="">{row.getValue("name") || "-"}</div>
         ),
       },
       {
@@ -204,6 +217,29 @@ const OperatorsTabledResults = ({
         cell: ({ row }) => <div>{row.getValue("gstNo") || "-"}</div>,
       },
       {
+        accessorKey: "cinNo",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              CIN/LLPIN
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("cinNo") || "-"}</div>,
+      },
+      {
         accessorKey: "brandName",
         header: ({ column }) => {
           return (
@@ -227,7 +263,7 @@ const OperatorsTabledResults = ({
         cell: ({ row }) => <div>{row.getValue("brandName") || "-"}</div>,
       },
       {
-        accessorKey: "headquarter.address",
+        accessorKey: "hqAddress",
         header: ({ column }) => {
           return (
             <Button
@@ -236,7 +272,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Operator HQ Address
+              HQ Address
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -248,11 +284,13 @@ const OperatorsTabledResults = ({
           );
         },
         cell: ({ row }) => (
-          <div>{row.original.headquarter?.address || "-"}</div>
+          <div>
+            {row.original.branches?.find((b) => b.isPrimary)?.address || "-"}
+          </div>
         ),
       },
       {
-        accessorKey: "branches[0].name",
+        accessorKey: "hqState",
         header: ({ column }) => {
           return (
             <Button
@@ -261,7 +299,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              State
+              HQ State
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -273,11 +311,13 @@ const OperatorsTabledResults = ({
           );
         },
         cell: ({ row }) => (
-          <div>{row.original.branches?.[0]?.name || "-"}</div>
+          <div>
+            {row.original.branches?.find((b) => b.isPrimary)?.name || "-"}
+          </div>
         ),
       },
       {
-        accessorKey: "branches[0].city",
+        accessorKey: "hqCity",
         header: ({ column }) => {
           return (
             <Button
@@ -286,7 +326,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              City
+              HQ City
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -298,11 +338,13 @@ const OperatorsTabledResults = ({
           );
         },
         cell: ({ row }) => (
-          <div>{row.original.branches?.[0]?.city || "-"}</div>
+          <div>
+            {row.original.branches?.find((b) => b.isPrimary)?.city || "-"}
+          </div>
         ),
       },
       {
-        accessorKey: "branches[0].postalCode",
+        accessorKey: "hqPostalCode",
         header: ({ column }) => {
           return (
             <Button
@@ -311,7 +353,7 @@ const OperatorsTabledResults = ({
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Zip/Pin Code
+              HQ Zip/Pin Code
               {column.getIsSorted() === "asc" ? (
                 <ArrowDown />
               ) : column.getIsSorted() === "desc" ? (
@@ -323,11 +365,13 @@ const OperatorsTabledResults = ({
           );
         },
         cell: ({ row }) => (
-          <div>{row.original.branches?.[0]?.postalCode || "-"}</div>
+          <div>
+            {row.original.branches?.find((b) => b.isPrimary)?.postalCode || "-"}
+          </div>
         ),
       },
       {
-        accessorKey: "person.name",
+        accessorKey: "hqPOCName",
         header: ({ column }) => {
           return (
             <Button
@@ -347,10 +391,15 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original.person?.name || "-"}</div>,
+        cell: ({ row }) => (
+          <div>
+            {row.original.branches?.find((b) => b.isPrimary)?.person?.name ||
+              "-"}
+          </div>
+        ),
       },
       {
-        accessorKey: "person.email",
+        accessorKey: "hqPOCEmail",
         header: ({ column }) => {
           return (
             <Button
@@ -370,10 +419,15 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original.person?.email || "-"}</div>,
+        cell: ({ row }) => (
+          <div>
+            {row.original.branches?.find((b) => b.isPrimary)?.person?.email ||
+              "-"}
+          </div>
+        ),
       },
       {
-        accessorKey: "email",
+        accessorKey: "loginEmail",
         header: ({ column }) => {
           return (
             <Button
@@ -393,10 +447,10 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.getValue("email") || "-"}</div>,
+        cell: ({ row }) => <div>{row.original.email || "-"}</div>,
       },
       {
-        accessorKey: "person.contactNo",
+        accessorKey: "hqPOCContactNo",
         header: ({ column }) => {
           return (
             <Button
@@ -416,10 +470,15 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original.person?.contactNo || "-"}</div>,
+        cell: ({ row }) => (
+          <div>
+            {row.original.branches?.find((b) => b.isPrimary)?.person
+              ?.contactNo || "-"}
+          </div>
+        ),
       },
       {
-        accessorKey: "headquarter.contactNo",
+        accessorKey: "hqLandlineNo",
         header: ({ column }) => {
           return (
             <Button
@@ -444,7 +503,7 @@ const OperatorsTabledResults = ({
         ),
       },
       {
-        accessorKey: "person.role",
+        accessorKey: "hqPOCRole",
         header: ({ column }) => {
           return (
             <Button
@@ -464,30 +523,12 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{row.original.person?.role || "-"}</div>,
-      },
-      {
-        accessorKey: "cinNo",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              CIN/LLPIN
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("cinNo") || "-"}</div>,
+        cell: ({ row }) => (
+          <div>
+            {row.original.branches?.find((b) => b.isPrimary)?.person?.role ||
+              "-"}
+          </div>
+        ),
       },
     ],
     [navigate, page],
@@ -568,7 +609,11 @@ const OperatorsTabledResults = ({
               setSearch({ value: "", field: value });
             },
           }}
-          items={["Operator Registered Name", "Operator HQ Address", "HQ POC Name"].map((s) => ({
+          items={[
+            "Operator Registered Name",
+            "Operator HQ Address",
+            "HQ POC Name",
+          ].map((s) => ({
             label: s,
             value: s,
           }))}
@@ -634,7 +679,13 @@ const OperatorsTabledResults = ({
                 ))
             ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer"
+                  onDoubleClick={() =>
+                    navigate(`/operators/${row.original.id}`)
+                  }
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
