@@ -25,6 +25,7 @@ const CSVHeaders = {
   STATE: "state",
   CITY: "city",
   ZIPPINCODE: "zippincode",
+  HQEMAILFORLOGINID: "hqemailforloginid",
   HQPOCEMAIL: "hqpocemail",
   HQPOCMOBILENO: "hqpocmobileno",
   HQLANDLINECUSTOMERCARENO: "hqlandlinecustomercareno",
@@ -95,7 +96,7 @@ type StatesData = Awaited<ReturnType<typeof getStatesData>>;
 
 const convertAsPhoneNo = (val: string) => {
   val =
-    `+91${validifyStringValues(val?.replace(/ +g/, "").match(/\d{8,10}$/)?.[0]).trim()}`
+    `+91${validifyStringValues(val?.replace(/[^0-9]+/g, "").match(/\d{8,10}$/)?.[0]).trim()}`
       .trim()
       .replace(/^[+]91$/, "");
   return val;
@@ -121,7 +122,9 @@ const getBranchesData = (
       gstNo: validifyStringValues(row.gst),
       person: {
         name: validifyStringValues(row.hqpocname) || undefined,
-        email: validifyStringValues(row.hqpocemail) || undefined,
+        email:
+          validifyStringValues(row.hqpocemail || row.hqemailforloginid) ||
+          undefined,
         role: validifyStringValues(row.hqpocdesignation) || undefined,
         contactNo: convertAsPhoneNo(validifyStringValues(row.hqpocmobileno)),
       },
@@ -171,7 +174,7 @@ const prepareData = (
     const prepared: Partial<OperatorSchema> = {
       name: validifyStringValues(row.operatorregisteredname),
       brandName: validifyStringValues(row.operatorbrandname),
-      email: validifyStringValues(row.hqpocemail),
+      email: validifyStringValues(row.hqemailforloginid || row.hqpocemail),
       slug: row.slug,
       password: encodeCrypto("Pass123@" + row.slug),
       gstNo: validifyStringValues(row.gst),
@@ -184,7 +187,7 @@ const prepareData = (
       },
       person: {
         name: validifyStringValues(row.hqpocname) || "Admin",
-        email: validifyStringValues(row.hqpocemail),
+        email: validifyStringValues(row.hqpocemail || row.hqemailforloginid),
         role: validifyStringValues(row.hqpocdesignation) || "Admin",
         contactNo: convertAsPhoneNo(validifyStringValues(row.hqpocmobileno)),
       },
