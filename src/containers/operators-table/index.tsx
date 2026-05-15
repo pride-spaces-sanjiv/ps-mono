@@ -42,7 +42,6 @@ import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import type { Operator } from "@/types/data/operators";
 import { getOperators } from "@/services/apis/admin/operators";
 import { SelectPicker } from "@/components/select";
-import LimitSelector from "@/components/table/limit-selector";
 import TablePaginationFooter from "@/components/table/pagination";
 
 type Props = {
