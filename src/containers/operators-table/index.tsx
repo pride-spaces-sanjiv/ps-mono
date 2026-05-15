@@ -43,6 +43,7 @@ import type { Operator } from "@/types/data/operators";
 import { getOperators } from "@/services/apis/admin/operators";
 import { SelectPicker } from "@/components/select";
 import LimitSelector from "@/components/table/limit-selector";
+import TablePaginationFooter from "@/components/table/pagination";
 
 type Props = {
   id: string | null;
@@ -646,8 +647,8 @@ const OperatorsTabledResults = ({
         </DropdownMenu>
       </div>
       <div className="admin-table-frame">
-        <Table className="">
-          <TableHeader>
+        <Table className="w-full">
+          <TableHeader className="">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -664,7 +665,7 @@ const OperatorsTabledResults = ({
             ))}
           </TableHeader>
 
-          <TableBody>
+          <TableBody className="h-full">
             {isFetching ? (
               Array(5)
                 .fill(null)
@@ -709,61 +710,15 @@ const OperatorsTabledResults = ({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        {/* <div className="text-muted-foreground text-sm">
-                {table.getFilteredSelectedRowModel().rows?.length} of{" "}
-                {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
-              </div> */}
-        <div className="flex gap-2 items-center">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!table.getCanPreviousPage()}
-            {...prevButtonProps}
-            className={cn("", prevButtonProps?.className)}
-            onClick={(e) => {
-              table.previousPage();
-              prevButtonProps?.onClick?.(e);
-            }}
-          >
-            Previous
-          </Button>
-          <p className="text-lg font-medium">
-            Page :{" "}
-            {!isFetching && (
-              <>
-                {page + 1} / {table.getPageCount()}
-              </>
-            )}
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!table.getCanNextPage()}
-            {...nextButtonProps}
-            className={cn("", nextButtonProps?.className)}
-            onClick={(e) => {
-              table.nextPage();
-              nextButtonProps?.onClick?.(e);
-            }}
-          >
-            Next
-          </Button>
-        </div>
-        {!!pagination && (
-          <div className="space-x-2">
-            <div className="flex gap-2 items-center">
-              Limit Records :
-              <LimitSelector
-                defaultLimit={20}
-                onLimitChange={(limit) => {
-                  setLimit(limit);
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+
+      <TablePaginationFooter
+        table={table}
+        page={page}
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
+        loading={isFetching}
+      />
     </div>
   );
 };
