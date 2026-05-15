@@ -120,6 +120,9 @@ const getBranchesData = (
       isPrimary: true,
       gstNo: validifyStringValues(row.gst),
       person: {
+        name: validifyStringValues(row.hqpocname) || undefined,
+        email: validifyStringValues(row.hqpocemail) || undefined,
+        role: validifyStringValues(row.hqpocdesignation) || undefined,
         contactNo: convertAsPhoneNo(validifyStringValues(row.hqpocmobileno)),
       },
     }))

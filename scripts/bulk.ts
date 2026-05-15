@@ -18,7 +18,7 @@ import {
   parseBulkOperatorsData,
   pushBulkOperatorsData,
 } from "../src/utils/scripts/bulk/operator";
-import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
+import { getSpaceCountsOfOperator } from "../src/utils/mongoose/relations/space-operator.js";
 const { default: parsedData } = await import("../data/parsed-data.json", {
   assert: { type: "json" },
 });
@@ -30,8 +30,10 @@ const { default: convertedParsed } = await import(
 );
 // console.log(parsedData);
 
+// const csvFile =
+//   "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
 const csvFile =
-  "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
+  "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - KA Operator HQ.csv";
 
 // npm run test scripts/bulk -- --env=dev
 
@@ -120,9 +122,9 @@ fs.writeFileSync(
   JSON.stringify(bulkedOperators, null, 2),
 );
 console.timeEnd("Scripting Time :");
-console.time("Push Time :");
-bulkedOperators && (await pushBulkOperatorsData(bulkedOperators));
-console.timeEnd("Push Time :");
+// console.time("Push Time :");
+// bulkedOperators && (await pushBulkOperatorsData(bulkedOperators));
+// console.timeEnd("Push Time :");
 
 let saves = 0;
 // await Space.deleteMany();
