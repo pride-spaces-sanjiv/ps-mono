@@ -242,9 +242,9 @@ const OperatorCreatePage = () => {
           />
 
           <FormField
-            label="CIN Number"
+            label="CIN/LLPIN Number"
             labelPosition="embedded"
-            placeholder="Enter CIN Number"
+            placeholder="Enter CIN/LLPIN Number"
             {...register("cinNo")}
             error={errors?.cinNo}
           />
@@ -255,7 +255,9 @@ const OperatorCreatePage = () => {
             <MultiStateCard
               branches={states}
               onEdit={(branch) => handleEditState(branch as MultiStateItem)}
-              onDelete={(branch) => handleDeleteState((branch as MultiStateItem).id)}
+              onDelete={(branch) =>
+                handleDeleteState((branch as MultiStateItem).id)
+              }
             />
           </div>
 
