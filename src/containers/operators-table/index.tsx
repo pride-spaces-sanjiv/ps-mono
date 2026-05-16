@@ -143,7 +143,7 @@ const OperatorsTabledResults = ({
             </Button>
           );
         },
-        cell: ({ row }) => <div>{page * 10 + (row.index + 1) || "-"}</div>,
+        cell: ({ row }) => <div>{page * limit + (row.index + 1) || "-"}</div>,
       },
       {
         accessorKey: "slug",
@@ -531,7 +531,7 @@ const OperatorsTabledResults = ({
         ),
       },
     ],
-    [navigate, page],
+    [navigate, page, limit],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
