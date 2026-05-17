@@ -53,6 +53,7 @@ import { cn } from "@/utils/className";
 import { SelectPicker } from "@/components/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import TablePaginationFooter from "@/components/table/pagination";
 
 type Props = {
   id: string | null;
@@ -103,8 +104,10 @@ const SpacesTabledResults = ({
     page,
     setPage,
     refetch,
+    limit,
+    setLimit,
   } = usePaginatedQuery({
-    limit: 10,
+    limit: 20,
     queryKey: [
       queryKeys.SPACES,
       debouncedSearch.field,
@@ -180,6 +183,29 @@ const SpacesTabledResults = ({
   // Columns definition
   const columns: ColumnDef<Space>[] = useMemo(
     () => [
+      {
+        accessorKey: "serialNo",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Serial No
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{page * 10 + (row.index + 1) || "-"}</div>,
+      },
       {
         accessorKey: "operator",
         header: ({ column }) => {
@@ -388,34 +414,6 @@ const SpacesTabledResults = ({
           return <div>{formatOpenDays(openDays)}</div>;
         },
       },
-      {
-        id: "actions",
-        enableHiding: false,
-        cell: ({ row }) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={() => navigate(`/spaces/${row.original.id}`)}
-                >
-                  Show details
-                </DropdownMenuItem>
-                {/* <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  Delete Space
-                </DropdownMenuItem> */}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        },
-      },
     ],
     [res?.data],
   );
@@ -525,7 +523,7 @@ const SpacesTabledResults = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border max-w-full overflow-x-auto w-auto">
+      <div className="rounded-md border max-w-full overflow-x-auto w-auto admin-table-frame">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -559,7 +557,11 @@ const SpacesTabledResults = ({
                 ))
             ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer"
+                  onDoubleClick={() => navigate(`/spaces/${row.original?.id}`)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="whitespace-normal">
                       {flexRender(
@@ -583,43 +585,14 @@ const SpacesTabledResults = ({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        {/* <div className="text-muted-foreground text-sm">
-                {table.getFilteredSelectedRowModel().rows?.length} of{" "}
-                {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
-              </div> */}
-        <p className="text-lg font-medium">Page : {page + 1}</p>
-        {!!pagination && (
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!table.getCanPreviousPage()}
-              {...prevButtonProps}
-              className={cn("", prevButtonProps?.className)}
-              onClick={(e) => {
-                table.previousPage();
-                prevButtonProps?.onClick?.(e);
-              }}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!table.getCanNextPage()}
-              {...nextButtonProps}
-              className={cn("", nextButtonProps?.className)}
-              onClick={(e) => {
-                table.nextPage();
-                nextButtonProps?.onClick?.(e);
-              }}
-            >
-              Next
-            </Button>
-          </div>
-        )}
-      </div>
+      <TablePaginationFooter
+        table={table}
+        page={page}
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
+        loading={isFetching}
+      />
     </div>
   );
 };

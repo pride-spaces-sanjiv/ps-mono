@@ -272,7 +272,11 @@ const OperatorEditPage = () => {
             type="tel"
             inputMode="tel"
             inputType="phone"
-            value={watch("person.contactNo") || defaultValues?.person?.contactNo || ""}
+            value={
+              watch("person.contactNo") ||
+              defaultValues?.person?.contactNo ||
+              ""
+            }
             defaultValue={defaultValues?.person?.contactNo}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
@@ -312,9 +316,9 @@ const OperatorEditPage = () => {
           />
 
           <FormField
-            label="CIN Number"
+            label="CIN/LLPIN Number"
             labelPosition="embedded"
-            placeholder="Enter CIN Number"
+            placeholder="Enter CIN/LLPIN Number"
             {...register("cinNo")}
             error={errors?.cinNo}
           />
@@ -327,13 +331,12 @@ const OperatorEditPage = () => {
               onEdit={(branch, i) => {
                 const branches = (watch("branches", []) ||
                   []) as BranchSchema[];
-              const updatedBranches = setSinglePrimaryBranch(branches || [], branch);
-
-                setValue(
-                  "branches",
-                  updatedBranches,
-                  { shouldValidate: true },
+                const updatedBranches = setSinglePrimaryBranch(
+                  branches || [],
+                  branch,
                 );
+
+                setValue("branches", updatedBranches, { shouldValidate: true });
 
                 notifyPrimarySingleBranch(updatedBranches, branch);
                 handleBranchesUpdate(updatedBranches);
@@ -346,11 +349,7 @@ const OperatorEditPage = () => {
                   branches || [],
                   branches?.[0] as BranchSchema,
                 );
-                setValue(
-                  "branches",
-                  updatedBranches,
-                  { shouldValidate: true },
-                );
+                setValue("branches", updatedBranches, { shouldValidate: true });
 
                 handleBranchesUpdate(updatedBranches);
               }}

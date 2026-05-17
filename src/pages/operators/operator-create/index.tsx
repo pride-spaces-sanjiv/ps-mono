@@ -5,15 +5,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
+import {
+  operatorSchema,
+  type BranchSchema,
+  type OperatorSchema,
+} from "@/utils/schemas/operators";
 import { createOperator } from "@/services/apis/admin/operators";
 
 import { generatePassword } from "@/utils/string/password";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
-import MultiStateDialog from "@/containers/multi-state/multi-state-dialog";
+// import MultiStateDialog from "@/containers/multi-state/multi-state-dialog";
+import MultiStateDialog from "@/containers/operator/multi-state-dialog";
 import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
 import type { MultiStateItem } from "@/containers/multi-state/types";
+import { setSinglePrimaryBranch } from "@/utils/data/branches";
 
 const OperatorCreatePage = () => {
   const navigate = useNavigate();
@@ -242,9 +248,9 @@ const OperatorCreatePage = () => {
           />
 
           <FormField
-            label="CIN Number"
+            label="CIN/LLPIN Number"
             labelPosition="embedded"
-            placeholder="Enter CIN Number"
+            placeholder="Enter CIN/LLPIN Number"
             {...register("cinNo")}
             error={errors?.cinNo}
           />
@@ -255,7 +261,9 @@ const OperatorCreatePage = () => {
             <MultiStateCard
               branches={states}
               onEdit={(branch) => handleEditState(branch as MultiStateItem)}
-              onDelete={(branch) => handleDeleteState((branch as MultiStateItem).id)}
+              onDelete={(branch) =>
+                handleDeleteState((branch as MultiStateItem).id)
+              }
             />
           </div>
 
@@ -263,6 +271,7 @@ const OperatorCreatePage = () => {
           <div className="col-span-full mt-6 flex justify-between items-center">
             {/* LEFT SIDE */}
             <MultiStateDialog
+              disAllowedStates={watch("branches")?.map((br) => br.code) || []}
               open={isStateDialogOpen}
               onOpenChange={(open) => {
                 setIsStateDialogOpen(open);
@@ -270,8 +279,16 @@ const OperatorCreatePage = () => {
                   setEditingState(null);
                 }
               }}
-              onSave={handleSaveState}
-              editingState={editingState}
+              onSave={(data) => {
+                const branches = setSinglePrimaryBranch(
+                  [...(watch("branches", []) || [])] as BranchSchema[],
+                  data,
+                );
+                setValue("branches", branches, {
+                  shouldValidate: true,
+                });
+              }}
+              isEditing={false}
             />
 
             {/* RIGHT SIDE */}

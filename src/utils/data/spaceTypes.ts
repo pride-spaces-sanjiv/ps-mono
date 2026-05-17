@@ -1,7 +1,7 @@
 export const spaceTypes = ["Flex", "MOS", "Both"] as const;
 export const labelledSpaceTypes = spaceTypes.map((v, i) => ({
   label:
-    v +
+    (v === "Both" ? "Hybrid" : v) +
     " ( " +
     (v === "Flex"
       ? "Co-Working"
