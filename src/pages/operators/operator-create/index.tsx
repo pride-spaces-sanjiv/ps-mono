@@ -11,15 +11,16 @@ import {
   type OperatorSchema,
 } from "@/utils/schemas/operators";
 import { createOperator } from "@/services/apis/admin/operators";
-
+import {
+  setSinglePrimaryBranch,
+  notifyPrimarySingleBranch,
+} from "@/utils/data/branches";
 import { generatePassword } from "@/utils/string/password";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
-// import MultiStateDialog from "@/containers/multi-state/multi-state-dialog";
 import MultiStateDialog from "@/containers/operator/multi-state-dialog";
 import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
 import type { MultiStateItem } from "@/containers/multi-state/types";
-import { setSinglePrimaryBranch } from "@/utils/data/branches";
 
 const OperatorCreatePage = () => {
   const navigate = useNavigate();
@@ -287,6 +288,7 @@ const OperatorCreatePage = () => {
                 setValue("branches", branches, {
                   shouldValidate: true,
                 });
+                notifyPrimarySingleBranch(branches, data);
               }}
               isEditing={false}
             />

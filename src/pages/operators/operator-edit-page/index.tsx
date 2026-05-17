@@ -16,7 +16,10 @@ import {
   getOperatorById,
   updateOperator,
 } from "@/services/apis/admin/operators";
-import { setSinglePrimaryBranch } from "@/utils/data/branches";
+import {
+  setSinglePrimaryBranch,
+  notifyPrimarySingleBranch,
+} from "@/utils/data/branches";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
@@ -26,15 +29,6 @@ import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 import type { MultiStateItem } from "@/containers/multi-state/types";
 import FormSectionTitle from "@/components/form/section/title";
-
-const notifyPrimarySingleBranch = (
-  branches: BranchSchema[],
-  branch: BranchSchema,
-) => {
-  if (!branch.isPrimary && branches.length === 1) {
-    toast.warning("Single Branches are by default primary");
-  }
-};
 
 const OperatorEditPage = () => {
   const { id } = useParams();
@@ -333,12 +327,15 @@ const OperatorEditPage = () => {
                   []) as BranchSchema[];
                 const updatedBranches = setSinglePrimaryBranch(
                   branches || [],
-                  branch,
+                  branch as BranchSchema,
                 );
 
                 setValue("branches", updatedBranches, { shouldValidate: true });
 
-                notifyPrimarySingleBranch(updatedBranches, branch);
+                notifyPrimarySingleBranch(
+                  updatedBranches,
+                  branch as BranchSchema,
+                );
                 handleBranchesUpdate(updatedBranches);
               }}
               onDelete={(branch, i) => {
