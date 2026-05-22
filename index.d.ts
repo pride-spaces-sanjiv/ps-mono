@@ -1,6 +1,12 @@
 import { SessionData as OldData } from "express-session";
 
-type UserType = "admin" | "super-admin" | "support" | "operator" | "user";
+type UserType =
+  | "admin"
+  | "super-admin"
+  | "lead"
+  | "support"
+  | "operator"
+  | "user";
 declare module "express-session" {
   interface SessionData extends OldData {
     user?: Partial<{

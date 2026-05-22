@@ -1,5 +1,6 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Operator, operatorNonPassFields } from "@/database/models/operator.js";
+import { Dump } from "@/database/models/dump.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import {
   cleanPaginatedData,
@@ -15,6 +16,8 @@ import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-opera
 import { encodeCrypto } from "@/utils/crypto.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { OperatorSchema } from "@/database/schemas/operator.js";
+import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+import { ModelToDocument, ModelToRaw } from "@/types/mongoose/document.js";
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -168,15 +171,48 @@ export const updateOperator = async (
 ) => {
   try {
     const body = req.body;
-    const doc = await Operator.findOneAndUpdate({ _id: req.params.id }, body, {
-      new: true,
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
+    const sessionUser = req.session.user;
+    let doc: ModelToDocument<typeof Operator> | null = null;
+
+    // For support admin
+    if (
+      sessionUser?.userType &&
+      adminLevels.includes(sessionUser?.userType as AdminLevel) &&
+      sessionUser?.userType === "support"
+    ) {
+      doc = await Operator.findOne({ _id: req.params.id });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "operator-not-found",
+          message: "Operator not found",
+        });
+        return;
+      }
+      const newDump = new Dump({
+        collection: "operators",
+        data: { ...body, isActive: undefined },
+        user: sessionUser,
       });
-      return;
+      try {
+        await newDump.save();
+      } catch (err) {
+        ResponseHandler.handleError(res, {
+          errorType: "update-operator-dump-failure",
+          message: "Failed to dump-update operator details",
+        });
+        return;
+      }
+    } else {
+      doc = await Operator.findOneAndUpdate({ _id: req.params.id }, body, {
+        new: true,
+      });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "operator-not-found",
+          message: "Operator not found",
+        });
+        return;
+      }
     }
 
     const spaceCounts = await getSpaceCountsOfOperator([doc.id]);
