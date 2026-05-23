@@ -198,6 +198,7 @@ export const updateOperator = async (
       try {
         await newDump.save();
       } catch (err) {
+        console.error("Saving operator dump error :", err);
         ResponseHandler.handleError(res, {
           errorType: "update-operator-dump-failure",
           message: "Failed to dump-update operator details",

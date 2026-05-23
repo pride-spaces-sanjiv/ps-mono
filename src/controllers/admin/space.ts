@@ -220,6 +220,7 @@ export const updateSpace = async (
       try {
         await newDump.save();
       } catch (err) {
+        console.error("Saving spacedump error :", err);
         ResponseHandler.handleError(res, {
           errorType: "update-space-dump-failure",
           message: "Failed to dump-update space details",
