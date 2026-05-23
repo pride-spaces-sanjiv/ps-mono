@@ -69,6 +69,11 @@ export const ADMIN_AMENITY = ADMIN.create({
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
+export const ADMIN_DUMP = ADMIN.create({
+  baseURL: baseUrl + "/admin/dumps",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
 
 // Enterprise
 
