@@ -14,10 +14,11 @@ import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 import { encodeCrypto } from "@/utils/crypto.js";
+import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+// types
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { OperatorSchema } from "@/database/schemas/operator.js";
-import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
-import { ModelToDocument, ModelToRaw } from "@/types/mongoose/document.js";
+import { ModelToDocument } from "@/types/mongoose/document.js";
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,

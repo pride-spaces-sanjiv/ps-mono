@@ -1,5 +1,6 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Space, spaceFields } from "@/database/models/space.js";
+import { Dump } from "@/database/models/dump.js";
 import { getSpaceOperatorsData } from "@/utils/mongoose/relations/space-operator.js";
 import {
   cleanPaginatedData,
@@ -12,8 +13,11 @@ import {
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
+import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+// types
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { SpaceSchema } from "@/database/schemas/space.js";
+import { ModelToDocument } from "@/types/mongoose/document.js";
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -190,15 +194,48 @@ export const updateSpace = async (
 ) => {
   try {
     const body = req.body;
-    const doc = await Space.findOneAndUpdate({ _id: req.params.id }, body, {
-      new: true,
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "space-not-found",
-        message: "Space not found",
+    const sessionUser = req.session.user;
+    let doc: ModelToDocument<typeof Space> | null = null;
+
+    // For support admin
+    if (
+      sessionUser?.userType &&
+      adminLevels.includes(sessionUser?.userType as AdminLevel) &&
+      sessionUser?.userType === "support"
+    ) {
+      doc = await Space.findOne({ _id: req.params.id });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "space-not-found",
+          message: "Space not found",
+        });
+        return;
+      }
+      const newDump = new Dump({
+        collection: "spaces",
+        data: { ...body, isActive: undefined },
+        user: sessionUser,
       });
-      return;
+      try {
+        await newDump.save();
+      } catch (err) {
+        ResponseHandler.handleError(res, {
+          errorType: "update-space-dump-failure",
+          message: "Failed to dump-update space details",
+        });
+        return;
+      }
+    } else {
+      doc = await Space.findOneAndUpdate({ _id: req.params.id }, body, {
+        new: true,
+      });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "space-not-found",
+          message: "Space not found",
+        });
+        return;
+      }
     }
 
     const data = convertDataToJSON(doc);
