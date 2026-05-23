@@ -191,7 +191,7 @@ export const updateOperator = async (
       }
       const newDump = new Dump({
         collection: "operators",
-        data: { ...body, isActive: undefined },
+        data: { ...body, isActive: undefined, id: req.params.id },
         action: "update",
         user: sessionUser,
       });

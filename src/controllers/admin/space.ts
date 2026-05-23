@@ -213,7 +213,7 @@ export const updateSpace = async (
       }
       const newDump = new Dump({
         collection: "spaces",
-        data: { ...body, isActive: undefined },
+        data: { ...body, isActive: undefined, id: req.params.id },
         action: "update",
         user: sessionUser,
       });
