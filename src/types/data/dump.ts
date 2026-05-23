@@ -7,6 +7,7 @@ import type { AdminLevel } from "@/utils/data/admin";
 export type RawDump<T extends any = any> = {
   collection: (typeof dumpCollectionNames)[keyof typeof dumpCollectionNames];
   action: (typeof dumpActions)[keyof typeof dumpActions];
+  metadata: { id: string; name?: string };
   data: T;
   user: {
     id: string;

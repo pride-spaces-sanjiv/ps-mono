@@ -77,6 +77,22 @@ export const updateDump = APIBodyValidationWrapper({
   },
 });
 
+// 🔹 Approve
+export const approveDump = APIBodyValidationWrapper({
+  schema: adminSchema.omit({ password: true }).partial(),
+  handle: async (param, config) => {
+    const url = `/approve/${param?.url}`;
+
+    const res = await ADMIN_DUMP.put<GeneralResponseWithError<Dump>>(
+      url,
+      param?.body,
+      config,
+    );
+
+    return res;
+  },
+});
+
 // 🔹 Delete
 export const deleteDump = APIBodyValidationWrapper({
   handle: async (param, config) => {
