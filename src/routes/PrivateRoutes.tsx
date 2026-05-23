@@ -32,6 +32,8 @@ const OperatorCreate = lazy(() => import("@/pages/operators/operator-create"));
 const OperatorEditPage = lazy(
   () => import("@/pages/operators/operator-edit-page"),
 );
+// Notifications
+const NotificationsPage = lazy(() => import("@/pages/notifications"));
 // Amenity
 const Amenities = lazy(() => import("@/pages/amenities"));
 const CreateAmenity = lazy(() => import("@/pages/amenities/create"));
@@ -134,6 +136,15 @@ const PrivateRoutes = () => {
         />
         <Route path="/operators/:id" element={<OperatorEditPage />} />
         <Route path="/operators/new" element={<OperatorCreate />} />
+        {/* Notifications */}
+        <Route
+          path="/notifications"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<NotificationsPage />} />
+            </SuspensedView>
+          }
+        />
         {/* Amenities */}
         <Route
           path="/amenities"

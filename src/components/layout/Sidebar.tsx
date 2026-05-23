@@ -61,8 +61,8 @@ const items = [
     icon: HardDriveIcon,
   },
   {
-    title: "Notfication",
-    url: "/notfication",
+    title: "Notifications",
+    url: "/notifications",
     icon: BellIcon,
   },
   {
