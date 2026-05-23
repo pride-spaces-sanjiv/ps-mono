@@ -6,7 +6,7 @@ import {
 } from "@/utils/mongoose/fields.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 import { userTypes } from "@/utils/data/userTypes.js";
-import { dumpCollectionNames } from "@/utils/data/dump.js";
+import { dumpActions, dumpCollectionNames } from "@/utils/data/dump.js";
 import { User } from "@/database/models/user.js";
 import { adminLevels } from "@/utils/data/admin.js";
 
@@ -38,6 +38,11 @@ const DumpSchema = new Conn.Schema(
     collection: {
       type: String,
       enum: Object.values(dumpCollectionNames),
+      required: true,
+    },
+    action: {
+      type: String,
+      enum: Object.values(dumpActions),
       required: true,
     },
     data: { type: Schema.Types.Mixed },
