@@ -1,4 +1,5 @@
 import type { BranchSchema } from "@/utils/schemas/operators";
+import { toast } from "sonner";
 
 export const setSinglePrimaryBranch = (
   branches: BranchSchema[],
@@ -26,4 +27,25 @@ export const setSinglePrimaryBranch = (
         isPrimary: i === self.length - 1,
       }))
     : modifiedBranches;
+};
+
+export const notifyPrimarySingleBranch = (
+  branches: BranchSchema[],
+  branch: BranchSchema,
+) => {
+  // There is only one branch
+  if (!branch.isPrimary && branches.length === 1) {
+    toast.warning("Single Branches are by default primary");
+    return;
+  }
+  // None is primary branch
+  if (
+    branch &&
+    branches.length >= 1 &&
+    branches.every((b) => !b.isPrimary) &&
+    !branch.isPrimary
+  ) {
+    toast.warning("Atleast one branch should be primary");
+    return;
+  }
 };
