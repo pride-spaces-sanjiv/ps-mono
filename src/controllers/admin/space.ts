@@ -182,8 +182,8 @@ export const createSpace = async (
       return;
     }
     ResponseHandler.handleError(res, {
-      errorType: "create-user-error-failure",
-      message: "Failed to create user",
+      errorType: "create-space-error-failure",
+      message: "Failed to create space",
     });
   }
 };
@@ -213,6 +213,7 @@ export const updateSpace = async (
       }
       const newDump = new Dump({
         collection: "spaces",
+        metadata: { id: req.params.id, name: doc.name },
         data: { ...body, isActive: undefined, id: req.params.id },
         action: "update",
         user: sessionUser,

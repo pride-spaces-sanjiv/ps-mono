@@ -11,6 +11,7 @@ import {
   approveDump,
 } from "@/controllers/general/dump.js";
 import { getIdSchema } from "@/database/schemas/string.js";
+import { adminLevels } from "@/utils/data/admin.js";
 
 const router = Router();
 
@@ -43,6 +44,9 @@ router.put(
 router.get(
   "/approve/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  allowAdminLevelsToPass({
+    allowedLevels: adminLevels.filter((lv) => lv !== "support"),
+  }),
   approveDump,
 );
 

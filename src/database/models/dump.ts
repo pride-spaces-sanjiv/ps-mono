@@ -45,6 +45,7 @@ const DumpSchema = new Conn.Schema(
       enum: Object.values(dumpActions),
       required: true,
     },
+    metadata: { id: { type: String, required: true }, name: String },
     data: { type: Schema.Types.Mixed },
     user: { type: UserSchema, required: true },
   },
