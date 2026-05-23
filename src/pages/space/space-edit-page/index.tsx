@@ -780,7 +780,7 @@ const SpaceEditPage = () => {
                     loading={updateLoading}
                     className="max-w-fit"
                   >
-                    Delete Centre
+                    Move to bin
                   </ActionButton>
                 ),
               }}
@@ -790,7 +790,7 @@ const SpaceEditPage = () => {
                   "Are you sure to delete this centre ? You cannot undo this action.",
               }}
             >
-              <ActionButton variant={"destructive"}>Delete Centre</ActionButton>
+              <ActionButton variant={"destructive"}>Move to bin</ActionButton>
             </DialogModal>
           </div>
         </form>
