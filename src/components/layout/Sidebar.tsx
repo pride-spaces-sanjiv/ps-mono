@@ -18,7 +18,6 @@ import {
   BellIcon,
   BuildingIcon,
   GlobeIcon,
-  HardDriveIcon,
   Home,
   LogOutIcon,
   Settings,
@@ -54,11 +53,6 @@ const items = [
     title: "Amenities",
     url: "/amenities",
     icon: LogOutIcon,
-  },
-  {
-    title: "Migrate Offices",
-    url: "/migration",
-    icon: HardDriveIcon,
   },
   {
     title: "Notifications",

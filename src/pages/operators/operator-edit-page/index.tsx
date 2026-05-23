@@ -441,7 +441,7 @@ const OperatorEditPage = () => {
                   loading={updateLoading}
                   className="max-w-fit"
                 >
-                  Delete Operator
+                  Move to bin
                 </ActionButton>
               ),
             }}
@@ -451,7 +451,7 @@ const OperatorEditPage = () => {
                 "Are you sure to delete this operator ? You cannot undo this action.",
             }}
           >
-            <ActionButton variant={"destructive"}>Delete Operator</ActionButton>
+            <ActionButton variant={"destructive"}>Move to bin</ActionButton>
           </DialogModal>
         </div>
       </div>
