@@ -192,6 +192,7 @@ export const updateOperator = async (
       const newDump = new Dump({
         collection: "operators",
         data: { ...body, isActive: undefined },
+        action: "update",
         user: sessionUser,
       });
       try {

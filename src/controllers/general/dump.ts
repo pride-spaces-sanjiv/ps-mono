@@ -29,6 +29,9 @@ export const getDumps = async (
     const searchFilters = getSearchFilters<typeof Dump>(req, {
       fieldMaps: {
         Collection: "collection",
+        UsersName: "user.name",
+        UsersEmail: "user.email",
+        Action: "action",
       },
     });
 
