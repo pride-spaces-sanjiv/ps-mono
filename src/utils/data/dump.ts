@@ -1,4 +1,4 @@
 export const dumpCollectionNames = {
-  space: "spaces",
-  operator: "operators",
+  SPACE: "spaces",
+  OPERATOR: "operators",
 } as const;
