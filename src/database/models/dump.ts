@@ -24,7 +24,7 @@ const UserSchema = new Conn.Schema(
     id: { type: String, required: true },
     name: String,
     email: String,
-    level: {
+    userType: {
       type: String,
       enum: adminLevels,
       required: true,
