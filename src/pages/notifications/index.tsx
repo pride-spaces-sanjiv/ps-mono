@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import NotificationList from "@/components/notifications/list";
 import ActionButton from "@/components/buttons/action-btn";
+import { useState } from "react";
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
+  const [now, setNow] = useState(Date.now());
 
   return (
     <div className="admin-page-shell">
@@ -12,13 +14,14 @@ export default function NotificationsPage() {
         <ActionButton
           variant="secondary"
           onClick={() => {
-            navigate("/notifications");
+            // navigate("/notifications");
+            setNow(Date.now());
           }}
         >
           Refresh
         </ActionButton>
       </div>
-      <NotificationList />
+      <NotificationList key={`${now}`} />
     </div>
   );
 }

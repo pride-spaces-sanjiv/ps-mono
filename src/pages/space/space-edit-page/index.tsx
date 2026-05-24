@@ -27,6 +27,7 @@ import type { Operator } from "@/types/data/operators";
 import type { Dump } from "@/types/data/dump";
 import type { Space } from "@/types/data/spaces";
 import { compareFields } from "@/utils/object/compare";
+import { deleteDump } from "@/services/apis/admin/dump";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -42,6 +43,11 @@ const SpaceEditPage = () => {
       | { from?: string; data?: Dump<Space> };
     return state || {};
   }, [location.state]);
+
+  const isDump = useMemo(
+    () => fromRoute === "notifications" && !!locData,
+    [fromRoute, locData],
+  );
 
   const { amenitiesData } = useAmenities();
 
@@ -172,6 +178,12 @@ const SpaceEditPage = () => {
     mutationFn: updateSpace,
   });
 
+  const { mutateAsync: approvalMutater, isPending: approvalPending } =
+    useMutation({
+      mutationKey: [queryKeys.DUMPS, id, "delete"],
+      mutationFn: deleteDump,
+    });
+
   const onSubmit = async (body: SpaceSchema) => {
     try {
       console.log("Space edit body", body);
@@ -180,9 +192,17 @@ const SpaceEditPage = () => {
         url: id,
         body,
       });
+
+      if (isDump) {
+        const dumpRes = await approvalMutater({ url: locData?.id });
+        if (dumpRes.status !== 200) {
+          throw new Error("Dump approval failed");
+        }
+      }
+
       if (res.status === 200) {
-        toast.success("Space updated successfully");
-        navigate("/spaces");
+        toast.success(`Centre ${isDump ? "approved" : "updated"} successfully`);
+        navigate(isDump ? "/notifications" : "/spaces");
         return;
       }
       throw new Error("Invalid response");
@@ -859,7 +879,7 @@ const SpaceEditPage = () => {
           <div className="col-span-full flex justify-end">
             <ActionButton
               type="submit"
-              loading={updateLoading}
+              loading={updateLoading || approvalPending}
               className="max-w-fit"
             >
               {fromRoute === "notifications" && locData
