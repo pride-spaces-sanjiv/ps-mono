@@ -9,6 +9,7 @@ import {
   createDump,
   updateDump,
   approveDump,
+  deleteDump,
 } from "@/controllers/general/dump.js";
 import { getIdSchema } from "@/database/schemas/string.js";
 import { adminLevels } from "@/utils/data/admin.js";
@@ -40,6 +41,14 @@ router.put(
     extractOnlyRequiredFields: true,
   }),
   updateDump,
+);
+router.delete(
+  "/:id",
+  RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  allowAdminLevelsToPass({
+    allowedLevels: adminLevels.filter((lv) => lv !== "support"),
+  }),
+  deleteDump,
 );
 router.get(
   "/approve/:id",

@@ -269,3 +269,31 @@ export const approveDump = async (
     });
   }
 };
+
+export const deleteDump = async (
+  req: ManagedRequest<any, { [k: string]: any }>,
+  res: ManagedResponse,
+) => {
+  try {
+    const doc = await Dump.findOneAndDelete({ _id: req.params.id });
+
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "dump-not-found",
+        message: "Dump not found",
+      });
+      return;
+    }
+
+    const data = convertDataToJSON(doc);
+    ResponseHandler.handleSuccess(res, {
+      message: "Deleted dump successfully",
+      data: data,
+    });
+  } catch (err) {
+    ResponseHandler.handleError(res, {
+      errorType: "delete-dump-error-failure",
+      message: "Failed to delete dump",
+    });
+  }
+};
