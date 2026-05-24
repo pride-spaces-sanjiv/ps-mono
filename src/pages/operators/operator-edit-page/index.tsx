@@ -20,6 +20,7 @@ import {
   setSinglePrimaryBranch,
   notifyPrimarySingleBranch,
 } from "@/utils/data/branches";
+import { compareFields } from "@/utils/object/compare";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
@@ -58,6 +59,22 @@ const OperatorEditPage = () => {
 
   console.log("operator data", res?.data);
 
+  // Get added or changed fields
+  const {
+    changedFields,
+    changedData,
+    newFields,
+    newData,
+    allFields: allUpdatedFields,
+    allData: allUpdatedData,
+  } = useMemo(() => {
+    const comparedRes = compareFields(res?.data?.data, locData?.data, {
+      excludeFields: ["id", "totalSpaces", "createdAt", "updatedAt"],
+    });
+    return comparedRes;
+  }, [res?.data, locData?.data]);
+  console.log("Changed operator data :", allUpdatedFields, allUpdatedData);
+
   const {
     register,
     handleSubmit,
@@ -71,7 +88,7 @@ const OperatorEditPage = () => {
 
   useEffect(() => {
     if (res?.data.data) {
-      const operatorData = res.data.data;
+      const operatorData = { ...res.data.data, ...allUpdatedData };
       const mergedBranches = operatorData.branches?.map((branch) => ({
         ...branch,
         person: {
@@ -87,7 +104,7 @@ const OperatorEditPage = () => {
         branches: mergedBranches,
       });
     }
-  }, [res, reset]);
+  }, [res, reset, allUpdatedData]);
 
   const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationKey: [queryKeys.OPERATORS, id],
@@ -333,6 +350,13 @@ const OperatorEditPage = () => {
             <MultiStateCard
               // @ts-ignore
               branches={watch("branches", []) || []}
+              changedBranches={
+                allUpdatedData?.branches
+                  ? Object.fromEntries(
+                      allUpdatedData.branches.map((br) => [br.code, br]),
+                    )
+                  : {}
+              }
               onEdit={(branch, i) => {
                 const branches = (watch("branches", []) ||
                   []) as BranchSchema[];

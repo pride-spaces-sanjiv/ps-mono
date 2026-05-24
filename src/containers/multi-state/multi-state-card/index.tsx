@@ -18,8 +18,9 @@ import { Badge } from "@/components/ui/badge";
 
 type MultiStateCardProps = {
   branches: Array<BranchSchema | MultiStateItem>;
-  onEdit: (branch: BranchSchema | MultiStateItem, i: number) => void;
-  onDelete: (branch: BranchSchema | MultiStateItem, i: number) => void;
+  changedBranches?: Record<string, BranchSchema | MultiStateItem>;
+  onEdit?: (branch: BranchSchema | MultiStateItem, i: number) => void;
+  onDelete?: (branch: BranchSchema | MultiStateItem, i: number) => void;
 };
 
 type RenderBranch = {
@@ -42,7 +43,9 @@ const isMultiStateItem = (
   branch: BranchSchema | MultiStateItem,
 ): branch is MultiStateItem => "state" in branch && !("code" in branch);
 
-const normalizeBranch = (branch: BranchSchema | MultiStateItem): RenderBranch => ({
+const normalizeBranch = (
+  branch: BranchSchema | MultiStateItem,
+): RenderBranch => ({
   id: isMultiStateItem(branch) ? branch.id : branch.code,
   code: isMultiStateItem(branch) ? branch.state : branch.code,
   name: isMultiStateItem(branch) ? branch.state : branch.name,
@@ -50,16 +53,12 @@ const normalizeBranch = (branch: BranchSchema | MultiStateItem): RenderBranch =>
   city: branch.city,
   postalCode: isMultiStateItem(branch) ? "" : branch.postalCode,
   gstNo: branch.gstNo ?? "",
-  isPrimary: isMultiStateItem(branch) ? false : branch.isPrimary ?? false,
-  hqPocName: isMultiStateItem(branch)
-    ? branch.hqPocName
-    : branch.person?.name,
+  isPrimary: isMultiStateItem(branch) ? false : (branch.isPrimary ?? false),
+  hqPocName: isMultiStateItem(branch) ? branch.hqPocName : branch.person?.name,
   hqPocEmail: isMultiStateItem(branch)
     ? branch.hqPocEmail
     : branch.person?.email,
-  hqPocMobile: isMultiStateItem(branch)
-    ? undefined
-    : branch.person?.contactNo,
+  hqPocMobile: isMultiStateItem(branch) ? undefined : branch.person?.contactNo,
   designation: isMultiStateItem(branch)
     ? branch.designation
     : branch.person?.role,
@@ -68,6 +67,7 @@ const normalizeBranch = (branch: BranchSchema | MultiStateItem): RenderBranch =>
 
 export function MultiStateCard({
   branches,
+  changedBranches,
   onEdit,
   onDelete,
 }: MultiStateCardProps) {
@@ -168,22 +168,26 @@ export function MultiStateCard({
                       </p>
                       {item.hqPocName && (
                         <p className="text-sm">
-                          <span className="font-medium">Name:</span> {item.hqPocName}
+                          <span className="font-medium">Name:</span>{" "}
+                          {item.hqPocName}
                         </p>
                       )}
                       {item.hqPocEmail && (
                         <p className="text-sm">
-                          <span className="font-medium">Email:</span> {item.hqPocEmail}
+                          <span className="font-medium">Email:</span>{" "}
+                          {item.hqPocEmail}
                         </p>
                       )}
                       {item.hqPocMobile && (
                         <p className="text-sm">
-                          <span className="font-medium">Mobile:</span> {item.hqPocMobile}
+                          <span className="font-medium">Mobile:</span>{" "}
+                          {item.hqPocMobile}
                         </p>
                       )}
                       {item.designation && (
                         <p className="text-sm">
-                          <span className="font-medium">Designation:</span> {item.designation}
+                          <span className="font-medium">Designation:</span>{" "}
+                          {item.designation}
                         </p>
                       )}
                     </div>
@@ -202,7 +206,9 @@ export function MultiStateCard({
                         </ActionButton>
                       }
                       open={isEditing}
-                      onOpenChange={(open) => setActiveEditIndex(open ? i : null)}
+                      onOpenChange={(open) =>
+                        setActiveEditIndex(open ? i : null)
+                      }
                       editingState={original}
                       onSave={(data) => {
                         onEdit?.(data, i);
@@ -212,8 +218,11 @@ export function MultiStateCard({
                   ) : (
                     <OperatorMultiStateDialog
                       open={isEditing}
-                      onOpenChange={(open) => setActiveEditIndex(open ? i : null)}
+                      onOpenChange={(open) =>
+                        setActiveEditIndex(open ? i : null)
+                      }
                       defaultData={original}
+                      updatedData={changedBranches?.[item.code]}
                       dialogModalProps={{
                         triggerProps: {
                           children: (
@@ -236,7 +245,7 @@ export function MultiStateCard({
                   <Button
                     variant="destructive"
                     type="button"
-                    onClick={() => onDelete(item.original, i)}
+                    onClick={() => onDelete?.(item.original, i)}
                   >
                     <Trash2 className="size-4" />
                     Delete

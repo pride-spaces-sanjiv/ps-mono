@@ -59,11 +59,11 @@ export default function NotificationCard({
 
   const handleView = () => {
     if (collection === "operators")
-      navigate(`/operators/${id}`, {
+      navigate(`/operators/${metadata?.id}`, {
         state: { from: "notifications", data: notification },
       });
     else
-      navigate(`/spaces/${id}`, {
+      navigate(`/spaces/${metadata?.id}`, {
         state: { from: "notifications", data: notification },
       });
   };

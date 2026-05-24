@@ -12,6 +12,7 @@ import { DialogModal } from "@/components/dialog";
 import { GroupedSearchSelect } from "@/components/search-select";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import { compareFields } from "@/utils/object/compare";
 
 type Props = {
   dialogModalProps: React.ComponentProps<typeof DialogModal>;
@@ -20,6 +21,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultData: BranchSchema;
+  updatedData: Partial<BranchSchema>;
   hideTrigger: boolean;
   isEditing: boolean;
   /**
@@ -35,6 +37,7 @@ export default function MultiState({
   open,
   onOpenChange,
   defaultData,
+  updatedData,
   hideTrigger,
   isEditing = false,
   disAllowedStates = [],
@@ -63,11 +66,25 @@ export default function MultiState({
     return citiesData.filter((city) => city.state === formData.code);
   }, [formData.code, citiesData]);
 
+  const { allFields, allData } = useMemo(() => {
+    return compareFields(defaultData, updatedData);
+  }, [defaultData, updatedData]);
+  const { allFields: allPersonFields, allData: allPersonData } = useMemo(() => {
+    return compareFields(defaultData?.person, updatedData?.person);
+  }, [defaultData, updatedData]);
+  console.log(
+    "Changed operator branch data :",
+    allFields,
+    allData,
+    allPersonFields,
+    allPersonData,
+  );
+
   useEffect(() => {
     if (open && defaultData) {
-      reset(defaultData);
+      reset({ ...defaultData, ...updatedData });
     }
-  }, [open, defaultData, reset]);
+  }, [open, defaultData, updatedData, reset]);
 
   // Reset city on state change
   useEffect(() => {
@@ -293,7 +310,9 @@ export default function MultiState({
           type="tel"
           inputMode="tel"
           inputType="phone"
-          value={watch("person.contactNo") || defaultValues?.person?.contactNo || ""}
+          value={
+            watch("person.contactNo") || defaultValues?.person?.contactNo || ""
+          }
           defaultValue={defaultValues?.person?.contactNo}
           placeholder="+1-123-456-7890"
           onChange={(val) => {
