@@ -26,9 +26,7 @@ export default function NotificationList() {
 
   const { mutateAsync: deleteMutater } = useMutation({
     mutationFn: (id: string) => deleteDump({ query: { id } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKeys.DUMPS] });
-    },
+    mutationKey: [queryKeys.DUMPS, "delete"],
   });
 
   const handleDelete = async (id: string) => {
@@ -37,6 +35,7 @@ export default function NotificationList() {
       const res = await deleteMutater(id);
 
       if (res.status === 200) {
+        queryClient.invalidateQueries({ queryKey: [queryKeys.DUMPS] });
         toast.success("Notification deleted");
         return;
       }
