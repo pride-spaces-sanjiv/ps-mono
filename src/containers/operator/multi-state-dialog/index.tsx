@@ -13,6 +13,7 @@ import { GroupedSearchSelect } from "@/components/search-select";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 import { compareFields } from "@/utils/object/compare";
+import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 
 type Props = {
   dialogModalProps: React.ComponentProps<typeof DialogModal>;
@@ -66,6 +67,7 @@ export default function MultiState({
     return citiesData.filter((city) => city.state === formData.code);
   }, [formData.code, citiesData]);
 
+  // Get compared data for new/updated fields
   const { allFields, allData } = useMemo(() => {
     return compareFields(defaultData, updatedData);
   }, [defaultData, updatedData]);
@@ -175,6 +177,9 @@ export default function MultiState({
           //   },
           // }}
           error={errors?.name || errors?.code}
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allData, "code"),
+          }}
         >
           <GroupedSearchSelect
             items={statesData
@@ -212,6 +217,9 @@ export default function MultiState({
           label="City"
           labelPosition="embedded"
           error={errors?.city}
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allData, "city"),
+          }}
         >
           <GroupedSearchSelect
             items={stateOnlyCities
@@ -252,6 +260,9 @@ export default function MultiState({
           label="Zip/Postal Code"
           placeholder="450192"
           labelPosition="embedded"
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allData, "postalCode"),
+          }}
           {...register("postalCode")}
           error={errors.postalCode}
         />
@@ -260,6 +271,9 @@ export default function MultiState({
           label="GST Number"
           labelPosition="embedded"
           placeholder="Enter GST Number"
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allData, "gstNo"),
+          }}
           {...register("gstNo")}
           error={errors?.gstNo}
         />
@@ -270,6 +284,9 @@ export default function MultiState({
           labelPosition="embedded"
           inputType="textarea"
           wrapperProps={{ className: "sm:col-span-2" }}
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allData, "address"),
+          }}
           {...register("address")}
           error={errors.address}
         />
@@ -278,6 +295,9 @@ export default function MultiState({
           label="POC Name"
           labelPosition="embedded"
           {...register("person.name")}
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allPersonData, "name"),
+          }}
           error={errors.person?.name}
           defaultValue={defaultValues?.person?.name}
           placeholder="John Doe"
@@ -287,6 +307,9 @@ export default function MultiState({
           label="Designation"
           labelPosition="embedded"
           {...register("person.role")}
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allPersonData, "role"),
+          }}
           error={errors.person?.role}
           defaultValue={defaultValues?.person?.role}
           placeholder="Manager"
@@ -297,6 +320,9 @@ export default function MultiState({
           labelPosition="embedded"
           type="email"
           {...register("person.email")}
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allPersonData, "email"),
+          }}
           error={errors.person?.email}
           defaultValue={defaultValues?.person?.email}
           placeholder="john.doe@example.com"
@@ -307,6 +333,9 @@ export default function MultiState({
           labelPosition="embedded"
           error={errors.person?.contactNo}
           key={`hq-poc-phone-${defaultValues?.person?.contactNo}`}
+          embeddedWrapperProps={{
+            className: highlightFieldClassName(allPersonData, "contactNo"),
+          }}
           type="tel"
           inputMode="tel"
           inputType="phone"
