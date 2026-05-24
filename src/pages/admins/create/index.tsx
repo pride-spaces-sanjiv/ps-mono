@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useUser } from "@/services/hooks/use-user";
 import { adminSchema, type AdminSchema } from "@/utils/schemas/user";
 import { createAdmin } from "@/services/apis/admin/admins";
-import { getAdminLowerLevels } from "@/utils/data/admin";
+import { getAdminLabel, getAdminLowerLevels } from "@/utils/data/admin";
 import { generatePassword } from "@/utils/string/password";
 import { queryKeys } from "@/utils/query-keys";
 import FormSectionTitle from "@/components/form/section/title";
@@ -134,8 +134,8 @@ const AdminCreatePage = () => {
             labelPosition="embedded"
             inputType="select"
             defaultValue={defaultValues?.level}
-            items={levels.map((s) => ({
-              label: s[0].toUpperCase() + s.slice(1).toLowerCase(),
+            items={levels.map((s, i) => ({
+              label: getAdminLabel(s),
               value: s,
             }))}
             pickerProps={{

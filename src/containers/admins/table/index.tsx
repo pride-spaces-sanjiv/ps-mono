@@ -40,6 +40,7 @@ import { datifyObjectValues } from "@/utils/object/datify";
 import { cn } from "@/utils/className";
 import { dashToUpperCased } from "@/utils/string/dashed";
 import { formatOpenDays } from "@/utils/data/days";
+import { getAdminLabel, type AdminLevel } from "@/utils/data/admin";
 import { queryKeys } from "@/utils/query-keys";
 import {
   DropdownMenu,
@@ -52,6 +53,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SelectPicker } from "@/components/select";
 import type { Admin } from "@/types/data/user";
+import TablePaginationFooter from "@/components/table/pagination";
 
 type Props = {
   id: string | null;
@@ -99,8 +101,10 @@ const AdminsTable = ({
     isFetching,
     page,
     setPage,
+    limit,
+    setLimit,
   } = usePaginatedQuery({
-    limit: 10,
+    limit: 20,
     queryKey: [
       queryKeys.OPERATORS,
       debouncedSearch.field,
@@ -194,36 +198,8 @@ const AdminsTable = ({
           );
         },
         cell: ({ row }) => (
-          <div>{dashToUpperCased(row.original.level || "", " ") || "-"}</div>
+          <div>{getAdminLabel(row.original.level as AdminLevel) || "-"}</div>
         ),
-      },
-      {
-        id: "actions",
-        enableHiding: false,
-        cell: ({ row }) => {
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={() => navigate(`/team/${row.original.id}`)}
-                >
-                  Show details
-                </DropdownMenuItem>
-                {/* <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  Delete Operator
-                </DropdownMenuItem> */}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        },
       },
     ],
     [navigate],
@@ -366,7 +342,11 @@ const AdminsTable = ({
                 ))
             ) : table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer"
+                  onDoubleClick={() => navigate(`/team/${row.original?.id}`)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -390,43 +370,14 @@ const AdminsTable = ({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        {/* <div className="text-muted-foreground text-sm">
-                {table.getFilteredSelectedRowModel().rows?.length} of{" "}
-                {Math.min(table.getFilteredRowModel().rows?.length)} row(s) selected.
-              </div> */}
-        <p className="text-lg font-medium">Page : {page + 1}</p>
-        {!!pagination && (
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!table.getCanPreviousPage()}
-              {...prevButtonProps}
-              className={cn("", prevButtonProps?.className)}
-              onClick={(e) => {
-                table.previousPage();
-                prevButtonProps?.onClick?.(e);
-              }}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!table.getCanNextPage()}
-              {...nextButtonProps}
-              className={cn("", nextButtonProps?.className)}
-              onClick={(e) => {
-                table.nextPage();
-                nextButtonProps?.onClick?.(e);
-              }}
-            >
-              Next
-            </Button>
-          </div>
-        )}
-      </div>
+      <TablePaginationFooter
+        table={table}
+        page={page}
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
+        loading={isFetching}
+      />
     </div>
   );
 };

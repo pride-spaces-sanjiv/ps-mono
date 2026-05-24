@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -11,56 +11,72 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MousePointerClick, Trash2 } from "lucide-react";
 import { cn } from "@/utils/className";
-
-export type NotificationType = "operator" | "centre";
-export type NotificationAction = "add" | "delete" | "update";
-
-export type Notification = {
-  id: string;
-  type: NotificationType;
-  action: NotificationAction;
-  entityId: string;
-  entityName: string;
-  operatorName?: string;
-  timestamp: string; // ISO string
-  details?: string;
-  read?: boolean;
-};
+import type { DumpAction, DumpCollectionName } from "@/utils/data/dump";
+import type { Dump } from "@/types/data/dump";
+import { datifyObjectValues } from "@/utils/object/datify";
+import moment from "moment";
+import type { Operator } from "@/types/data/operators";
+import type { Space } from "@/types/data/spaces";
 
 export default function NotificationCard({
   notification,
   onDelete,
+  isDeleting = false,
 }: {
-  notification: Notification;
+  notification: Dump<Operator | Space>;
   onDelete?: (id: string) => void;
+  isDeleting?: boolean;
 }) {
   const navigate = useNavigate();
 
-  const { type, action, entityName, operatorName, entityId, timestamp, read } =
-    notification;
+  const { collection, action, createdAt, updatedAt, data, id, metadata } =
+    datifyObjectValues(notification, ["createdAt", "updatedAt"]) || {};
 
-  const statusText =
-    action === "add" ? "Created" : action === "delete" ? "Removed" : "Updated";
+  const statusText = useMemo(
+    () =>
+      action === "add"
+        ? "Created"
+        : action === "remove"
+          ? "Removed"
+          : "Updated",
+    [action],
+  );
 
-  const entityTypeLabel = type === "operator" ? "Operator" : "Centre";
-  const title = `${entityTypeLabel}: ${entityName}`;
-  const formattedTimestamp = new Date(timestamp).toLocaleString();
+  const entityTypeLabel = collection === "operators" ? "Operator" : "Centre";
+  const title = useMemo(
+    () =>
+      // @ts-ignore
+      `${entityTypeLabel}: ${metadata?.name || "N/A"}`,
+    [data, entityTypeLabel, metadata],
+  );
+  const formattedTimestamp = moment(updatedAt || Date.now()).format(
+    "DD MMM YYYY [at] HH:mm A",
+  );
+  const operatorName = "-";
 
-  const entityLabel =
-    type === "operator"
-      ? `Operator: ${entityName}`
-      : `Centre: ${entityName}${operatorName ? ` - Operator: ${operatorName}` : ""}`;
+  // const entityLabel =
+  //   type === "operator"
+  //     ? `Operator: ${entityName}`
+  //     : `Centre: ${entityName}${operatorName ? ` - Operator: ${operatorName}` : ""}`;
 
   const handleView = () => {
-    if (type === "operator") navigate(`/operators/${entityId}`);
-    else navigate(`/spaces/${entityId}`);
+    if (collection === "operators")
+      navigate(`/operators/${metadata?.id}`, {
+        state: { from: "notifications", data: notification },
+      });
+    else
+      navigate(`/spaces/${metadata?.id}`, {
+        state: { from: "notifications", data: notification },
+      });
   };
 
   return (
     <Card
       className={cn(
         "relative overflow-hidden",
-        read ? "border border-border/80" : "border border-primary/20 shadow-lg",
+        action === "add"
+          ? "border border-border/80"
+          : "border border-primary/20 shadow-lg",
         "transition-all duration-200 hover:-translate-y-0.5",
         "py-2 gap-2",
       )}
@@ -70,7 +86,7 @@ export default function NotificationCard({
           "absolute right-[8px] top-[8px] rounded-full border px-3 py-1 text-xs font-medium",
           action === "add" &&
             "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-          action === "delete" &&
+          action === "remove" &&
             "border-destructive/30 bg-destructive/10 text-red-300",
           action === "update" &&
             "border-amber-500/30 bg-amber-500/10 text-amber-300",
@@ -87,13 +103,13 @@ export default function NotificationCard({
             <div
               className={cn(
                 "size-9 rounded-2xl flex items-center justify-center shrink-0",
-                action === "delete"
+                action === "remove"
                   ? "bg-destructive/10 text-destructive"
                   : "bg-primary/10 text-primary",
               )}
             >
               <span className="text-sm font-semibold">
-                {action === "delete" ? "!" : action === "add" ? "+" : "~"}
+                {action === "remove" ? "!" : action === "add" ? "+" : "~"}
               </span>
             </div>
 
@@ -108,7 +124,7 @@ export default function NotificationCard({
 
               {/* META */}
               <span className="text-[11px] text-muted-foreground">
-                {type === "centre" && operatorName
+                {collection === "spaces" && operatorName
                   ? `Operator: ${operatorName} - Edited: ${formattedTimestamp}`
                   : `Edited: ${formattedTimestamp}`}
               </span>
@@ -120,14 +136,13 @@ export default function NotificationCard({
       {/* DESCRIPTION */}
       <CardContent className="px-4 pb-1 pt-0">
         <p className="text-xs leading-snug text-muted-foreground">
-          {notification.details ??
-            `${entityLabel} ${
-              action === "add"
-                ? "was added"
-                : action === "delete"
-                  ? "was deleted"
-                  : "was updated"
-            }`}
+          {`${title} ${
+            action === "add"
+              ? "was added"
+              : action === "remove"
+                ? "was deleted"
+                : "was updated"
+          }`}
         </p>
       </CardContent>
 
@@ -149,6 +164,7 @@ export default function NotificationCard({
               size="sm"
               variant="destructive"
               onClick={() => onDelete?.(notification.id)}
+              disabled={isDeleting}
               aria-label="Delete notification"
             >
               <Trash2 className="w-4 h-4" />

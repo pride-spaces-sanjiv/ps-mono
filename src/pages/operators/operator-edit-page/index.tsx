@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import {
   setSinglePrimaryBranch,
   notifyPrimarySingleBranch,
 } from "@/utils/data/branches";
+import { compareFields } from "@/utils/object/compare";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
@@ -29,10 +30,28 @@ import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 import type { MultiStateItem } from "@/containers/multi-state/types";
 import FormSectionTitle from "@/components/form/section/title";
+import type { Dump } from "@/types/data/dump";
+import type { Operator } from "@/types/data/operators";
+import { approveDump, deleteDump } from "@/services/apis/admin/dump";
+import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 
 const OperatorEditPage = () => {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const { from: fromRoute, data: locData } = useMemo(() => {
+    const state = location.state as
+      | undefined
+      | null
+      | { from?: string; data?: Dump<Operator> };
+    return state || {};
+  }, [location.state]);
+
+  const isDump = useMemo(
+    () => fromRoute === "notifications" && !!locData,
+    [fromRoute, locData],
+  );
 
   const { statesData, groupedCities, citiesData } = useStatesCities();
   const [states, setStates] = useState<MultiStateItem[]>([]);
@@ -47,6 +66,37 @@ const OperatorEditPage = () => {
 
   console.log("operator data", res?.data);
 
+  // Get added or changed fields
+  const { mainChanges, headQuarterChanges, personChanges } = useMemo(() => {
+    return {
+      mainChanges: compareFields(
+        res?.data?.data,
+        fromRoute === "notifications" ? locData?.data : undefined,
+        {
+          excludeFields: ["id", "totalSpaces", "createdAt", "updatedAt"],
+        },
+      ),
+      headQuarterChanges: compareFields(
+        res?.data?.data?.headquarter,
+        fromRoute === "notifications" ? locData?.data?.headquarter : undefined,
+      ),
+      personChanges: compareFields(
+        res?.data?.data?.person,
+        fromRoute === "notifications" ? locData?.data?.person : undefined,
+      ),
+    };
+  }, [res?.data, locData?.data, fromRoute]);
+
+  const {
+    changedFields,
+    changedData,
+    newFields,
+    newData,
+    allFields: allUpdatedFields,
+    allData: allUpdatedData,
+  } = useMemo(() => mainChanges, [mainChanges]);
+  console.log("Changed operator data :", allUpdatedFields, allUpdatedData);
+
   const {
     register,
     handleSubmit,
@@ -60,7 +110,7 @@ const OperatorEditPage = () => {
 
   useEffect(() => {
     if (res?.data.data) {
-      const operatorData = res.data.data;
+      const operatorData = { ...res.data.data, ...allUpdatedData };
       const mergedBranches = operatorData.branches?.map((branch) => ({
         ...branch,
         person: {
@@ -76,12 +126,18 @@ const OperatorEditPage = () => {
         branches: mergedBranches,
       });
     }
-  }, [res, reset]);
+  }, [res, reset, allUpdatedData]);
 
   const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationKey: [queryKeys.OPERATORS, id],
     mutationFn: updateOperator,
   });
+
+  const { mutateAsync: approvalMutater, isPending: approvalPending } =
+    useMutation({
+      mutationKey: [queryKeys.DUMPS, id, "delete"],
+      mutationFn: deleteDump,
+    });
 
   const { mutateAsync: branchesMutater, isPending: branchesLoading } =
     useMutation({
@@ -97,15 +153,27 @@ const OperatorEditPage = () => {
     try {
       console.log("Operator edit body", body);
 
-      await mutateAsync({
+      const res = await mutateAsync({
         url: id,
         body,
       });
 
-      toast.success("Operator updated successfully");
+      if (isDump) {
+        const dumpRes = await approvalMutater({ url: locData?.id });
+        if (dumpRes.status !== 200) {
+          throw new Error("Dump approval failed");
+        }
+      }
 
-      navigate("/operators");
+      if (res.status === 200) {
+        toast.success(
+          `Operator ${isDump ? "approved" : "updated"} successfully`,
+        );
+        navigate(isDump ? "/notifications" : "/operators");
+      }
+      throw new Error("Invalid response");
     } catch (err) {
+      console.error("Error updating operator:", err);
       toast.error("Failed to update operator");
     }
   };
@@ -113,6 +181,14 @@ const OperatorEditPage = () => {
   const handleBranchesUpdate = async (branches: BranchSchema[]) => {
     try {
       const res = await branchesMutater(branches);
+
+      if (isDump) {
+        const dumpRes = await approvalMutater({ url: locData?.id });
+        if (dumpRes.status !== 200) {
+          throw new Error("Dump approval failed");
+        }
+      }
+
       if (res.status === 200 && res.data?.data?.branches) {
         toast.success("Updated state branches");
         return;
@@ -169,6 +245,9 @@ const OperatorEditPage = () => {
             labelPosition="embedded"
             {...register("name")}
             error={errors.name}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(allUpdatedData, "name"),
+            }}
           />
 
           <FormField
@@ -177,6 +256,9 @@ const OperatorEditPage = () => {
             labelPosition="embedded"
             {...register("brandName")}
             error={errors.brandName}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(allUpdatedData, "brandName"),
+            }}
           />
 
           <FormField
@@ -185,6 +267,9 @@ const OperatorEditPage = () => {
             placeholder="operator-slug"
             {...register("slug")}
             error={errors.slug}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(allUpdatedData, "slug"),
+            }}
           />
 
           <FormField
@@ -200,6 +285,9 @@ const OperatorEditPage = () => {
             placeholder="operator@example.com"
             {...register("email")}
             error={errors.email}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(allUpdatedData, "email"),
+            }}
           />
 
           {/* SECTION: Headquarter Details */}
@@ -211,6 +299,12 @@ const OperatorEditPage = () => {
             {...register("headquarter.address")}
             error={errors.headquarter?.address}
             inputType="textarea"
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(
+                headQuarterChanges.allData,
+                "address",
+              ),
+            }}
           />
 
           <FormField
@@ -223,6 +317,12 @@ const OperatorEditPage = () => {
             inputType="phone"
             defaultValue={defaultValues?.headquarter?.contactNo}
             placeholder="+1-123-456-7890"
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(
+                headQuarterChanges.allData,
+                "contactNo",
+              ),
+            }}
             onChange={(val) => {
               console.log(val);
               setValue("headquarter.contactNo", val?.toString() || "", {
@@ -248,6 +348,9 @@ const OperatorEditPage = () => {
             placeholder="John Doe"
             {...register("person.name")}
             error={errors?.person?.name}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(personChanges.allData, "name"),
+            }}
           />
 
           <FormField
@@ -257,6 +360,12 @@ const OperatorEditPage = () => {
             placeholder="john.doe@example.com"
             {...register("person.email")}
             error={errors?.person?.email}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(
+                personChanges.allData,
+                "email",
+              ),
+            }}
           />
 
           <FormField
@@ -272,6 +381,12 @@ const OperatorEditPage = () => {
               ""
             }
             defaultValue={defaultValues?.person?.contactNo}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(
+                personChanges.allData,
+                "contactNo",
+              ),
+            }}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
               console.log(val);
@@ -288,6 +403,9 @@ const OperatorEditPage = () => {
             labelPosition="embedded"
             {...register("person.role")}
             error={errors?.person?.role}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(personChanges.allData, "role"),
+            }}
           />
 
           {/* SECTION: GST Details */}
@@ -307,6 +425,9 @@ const OperatorEditPage = () => {
             placeholder="Enter GST Number"
             {...register("gstNo")}
             error={errors?.gstNo}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(allUpdatedData, "gstNo"),
+            }}
           />
 
           <FormField
@@ -315,6 +436,9 @@ const OperatorEditPage = () => {
             placeholder="Enter CIN/LLPIN Number"
             {...register("cinNo")}
             error={errors?.cinNo}
+            embeddedWrapperProps={{
+              className: highlightFieldClassName(allUpdatedData, "cinNo"),
+            }}
           />
 
           {/* Multi State Cards */}
@@ -322,6 +446,13 @@ const OperatorEditPage = () => {
             <MultiStateCard
               // @ts-ignore
               branches={watch("branches", []) || []}
+              changedBranches={
+                allUpdatedData?.branches
+                  ? Object.fromEntries(
+                      allUpdatedData.branches.map((br) => [br.code, br]),
+                    )
+                  : {}
+              }
               onEdit={(branch, i) => {
                 const branches = (watch("branches", []) ||
                   []) as BranchSchema[];
@@ -397,64 +528,68 @@ const OperatorEditPage = () => {
             {/* Submit */}
             <ActionButton
               type="submit"
-              loading={updateLoading || branchesLoading}
+              loading={updateLoading || branchesLoading || approvalPending}
               className="px-5 py-5"
             >
-              Update Operator
+              {fromRoute === "notifications" && locData
+                ? "Approve Changes"
+                : "Update Operator"}
             </ActionButton>
           </div>
         </form>
       </div>
 
-      <div className="w-full max-w-6xl mx-auto">
-        <div className="flex justify-between items-center my-2">
-          <h2 className="text-xl font-semibold">
-            Centres under {res?.data?.data?.name || "Operator"}
-          </h2>
-          <ActionButton
-            onClick={() => {
-              navigate("/spaces/new", {
-                state: { operatorData: res?.data?.data },
-              });
-            }}
-          >
-            <div className="flex gap-2 items-center">
-              List Centre
-              <Plus />
-            </div>
-          </ActionButton>
+      {!isDump && (
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="flex justify-between items-center my-2">
+            <h2 className="text-xl font-semibold">
+              Centres under {res?.data?.data?.name || "Operator"}
+            </h2>
+            <ActionButton
+              onClick={() => {
+                navigate("/spaces/new", {
+                  state: { operatorData: res?.data?.data },
+                });
+              }}
+            >
+              <div className="flex gap-2 items-center">
+                List Centre
+                <Plus />
+              </div>
+            </ActionButton>
+          </div>
+
+          {/* Your existing spaces container/table goes here */}
+
+          {/* <SpacesTableContainer operatorId={id} /> */}
+          <SpacesTabledResults operatorId={res?.data?.data?.id} />
+
+          {/* Delete trigger */}
+          <div className="col-span-full flex justify-center pt-4">
+            <DialogModal
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"destructive"}
+                    loading={updateLoading}
+                    className="max-w-fit"
+                  >
+                    Move to bin
+                  </ActionButton>
+                ),
+              }}
+              titleProps={{ children: "Operator Delete Confirmation" }}
+              descriptionProps={{
+                children:
+                  "Are you sure to delete this operator ? You cannot undo this action.",
+              }}
+            >
+              <ActionButton variant={"destructive"}>Move to bin</ActionButton>
+            </DialogModal>
+          </div>
         </div>
-
-        {/* Your existing spaces container/table goes here */}
-
-        {/* <SpacesTableContainer operatorId={id} /> */}
-        <SpacesTabledResults operatorId={res?.data?.data?.id} />
-
-        {/* Delete trigger */}
-        <div className="col-span-full flex justify-center pt-4">
-          <DialogModal
-            triggerProps={{
-              children: (
-                <ActionButton
-                  type="button"
-                  variant={"destructive"}
-                  loading={updateLoading}
-                  className="max-w-fit"
-                >
-                  Move to bin
-                </ActionButton>
-              ),
-            }}
-            titleProps={{ children: "Operator Delete Confirmation" }}
-            descriptionProps={{
-              children:
-                "Are you sure to delete this operator ? You cannot undo this action.",
-            }}
-          >
-            <ActionButton variant={"destructive"}>Move to bin</ActionButton>
-          </DialogModal>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

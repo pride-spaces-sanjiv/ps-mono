@@ -59,11 +59,19 @@ export type BranchSchema = z.infer<typeof branchSchema>;
 
 // 4. Operator
 export const operatorSchema = z.object({
-  name: getNameSchema(),
+  name: getNameSchema({
+    keyName: "Operator Name",
+    alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
   email: getEmailSchema(),
   password: getPasswordSchema(),
   slug: getSlugSchema({ keyName: "Operator Slug" }),
-  brandName: getNameSchema({ keyName: "Brand Name" }),
+  brandName: getNameSchema({
+    keyName: "Brand Name",
+    alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
   gstNo: gstNoSchema,
   cinNo: z
     .string()

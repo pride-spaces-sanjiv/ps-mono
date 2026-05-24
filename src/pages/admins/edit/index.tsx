@@ -21,7 +21,7 @@ import { adminSchema, type AdminSchema } from "@/utils/schemas/user";
 import { datifyObjectValues } from "@/utils/object/datify";
 
 // Data
-import { getAdminLowerLevels } from "@/utils/data/admin";
+import { getAdminLabel, getAdminLowerLevels } from "@/utils/data/admin";
 import { queryKeys } from "@/utils/query-keys";
 
 // Components
@@ -167,7 +167,7 @@ export default function EditAdmin() {
             inputType="select"
             defaultValue={defaultValues?.level}
             items={levels.map((s) => ({
-              label: s[0].toUpperCase() + s.slice(1).toLowerCase(),
+              label: getAdminLabel(s),
               value: s,
             }))}
             pickerProps={{
