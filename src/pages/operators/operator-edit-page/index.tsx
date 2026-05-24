@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -29,10 +29,21 @@ import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 import type { MultiStateItem } from "@/containers/multi-state/types";
 import FormSectionTitle from "@/components/form/section/title";
+import type { Dump } from "@/types/data/dump";
+import type { Operator } from "@/types/data/operators";
 
 const OperatorEditPage = () => {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const { from: fromRoute, data: locData } = useMemo(() => {
+    const state = location.state as
+      | undefined
+      | null
+      | { from?: string; data?: Dump<Operator> };
+    return state || {};
+  }, [location.state]);
 
   const { statesData, groupedCities, citiesData } = useStatesCities();
   const [states, setStates] = useState<MultiStateItem[]>([]);
