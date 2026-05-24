@@ -7,13 +7,15 @@ import {
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 import { userTypes } from "@/utils/data/userTypes.js";
 import { dumpActions, dumpCollectionNames } from "@/utils/data/dump.js";
-import { User } from "@/database/models/user.js";
+// import { User } from "@/database/models/user.js";
 import { adminLevels } from "@/utils/data/admin.js";
 
 export const ApprovalSchema = new Conn.Schema(
   {
+    id: { type: String, required: true },
+    email: { type: String, required: true },
     name: { type: String, required: true },
-    level: { type: String, enum: userTypes, required: true },
+    userType: { type: String, enum: userTypes, required: true },
     lastRequested: { type: Date, required: true },
   },
   { _id: false },

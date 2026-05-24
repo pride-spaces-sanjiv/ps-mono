@@ -248,8 +248,10 @@ export const approveDump = async (
       {
         ...parsed,
         approval: {
+          id: req.session.user?.id,
+          email: req.session.user?.email,
           name: req.session.user?.name,
-          level: req.session.user?.userType,
+          userType: req.session.user?.userType,
           lastRequested: doc.updatedAt,
         },
       },
