@@ -1,13 +1,16 @@
-import React, { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
 import useInfiniteScrollHook from "react-infinite-scroll-hook";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { getDumps } from "@/services/apis/admin/dump";
-import { notifications as staticNotifications } from "@/utils/data/notifications";
+import { deleteDump, getDumps } from "@/services/apis/admin/dump";
 import { queryKeys } from "@/utils/query-keys";
 import NotificationCard from "@/components/notifications/card";
 
 export default function NotificationList() {
+  const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const {
     data: res,
     isFetching,
@@ -20,6 +23,31 @@ export default function NotificationList() {
   });
 
   const dumps = useMemo(() => res?.data?.data?.results || [], [res]);
+
+  const { mutateAsync: deleteMutater } = useMutation({
+    mutationFn: (id: string) => deleteDump({ query: { id } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [queryKeys.DUMPS] });
+    },
+  });
+
+  const handleDelete = async (id: string) => {
+    try {
+      setDeletingId(id);
+      const res = await deleteMutater(id);
+
+      if (res.status === 200) {
+        toast.success("Notification deleted");
+        return;
+      }
+
+      throw new Error("Invalid response");
+    } catch (err) {
+      toast.error("Failed to delete notification");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const [infiniteRef] = useInfiniteScrollHook({
     loading: isFetching,
@@ -42,7 +70,8 @@ export default function NotificationList() {
           <NotificationCard
             key={n.id}
             notification={n}
-            onDelete={() => undefined}
+            onDelete={handleDelete}
+            isDeleting={deletingId === n.id}
           />
         ))
       )}

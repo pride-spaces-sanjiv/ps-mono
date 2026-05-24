@@ -80,6 +80,35 @@ const SpaceEditPage = () => {
   }, [res?.data, locData?.data, fromRoute]);
   console.log("Changed space data :", allUpdatedFields, allUpdatedData);
 
+  const changedFieldProps = (field: string) => {
+    if (fromRoute !== "notifications" || !locData) return {};
+
+    const fieldPath = field.split(".");
+    const rootField = fieldPath[0];
+
+    if (!(allUpdatedFields as string[]).includes(rootField)) return {};
+
+    if (fieldPath.length > 1) {
+      const currentValue = fieldPath.reduce<any>(
+        (value, key) => value?.[key],
+        res?.data?.data,
+      );
+      const updatedValue = fieldPath.reduce<any>(
+        (value, key) => value?.[key],
+        locData?.data,
+      );
+
+      if (currentValue === updatedValue) return {};
+    }
+
+    return {
+      embeddedWrapperProps: {
+        className:
+          "border-amber-400/50 bg-amber-500/10 shadow-[0_0_0_1px_rgba(251,191,36,0.18)]",
+      },
+    };
+  };
+
   // form builder
   const {
     register,
@@ -214,6 +243,7 @@ const SpaceEditPage = () => {
             placeholder="My Centre"
             {...register("name")}
             error={errors.name}
+            {...changedFieldProps("name")}
           />
 
           <FormField
@@ -224,6 +254,7 @@ const SpaceEditPage = () => {
             readOnly
             {...register("slug")}
             error={errors.slug}
+            {...changedFieldProps("slug")}
           />
 
           <FormField
@@ -233,6 +264,7 @@ const SpaceEditPage = () => {
             placeholder="centre@example.com"
             {...register("email")}
             error={errors.email}
+            {...changedFieldProps("email")}
           />
 
           <FormField
@@ -242,6 +274,7 @@ const SpaceEditPage = () => {
             readOnly
             disabled
             error={errors.operator}
+            {...changedFieldProps("operator")}
           />
 
           <FormField
@@ -260,6 +293,7 @@ const SpaceEditPage = () => {
                   }),
               },
             }}
+            {...changedFieldProps("category")}
           />
 
           <FormField
@@ -278,6 +312,7 @@ const SpaceEditPage = () => {
               },
             }}
             error={errors.spaceType}
+            {...changedFieldProps("spaceType")}
           />
 
           <FormField
@@ -296,6 +331,7 @@ const SpaceEditPage = () => {
                   }),
               },
             }}
+            {...changedFieldProps("grade")}
           />
 
           {/* Open Time */}
@@ -317,6 +353,7 @@ const SpaceEditPage = () => {
               });
             }}
             error={errors.openTime}
+            {...changedFieldProps("openTime")}
           />
 
           {/* Close Time */}
@@ -338,6 +375,7 @@ const SpaceEditPage = () => {
               });
             }}
             error={errors.closeTime}
+            {...changedFieldProps("closeTime")}
           />
 
           <FormField
@@ -346,6 +384,7 @@ const SpaceEditPage = () => {
             type="number"
             {...register("totalSeats", { valueAsNumber: true })}
             error={errors.totalSeats}
+            {...changedFieldProps("totalSeats")}
           />
 
           <FormField
@@ -354,6 +393,7 @@ const SpaceEditPage = () => {
             type="number"
             {...register("bookedSeats", { valueAsNumber: true })}
             error={errors.bookedSeats}
+            {...changedFieldProps("bookedSeats")}
           />
 
           {/* Open Days */}
@@ -367,6 +407,7 @@ const SpaceEditPage = () => {
                 message: errors.openDays?.message,
                 type: errors.openDays?.type || "validate",
               }}
+              {...changedFieldProps("openDays")}
             >
               <GroupedSearchSelect
                 key={`days-${defaultValues?.openDays?.length}`}
@@ -425,6 +466,7 @@ const SpaceEditPage = () => {
               labelPosition="embedded"
               error={errors.operationalHrs}
               {...register("operationalHrs")}
+              {...changedFieldProps("operationalHrs")}
             />
           )}
 
@@ -440,6 +482,7 @@ const SpaceEditPage = () => {
                 errors?.facilities?.type ||
                 "validate",
             }}
+            {...changedFieldProps("facilities")}
           >
             <SelectAmenities
               className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
@@ -482,6 +525,7 @@ const SpaceEditPage = () => {
                 errors?.workingSizes?.type ||
                 "validate",
             }}
+            {...changedFieldProps("workingSizes")}
           >
             <GroupedSearchSelect
               key={`working-sizes-${defaultValues?.workingSizes?.length}`}
@@ -535,6 +579,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("area")}
             error={errors.area}
+            {...changedFieldProps("area")}
           />
           <FormField
             label="Training Room"
@@ -544,6 +589,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("trainingRoom")}
             error={errors.trainingRoom}
+            {...changedFieldProps("trainingRoom")}
           />
           <FormField
             label="Meeting Room"
@@ -553,6 +599,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("meetingRoom")}
             error={errors.meetingRoom}
+            {...changedFieldProps("meetingRoom")}
           />
           <FormField
             label="Conference Room"
@@ -562,6 +609,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("conferenceRoom")}
             error={errors.conferenceRoom}
+            {...changedFieldProps("conferenceRoom")}
           />
           <FormField
             label="Description"
@@ -570,6 +618,7 @@ const SpaceEditPage = () => {
             {...register("description")}
             error={errors.description}
             inputType="textarea"
+            {...changedFieldProps("description")}
           />
 
           {/* Pricing Details */}
@@ -583,6 +632,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("pricing.dayPass")}
             error={errors.pricing?.dayPass}
+            {...changedFieldProps("pricing.dayPass")}
           />
           <FormField
             label="Per Seat"
@@ -593,6 +643,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("pricing.perSeat")}
             error={errors.pricing?.perSeat}
+            {...changedFieldProps("pricing.perSeat")}
           />
           <FormField
             label="Dedicated Desk"
@@ -603,6 +654,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("pricing.dedicatedDesk")}
             error={errors.pricing?.dedicatedDesk}
+            {...changedFieldProps("pricing.dedicatedDesk")}
           />
           <FormField
             label="Flexi Desk"
@@ -613,6 +665,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("pricing.flexiDesk")}
             error={errors.pricing?.flexiDesk}
+            {...changedFieldProps("pricing.flexiDesk")}
           />
           <FormField
             label="Private Cabin"
@@ -623,6 +676,7 @@ const SpaceEditPage = () => {
             min={0}
             {...register("pricing.privateCabin")}
             error={errors.pricing?.privateCabin}
+            {...changedFieldProps("pricing.privateCabin")}
           />
 
           {/* Location */}
@@ -634,6 +688,7 @@ const SpaceEditPage = () => {
             placeholder="Mumbai"
             {...register("location.city")}
             error={errors.location?.city}
+            {...changedFieldProps("location.city")}
           />
 
           <FormField
@@ -642,6 +697,7 @@ const SpaceEditPage = () => {
             placeholder="Maharashtra"
             {...register("location.state")}
             error={errors.location?.state}
+            {...changedFieldProps("location.state")}
           />
 
           <FormField
@@ -650,6 +706,7 @@ const SpaceEditPage = () => {
             placeholder="India"
             {...register("location.country")}
             error={errors.location?.country}
+            {...changedFieldProps("location.country")}
           />
 
           <FormField
@@ -658,6 +715,7 @@ const SpaceEditPage = () => {
             placeholder="Panvel"
             {...register("location.area")}
             error={errors.location?.area}
+            {...changedFieldProps("location.area")}
           />
 
           <FormField
@@ -666,6 +724,7 @@ const SpaceEditPage = () => {
             placeholder="349203"
             {...register("location.postalCode")}
             error={errors.location?.postalCode}
+            {...changedFieldProps("location.postalCode")}
           />
 
           <FormField
@@ -675,6 +734,7 @@ const SpaceEditPage = () => {
             step="any"
             {...register("location.lat")}
             error={errors.location?.lat}
+            {...changedFieldProps("location.lat")}
           />
 
           <FormField
@@ -684,6 +744,7 @@ const SpaceEditPage = () => {
             step="any"
             {...register("location.lng")}
             error={errors.location?.lng}
+            {...changedFieldProps("location.lng")}
           />
 
           {/* Maps */}
@@ -714,6 +775,7 @@ const SpaceEditPage = () => {
             inputType="textarea"
             {...register("location.address")}
             error={errors.location?.address}
+            {...changedFieldProps("location.address")}
           />
 
           {/* SECTION: Centre Point of Contact */}
@@ -735,6 +797,7 @@ const SpaceEditPage = () => {
             disabled={POCSameAsOperator}
             {...register("person.name")}
             error={errors?.person?.name}
+            {...changedFieldProps("person.name")}
           />
 
           <FormField
@@ -746,6 +809,7 @@ const SpaceEditPage = () => {
             placeholder="john.doe@example.com"
             {...register("person.email")}
             error={errors?.person?.email}
+            {...changedFieldProps("person.email")}
           />
 
           <FormField
@@ -759,6 +823,7 @@ const SpaceEditPage = () => {
             disabled={POCSameAsOperator}
             defaultValue={defaultValues?.person?.contactNo}
             value={watch("person.contactNo")}
+            {...changedFieldProps("person.contactNo")}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
               console.log("POC contact number:", val);
@@ -777,6 +842,7 @@ const SpaceEditPage = () => {
             disabled={POCSameAsOperator}
             {...register("person.role")}
             error={errors?.person?.role}
+            {...changedFieldProps("person.role")}
           />
 
           {/* Status */}
