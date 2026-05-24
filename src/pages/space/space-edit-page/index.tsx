@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -24,12 +24,24 @@ import MapsField from "@/components/maps";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
 import type { Operator } from "@/types/data/operators";
+import type { Dump } from "@/types/data/dump";
+import type { Space } from "@/types/data/spaces";
+import { compareFields } from "@/utils/object/compare";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
 const SpaceEditPage = () => {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const { from: fromRoute, data: locData } = useMemo(() => {
+    const state = location.state as
+      | undefined
+      | null
+      | { from?: string; data?: Dump<Space> };
+    return state || {};
+  }, [location.state]);
 
   const { amenitiesData } = useAmenities();
 
@@ -41,6 +53,26 @@ const SpaceEditPage = () => {
     enabled: !!id,
   });
   console.log("space data", res?.data);
+
+  // Get added or changed fields
+  const {
+    changedFields,
+    changedData,
+    newFields,
+    newData,
+    allFields: allUpdatedFields,
+    allData: allUpdatedData,
+  } = useMemo(() => {
+    const comparedRes = compareFields(
+      res?.data?.data,
+      fromRoute === "notifications" ? locData?.data : undefined,
+      {
+        excludeFields: ["id", "createdAt", "updatedAt"],
+      },
+    );
+    return comparedRes;
+  }, [res?.data, locData?.data, fromRoute]);
+  console.log("Changed space data :", allUpdatedFields, allUpdatedData);
 
   // form builder
   const {
@@ -86,26 +118,25 @@ const SpaceEditPage = () => {
   //   }
   // }, [data]);
   useEffect(() => {
-    if (res?.data.data) {
-      const modified = datifyObjectValues(res?.data.data, [
-        "closeTime",
-        "openTime",
-        "createdAt",
-        "updatedAt",
-      ]);
-      reset({
+    if (res?.data?.data) {
+      const modified = datifyObjectValues(
+        { ...res?.data?.data, ...allUpdatedData },
+        ["closeTime", "openTime", "createdAt", "updatedAt"],
+      );
+      reset?.({
         openTime: defaultTime,
         closeTime: defaultTime,
         slug: modified?.references?.operator?.slug,
         ...modified,
         person: {
+          ...allUpdatedData?.person,
           ...(POCSameAsOperator
             ? operatorData?.person
             : res?.data?.data?.person),
         },
       } as NonNullable<typeof modified>);
     }
-  }, [res, POCSameAsOperator, operatorData]);
+  }, [res, POCSameAsOperator, operatorData, allUpdatedData]);
 
   // Update Mutater
   const { mutateAsync, isPending: updateLoading } = useMutation({
@@ -491,8 +522,8 @@ const SpaceEditPage = () => {
             placeholder="20 (pax)"
             type="number"
             min={0}
-          {...register("trainingRoom")}
-          error={errors.trainingRoom}
+            {...register("trainingRoom")}
+            error={errors.trainingRoom}
           />
           <FormField
             label="Meeting Room"
@@ -500,8 +531,8 @@ const SpaceEditPage = () => {
             placeholder="4 (pax)"
             type="number"
             min={0}
-          {...register("meetingRoom")}
-          error={errors.meetingRoom}
+            {...register("meetingRoom")}
+            error={errors.meetingRoom}
           />
           <FormField
             label="Conference Room"
@@ -509,8 +540,8 @@ const SpaceEditPage = () => {
             placeholder="10 (pax)"
             type="number"
             min={0}
-          {...register("conferenceRoom")}
-          error={errors.conferenceRoom}
+            {...register("conferenceRoom")}
+            error={errors.conferenceRoom}
           />
           <FormField
             label="Description"
@@ -748,15 +779,15 @@ const SpaceEditPage = () => {
                 {...register("isVerified")}
               />
             </div>
-          <div className="flex items-center gap-4">
-            <label className="text-white text-sm">Same As Operator</label>
-            <Switch
-              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-              onCheckedChange={(checked) => {
-                setPOCSameAsOperator(checked);
-              }}
-            />
-          </div>
+            <div className="flex items-center gap-4">
+              <label className="text-white text-sm">Same As Operator</label>
+              <Switch
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+                onCheckedChange={(checked) => {
+                  setPOCSameAsOperator(checked);
+                }}
+              />
+            </div>
           </div>
           {/* Submit */}
           <div className="col-span-full flex justify-end">
@@ -765,7 +796,9 @@ const SpaceEditPage = () => {
               loading={updateLoading}
               className="max-w-fit"
             >
-              Update Centre
+              {fromRoute === "notifications" && locData
+                ? "Approve Changes"
+                : "Update Centre"}
             </ActionButton>
           </div>
 

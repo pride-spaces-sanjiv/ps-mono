@@ -68,11 +68,15 @@ const OperatorEditPage = () => {
     allFields: allUpdatedFields,
     allData: allUpdatedData,
   } = useMemo(() => {
-    const comparedRes = compareFields(res?.data?.data, locData?.data, {
-      excludeFields: ["id", "totalSpaces", "createdAt", "updatedAt"],
-    });
+    const comparedRes = compareFields(
+      res?.data?.data,
+      fromRoute === "notifications" ? locData?.data : undefined,
+      {
+        excludeFields: ["id", "totalSpaces", "createdAt", "updatedAt"],
+      },
+    );
     return comparedRes;
-  }, [res?.data, locData?.data]);
+  }, [res?.data, locData?.data, fromRoute]);
   console.log("Changed operator data :", allUpdatedFields, allUpdatedData);
 
   const {
@@ -435,7 +439,9 @@ const OperatorEditPage = () => {
               loading={updateLoading || branchesLoading}
               className="px-5 py-5"
             >
-              Update Operator
+              {fromRoute === "notifications" && locData
+                ? "Approve Changes"
+                : "Update Operator"}
             </ActionButton>
           </div>
         </form>
