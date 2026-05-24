@@ -32,6 +32,7 @@ import type { MultiStateItem } from "@/containers/multi-state/types";
 import FormSectionTitle from "@/components/form/section/title";
 import type { Dump } from "@/types/data/dump";
 import type { Operator } from "@/types/data/operators";
+import { approveDump, deleteDump } from "@/services/apis/admin/dump";
 
 const OperatorEditPage = () => {
   const { id } = useParams();
@@ -45,6 +46,11 @@ const OperatorEditPage = () => {
       | { from?: string; data?: Dump<Operator> };
     return state || {};
   }, [location.state]);
+
+  const isDump = useMemo(
+    () => fromRoute === "notifications" && !!locData,
+    [fromRoute, locData],
+  );
 
   const { statesData, groupedCities, citiesData } = useStatesCities();
   const [states, setStates] = useState<MultiStateItem[]>([]);
@@ -115,6 +121,12 @@ const OperatorEditPage = () => {
     mutationFn: updateOperator,
   });
 
+  const { mutateAsync: approvalMutater, isPending: approvalPending } =
+    useMutation({
+      mutationKey: [queryKeys.DUMPS, id, "delete"],
+      mutationFn: deleteDump,
+    });
+
   const { mutateAsync: branchesMutater, isPending: branchesLoading } =
     useMutation({
       mutationKey: [queryKeys.OPERATORS, id, "branches"],
@@ -129,15 +141,27 @@ const OperatorEditPage = () => {
     try {
       console.log("Operator edit body", body);
 
-      await mutateAsync({
+      const res = await mutateAsync({
         url: id,
         body,
       });
 
-      toast.success("Operator updated successfully");
+      if (isDump) {
+        const dumpRes = await approvalMutater({ url: locData?.id });
+        if (dumpRes.status !== 200) {
+          throw new Error("Dump approval failed");
+        }
+      }
 
-      navigate("/operators");
+      if (res.status === 200) {
+        toast.success(
+          `Operator ${isDump ? "approved" : "updated"} successfully`,
+        );
+        navigate(isDump ? "/notifications" : "/operators");
+      }
+      throw new Error("Invalid response");
     } catch (err) {
+      console.error("Error updating operator:", err);
       toast.error("Failed to update operator");
     }
   };
@@ -145,6 +169,14 @@ const OperatorEditPage = () => {
   const handleBranchesUpdate = async (branches: BranchSchema[]) => {
     try {
       const res = await branchesMutater(branches);
+
+      if (isDump) {
+        const dumpRes = await approvalMutater({ url: locData?.id });
+        if (dumpRes.status !== 200) {
+          throw new Error("Dump approval failed");
+        }
+      }
+
       if (res.status === 200 && res.data?.data?.branches) {
         toast.success("Updated state branches");
         return;
@@ -436,7 +468,7 @@ const OperatorEditPage = () => {
             {/* Submit */}
             <ActionButton
               type="submit"
-              loading={updateLoading || branchesLoading}
+              loading={updateLoading || branchesLoading || approvalPending}
               className="px-5 py-5"
             >
               {fromRoute === "notifications" && locData
@@ -447,55 +479,57 @@ const OperatorEditPage = () => {
         </form>
       </div>
 
-      <div className="w-full max-w-6xl mx-auto">
-        <div className="flex justify-between items-center my-2">
-          <h2 className="text-xl font-semibold">
-            Centres under {res?.data?.data?.name || "Operator"}
-          </h2>
-          <ActionButton
-            onClick={() => {
-              navigate("/spaces/new", {
-                state: { operatorData: res?.data?.data },
-              });
-            }}
-          >
-            <div className="flex gap-2 items-center">
-              List Centre
-              <Plus />
-            </div>
-          </ActionButton>
+      {!isDump && (
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="flex justify-between items-center my-2">
+            <h2 className="text-xl font-semibold">
+              Centres under {res?.data?.data?.name || "Operator"}
+            </h2>
+            <ActionButton
+              onClick={() => {
+                navigate("/spaces/new", {
+                  state: { operatorData: res?.data?.data },
+                });
+              }}
+            >
+              <div className="flex gap-2 items-center">
+                List Centre
+                <Plus />
+              </div>
+            </ActionButton>
+          </div>
+
+          {/* Your existing spaces container/table goes here */}
+
+          {/* <SpacesTableContainer operatorId={id} /> */}
+          <SpacesTabledResults operatorId={res?.data?.data?.id} />
+
+          {/* Delete trigger */}
+          <div className="col-span-full flex justify-center pt-4">
+            <DialogModal
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"destructive"}
+                    loading={updateLoading}
+                    className="max-w-fit"
+                  >
+                    Move to bin
+                  </ActionButton>
+                ),
+              }}
+              titleProps={{ children: "Operator Delete Confirmation" }}
+              descriptionProps={{
+                children:
+                  "Are you sure to delete this operator ? You cannot undo this action.",
+              }}
+            >
+              <ActionButton variant={"destructive"}>Move to bin</ActionButton>
+            </DialogModal>
+          </div>
         </div>
-
-        {/* Your existing spaces container/table goes here */}
-
-        {/* <SpacesTableContainer operatorId={id} /> */}
-        <SpacesTabledResults operatorId={res?.data?.data?.id} />
-
-        {/* Delete trigger */}
-        <div className="col-span-full flex justify-center pt-4">
-          <DialogModal
-            triggerProps={{
-              children: (
-                <ActionButton
-                  type="button"
-                  variant={"destructive"}
-                  loading={updateLoading}
-                  className="max-w-fit"
-                >
-                  Move to bin
-                </ActionButton>
-              ),
-            }}
-            titleProps={{ children: "Operator Delete Confirmation" }}
-            descriptionProps={{
-              children:
-                "Are you sure to delete this operator ? You cannot undo this action.",
-            }}
-          >
-            <ActionButton variant={"destructive"}>Move to bin</ActionButton>
-          </DialogModal>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
