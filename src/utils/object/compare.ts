@@ -21,7 +21,7 @@ export const compareFields = <
     allData: {} as Partial<T | NT>,
   };
   try {
-    const o1Keys = Object.keys(obj1 as T);
+    const o1Keys = Object.keys((obj1 || {}) as T);
     const o2Keys = Object.keys(obj2 as NT);
 
     if (!obj1 || !obj2) {
