@@ -21,9 +21,11 @@ import type { Space } from "@/types/data/spaces";
 export default function NotificationCard({
   notification,
   onDelete,
+  isDeleting = false,
 }: {
   notification: Dump<Operator | Space>;
   onDelete?: (id: string) => void;
+  isDeleting?: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -162,6 +164,7 @@ export default function NotificationCard({
               size="sm"
               variant="destructive"
               onClick={() => onDelete?.(notification.id)}
+              disabled={isDeleting}
               aria-label="Delete notification"
             >
               <Trash2 className="w-4 h-4" />

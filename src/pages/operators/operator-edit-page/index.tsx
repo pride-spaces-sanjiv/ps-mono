@@ -79,6 +79,35 @@ const OperatorEditPage = () => {
   }, [res?.data, locData?.data, fromRoute]);
   console.log("Changed operator data :", allUpdatedFields, allUpdatedData);
 
+  const changedFieldProps = (field: string) => {
+    if (fromRoute !== "notifications" || !locData) return {};
+
+    const fieldPath = field.split(".");
+    const rootField = fieldPath[0];
+
+    if (!(allUpdatedFields as string[]).includes(rootField)) return {};
+
+    if (fieldPath.length > 1) {
+      const currentValue = fieldPath.reduce<any>(
+        (value, key) => value?.[key],
+        res?.data?.data,
+      );
+      const updatedValue = fieldPath.reduce<any>(
+        (value, key) => value?.[key],
+        locData?.data,
+      );
+
+      if (currentValue === updatedValue) return {};
+    }
+
+    return {
+      embeddedWrapperProps: {
+        className:
+          "border-amber-400/50 bg-amber-500/10 shadow-[0_0_0_1px_rgba(251,191,36,0.18)]",
+      },
+    };
+  };
+
   const {
     register,
     handleSubmit,
@@ -201,6 +230,7 @@ const OperatorEditPage = () => {
             labelPosition="embedded"
             {...register("name")}
             error={errors.name}
+            {...changedFieldProps("name")}
           />
 
           <FormField
@@ -209,6 +239,7 @@ const OperatorEditPage = () => {
             labelPosition="embedded"
             {...register("brandName")}
             error={errors.brandName}
+            {...changedFieldProps("brandName")}
           />
 
           <FormField
@@ -217,6 +248,7 @@ const OperatorEditPage = () => {
             placeholder="operator-slug"
             {...register("slug")}
             error={errors.slug}
+            {...changedFieldProps("slug")}
           />
 
           <FormField
@@ -232,6 +264,7 @@ const OperatorEditPage = () => {
             placeholder="operator@example.com"
             {...register("email")}
             error={errors.email}
+            {...changedFieldProps("email")}
           />
 
           {/* SECTION: Headquarter Details */}
@@ -243,6 +276,7 @@ const OperatorEditPage = () => {
             {...register("headquarter.address")}
             error={errors.headquarter?.address}
             inputType="textarea"
+            {...changedFieldProps("headquarter.address")}
           />
 
           <FormField
@@ -255,6 +289,7 @@ const OperatorEditPage = () => {
             inputType="phone"
             defaultValue={defaultValues?.headquarter?.contactNo}
             placeholder="+1-123-456-7890"
+            {...changedFieldProps("headquarter.contactNo")}
             onChange={(val) => {
               console.log(val);
               setValue("headquarter.contactNo", val?.toString() || "", {
@@ -280,6 +315,7 @@ const OperatorEditPage = () => {
             placeholder="John Doe"
             {...register("person.name")}
             error={errors?.person?.name}
+            {...changedFieldProps("person.name")}
           />
 
           <FormField
@@ -289,6 +325,7 @@ const OperatorEditPage = () => {
             placeholder="john.doe@example.com"
             {...register("person.email")}
             error={errors?.person?.email}
+            {...changedFieldProps("person.email")}
           />
 
           <FormField
@@ -304,6 +341,7 @@ const OperatorEditPage = () => {
               ""
             }
             defaultValue={defaultValues?.person?.contactNo}
+            {...changedFieldProps("person.contactNo")}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
               console.log(val);
@@ -320,6 +358,7 @@ const OperatorEditPage = () => {
             labelPosition="embedded"
             {...register("person.role")}
             error={errors?.person?.role}
+            {...changedFieldProps("person.role")}
           />
 
           {/* SECTION: GST Details */}
@@ -339,6 +378,7 @@ const OperatorEditPage = () => {
             placeholder="Enter GST Number"
             {...register("gstNo")}
             error={errors?.gstNo}
+            {...changedFieldProps("gstNo")}
           />
 
           <FormField
@@ -347,6 +387,7 @@ const OperatorEditPage = () => {
             placeholder="Enter CIN/LLPIN Number"
             {...register("cinNo")}
             error={errors?.cinNo}
+            {...changedFieldProps("cinNo")}
           />
 
           {/* Multi State Cards */}
