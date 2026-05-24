@@ -34,9 +34,25 @@ export const compareFields = <
       // Only updated
       const oldVal = obj1[key];
       const newVal = obj2[key];
-      if (primaryTypes.includes(typeof oldVal) || (oldVal as any) !== newVal) {
+      if (primaryTypes.includes(typeof oldVal) && (oldVal as any) !== newVal) {
         result.changedFields.push(key);
         result.changedData[key] = newVal;
+        continue;
+      }
+      if (typeof oldVal === typeof newVal && typeof oldVal === "object") {
+        // Array
+        if (Array.isArray(oldVal) && Array.isArray(newVal)) {
+          result.changedFields.push(key);
+          // @ts-ignore
+          result.changedData[key] = [...newVal];
+          continue;
+        }
+        // Object
+        if (oldVal && newVal) {
+          result.changedFields.push(key);
+          // @ts-ignore
+          result.changedData[key] = { ...newVal };
+        }
       }
     }
   } catch (err) {}
