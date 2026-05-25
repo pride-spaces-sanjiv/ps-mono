@@ -20,6 +20,7 @@ import { SpaceSchema } from "@/database/schemas/space.js";
 import { ModelToDocument } from "@/types/mongoose/document.js";
 import { dumpStatuses } from "@/utils/data/dump.js";
 import { dumpAdminAction } from "@/utils/data/dumpAction.js";
+import { Types } from "mongoose";
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -163,15 +164,64 @@ export const createSpace = async (
   res: ManagedResponse,
 ) => {
   try {
+    const sessionUser = req.session.user;
     const body = req.body;
-    const doc = new Space(body);
-    await doc.save();
 
-    const data = convertDataToJSON(doc);
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      isNew: true,
+      dump: {
+        collection: "spaces",
+        data: { ...body, isActive: undefined },
+        metadata: {
+          id: new Types.ObjectId().toHexString(),
+          name: body.name,
+        },
+        action: "add",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-failed",
+        message: "Dump action was failed",
+      });
+      return;
+    }
+
+    // For lead and above direct create
+    if (
+      sessionUser?.userType &&
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
+    ) {
+      const doc = new Space(body);
+      await doc.save();
+
+      const data = convertDataToJSON(doc);
+      ResponseHandler.handleSuccess(res, {
+        status: 201,
+        message: "Created space successfully",
+        data: data,
+      });
+      return;
+    }
+
     ResponseHandler.handleSuccess(res, {
       status: 201,
-      message: "Created space successfully",
-      data: data,
+      message: "Dumped new space successfully",
+      data: body,
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {

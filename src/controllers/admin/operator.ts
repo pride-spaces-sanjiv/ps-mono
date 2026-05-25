@@ -21,6 +21,7 @@ import { OperatorSchema } from "@/database/schemas/operator.js";
 import { ModelToDocument } from "@/types/mongoose/document.js";
 import { dumpStatuses } from "@/utils/data/dump.js";
 import { dumpAdminAction } from "@/utils/data/dumpAction.js";
+import { Types } from "mongoose";
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -137,19 +138,68 @@ export const createOperator = async (
   res: ManagedResponse,
 ) => {
   try {
+    const sessionUser = req.session.user;
     const body = req.body;
     const encodedPass = encodeCrypto(body.password);
-    const doc = new Operator({
-      ...body,
-      password: encodedPass,
-    });
-    await doc.save();
 
-    const data = convertDataToJSON(doc);
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      isNew: true,
+      dump: {
+        collection: "operators",
+        data: { ...body, password: encodedPass, isActive: undefined },
+        metadata: {
+          id: new Types.ObjectId().toHexString(),
+          name: body.brandName || body.name,
+        },
+        action: "add",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-failed",
+        message: "Dump action was failed",
+      });
+      return;
+    }
+
+    // For lead and above direct create
+    if (
+      sessionUser?.userType &&
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
+    ) {
+      const doc = new Operator({
+        ...body,
+        password: encodedPass,
+      });
+      await doc.save();
+
+      const data = convertDataToJSON(doc);
+      ResponseHandler.handleSuccess(res, {
+        status: 201,
+        message: "Created operator successfully",
+        data: data,
+      });
+      return;
+    }
+
     ResponseHandler.handleSuccess(res, {
       status: 201,
-      message: "Created operator successfully",
-      data: data,
+      message: "Dumped new operator successfully",
+      data: { ...body, password: undefined },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
