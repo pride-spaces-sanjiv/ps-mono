@@ -7,6 +7,7 @@ import { Dump } from "@/database/models/dump.js";
 import { dumpStatuses } from "./dump.js";
 
 export const dumpAdminAction = async <
+  N extends boolean = true,
   F extends AdminLevel = "support",
   T extends AdminLevel = "super-admin" | "admin" | "lead",
 >(
@@ -17,15 +18,21 @@ export const dumpAdminAction = async <
     // @ts-ignore
     dump = {},
     req,
+    // @ts-ignore
+    isNew = true,
+    id = undefined,
   }: Partial<{
     fromAllowedLevels: [...F[]];
     toAllowedLevels: [...T[]];
+    isNew: N;
+    id: string | (N extends true ? undefined : never);
   }> & { dump: Omit<DumpSchema, "from" | "to">; req: ManagedRequest } = {},
 ) => {
   const result = {
     levelInvalid: false,
     disAllowed: false,
     dumped: false,
+    notFound: false,
     error: null as Error | null,
   };
   try {
@@ -49,13 +56,34 @@ export const dumpAdminAction = async <
     }
 
     // Dump
-    const newDump = new Dump({
-      ...dump,
-      [sender]: req.session.user,
-      status: sender === "from" ? dumpStatuses.PENDING : dumpStatuses.APPROVED,
-    });
-    await newDump.save();
-    result.dumped = true;
+    if (isNew) {
+      const newDump = new Dump({
+        ...dump,
+        [sender]: req.session.user,
+        status:
+          dump.status ||
+          (sender === "from" ? dumpStatuses.PENDING : dumpStatuses.APPROVED),
+      });
+      await newDump.save();
+      result.dumped = true;
+    } else {
+      const doc = await Dump.findOneAndUpdate(
+        { _id: id },
+        {
+          ...dump,
+          [sender]: req.session.user,
+          status:
+            dump.status ||
+            (sender === "from" ? dumpStatuses.PENDING : dumpStatuses.APPROVED),
+        },
+        { new: true },
+      );
+      if (!doc) {
+        result.notFound = true;
+        return result;
+      }
+      result.dumped = true;
+    }
 
     return result;
   } catch (err: any) {

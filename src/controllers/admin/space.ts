@@ -19,6 +19,7 @@ import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { SpaceSchema } from "@/database/schemas/space.js";
 import { ModelToDocument } from "@/types/mongoose/document.js";
 import { dumpStatuses } from "@/utils/data/dump.js";
+import { dumpAdminAction } from "@/utils/data/dumpAction.js";
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -207,24 +208,31 @@ export const updateSpace = async (
       });
       return;
     }
-    const newDump = new Dump({
-      collection: "spaces",
-      metadata: { id: req.params.id, name: doc.name },
-      data: { ...body, isActive: undefined, id: req.params.id },
-      action: "update",
-      from: sessionUser,
-      status:
-        sessionUser?.userType === "support"
-          ? dumpStatuses.PENDING
-          : dumpStatuses.APPROVED,
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      dump: {
+        collection: "spaces",
+        data: { ...body, isActive: undefined, id: req.params.id },
+        metadata: { id: req.params.id, name: doc.name },
+        action: "update",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
     });
-    try {
-      await newDump.save();
-    } catch (err) {
-      console.error("Saving spacedump error :", err);
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
       ResponseHandler.handleError(res, {
-        errorType: "update-space-dump-failure",
-        message: "Failed to dump-update space details",
+        errorType: "dump-failed",
+        message: "Dump action was failed",
       });
       return;
     }
