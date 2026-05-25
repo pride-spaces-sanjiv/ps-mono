@@ -110,7 +110,17 @@ export const getDump = async (
       dumpFields,
     );
 
-    const doc = await Dump.findOne({ _id: req.params.id }, projectors);
+    const preLevelFilters: Partial<
+      Record<ObjectDepthKeys<ModelToRaw<typeof Dump>>, any>
+    > =
+      req.session.user?.userType === "support"
+        ? { "from.id": req.session.user?.id, "to.id": req.session.user?.id }
+        : {};
+
+    const doc = await Dump.findOne(
+      { _id: req.params.id, ...preLevelFilters },
+      projectors,
+    );
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "dump-not-found",

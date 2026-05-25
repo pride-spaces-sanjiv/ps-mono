@@ -60,6 +60,7 @@ const DumpSchema = new Conn.Schema(
       enum: Object.values(dumpStatuses),
       default: dumpStatuses.PENDING,
     },
+    comment: { type: String },
   },
   { timestamps: true },
 );

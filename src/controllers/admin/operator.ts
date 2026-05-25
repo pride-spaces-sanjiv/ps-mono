@@ -19,6 +19,7 @@ import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { OperatorSchema } from "@/database/schemas/operator.js";
 import { ModelToDocument } from "@/types/mongoose/document.js";
+import { dumpStatuses } from "@/utils/data/dump.js";
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -175,38 +176,43 @@ export const updateOperator = async (
     const sessionUser = req.session.user;
     let doc: ModelToDocument<typeof Operator> | null = null;
 
-    // For support admin
+    // Create dump for every update, support will request and others auto approve
+    doc = await Operator.findOne({ _id: req.params.id });
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "operator-not-found",
+        message: "Operator not found",
+      });
+      return;
+    }
+    const newDump = new Dump({
+      collection: "operators",
+      data: { ...body, isActive: undefined, id: req.params.id },
+      metadata: { id: req.params.id, name: doc.brandName || doc.name },
+      action: "update",
+      from: sessionUser,
+      status:
+        sessionUser?.userType === "support"
+          ? dumpStatuses.PENDING
+          : dumpStatuses.APPROVED,
+    });
+    try {
+      await newDump.save();
+    } catch (err) {
+      console.error("Saving operator dump error :", err);
+      ResponseHandler.handleError(res, {
+        errorType: "update-operator-dump-failure",
+        message: "Failed to dump-update operator details",
+      });
+      return;
+    }
+
+    // For lead and above direct update
     if (
       sessionUser?.userType &&
-      adminLevels.includes(sessionUser?.userType as AdminLevel) &&
-      sessionUser?.userType === "support"
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      doc = await Operator.findOne({ _id: req.params.id });
-      if (!doc) {
-        ResponseHandler.handleNotFound(res, {
-          errorType: "operator-not-found",
-          message: "Operator not found",
-        });
-        return;
-      }
-      const newDump = new Dump({
-        collection: "operators",
-        data: { ...body, isActive: undefined, id: req.params.id },
-        metadata: { id: req.params.id, name: doc.brandName || doc.name },
-        action: "update",
-        user: sessionUser,
-      });
-      try {
-        await newDump.save();
-      } catch (err) {
-        console.error("Saving operator dump error :", err);
-        ResponseHandler.handleError(res, {
-          errorType: "update-operator-dump-failure",
-          message: "Failed to dump-update operator details",
-        });
-        return;
-      }
-    } else {
       doc = await Operator.findOneAndUpdate({ _id: req.params.id }, body, {
         new: true,
       });

@@ -18,6 +18,7 @@ import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { SpaceSchema } from "@/database/schemas/space.js";
 import { ModelToDocument } from "@/types/mongoose/document.js";
+import { dumpStatuses } from "@/utils/data/dump.js";
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -197,38 +198,43 @@ export const updateSpace = async (
     const sessionUser = req.session.user;
     let doc: ModelToDocument<typeof Space> | null = null;
 
-    // For support admin
+    // Create dump for every update, support will request and others auto approve
+    doc = await Space.findOne({ _id: req.params.id });
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "space-not-found",
+        message: "Space not found",
+      });
+      return;
+    }
+    const newDump = new Dump({
+      collection: "spaces",
+      metadata: { id: req.params.id, name: doc.name },
+      data: { ...body, isActive: undefined, id: req.params.id },
+      action: "update",
+      from: sessionUser,
+      status:
+        sessionUser?.userType === "support"
+          ? dumpStatuses.PENDING
+          : dumpStatuses.APPROVED,
+    });
+    try {
+      await newDump.save();
+    } catch (err) {
+      console.error("Saving spacedump error :", err);
+      ResponseHandler.handleError(res, {
+        errorType: "update-space-dump-failure",
+        message: "Failed to dump-update space details",
+      });
+      return;
+    }
+
+    // For lead and above direct update
     if (
       sessionUser?.userType &&
-      adminLevels.includes(sessionUser?.userType as AdminLevel) &&
-      sessionUser?.userType === "support"
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      doc = await Space.findOne({ _id: req.params.id });
-      if (!doc) {
-        ResponseHandler.handleNotFound(res, {
-          errorType: "space-not-found",
-          message: "Space not found",
-        });
-        return;
-      }
-      const newDump = new Dump({
-        collection: "spaces",
-        metadata: { id: req.params.id, name: doc.name },
-        data: { ...body, isActive: undefined, id: req.params.id },
-        action: "update",
-        user: sessionUser,
-      });
-      try {
-        await newDump.save();
-      } catch (err) {
-        console.error("Saving spacedump error :", err);
-        ResponseHandler.handleError(res, {
-          errorType: "update-space-dump-failure",
-          message: "Failed to dump-update space details",
-        });
-        return;
-      }
-    } else {
       doc = await Space.findOneAndUpdate({ _id: req.params.id }, body, {
         new: true,
       });
