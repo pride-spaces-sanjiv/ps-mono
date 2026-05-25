@@ -25,7 +25,7 @@ export default function NotificationList() {
   const dumps = useMemo(() => res?.data?.data?.results || [], [res]);
 
   const { mutateAsync: deleteMutater } = useMutation({
-    mutationFn: (id: string) => deleteDump({ query: { id } }),
+    mutationFn: (id: string) => deleteDump({ url: id }),
     mutationKey: [queryKeys.DUMPS, "delete"],
   });
 
