@@ -23,6 +23,7 @@ export type RawDump<T extends any = any> = {
   from?: DumpUser;
   to?: DumpUser;
   status: DumpStatus;
+  comment?: string;
 };
 
 export type Dump<T extends any = any> = GeneralData & RawDump<T>;
