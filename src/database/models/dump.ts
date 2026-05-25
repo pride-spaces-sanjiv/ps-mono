@@ -6,7 +6,11 @@ import {
 } from "@/utils/mongoose/fields.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 import { userTypes } from "@/utils/data/userTypes.js";
-import { dumpActions, dumpCollectionNames } from "@/utils/data/dump.js";
+import {
+  dumpActions,
+  dumpCollectionNames,
+  dumpStatuses,
+} from "@/utils/data/dump.js";
 // import { User } from "@/database/models/user.js";
 import { adminLevels } from "@/utils/data/admin.js";
 
@@ -49,7 +53,13 @@ const DumpSchema = new Conn.Schema(
     },
     metadata: { id: { type: String, required: true }, name: String },
     data: { type: Schema.Types.Mixed },
-    user: { type: UserSchema, required: true },
+    from: { type: UserSchema },
+    to: { type: UserSchema },
+    status: {
+      type: String,
+      enum: Object.values(dumpStatuses),
+      default: dumpStatuses.PENDING,
+    },
   },
   { timestamps: true },
 );
@@ -57,7 +67,15 @@ const DumpSchema = new Conn.Schema(
 // Model Instances
 export const Dump = Conn.model("Dump", DumpSchema, "dumps");
 indexFieldsFromSchema(DumpSchema, {
-  singleFields: ["collection", "user.id", "user.email", "user.name"],
+  singleFields: [
+    "collection",
+    "from.id",
+    "from.email",
+    "from.name",
+    "to.id",
+    "to.email",
+    "to.name",
+  ],
 });
 
 // Field names

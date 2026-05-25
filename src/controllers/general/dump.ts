@@ -12,13 +12,15 @@ import {
 } from "@/utils/mongoose/filters.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { type AdminSchema } from "@/database/schemas/user.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { cleanObject } from "@/utils/object/clean.js";
 import { dumpCollectionNames } from "@/utils/data/dump.js";
 import { spaceSchema } from "@/database/schemas/space.js";
 import { operatorSchema } from "@/database/schemas/operator.js";
 import { validateDataAndRespond } from "@/utils/schemas/validate.js";
+import { adminLevels } from "@/utils/data/admin.js";
+import { ObjectDepthKeys } from "@/types/object.js";
+import { ModelToRaw } from "@/types/mongoose/document.js";
 
 export const getDumps = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -26,14 +28,27 @@ export const getDumps = async (
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
+
     const searchFilters = getSearchFilters<typeof Dump>(req, {
       fieldMaps: {
         Collection: "collection",
-        UsersName: "user.name",
-        UsersEmail: "user.email",
+        FromId: "from.id",
+        ToId: "to.id",
+        FromName: "from.name",
+        FromEmail: "from.email",
+        ToName: "to.name",
+        ToEmail: "to.email",
         Action: "action",
+        Status: "status",
       },
     });
+
+    const preLevelFilters: Partial<
+      Record<ObjectDepthKeys<ModelToRaw<typeof Dump>>, any>
+    > =
+      selfLevel === "support"
+        ? { "from.id": req.session.user?.id, "to.id": req.session.user?.id }
+        : {};
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -47,7 +62,10 @@ export const getDumps = async (
       { limit: 10 },
       {
         projection: projectors,
-        filter: cleanObject({ ...searchFilters }, { excludeByValues: [""] }),
+        filter: cleanObject(
+          { ...searchFilters, ...preLevelFilters },
+          { excludeByValues: [""] },
+        ),
       },
     );
 
