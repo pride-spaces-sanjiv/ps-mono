@@ -21,6 +21,7 @@ import { validateDataAndRespond } from "@/utils/schemas/validate.js";
 import { adminLevels } from "@/utils/data/admin.js";
 import { ObjectDepthKeys } from "@/types/object.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
+import { RootFilterQuery } from "mongoose";
 
 export const getDumps = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -43,11 +44,14 @@ export const getDumps = async (
       },
     });
 
-    const preLevelFilters: Partial<
-      Record<ObjectDepthKeys<ModelToRaw<typeof Dump>>, any>
-    > =
+    const preLevelFilters: RootFilterQuery<ModelToRaw<typeof Dump>> =
       selfLevel === "support"
-        ? { "from.id": req.session.user?.id, "to.id": req.session.user?.id }
+        ? {
+            $or: [
+              { "from.id": req.session.user?.id },
+              { "to.id": req.session.user?.id },
+            ],
+          }
         : {};
 
     const { fields, projectors } = getFieldsandProjectors(
@@ -110,11 +114,14 @@ export const getDump = async (
       dumpFields,
     );
 
-    const preLevelFilters: Partial<
-      Record<ObjectDepthKeys<ModelToRaw<typeof Dump>>, any>
-    > =
+    const preLevelFilters: RootFilterQuery<ModelToRaw<typeof Dump>> =
       req.session.user?.userType === "support"
-        ? { "from.id": req.session.user?.id, "to.id": req.session.user?.id }
+        ? {
+            $or: [
+              { "from.id": req.session.user?.id },
+              { "to.id": req.session.user?.id },
+            ],
+          }
         : {};
 
     const doc = await Dump.findOne(
