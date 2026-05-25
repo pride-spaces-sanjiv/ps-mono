@@ -69,10 +69,7 @@ export const operatorSchema = z.object({
   cinNo: z
     .string()
     .trim()
-    .refine(
-      (v) => v.match(/^[A-Za-z0-9]{21}$/),
-      "CIN number must be 21 characters long",
-    )
+    .refine((v) => !v.match(/ +/), "CIN cannot have spaces")
     .optional(),
   headquarter: headQuarterSchema,
   branches: z.array(branchSchema).optional(),
