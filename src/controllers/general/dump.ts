@@ -22,6 +22,7 @@ import { adminLevels } from "@/utils/data/admin.js";
 import { ObjectDepthKeys } from "@/types/object.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { RootFilterQuery } from "mongoose";
+import { DumpSchema } from "@/database/schemas/dump.js";
 
 export const getDumps = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -185,14 +186,22 @@ export const createDump = async (
 };
 
 export const updateDump = async (
-  req: ManagedRequest<{
-    collection: (typeof dumpCollectionNames)[keyof typeof dumpCollectionNames];
-    data: any;
-  }>,
+  req: ManagedRequest<
+    Omit<Partial<DumpSchema>, "collection" | "action" | "metadata">
+  >,
   res: ManagedResponse,
 ) => {
   try {
+    const sessionUser = req.session.user;
     const body = req.body;
+
+    if (
+      sessionUser?.userType === "support" &&
+      Object.prototype.hasOwnProperty.call(body, "status")
+    ) {
+      body.status = "pending";
+    }
+
     const doc = await Dump.findOneAndUpdate({ _id: req.params.id }, body, {
       new: true,
     });
