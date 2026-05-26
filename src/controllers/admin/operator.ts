@@ -11,7 +11,7 @@ import {
   getSearchFilters,
 } from "@/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
+import { cleanObject, deleteObjectFields } from "@/utils/object/clean.js";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
@@ -219,16 +219,23 @@ export const createOperator = async (
 };
 
 export const updateOperator = async (
-  req: ManagedRequest<Omit<OperatorSchema, "password">>,
+  req: ManagedRequest<Partial<OperatorSchema>>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
     const sessionUser = req.session.user;
-    let doc: ModelToDocument<typeof Operator> | null = null;
+    !(
+      sessionUser?.userType &&
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
+    ) && deleteObjectFields(body, { excludeFields: ["password"] });
+    body.password = body.password?.trim()
+      ? encodeCrypto(body.password)
+      : undefined;
 
     // Create dump for every update, support will request and others auto approve
-    doc = await Operator.findOne({ _id: req.params.id });
+    let doc = await Operator.findOne({ _id: req.params.id });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "operator-not-found",

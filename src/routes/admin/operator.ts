@@ -39,7 +39,7 @@ router.post(
 router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  RequestMiddleware.bodyValidator(operatorSchema.omit({ password: true }), {
+  RequestMiddleware.bodyValidator(operatorSchema, {
     allowEmpty: true,
     validateOnlyPresent: true,
     overridePostValidation: true,

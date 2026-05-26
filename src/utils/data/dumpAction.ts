@@ -1,10 +1,10 @@
 import { NextFunction } from "express";
 import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
-import { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { ResponseHandler } from "../../middlewares/request.js";
+import { ResponseHandler } from "@/middlewares/request.js";
 import { DumpSchema } from "@/database/schemas/dump.js";
 import { Dump } from "@/database/models/dump.js";
 import { dumpStatuses } from "./dump.js";
+import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 
 export const dumpAdminAction = async <
   N extends boolean = true,
@@ -26,7 +26,10 @@ export const dumpAdminAction = async <
     toAllowedLevels: [...T[]];
     isNew: N;
     id: string | (N extends true ? undefined : never);
-  }> & { dump: Omit<DumpSchema, "from" | "to">; req: ManagedRequest } = {},
+  }> & {
+    dump: Omit<DumpSchema, "from" | "to">;
+    req: ManagedRequest<any, any>;
+  } = {},
 ) => {
   const result = {
     levelInvalid: false,

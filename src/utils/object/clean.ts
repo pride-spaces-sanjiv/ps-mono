@@ -17,3 +17,16 @@ export const cleanObject = <T extends Record<string, any>, R = T>(
   }
   return cleaned;
 };
+
+export const deleteObjectFields = <
+  T extends Record<string, any>,
+  F extends keyof T,
+>(
+  obj: T,
+  { excludeFields = [] }: Partial<{ excludeFields: [...F[]] }> = {},
+) => {
+  for (const field of excludeFields) {
+    delete obj[field];
+  }
+  return obj as Omit<T, F>;
+};
