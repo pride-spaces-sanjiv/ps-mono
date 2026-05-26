@@ -314,7 +314,9 @@ export const deleteOperator = async (
   res: ManagedResponse,
 ) => {
   try {
-    const doc = await Operator.findOneAndDelete({ _id: req.params.id });
+    const sessionUser = req.session.user;
+
+    const doc = await Operator.findOne({ _id: req.params.id });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "operator-not-found",
@@ -323,7 +325,61 @@ export const deleteOperator = async (
       return;
     }
 
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      isNew: true,
+      dump: {
+        collection: "operators",
+        data: {},
+        metadata: {
+          id: doc.id,
+          name: doc.brandName || doc.name,
+        },
+        action: "remove",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-failed",
+        message: "Dump action was failed",
+      });
+      return;
+    }
+
+    // For lead and above direct delete
+    if (
+      sessionUser?.userType &&
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
+    ) {
+      const doc = await Operator.findOne({ _id: req.params.id });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "operator-not-found",
+          message: "Operator not found",
+        });
+        return;
+      }
+      ResponseHandler.handleSuccess(res, {
+        message: "Operator deleted successfully",
+        data: { id: doc.id },
+      });
+      return;
+    }
     ResponseHandler.handleSuccess(res, {
+      message: "Dumped operator-removal successfully",
       data: { id: doc.id },
     });
   } catch (err) {

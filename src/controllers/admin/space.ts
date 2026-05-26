@@ -331,7 +331,9 @@ export const deleteSpace = async (
   res: ManagedResponse,
 ) => {
   try {
-    const doc = await Space.findOneAndDelete({ _id: req.params.id });
+    const sessionUser = req.session.user;
+
+    const doc = await Space.findOne({ _id: req.params.id });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "space-not-found",
@@ -340,9 +342,62 @@ export const deleteSpace = async (
       return;
     }
 
-    const data = convertDataToJSON(doc);
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      isNew: true,
+      dump: {
+        collection: "spaces",
+        data: {},
+        metadata: {
+          id: doc.id,
+          name: doc.name,
+        },
+        action: "remove",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-failed",
+        message: "Dump action was failed",
+      });
+      return;
+    }
+
+    // For lead and above direct delete
+    if (
+      sessionUser?.userType &&
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
+    ) {
+      const doc = await Space.findOneAndDelete({ _id: req.params.id });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "space-not-found",
+          message: "Space not found",
+        });
+        return;
+      }
+      ResponseHandler.handleSuccess(res, {
+        message: "Space deleted successfully",
+        data: { id: doc.id },
+      });
+      return;
+    }
     ResponseHandler.handleSuccess(res, {
-      data: { id: data?.id },
+      message: "Dumped space-removal successfully",
+      data: { id: doc.id },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
