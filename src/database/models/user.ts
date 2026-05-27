@@ -58,6 +58,7 @@ const AdminSchema = new Conn.Schema(
     phone: {
       type: String,
     },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
