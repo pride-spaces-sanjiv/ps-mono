@@ -39,6 +39,15 @@ const UserSchema = new Conn.Schema(
   { _id: false },
 );
 
+const MetaDataSchema = new Conn.Schema(
+  {
+    id: { type: String, required: true },
+    name: String,
+    description: String,
+  },
+  { _id: false },
+);
+
 const DumpSchema = new Conn.Schema(
   {
     collection: {
@@ -51,7 +60,7 @@ const DumpSchema = new Conn.Schema(
       enum: Object.values(dumpActions),
       required: true,
     },
-    metadata: { id: { type: String, required: true }, name: String },
+    metadata: { type: MetaDataSchema },
     data: { type: Schema.Types.Mixed },
     from: { type: UserSchema },
     to: { type: UserSchema },

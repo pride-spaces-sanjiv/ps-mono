@@ -13,7 +13,7 @@ import {
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject, deleteObjectFields } from "@/utils/object/clean.js";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
-import { encodeCrypto } from "@/utils/crypto.js";
+import { compareCryptos, decodeCrypto, encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
 // types
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
@@ -393,6 +393,153 @@ export const deleteOperator = async (
     ResponseHandler.handleError(res, {
       errorType: "delete-operator-error-failure",
       message: "Failed to delete operator",
+    });
+  }
+};
+
+// Password
+export const getPassword = async (
+  req: ManagedRequest,
+  res: ManagedResponse,
+) => {
+  try {
+    const body = req.body;
+    const sessionUser = req.session.user;
+
+    let doc = await Operator.findOne(
+      { _id: req.params.id },
+      { password: 1, _id: 1 },
+    );
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "operator-not-found",
+        message: "Operator not found",
+      });
+      return;
+    }
+
+    const decodedPass = decodeCrypto(doc.password);
+    const data = { ...convertDataToJSON(doc), decodedPassword: decodedPass };
+
+    ResponseHandler.handleSuccess(res, {
+      message: "Operator password retrieved successfully",
+      data: data,
+    });
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "operator-unique-error",
+        msgPre: "Operator",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
+    ResponseHandler.handleError(res, {
+      errorType: "get-operator-password-error-failure",
+      message: "Failed to get operator password",
+    });
+  }
+};
+
+export const updatePassword = async (
+  req: ManagedRequest<Pick<OperatorSchema, "password">>,
+  res: ManagedResponse,
+) => {
+  try {
+    const body = req.body;
+    const sessionUser = req.session.user;
+    const password = encodeCrypto(body.password);
+
+    let doc = await Operator.findOne(
+      { _id: req.params.id },
+      { password: 1, _id: 1 },
+    );
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "operator-not-found",
+        message: "Operator not found",
+      });
+      return;
+    }
+
+    if (compareCryptos(doc.password, password)) {
+      ResponseHandler.handleError(res, {
+        errorType: "password-matched",
+        message: "New password cannot be the same as the current password",
+      });
+      return;
+    }
+
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      dump: {
+        collection: "operators",
+        data: { id: req.params.id, password: password },
+        metadata: {
+          id: req.params.id,
+          name: doc.brandName || doc.name,
+          description: "Password was updated",
+        },
+        action: "update",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      ResponseHandler.handleError(res, {
+        errorType: "dump-failed",
+        message: "Dump action was failed",
+      });
+      return;
+    }
+
+    doc = await Operator.findOneAndUpdate(
+      { _id: req.params.id },
+      { password: password },
+      {
+        new: true,
+        projection: { password: 1, _id: 1 },
+      },
+    );
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "operator-not-found",
+        message: "Operator not found",
+      });
+      return;
+    }
+
+    const data = {
+      ...convertDataToJSON(doc),
+    };
+    ResponseHandler.handleSuccess(res, {
+      message: "Operator password updated successfully",
+      data: data,
+    });
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "operator-unique-error",
+        msgPre: "Operator",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
+    ResponseHandler.handleError(res, {
+      errorType: "update-operator-password-error-failure",
+      message: "Failed to update operator password",
     });
   }
 };

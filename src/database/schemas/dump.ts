@@ -34,6 +34,7 @@ export const dumpSchema = z.object({
   metadata: z.object({
     id: getIdSchema({ keyName: "Meta Id" }),
     name: z.string().optional(),
+    description: z.string().optional(),
   }),
   data: z.any(),
   from: userSchema.optional(),
