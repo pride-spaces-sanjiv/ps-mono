@@ -14,7 +14,7 @@ import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { cleanObject } from "@/utils/object/clean.js";
-import { dumpCollectionNames } from "@/utils/data/dump.js";
+import { dumpCollectionNames, dumpStatuses } from "@/utils/data/dump.js";
 import { spaceSchema } from "@/database/schemas/space.js";
 import { operatorSchema } from "@/database/schemas/operator.js";
 import { validateDataAndRespond } from "@/utils/schemas/validate.js";
@@ -23,6 +23,7 @@ import { ObjectDepthKeys } from "@/types/object.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { RootFilterQuery } from "mongoose";
 import { DumpSchema } from "@/database/schemas/dump.js";
+import { dumpAdminAction } from "@/utils/data/dumpAction.js";
 
 export const getDumps = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -187,7 +188,10 @@ export const createDump = async (
 
 export const updateDump = async (
   req: ManagedRequest<
-    Omit<Partial<DumpSchema>, "collection" | "action" | "metadata">
+    Omit<
+      Partial<DumpSchema>,
+      "collection" | "action" | "metadata" | "from" | "to"
+    >
   >,
   res: ManagedResponse,
 ) => {
@@ -195,25 +199,37 @@ export const updateDump = async (
     const sessionUser = req.session.user;
     const body = req.body;
 
-    if (
-      sessionUser?.userType === "support" &&
-      Object.prototype.hasOwnProperty.call(body, "status")
-    ) {
-      body.status = "pending";
-    }
-
-    const doc = await Dump.findOneAndUpdate({ _id: req.params.id }, body, {
-      new: true,
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      dump: {
+        ...body,
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : body.status,
+      },
+      req: req,
+      isNew: false,
     });
-    if (!doc) {
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "update-dump-unauthorized",
+        message: "Dump update was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.notFound || !dumpRes.doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "dump-not-found",
         message: "Dump not found",
       });
       return;
     }
+    if (dumpRes.error) {
+      throw dumpRes.error;
+    }
 
-    const data = convertDataToJSON(doc);
+    const data = convertDataToJSON(dumpRes.doc);
     ResponseHandler.handleSuccess(res, {
       message: "Updated dump successfully",
       data: data,

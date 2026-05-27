@@ -40,7 +40,13 @@ router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
   RequestMiddleware.bodyValidator(
-    dumpSchema.omit({ collection: true, action: true, metadata: true }),
+    dumpSchema.omit({
+      collection: true,
+      action: true,
+      metadata: true,
+      from: true,
+      to: true,
+    }),
     {
       allowEmpty: true,
       validateOnlyPresent: true,

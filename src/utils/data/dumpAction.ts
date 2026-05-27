@@ -5,6 +5,7 @@ import { DumpSchema } from "@/database/schemas/dump.js";
 import { Dump } from "@/database/models/dump.js";
 import { dumpStatuses } from "./dump.js";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { ModelToDocument } from "@/types/mongoose/document.js";
 
 export const dumpAdminAction = async <
   N extends boolean = true,
@@ -30,7 +31,10 @@ export const dumpAdminAction = async <
     isNew: N;
     id: string | (N extends true ? undefined : never);
   }> & {
-    dump: Omit<DumpSchema, "from" | "to">;
+    dump: Omit<
+      N extends true ? DumpSchema : Partial<DumpSchema>,
+      "from" | "to"
+    >;
     req: ManagedRequest<any, any>;
   } = {},
 ) => {
@@ -40,6 +44,7 @@ export const dumpAdminAction = async <
     dumped: false,
     notFound: false,
     error: null as Error | null,
+    doc: null as ModelToDocument<typeof Dump> | null,
   };
   try {
     const selfLevel = req.session.user?.userType;
@@ -72,6 +77,7 @@ export const dumpAdminAction = async <
       });
       await newDump.save();
       result.dumped = true;
+      result.doc = newDump;
     } else {
       const doc = await Dump.findOneAndUpdate(
         { _id: id },
@@ -89,6 +95,7 @@ export const dumpAdminAction = async <
         return result;
       }
       result.dumped = true;
+      result.doc = doc;
     }
 
     return result;
