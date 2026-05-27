@@ -24,6 +24,9 @@ export const dumpAdminAction = async <
   }: Partial<{
     fromAllowedLevels: [...F[]];
     toAllowedLevels: [...T[]];
+    /**
+     * @default true
+     */
     isNew: N;
     id: string | (N extends true ? undefined : never);
   }> & {

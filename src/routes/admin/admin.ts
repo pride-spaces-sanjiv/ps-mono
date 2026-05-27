@@ -57,14 +57,14 @@ const passwordSchema = adminSchema.pick({ password: true });
 router.get(
   "/:id/password",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  allowAdminLevelsToPass({ allowedLevels: ["super-admin"] }),
+  allowAdminLevelsToPass({ allowedLevels: ["super-admin", "admin"] }),
   authorizeAdminDetailsByParam(),
   getPassword(Admin, { keyName: "admin" }),
 );
 router.put(
   "/:id/password/change",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  allowAdminLevelsToPass({ allowedLevels: ["super-admin"] }),
+  allowAdminLevelsToPass({ allowedLevels: ["super-admin", "admin"] }),
   RequestMiddleware.bodyValidator(passwordSchema, {
     allowEmpty: false,
     validateOnlyPresent: false,
