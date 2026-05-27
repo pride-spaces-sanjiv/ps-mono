@@ -219,20 +219,12 @@ export const createOperator = async (
 };
 
 export const updateOperator = async (
-  req: ManagedRequest<Partial<OperatorSchema>>,
+  req: ManagedRequest<Partial<Omit<OperatorSchema, "password">>>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
     const sessionUser = req.session.user;
-    !(
-      sessionUser?.userType &&
-      sessionUser?.userType !== "support" &&
-      adminLevels.includes(sessionUser.userType as AdminLevel)
-    ) && deleteObjectFields(body, { excludeFields: ["password"] });
-    body.password = body.password?.trim()
-      ? encodeCrypto(body.password)
-      : undefined;
 
     // Create dump for every update, support will request and others auto approve
     let doc = await Operator.findOne({ _id: req.params.id });
