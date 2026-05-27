@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MousePointerClick } from "lucide-react";
+import { MessageSquareWarning, MousePointerClick } from "lucide-react";
 import { cn } from "@/utils/className";
 import type { Dump } from "@/types/data/dump";
 import { datifyObjectValues } from "@/utils/object/datify";
@@ -23,7 +23,7 @@ export default function NotificationCard({
 }) {
   const navigate = useNavigate();
 
-  const { collection, action, updatedAt, data, metadata } =
+  const { collection, action, updatedAt, data, metadata, from, to, status } =
     datifyObjectValues(notification, ["createdAt", "updatedAt"]) || {};
 
   const statusText = useMemo(
@@ -47,6 +47,41 @@ export default function NotificationCard({
     "DD MMM YYYY [at] HH:mm A",
   );
   const operatorName = "-";
+  const requestDetails = useMemo(() => {
+    const requester = from?.name || from?.email || "Someone";
+    const recipient = to?.name || to?.email || "";
+    const actionLabel =
+      action === "add" ? "creation" : action === "remove" ? "removal" : "update";
+    const subject = `${entityTypeLabel.toLowerCase()} ${metadata?.name || "N/A"}`;
+
+    if (recipient) {
+      if (status === "recorrect") {
+        return {
+          requester,
+          recipient,
+          prefix: "",
+          middle: " sent corrections to ",
+          suffix: ` for ${subject}.`,
+        };
+      }
+
+      return {
+        requester,
+        recipient,
+        prefix: "",
+        middle: " requested approval from ",
+        suffix: ` for ${subject}.`,
+      };
+    }
+
+    return {
+      requester,
+      recipient: "",
+      prefix: "",
+      middle: ` requested ${actionLabel} for ${subject}.`,
+      suffix: "",
+    };
+  }, [action, entityTypeLabel, from, metadata, status, to]);
 
   // const entityLabel =
   //   type === "operator"
@@ -129,14 +164,18 @@ export default function NotificationCard({
 
       {/* DESCRIPTION */}
       <CardContent className="flex items-center justify-between gap-3 px-3 pb-1.5 pt-0">
-        <p className="min-w-0 truncate text-[11px] leading-tight text-muted-foreground">
-          {`${title} ${
-            action === "add"
-              ? "was added"
-              : action === "remove"
-                ? "was deleted"
-                : "was updated"
-          }`}
+        <p className="min-w-0 truncate text-xs leading-snug text-muted-foreground">
+          {requestDetails.prefix}
+          <span className="font-semibold text-foreground">
+            {requestDetails.requester}
+          </span>
+          {requestDetails.middle}
+          {requestDetails.recipient && (
+            <span className="font-semibold text-foreground">
+              {requestDetails.recipient}
+            </span>
+          )}
+          {requestDetails.suffix}
         </p>
 
         <div className="flex shrink-0 items-center justify-end gap-1.5">
@@ -144,11 +183,19 @@ export default function NotificationCard({
             size="sm"
             variant="default"
             onClick={handleView}
-            aria-label={`Take action on ${entityTypeLabel.toLowerCase()}`}
+            aria-label={
+              status === "recorrect"
+                ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
+                : `Take action on ${entityTypeLabel.toLowerCase()}`
+            }
             className="h-7 px-2 text-xs"
           >
-            <MousePointerClick className="size-3.5" />
-            Take action
+            {status === "recorrect" ? (
+              <MessageSquareWarning className="size-3.5" />
+            ) : (
+              <MousePointerClick className="size-3.5" />
+            )}
+            {status === "recorrect" ? "Make corrections" : "Take action"}
           </Button>
         </div>
       </CardContent>

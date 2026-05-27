@@ -19,7 +19,7 @@ export default function NotificationList() {
 
   const dumps = useMemo(() => res?.data?.data?.results || [], [res]);
 
-  const [infiniteRef] = useInfiniteScrollHook({
+    const [infiniteRef] = useInfiniteScrollHook({
     loading: isFetching,
     hasNextPage: !!res?.data?.data?.metrics?.next,
     onLoadMore: () => {

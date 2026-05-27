@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
+import { MessageSquareWarning } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
 import { getSpaceById, updateSpace } from "@/services/apis/admin/spaces";
@@ -27,7 +28,7 @@ import type { Operator } from "@/types/data/operators";
 import type { Dump } from "@/types/data/dump";
 import type { Space } from "@/types/data/spaces";
 import { compareFields } from "@/utils/object/compare";
-import { deleteDump } from "@/services/apis/admin/dump";
+import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
@@ -187,6 +188,8 @@ const SpaceEditPage = () => {
     [res?.data],
   );
   const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
+  const [correctionComment, setCorrectionComment] = useState("");
+  const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = useState(false);
 
   // useEffect(() => {
   //   if (data) {
@@ -225,6 +228,12 @@ const SpaceEditPage = () => {
       mutationFn: deleteDump,
     });
 
+  const { mutateAsync: correctionMutater, isPending: correctionPending } =
+    useMutation({
+      mutationKey: [queryKeys.DUMPS, id, "recorrect"],
+      mutationFn: recorrectDump,
+    });
+
   const onSubmit = async (body: SpaceSchema) => {
     try {
       console.log("Space edit body", body);
@@ -252,6 +261,38 @@ const SpaceEditPage = () => {
     }
   };
 
+  const handleSendToCorrection = async () => {
+    if (!locData?.id) return;
+
+    if (!correctionComment.trim()) {
+      toast.error("Please add a correction comment");
+      return;
+    }
+
+    try {
+      const res = await correctionMutater({
+        url: locData.id,
+        body: {
+          comment: correctionComment.trim(),
+          status: "recorrect",
+          to: locData.from?.id,
+        },
+      });
+
+      if (res.status === 200) {
+        toast.success("Sent to correction");
+        setIsCorrectionDialogOpen(false);
+        navigate("/notifications");
+        return;
+      }
+
+      throw new Error("Invalid response");
+    } catch (err) {
+      console.error("Error sending correction:", err);
+      toast.error("Failed to send correction");
+    }
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center my-4">
@@ -261,6 +302,16 @@ const SpaceEditPage = () => {
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
+        {isDump && locData?.comment && (
+          <div className="mb-5 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+            <div className="mb-2 flex items-center gap-2 font-semibold text-amber-200">
+              <MessageSquareWarning className="size-4" />
+              Correction requested
+            </div>
+            <p className="leading-relaxed text-amber-50/90">{locData.comment}</p>
+          </div>
+        )}
+
         <form
           onSubmit={handleSubmit(onSubmit, (errors) => {
             console.log("Space edit form error", errors);
@@ -918,15 +969,64 @@ const SpaceEditPage = () => {
           </div>
           {/* Submit */}
           <div className="col-span-full flex justify-end">
-            <ActionButton
-              type="submit"
-              loading={updateLoading || approvalPending}
-              className="max-w-fit"
-            >
-              {fromRoute === "notifications" && locData
-                ? "Approve Changes"
-                : "Update Centre"}
-            </ActionButton>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {isDump && (
+                <DialogModal
+                  open={isCorrectionDialogOpen}
+                  onOpenChange={setIsCorrectionDialogOpen}
+                  triggerProps={{
+                    children: (
+                      <ActionButton
+                        type="button"
+                        variant="outline"
+                        className="max-w-fit"
+                        loading={correctionPending}
+                      >
+                        <div className="flex items-center gap-2">
+                          <MessageSquareWarning className="size-4" />
+                          <span>Send to correction</span>
+                        </div>
+                      </ActionButton>
+                    ),
+                  }}
+                  titleProps={{ children: "Send To Correction" }}
+                  descriptionProps={{
+                    children:
+                      "Add a short note explaining what needs to be corrected before approval.",
+                  }}
+                  footerProps={{
+                    children: (
+                      <ActionButton
+                        type="button"
+                        loading={correctionPending}
+                        onClick={handleSendToCorrection}
+                      >
+                        Send
+                      </ActionButton>
+                    ),
+                  }}
+                >
+                  <FormField
+                    label="Correction comment"
+                    inputType="textarea"
+                    labelPosition="out"
+                    placeholder="Mention what needs to be corrected..."
+                    value={correctionComment}
+                    onChange={(event) =>
+                      setCorrectionComment(event.currentTarget.value)
+                    }
+                  />
+                </DialogModal>
+              )}
+
+              <ActionButton
+                type="submit"
+                loading={updateLoading || approvalPending}
+                className="max-w-fit"
+              >
+                {isDump ? "Approve" : "Update Centre"}
+              </ActionButton>
+            </div>
           </div>
 
           {/* Delete trigger */}

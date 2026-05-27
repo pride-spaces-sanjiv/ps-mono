@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { MessageSquareWarning, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useStatesCities } from "@/services/hooks/use-states-cities";
 import {
@@ -32,7 +32,7 @@ import type { MultiStateItem } from "@/containers/multi-state/types";
 import FormSectionTitle from "@/components/form/section/title";
 import type { Dump } from "@/types/data/dump";
 import type { Operator } from "@/types/data/operators";
-import { approveDump, deleteDump } from "@/services/apis/admin/dump";
+import { deleteDump, updateDump } from "@/services/apis/admin/dump";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 
 const OperatorEditPage = () => {
@@ -57,6 +57,8 @@ const OperatorEditPage = () => {
   const [states, setStates] = useState<MultiStateItem[]>([]);
   const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
   const [editingState, setEditingState] = useState<MultiStateItem | null>(null);
+  const [correctionComment, setCorrectionComment] = useState("");
+  const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = useState(false);
 
   const { data: res } = useQuery({
     queryKey: [queryKeys.OPERATORS, id],
@@ -133,11 +135,17 @@ const OperatorEditPage = () => {
     mutationFn: updateOperator,
   });
 
-  const { mutateAsync: approvalMutater, isPending: approvalPending } =
+  // const { mutateAsync: dumpMutator, isPending: approvalPending } =
+  //   useMutation({
+  //     mutationKey: [queryKeys.DUMPS, id, "delete"],
+  //     mutationFn: deleteDump,
+  //   });
+
+  const { mutateAsync: dumpMutator, isPending: dumpPending } =
     useMutation({
-      mutationKey: [queryKeys.DUMPS, id, "delete"],
-      mutationFn: deleteDump,
-    });
+      mutationKey: [queryKeys.DUMPS, id, "recorrect"],
+      mutationFn: updateDump,
+    }); 
 
   const { mutateAsync: branchesMutater, isPending: branchesLoading } =
     useMutation({
@@ -159,7 +167,7 @@ const OperatorEditPage = () => {
       });
 
       if (isDump) {
-        const dumpRes = await approvalMutater({ url: locData?.id });
+        const dumpRes = await dumpMutator({ url: locData?.id });
         if (dumpRes.status !== 200) {
           throw new Error("Dump approval failed");
         }
@@ -178,12 +186,43 @@ const OperatorEditPage = () => {
     }
   };
 
+  const handleSendToCorrection = async () => {
+    if (!locData?.id) return;
+
+    if (!correctionComment.trim()) {
+      toast.error("Please add a correction comment");
+      return;
+    }
+
+    try {
+      const res = await dumpMutator({
+        url: locData.id,
+        body: {
+          comment: correctionComment.trim(),
+          status: "recorrect",
+        },
+      });
+
+      if (res.status === 200) {
+        toast.success("Sent to correction");
+        setIsCorrectionDialogOpen(false);
+        navigate("/notifications");
+        return;
+      }
+
+      throw new Error("Invalid response");
+    } catch (err) {
+      console.error("Error sending correction:", err);
+      toast.error("Failed to send correction");
+    }
+  };
+
   const handleBranchesUpdate = async (branches: BranchSchema[]) => {
     try {
       const res = await branchesMutater(branches);
 
       if (isDump) {
-        const dumpRes = await approvalMutater({ url: locData?.id });
+        const dumpRes = await dumpMutator({ url: locData?.id });
         if (dumpRes.status !== 200) {
           throw new Error("Dump approval failed");
         }
@@ -229,6 +268,16 @@ const OperatorEditPage = () => {
         <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
+        {isDump && locData?.comment && (
+          <div className="mb-5 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+            <div className="mb-2 flex items-center gap-2 font-semibold text-amber-200">
+              <MessageSquareWarning className="size-4" />
+              Correction requested
+            </div>
+            <p className="leading-relaxed text-amber-50/90">{locData.comment}</p>
+          </div>
+        )}
+
         <form
           onSubmit={handleSubmit(onSubmit, (errors) => {
             console.log("Operator form err", errors);
@@ -526,15 +575,64 @@ const OperatorEditPage = () => {
 
             {/* RIGHT SIDE */}
             {/* Submit */}
-            <ActionButton
-              type="submit"
-              loading={updateLoading || branchesLoading || approvalPending}
-              className="px-5 py-5"
-            >
-              {fromRoute === "notifications" && locData
-                ? "Approve Changes"
-                : "Update Operator"}
-            </ActionButton>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {isDump && (
+                <DialogModal
+                  open={isCorrectionDialogOpen}
+                  onOpenChange={setIsCorrectionDialogOpen}
+                  triggerProps={{
+                    children: (
+                      <ActionButton
+                        type="button"
+                        variant="outline"
+                        className="px-5 py-5"
+                        loading={dumpPending}
+                      >
+                        <div className="flex items-center gap-2">
+                          <MessageSquareWarning className="size-4" />
+                          <span>Send to correction</span>
+                        </div>
+                      </ActionButton>
+                    ),
+                  }}
+                  titleProps={{ children: "Send To Correction" }}
+                  descriptionProps={{
+                    children:
+                      "Add a short note explaining what needs to be corrected before approval.",
+                  }}
+                  footerProps={{
+                    children: (
+                      <ActionButton
+                        type="button"
+                        loading={dumpPending}
+                        onClick={handleSendToCorrection}
+                      >
+                        Send
+                      </ActionButton>
+                    ),
+                  }}
+                >
+                  <FormField
+                    label="Correction comment"
+                    inputType="textarea"
+                    labelPosition="out"
+                    placeholder="Mention what needs to be corrected..."
+                    value={correctionComment}
+                    onChange={(event) =>
+                      setCorrectionComment(event.currentTarget.value)
+                    }
+                  />
+                </DialogModal>
+              )}
+
+              <ActionButton
+                type="submit"
+                loading={updateLoading || branchesLoading || dumpPending}
+                className="px-5 py-5"
+              >
+                {isDump ? "Approve" : "Update Operator"}
+              </ActionButton>
+            </div>
           </div>
         </form>
       </div>
