@@ -13,6 +13,7 @@ import { queryKeys } from "@/utils/query-keys";
 import FormSectionTitle from "@/components/form/section/title";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import { Switch } from "@/components/ui/switch";
 
 const AdminCreatePage = () => {
   const navigate = useNavigate();
@@ -149,6 +150,18 @@ const AdminCreatePage = () => {
               },
             }}
           />
+
+          <div className="col-span-full flex gap-8">
+            <div className="flex items-center gap-4">
+              <label className="text-white text-sm">Active</label>
+              <Switch
+                key={defaultValues?.isActive ? "active" : "inactive"}
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+                defaultChecked={!!defaultValues?.isActive}
+                {...register("isActive")}
+              />
+            </div>
+          </div>
 
           {/* Submit */}
 

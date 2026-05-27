@@ -85,7 +85,10 @@ const SpaceEditPage = () => {
           currentData?.location,
           notificationData?.location,
         ),
-        personChanges: compareFields(currentData?.person, notificationData?.person),
+        personChanges: compareFields(
+          currentData?.person,
+          notificationData?.person,
+        ),
         pricingChanges: compareFields(
           currentData?.pricing,
           notificationData?.pricing,
@@ -308,7 +311,9 @@ const SpaceEditPage = () => {
               <MessageSquareWarning className="size-4" />
               Correction requested
             </div>
-            <p className="leading-relaxed text-amber-50/90">{locData.comment}</p>
+            <p className="leading-relaxed text-amber-50/90">
+              {locData.comment}
+            </p>
           </div>
         )}
 
@@ -1060,4 +1065,3 @@ const SpaceEditPage = () => {
 };
 
 export default SpaceEditPage;
-

@@ -64,7 +64,6 @@ export const createDump = APIBodyValidationWrapper({
 
 // 🔹 Update
 export const updateDump = APIBodyValidationWrapper({
-  schema: adminSchema.omit({ password: true }).partial(),
   handle: async (param, config) => {
     const url = `/${param?.url}`;
 

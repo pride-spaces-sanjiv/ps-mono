@@ -29,6 +29,7 @@ import ChangePasswordDialog from "@/containers/admins/change-password";
 import FormSectionTitle from "@/components/form/section/title";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
+import { Switch } from "@/components/ui/switch";
 
 // Types
 
@@ -182,9 +183,21 @@ export default function EditAdmin() {
             }}
           />
 
-          {!!userLevel && userLevel === "super-admin" && (
+          {(userLevel === "super-admin" || userLevel === "admin") && (
             <ChangePasswordDialog />
           )}
+
+          <div className="col-span-full flex gap-8">
+            <div className="flex items-center gap-4">
+              <label className="text-white text-sm">Active</label>
+              <Switch
+                key={defaultValues?.isActive ? "active" : "inactive"}
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+                defaultChecked={!!defaultValues?.isActive}
+                {...register("isActive")}
+              />
+            </div>
+          </div>
 
           {/* Submit */}
           <div className="col-span-full mt-6 flex justify-end">
