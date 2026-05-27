@@ -66,7 +66,7 @@ router.get(
   }),
   getPassword,
 );
-router.get(
+router.put(
   "/:id/password",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
   allowAdminLevelsToPass({
