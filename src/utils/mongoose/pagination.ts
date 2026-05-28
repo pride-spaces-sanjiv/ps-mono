@@ -68,6 +68,11 @@ export const paginatedResults = async <
         allowOnly: acceptedFields || [],
         ...sorterOptions,
       }) || {};
+    console.log("Pagination sort options : ", {
+      sortBy,
+      sortOrder,
+      acceptedFields,
+    });
 
     const total = await model.countDocuments(args?.filter);
     const next = await model.countDocuments(args?.filter, {
