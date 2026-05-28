@@ -211,6 +211,7 @@ export const updateDump = async (
       },
       req: req,
       isNew: false,
+      id: req.params.id,
     });
     if (dumpRes.disAllowed || dumpRes.levelInvalid) {
       ResponseHandler.handleUnauthorized(res, {

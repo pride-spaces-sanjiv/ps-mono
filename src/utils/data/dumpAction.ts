@@ -29,7 +29,7 @@ export const dumpAdminAction = async <
      * @default true
      */
     isNew: N;
-    id: string | (N extends true ? undefined : never);
+    id: string | (N extends true ? undefined : string);
   }> & {
     dump: Omit<
       N extends true ? DumpSchema : Partial<DumpSchema>,
