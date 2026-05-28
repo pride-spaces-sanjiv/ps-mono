@@ -207,6 +207,83 @@ export const updateDump = async (
     const sessionUser = req.session.user;
     const body = req.body;
 
+    const doc = await Dump.findOne({ _id: req.params.id });
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "dump-not-found",
+        message: "Dump not found",
+      });
+      return;
+    }
+
+    // Update approved dump in real collection
+    if (
+      sessionUser?.userType &&
+      sessionUser.userType !== "support" &&
+      body.status === dumpStatuses.APPROVED
+    ) {
+      const model =
+        doc?.collection === "spaces"
+          ? Space
+          : doc?.collection === "operators"
+            ? Operator
+            : null;
+      const schema =
+        doc?.collection === "spaces"
+          ? spaceSchema.partial()
+          : doc?.collection === "operators"
+            ? operatorSchema.partial()
+            : null;
+
+      // Validate data first
+      const { error, valid, parsed, handled } = validateDataAndRespond(
+        schema as NonNullable<typeof schema>,
+        // @ts-ignore
+        data.data,
+        res,
+        { extractOnlyRequiredFields: true },
+      );
+      if (handled) {
+        return;
+      }
+      if (error) {
+        throw error;
+      }
+      if (!valid || !parsed) {
+        return ResponseHandler.handleError(res, {
+          errorType: "invalid-dump-data",
+          message: "Invalid dump data provided",
+        });
+      }
+
+      const id = parsed.id;
+      delete parsed.id;
+      // @ts-ignore
+      const updatedDoc = await model?.findOneAndUpdate(
+        { _id: id },
+        {
+          ...parsed,
+          approval: {
+            ...sessionUser,
+            lastRequested: doc.createdAt,
+          },
+        },
+        { new: true, projection: { password: 0 } },
+      );
+
+      if (!updatedDoc) {
+        return ResponseHandler.handleError(res, {
+          errorType: "dump-push-failure",
+          message: "Failed to push dump data to real",
+        });
+      }
+
+      // ResponseHandler.handleSuccess(res, {
+      //   message: "Approved dump successfully",
+      //   data: convertDataToJSON(updatedDoc),
+      // });
+    }
+
     // Handle dumping actions
     const dumpRes = await dumpAdminAction({
       dump: {
