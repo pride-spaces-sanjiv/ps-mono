@@ -17,7 +17,16 @@ export default function NotificationList() {
     queryFn: (page, limit) => getDumps({ query: { page, limit } }),
   });
 
-  const dumps = useMemo(() => res?.data?.data?.results || [], [res]);
+  // const dumps = useMemo(() => res?.data?.data?.results || [], [res]);
+  const dumps = useMemo(() => {
+  const results = res?.data?.data?.results || [];
+
+  return [...results].sort(
+    (a, b) =>
+      new Date(b.updatedAt).getTime() -
+      new Date(a.updatedAt).getTime()
+  );
+}, [res]);
 
     const [infiniteRef] = useInfiniteScrollHook({
     loading: isFetching,

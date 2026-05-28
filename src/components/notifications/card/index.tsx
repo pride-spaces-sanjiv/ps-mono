@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@/services/hooks/use-user";
 import {
   Card,
   CardHeader,
@@ -22,7 +23,7 @@ export default function NotificationCard({
   notification: Dump<Operator | Space>;
 }) {
   const navigate = useNavigate();
-
+const { userLevel } = useUser();
   const { collection, action, updatedAt, data, metadata, from, to, status } =
     datifyObjectValues(notification, ["createdAt", "updatedAt"]) || {};
 
@@ -35,20 +36,60 @@ export default function NotificationCard({
           : "Updated",
     [action],
   );
+  const workflowStatus = useMemo(() => {
+    switch (status) {
+      case "approved":
+        return {
+          label: "Approved",
+          className:
+            "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+        };
 
+      case "pending":
+        return {
+          label: "Pending",
+          className:
+            "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+        };
+
+      case "recorrect":
+        return {
+          label: "Recorrect",
+          className:
+            "border-orange-500/30 bg-orange-500/10 text-orange-300",
+        };
+
+      default:
+        return {
+          label: "Unknown",
+          className:
+            "border-border bg-muted text-muted-foreground",
+        };
+    }
+  }, [status]);
+
+  const ageText = useMemo(() => {
+    return moment(updatedAt || Date.now()).fromNow();
+  }, [updatedAt]);
+  
   const entityTypeLabel = collection === "operators" ? "Operator" : "Centre";
+
   const title = useMemo(
     () =>
       // @ts-ignore
       `${entityTypeLabel}: ${metadata?.name || "N/A"}`,
     [data, entityTypeLabel, metadata],
   );
+
   const formattedTimestamp = moment(updatedAt || Date.now()).format(
     "DD MMM YYYY [at] HH:mm A",
   );
+
   const operatorName = "-";
+
   const requestDetails = useMemo(() => {
     const requester = from?.name || from?.email || "Someone";
+
     const recipient = to?.name || to?.email || "";
     const actionLabel =
       action === "add" ? "creation" : action === "remove" ? "removal" : "update";
@@ -98,6 +139,13 @@ export default function NotificationCard({
         state: { from: "notifications", data: notification },
       });
   };
+const isSupportUser = userLevel === "support";
+
+const isCorrectionView =
+  status === "recorrect" && isSupportUser;
+
+const isCorrectionSentView =
+  status === "recorrect" && !isSupportUser;
 
   return (
     <Card
@@ -110,19 +158,43 @@ export default function NotificationCard({
         "py-1 gap-0",
       )}
     >
-      <Badge
-        className={cn(
-          "absolute right-2 top-2 rounded-full border px-2 py-0.5 text-[10px] font-medium",
-          action === "add" &&
+
+      {/* TOP RIGHT BADGES */}
+      <div className="absolute right-2 top-2 flex items-center gap-1">
+        {/* STATUS */}
+        <Badge
+          className={cn(
+            "rounded-full border px-2 py-0.5 text-[10px] font-medium",
+            workflowStatus.className,
+          )}
+        >
+          {workflowStatus.label}
+        </Badge>
+
+        {/* ACTION */}
+        <Badge
+          className={cn(
+            "rounded-full border px-2 py-0.5 text-[10px] font-medium",
+
+            action === "add" &&
             "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-          action === "remove" &&
+
+            action === "remove" &&
             "border-destructive/30 bg-destructive/10 text-red-300",
-          action === "update" &&
+
+            action === "update" &&
             "border-amber-500/30 bg-amber-500/10 text-amber-300",
-        )}
-      >
-        {statusText}
-      </Badge>
+          )}
+        >
+          {statusText}
+        </Badge>
+        <Badge
+          variant="outline"
+          className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground border-border/60"
+        >
+          {ageText}
+        </Badge>
+      </div>
 
       <CardHeader className="px-3 py-1.5">
         <div className="flex items-start justify-between gap-2 pr-16">
@@ -183,20 +255,28 @@ export default function NotificationCard({
             size="sm"
             variant="default"
             onClick={handleView}
+            disabled={isCorrectionSentView}
             aria-label={
-              status === "recorrect"
-                ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
-                : `Take action on ${entityTypeLabel.toLowerCase()}`
+              isCorrectionView
+  ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
+  : isCorrectionSentView
+    ? `Sent for correction for ${entityTypeLabel.toLowerCase()}`
+    : `Take action on ${entityTypeLabel.toLowerCase()}`
             }
             className="h-7 px-2 text-xs"
           >
-            {status === "recorrect" ? (
+            {isCorrectionView ? (
               <MessageSquareWarning className="size-3.5" />
             ) : (
               <MousePointerClick className="size-3.5" />
             )}
-            {status === "recorrect" ? "Make corrections" : "Take action"}
-          </Button>
+            {isCorrectionView
+  ? "Make corrections"
+  : isCorrectionSentView
+    ? "Sent for correction"
+    : "Take action"}
+    
+          </Button >
         </div>
       </CardContent>
     </Card>
