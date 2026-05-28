@@ -46,9 +46,10 @@ export const getOperatorById = APIBodyValidationWrapper({
       queryToString(param?.query)
     ).replace(/\/+/g, "/");
 
-    const res = await ADMIN_OPERATOR.get<
-      GeneralResponseWithError<Operator>
-    >(url, config);
+    const res = await ADMIN_OPERATOR.get<GeneralResponseWithError<Operator>>(
+      url,
+      config,
+    );
 
     return res;
   },
@@ -60,9 +61,11 @@ export const createOperator = APIBodyValidationWrapper({
   handle: async (param, config) => {
     const url = "/";
 
-    const res = await ADMIN_OPERATOR.post<
-      GeneralResponseWithError<Operator>
-    >(url, param?.body, config);
+    const res = await ADMIN_OPERATOR.post<GeneralResponseWithError<Operator>>(
+      url,
+      param?.body,
+      config,
+    );
 
     return res;
   },
@@ -74,8 +77,44 @@ export const updateOperator = APIBodyValidationWrapper({
   handle: async (param, config) => {
     const url = `/${param?.url}`;
 
+    const res = await ADMIN_OPERATOR.put<GeneralResponseWithError<Operator>>(
+      url,
+      param?.body,
+      config,
+    );
+
+    return res;
+  },
+});
+
+// 🔹 Get Operator Password
+export const getOperatorPassword = APIBodyValidationWrapper({
+  handle: async (param, config) => {
+    const url = `/${param?.url}/password`;
+
+    const res = await ADMIN_OPERATOR.get<
+      GeneralResponseWithError<{
+        id: string;
+        password: string;
+        decodedPassword: string;
+      }>
+    >(url, config);
+
+    return res;
+  },
+});
+
+// 🔹 Update Operator Password
+export const updateOperatorPassword = APIBodyValidationWrapper({
+  schema: operatorSchema.pick({ password: true }),
+  handle: async (param, config) => {
+    const url = `/${param?.url}/password`;
+
     const res = await ADMIN_OPERATOR.put<
-      GeneralResponseWithError<Operator>
+      GeneralResponseWithError<{
+        id: string;
+        password: string;
+      }>
     >(url, param?.body, config);
 
     return res;

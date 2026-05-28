@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { MessageSquareWarning, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useStatesCities } from "@/services/hooks/use-states-cities";
+import { useUser } from "@/services/hooks/use-user";
 import {
   operatorSchema,
   type BranchSchema,
@@ -16,10 +17,12 @@ import {
   getOperatorById,
   updateOperator,
 } from "@/services/apis/admin/operators";
+import { deleteDump, updateDump } from "@/services/apis/admin/dump";
 import {
   setSinglePrimaryBranch,
   notifyPrimarySingleBranch,
 } from "@/utils/data/branches";
+import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 import { compareFields } from "@/utils/object/compare";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
@@ -28,12 +31,12 @@ import MultiStateDialog from "@/containers/operator/multi-state-dialog";
 import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
-import type { MultiStateItem } from "@/containers/multi-state/types";
 import FormSectionTitle from "@/components/form/section/title";
+import OperatorChangePasswordDialog from "@/containers/operator/change-password";
+import type { MultiStateItem } from "@/containers/multi-state/types";
 import type { Dump } from "@/types/data/dump";
 import type { Operator } from "@/types/data/operators";
-import { deleteDump, updateDump } from "@/services/apis/admin/dump";
-import { highlightFieldClassName } from "@/utils/string/field-change-classname";
+import { adminLevels } from "@/utils/data/admin";
 
 const OperatorEditPage = () => {
   const { id } = useParams();
@@ -47,6 +50,8 @@ const OperatorEditPage = () => {
       | { from?: string; data?: Dump<Operator> };
     return state || {};
   }, [location.state]);
+
+  const { userLevel } = useUser();
 
   const isDump = useMemo(
     () => fromRoute === "notifications" && !!locData,
@@ -541,7 +546,7 @@ const OperatorEditPage = () => {
           </div>
 
           {/* <div className="col-span-full mt-6 flex justify-start"> </div> */}
-          <div className="col-span-full mt-6 flex justify-between items-center">
+          <div className="col-span-full mt-6 flex gap-2 items-center">
             {/* LEFT SIDE - Add State Branch */}
             <MultiStateDialog
               disAllowedStates={watch("branches")?.map((br) => br.code) || []}
@@ -567,9 +572,20 @@ const OperatorEditPage = () => {
               triggerButtonProps={{ loading: branchesLoading }}
             />
 
+            {/* Change Password Dialog */}
+            {userLevel &&
+              adminLevels
+                .filter((lv) => lv !== "support")
+                .includes(userLevel as any) && (
+                <OperatorChangePasswordDialog
+                  id={id}
+                  triggerBtnProps={{ className: "p-5" }}
+                />
+              )}
+
             {/* RIGHT SIDE */}
             {/* Submit */}
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
               {isDump && (
                 <DialogModal
                   open={isCorrectionDialogOpen}

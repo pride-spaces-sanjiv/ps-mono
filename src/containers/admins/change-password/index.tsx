@@ -15,7 +15,7 @@ import { DialogModal } from "@/components/dialog";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 
-export default function ChangePasswordDialog() {
+export default function AdminChangePasswordDialog() {
   const { id = "" } = useParams();
 
   const {
