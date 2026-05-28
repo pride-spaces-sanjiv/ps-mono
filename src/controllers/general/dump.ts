@@ -239,7 +239,7 @@ export const updateDump = async (
       const { error, valid, parsed, handled } = validateDataAndRespond(
         schema as NonNullable<typeof schema>,
         // @ts-ignore
-        data.data,
+        { ...doc.data, ...body?.data },
         res,
         { extractOnlyRequiredFields: true },
       );
