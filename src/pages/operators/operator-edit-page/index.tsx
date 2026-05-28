@@ -141,11 +141,10 @@ const OperatorEditPage = () => {
   //     mutationFn: deleteDump,
   //   });
 
-  const { mutateAsync: dumpMutator, isPending: dumpPending } =
-    useMutation({
-      mutationKey: [queryKeys.DUMPS, id, "recorrect"],
-      mutationFn: updateDump,
-    }); 
+  const { mutateAsync: dumpMutator, isPending: dumpPending } = useMutation({
+    mutationKey: [queryKeys.DUMPS, id, "recorrect"],
+    mutationFn: updateDump,
+  });
 
   const { mutateAsync: branchesMutater, isPending: branchesLoading } =
     useMutation({
@@ -165,13 +164,6 @@ const OperatorEditPage = () => {
         url: id,
         body,
       });
-
-      if (isDump) {
-        const dumpRes = await dumpMutator({ url: locData?.id });
-        if (dumpRes.status !== 200) {
-          throw new Error("Dump approval failed");
-        }
-      }
 
       if (res.status === 200) {
         toast.success(
@@ -274,7 +266,9 @@ const OperatorEditPage = () => {
               <MessageSquareWarning className="size-4" />
               Correction requested
             </div>
-            <p className="leading-relaxed text-amber-50/90">{locData.comment}</p>
+            <p className="leading-relaxed text-amber-50/90">
+              {locData.comment}
+            </p>
           </div>
         )}
 
