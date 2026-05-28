@@ -12,6 +12,7 @@ export type SortOptions<
   allowOnly: F[];
   defaultSortField: F;
   defaultSortOrder: SortOrder;
+  allowTimestampFields: boolean;
   fields: Partial<{
     sortBy: SB;
     sortOrder: SO;
@@ -104,6 +105,7 @@ export const getSortOptions = <
       // @ts-ignore
       fields: { sortBy: "sortBy", sortOrder: "sortOrder", ...options?.fields },
     };
+    const { allowTimestampFields = true } = options as typeof options & {};
     const field =
       (options?.fields?.sortBy &&
         options?.allowOnly?.find(

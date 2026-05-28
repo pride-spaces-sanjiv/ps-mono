@@ -1,5 +1,9 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Dump, dumpFields } from "@/database/models/dump.js";
+import {
+  allDumpFieldsEnabled,
+  Dump,
+  dumpFields,
+} from "@/database/models/dump.js";
 import { Space } from "@/database/models/space.js";
 import { Operator } from "@/database/models/operator.js";
 import {
@@ -73,7 +77,10 @@ export const getDumps = async (
           { excludeByValues: [""] },
         ),
       },
-      { defaultSortField: "lastUpdated", defaultSortOrder: "desc" },
+      {
+        defaultSortField: "updatedAt",
+        defaultSortOrder: "desc",
+      },
     );
 
     // On results error

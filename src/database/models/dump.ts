@@ -73,9 +73,6 @@ const DumpSchema = new Conn.Schema(
   },
   { timestamps: true },
 );
-
-// Model Instances
-export const Dump = Conn.model("Dump", DumpSchema, "dumps");
 indexFieldsFromSchema(DumpSchema, {
   singleFields: [
     "collection",
@@ -87,6 +84,9 @@ indexFieldsFromSchema(DumpSchema, {
     "to.name",
   ],
 });
+
+// Model Instances
+export const Dump = Conn.model("Dump", DumpSchema, "dumps");
 
 // Field names
 export const dumpFields = getFieldsOfModel(Dump, {
