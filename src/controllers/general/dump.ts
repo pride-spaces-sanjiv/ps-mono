@@ -73,6 +73,7 @@ export const getDumps = async (
           { excludeByValues: [""] },
         ),
       },
+      { defaultSortField: "lastUpdated" },
     );
 
     // On results error
