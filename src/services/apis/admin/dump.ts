@@ -31,6 +31,7 @@ export const getDumps = APIBodyValidationWrapper({
   },
 });
 
+// Get Dump
 export const getDump = APIBodyValidationWrapper({
   handle: async (param, config) => {
     const url = (
@@ -82,6 +83,21 @@ export const approveDump = APIBodyValidationWrapper({
   schema: adminSchema.omit({ password: true }).partial(),
   handle: async (param, config) => {
     const url = `/approve/${param?.url}`;
+
+    const res = await ADMIN_DUMP.put<GeneralResponseWithError<Dump>>(
+      url,
+      param?.body,
+      config,
+    );
+
+    return res;
+  },
+});
+
+// 🔹 Send to correction
+export const recorrectDump = APIBodyValidationWrapper({
+  handle: async (param, config) => {
+    const url = `/recorrect/${param?.url}`;
 
     const res = await ADMIN_DUMP.put<GeneralResponseWithError<Dump>>(
       url,

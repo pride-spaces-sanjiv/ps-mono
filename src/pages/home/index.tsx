@@ -29,7 +29,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className="relative text-primary-foreground w-full max-h-full overflow-y-auto"
+      className="relative flex min-h-dvh w-full flex-col overflow-y-auto text-primary-foreground"
       ref={divRef}
     >
       {/* Navigation */}
@@ -50,7 +50,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 relative">
+      <section className="relative flex flex-1 items-center px-4 pb-20 pt-32">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary rounded-full blur-3xl"></div>
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary rounded-full blur-3xl"></div>
@@ -87,7 +87,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-card py-12 px-4 border-t border-input">
+      <footer className="shrink-0 bg-card py-12 px-4 border-t border-input">
         <div className="max-w-7xl mx-auto text-center text-[#a6b5c2]">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Tv className="w-6 h-6 text-primary" />
