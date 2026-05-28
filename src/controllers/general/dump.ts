@@ -321,6 +321,7 @@ export const updateDump = async (
       data: data,
     });
   } catch (err: any) {
+    console.error("Error updating dump :", err);
     const errorData = handleMongooseError(err, res, {
       uniqueError: {
         errorType: "dump-unique-error",
