@@ -2,6 +2,7 @@ import { Model } from "mongoose";
 import { ManagedRequest } from "@/types/request.js";
 import { ModelDocumentKeys, ModelToRaw } from "@/types/mongoose/document.js";
 import { ObjectDepthKeys } from "@/types/object.js";
+import { allGeneralFieldsEnabled } from "./fields.js";
 
 export type SortOrder = "asc" | "desc";
 export type SortOptions<
@@ -80,6 +81,9 @@ export const cleanProjectors = <
   return cleaned;
 };
 
+const timestampFields = Object.keys(allGeneralFieldsEnabled).filter(
+  (k) => k !== "_id",
+) as (keyof Omit<typeof allGeneralFieldsEnabled, "_id">)[];
 /**
  * @description Returns `sort-options` based on query params
  * @description Checks for
@@ -107,6 +111,11 @@ export const getSortOptions = <
     };
     const { allowTimestampFields = true } = options as typeof options & {};
     const field =
+      (allowTimestampFields &&
+        (timestampFields.find(
+          (f) => f == req.query[String(options?.fields?.sortBy)],
+        ) ||
+          timestampFields.find((f) => f == options?.defaultSortField))) ||
       (options?.fields?.sortBy &&
         options?.allowOnly?.find(
           (f) => f == req.query[String(options?.fields?.sortBy)],
