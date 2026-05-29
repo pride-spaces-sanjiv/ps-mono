@@ -60,9 +60,7 @@ const OperatorEditPage = () => {
   );
 
   const isSupportCorrectionFlow =
-    isDump &&
-    locData?.status === "recorrect" &&
-    userLevel === "support";
+    isDump && locData?.status === "recorrect" && userLevel === "support";
 
   const { statesData, groupedCities, citiesData } = useStatesCities();
   const [states, setStates] = useState<MultiStateItem[]>([]);
@@ -177,30 +175,29 @@ const OperatorEditPage = () => {
       });
 
       if (res.status === 200) {
-          // If support fixed a correction request,
-  // move existing dump back to pending
-  if (isSupportCorrectionFlow && locData?.id) {
-    await dumpMutator({
-      url: locData.id,
-      body: {
-        status: "pending",
-      },
-    });
-  }
+        // If support fixed a correction request,
+        // move existing dump back to pending
+        if (isSupportCorrectionFlow && locData?.id) {
+          await dumpMutator({
+            url: locData.id,
+            body: {
+              status: "pending",
+            },
+          });
+        }
 
         toast.success(
-          `Operator ${isSupportCorrectionFlow
-            ? "updated"
-            : isDump
-              ? "approved"
-              : "updated"
+          `Operator ${
+            isSupportCorrectionFlow
+              ? "updated"
+              : isDump
+                ? "approved"
+                : "updated"
           } successfully`,
         );
 
         navigate(
-          isDump || isSupportCorrectionFlow
-            ? "/notifications"
-            : "/operators",
+          isDump || isSupportCorrectionFlow ? "/notifications" : "/operators",
         );
       }
       throw new Error("Invalid response");
@@ -269,6 +266,9 @@ const OperatorEditPage = () => {
 
   const handleBranchesUpdate = async (branches: BranchSchema[]) => {
     try {
+      if (isDump) {
+        return;
+      }
       const res = await branchesMutater(branches);
 
       if (res.status === 200 && res.data?.data?.branches) {
@@ -546,10 +546,11 @@ const OperatorEditPage = () => {
               changedBranches={
                 allUpdatedData?.branches
                   ? Object.fromEntries(
-                    allUpdatedData.branches.map((br) => [br.code, br]),
-                  )
+                      allUpdatedData.branches.map((br) => [br.code, br]),
+                    )
                   : {}
               }
+              errors={errors.branches}
               onEdit={(branch, i) => {
                 const branches = (watch("branches", []) ||
                   []) as BranchSchema[];

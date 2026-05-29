@@ -1,4 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type {
+  Merge,
+  FieldErrorsImpl,
+  FieldError,
+  FieldErrors,
+} from "react-hook-form";
 import {
   Card,
   CardAction,
@@ -15,10 +21,20 @@ import OperatorMultiStateDialog from "@/containers/operator/multi-state-dialog";
 import AddStateDialog from "@/containers/multi-state/multi-state-dialog";
 import ActionButton from "@/components/buttons/action-btn";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/utils/className";
 
 type MultiStateCardProps = {
   branches: Array<BranchSchema | MultiStateItem>;
   changedBranches?: Record<string, BranchSchema | MultiStateItem>;
+  errors?: FieldErrors<{ branches?: BranchSchema[] }>["branches"];
+  // | Merge<
+  //     FieldError,
+  //     (
+  //       | Merge<FieldError, FieldErrorsImpl<Required<BranchSchema>>>
+  //       | undefined
+  //     )[]
+  //   >
+  // | undefined;
   onEdit?: (branch: BranchSchema | MultiStateItem, i: number) => void;
   onDelete?: (branch: BranchSchema | MultiStateItem, i: number) => void;
 };
@@ -68,6 +84,7 @@ const normalizeBranch = (
 export function MultiStateCard({
   branches,
   changedBranches,
+  errors,
   onEdit,
   onDelete,
 }: MultiStateCardProps) {
@@ -83,6 +100,14 @@ export function MultiStateCard({
         : [...prev, id],
     );
   };
+
+  const erroredBranches = useMemo(() => {
+    if (Array.isArray(errors)) {
+      const branchErrs = errors as FieldError[];
+      return branchErrs;
+    }
+    return [];
+  }, [errors, branches]);
 
   if (!normalizedBranches.length) {
     return (
@@ -103,7 +128,13 @@ export function MultiStateCard({
         const isItemMultiState = isMultiStateItem(original);
 
         return (
-          <Card key={item.id} className="w-full h-fit relative">
+          <Card
+            key={item.id}
+            className={cn(
+              "w-full h-fit relative",
+              erroredBranches[i] ? "outline-2 outline-red-500/50" : "",
+            )}
+          >
             {item.isPrimary && (
               <Badge className="bg-orange-400 absolute right-[5px] top-[5px] rounded-full">
                 Primary HQ
