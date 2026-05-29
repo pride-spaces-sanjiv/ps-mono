@@ -60,7 +60,9 @@ const OperatorEditPage = () => {
   );
 
   const isSupportCorrectionFlow =
-    isDump && locData?.status === "recorrect" && userLevel === "support";
+    isDump &&
+    locData?.status === dumpStatuses.RECORRECT &&
+    userLevel === "support";
   const isDumpDisabled =
     isDump &&
     !!(locData?.status === dumpStatuses.APPROVED || locData?.disabled);
@@ -79,6 +81,7 @@ const OperatorEditPage = () => {
   });
 
   console.log("operator data", res?.data);
+  console.log("Dump operator data :", locData);
 
   // Get added or changed fields
   const { mainChanges, headQuarterChanges, personChanges } = useMemo(() => {
@@ -202,6 +205,7 @@ const OperatorEditPage = () => {
         navigate(
           isDump || isSupportCorrectionFlow ? "/notifications" : "/operators",
         );
+        return;
       }
       throw new Error("Invalid response");
     } catch (err) {
@@ -672,63 +676,67 @@ const OperatorEditPage = () => {
               {/* RIGHT SIDE */}
               {/* Submit */}
               <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
-                {isDump && !isSupportCorrectionFlow && (
-                  <DialogModal
-                    open={isCorrectionDialogOpen}
-                    onOpenChange={setIsCorrectionDialogOpen}
-                    triggerProps={{
-                      children: (
-                        <ActionButton
-                          type="button"
-                          variant="outline"
-                          className="px-5 py-5"
-                          loading={dumpPending}
-                        >
-                          <div className="flex items-center gap-2">
-                            <MessageSquareWarning className="size-4" />
-                            <span>Send to correction</span>
-                          </div>
-                        </ActionButton>
-                      ),
-                    }}
-                    titleProps={{ children: "Send To Correction" }}
-                    descriptionProps={{
-                      children:
-                        "Add a short note explaining what needs to be corrected before approval.",
-                    }}
-                    footerProps={{
-                      children: (
-                        <ActionButton
-                          type="button"
-                          loading={dumpPending}
-                          onClick={handleSendToCorrection}
-                        >
-                          Send
-                        </ActionButton>
-                      ),
-                    }}
-                  >
-                    <FormField
-                      label="Correction comment"
-                      inputType="textarea"
-                      labelPosition="out"
-                      placeholder="Mention what needs to be corrected..."
-                      value={correctionComment}
-                      onChange={(event) =>
-                        setCorrectionComment(event.currentTarget.value)
-                      }
-                    />
-                  </DialogModal>
-                )}
+                {isDump &&
+                  !isSupportCorrectionFlow &&
+                  userLevel !== "support" && (
+                    <DialogModal
+                      open={isCorrectionDialogOpen}
+                      onOpenChange={setIsCorrectionDialogOpen}
+                      triggerProps={{
+                        children: (
+                          <ActionButton
+                            type="button"
+                            variant="outline"
+                            className="px-5 py-5"
+                            loading={dumpPending}
+                          >
+                            <div className="flex items-center gap-2">
+                              <MessageSquareWarning className="size-4" />
+                              <span>Send to correction</span>
+                            </div>
+                          </ActionButton>
+                        ),
+                      }}
+                      titleProps={{ children: "Send To Correction" }}
+                      descriptionProps={{
+                        children:
+                          "Add a short note explaining what needs to be corrected before approval.",
+                      }}
+                      footerProps={{
+                        children: (
+                          <ActionButton
+                            type="button"
+                            loading={dumpPending}
+                            onClick={handleSendToCorrection}
+                          >
+                            Send
+                          </ActionButton>
+                        ),
+                      }}
+                    >
+                      <FormField
+                        label="Correction comment"
+                        inputType="textarea"
+                        labelPosition="out"
+                        placeholder="Mention what needs to be corrected..."
+                        value={correctionComment}
+                        onChange={(event) =>
+                          setCorrectionComment(event.currentTarget.value)
+                        }
+                      />
+                    </DialogModal>
+                  )}
 
                 <ActionButton
                   type="submit"
                   loading={updateLoading || branchesLoading || dumpPending}
                   className="px-5 py-5"
                 >
-                  {isSupportCorrectionFlow
-                    ? "Update Operator"
-                    : isDump
+                  {isDump &&
+                  locData?.status === dumpStatuses.RECORRECT &&
+                  userLevel === "support"
+                    ? "Send for Correction"
+                    : isDump && userLevel !== "support"
                       ? "Approve"
                       : "Update Operator"}
                 </ActionButton>
