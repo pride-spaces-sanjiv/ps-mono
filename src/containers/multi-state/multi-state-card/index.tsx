@@ -35,6 +35,7 @@ type MultiStateCardProps = {
   //     )[]
   //   >
   // | undefined;
+  onlyView?: boolean;
   onEdit?: (branch: BranchSchema | MultiStateItem, i: number) => void;
   onDelete?: (branch: BranchSchema | MultiStateItem, i: number) => void;
 };
@@ -85,6 +86,7 @@ export function MultiStateCard({
   branches,
   changedBranches,
   errors,
+  onlyView = false,
   onEdit,
   onDelete,
 }: MultiStateCardProps) {
@@ -224,64 +226,66 @@ export function MultiStateCard({
                     </div>
                   )}
                 </CardContent>
-                <CardFooter className="justify-end gap-2 border-t pt-4">
-                  {isItemMultiState ? (
-                    <AddStateDialog
-                      hideTrigger
-                      triggerElement={
-                        <ActionButton type="button" variant="outline">
-                          <div className="flex items-center gap-2">
-                            <Pencil className="size-4" />
-                            Edit
-                          </div>
-                        </ActionButton>
-                      }
-                      open={isEditing}
-                      onOpenChange={(open) =>
-                        setActiveEditIndex(open ? i : null)
-                      }
-                      editingState={original}
-                      onSave={(data) => {
-                        onEdit?.(data, i);
-                        setActiveEditIndex(null);
-                      }}
-                    />
-                  ) : (
-                    <OperatorMultiStateDialog
-                      open={isEditing}
-                      onOpenChange={(open) =>
-                        setActiveEditIndex(open ? i : null)
-                      }
-                      defaultData={original}
-                      updatedData={changedBranches?.[item.code]}
-                      dialogModalProps={{
-                        triggerProps: {
-                          children: (
-                            <ActionButton type="button" variant="outline">
-                              <div className="flex items-center gap-2">
-                                <Pencil className="size-4" />
-                                Edit
-                              </div>
-                            </ActionButton>
-                          ),
-                        },
-                      }}
-                      onSave={(data) => {
-                        onEdit?.(data, i);
-                      }}
-                      isEditing={true}
-                    />
-                  )}
+                {!onlyView && (
+                  <CardFooter className="justify-end gap-2 border-t pt-4">
+                    {isItemMultiState ? (
+                      <AddStateDialog
+                        hideTrigger
+                        triggerElement={
+                          <ActionButton type="button" variant="outline">
+                            <div className="flex items-center gap-2">
+                              <Pencil className="size-4" />
+                              Edit
+                            </div>
+                          </ActionButton>
+                        }
+                        open={isEditing}
+                        onOpenChange={(open) =>
+                          setActiveEditIndex(open ? i : null)
+                        }
+                        editingState={original}
+                        onSave={(data) => {
+                          onEdit?.(data, i);
+                          setActiveEditIndex(null);
+                        }}
+                      />
+                    ) : (
+                      <OperatorMultiStateDialog
+                        open={isEditing}
+                        onOpenChange={(open) =>
+                          setActiveEditIndex(open ? i : null)
+                        }
+                        defaultData={original}
+                        updatedData={changedBranches?.[item.code]}
+                        dialogModalProps={{
+                          triggerProps: {
+                            children: (
+                              <ActionButton type="button" variant="outline">
+                                <div className="flex items-center gap-2">
+                                  <Pencil className="size-4" />
+                                  Edit
+                                </div>
+                              </ActionButton>
+                            ),
+                          },
+                        }}
+                        onSave={(data) => {
+                          onEdit?.(data, i);
+                        }}
+                        isEditing={true}
+                      />
+                    )}
 
-                  <Button
-                    variant="destructive"
-                    type="button"
-                    onClick={() => onDelete?.(item.original, i)}
-                  >
-                    <Trash2 className="size-4" />
-                    Delete
-                  </Button>
-                </CardFooter>
+                    <Button
+                      variant="destructive"
+                      type="button"
+                      onClick={() => onDelete?.(item.original, i)}
+                    >
+                      <Trash2 className="size-4" />
+                      Delete
+                    </Button>
+                  </CardFooter>
+                )}
               </>
             )}
           </Card>

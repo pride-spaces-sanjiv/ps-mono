@@ -61,6 +61,9 @@ const OperatorEditPage = () => {
 
   const isSupportCorrectionFlow =
     isDump && locData?.status === "recorrect" && userLevel === "support";
+  const isDumpDisabled =
+    isDump &&
+    !!(locData?.status === dumpStatuses.APPROVED || locData?.disabled);
 
   const { statesData, groupedCities, citiesData } = useStatesCities();
   const [states, setStates] = useState<MultiStateItem[]>([]);
@@ -187,11 +190,12 @@ const OperatorEditPage = () => {
         }
 
         toast.success(
-          `Operator ${isSupportCorrectionFlow
-            ? "updated"
-            : isDump
-              ? "approved"
-              : "updated"
+          `Operator ${
+            isSupportCorrectionFlow
+              ? "updated"
+              : isDump
+                ? "approved"
+                : "updated"
           } successfully`,
         );
 
@@ -310,7 +314,7 @@ const OperatorEditPage = () => {
         <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
-        {isDump && locData?.comment && locData.status !== dumpStatuses.APPROVED && (
+        {isDump && locData?.comment && !isDumpDisabled && (
           <div className="mb-5 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
             <div className="mb-2 flex items-center gap-2 font-semibold text-amber-200">
               <MessageSquareWarning className="size-4" />
@@ -540,13 +544,14 @@ const OperatorEditPage = () => {
           {/* Multi State Cards */}
           <div className="col-span-full mt-6">
             <MultiStateCard
+              onlyView={isDumpDisabled}
               // @ts-ignore
               branches={watch("branches", []) || []}
               changedBranches={
                 allUpdatedData?.branches
                   ? Object.fromEntries(
-                    allUpdatedData.branches.map((br) => [br.code, br]),
-                  )
+                      allUpdatedData.branches.map((br) => [br.code, br]),
+                    )
                   : {}
               }
               errors={errors.branches}
@@ -590,114 +595,116 @@ const OperatorEditPage = () => {
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
                 defaultChecked={!!defaultValues?.isActive}
                 {...register("isActive")}
-                disabled={isDump && locData?.status === dumpStatuses.APPROVED}
+                disabled={isDumpDisabled}
               />
             </div>
           </div>
 
           {/* <div className="col-span-full mt-6 flex justify-start"> </div> */}
-          {!(isDump && locData?.status === dumpStatuses.APPROVED) && (<div className="col-span-full mt-6 flex gap-2 items-center">
-            {/* LEFT SIDE - Add State Branch */}
-            <MultiStateDialog
-              disAllowedStates={watch("branches")?.map((br) => br.code) || []}
-              open={isStateDialogOpen}
-              onOpenChange={(open) => {
-                setIsStateDialogOpen(open);
-                if (!open) {
-                  setEditingState(null);
-                }
-              }}
-              onSave={(data) => {
-                const branches = setSinglePrimaryBranch(
-                  [...(watch("branches", []) || [])] as BranchSchema[],
-                  data,
-                );
-                setValue("branches", branches, {
-                  shouldValidate: true,
-                });
-                !isDump && handleBranchesUpdate(branches);
-                notifyPrimarySingleBranch(branches, data);
-              }}
-              isEditing={false}
-              triggerButtonProps={{ loading: branchesLoading }}
-            />
+          {!isDumpDisabled && (
+            <div className="col-span-full mt-6 flex gap-2 items-center">
+              {/* LEFT SIDE - Add State Branch */}
+              <MultiStateDialog
+                disAllowedStates={watch("branches")?.map((br) => br.code) || []}
+                open={isStateDialogOpen}
+                onOpenChange={(open) => {
+                  setIsStateDialogOpen(open);
+                  if (!open) {
+                    setEditingState(null);
+                  }
+                }}
+                onSave={(data) => {
+                  const branches = setSinglePrimaryBranch(
+                    [...(watch("branches", []) || [])] as BranchSchema[],
+                    data,
+                  );
+                  setValue("branches", branches, {
+                    shouldValidate: true,
+                  });
+                  !isDump && handleBranchesUpdate(branches);
+                  notifyPrimarySingleBranch(branches, data);
+                }}
+                isEditing={false}
+                triggerButtonProps={{ loading: branchesLoading }}
+              />
 
-            {/* Change Password Dialog */}
-            {userLevel &&
-              adminLevels
-                .filter((lv) => lv !== "support")
-                .includes(userLevel as any) && (
-                <OperatorChangePasswordDialog
-                  id={id}
-                  triggerBtnProps={{ className: "p-5" }}
-                />
-              )}
-
-            {/* RIGHT SIDE */}
-            {/* Submit */}
-            <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
-              {isDump && !isSupportCorrectionFlow && (
-                <DialogModal
-                  open={isCorrectionDialogOpen}
-                  onOpenChange={setIsCorrectionDialogOpen}
-                  triggerProps={{
-                    children: (
-                      <ActionButton
-                        type="button"
-                        variant="outline"
-                        className="px-5 py-5"
-                        loading={dumpPending}
-                      >
-                        <div className="flex items-center gap-2">
-                          <MessageSquareWarning className="size-4" />
-                          <span>Send to correction</span>
-                        </div>
-                      </ActionButton>
-                    ),
-                  }}
-                  titleProps={{ children: "Send To Correction" }}
-                  descriptionProps={{
-                    children:
-                      "Add a short note explaining what needs to be corrected before approval.",
-                  }}
-                  footerProps={{
-                    children: (
-                      <ActionButton
-                        type="button"
-                        loading={dumpPending}
-                        onClick={handleSendToCorrection}
-                      >
-                        Send
-                      </ActionButton>
-                    ),
-                  }}
-                >
-                  <FormField
-                    label="Correction comment"
-                    inputType="textarea"
-                    labelPosition="out"
-                    placeholder="Mention what needs to be corrected..."
-                    value={correctionComment}
-                    onChange={(event) =>
-                      setCorrectionComment(event.currentTarget.value)
-                    }
+              {/* Change Password Dialog */}
+              {userLevel &&
+                adminLevels
+                  .filter((lv) => lv !== "support")
+                  .includes(userLevel as any) && (
+                  <OperatorChangePasswordDialog
+                    id={id}
+                    triggerBtnProps={{ className: "p-5" }}
                   />
-                </DialogModal>
-              )}
+                )}
 
-              <ActionButton
-                type="submit"
-                loading={updateLoading || branchesLoading || dumpPending}
-                className="px-5 py-5"
-              >
-                {isSupportCorrectionFlow
-                  ? "Update Operator"
-                  : isDump
-                    ? "Approve"
-                    : "Update Operator"}
-              </ActionButton>
+              {/* RIGHT SIDE */}
+              {/* Submit */}
+              <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
+                {isDump && !isSupportCorrectionFlow && (
+                  <DialogModal
+                    open={isCorrectionDialogOpen}
+                    onOpenChange={setIsCorrectionDialogOpen}
+                    triggerProps={{
+                      children: (
+                        <ActionButton
+                          type="button"
+                          variant="outline"
+                          className="px-5 py-5"
+                          loading={dumpPending}
+                        >
+                          <div className="flex items-center gap-2">
+                            <MessageSquareWarning className="size-4" />
+                            <span>Send to correction</span>
+                          </div>
+                        </ActionButton>
+                      ),
+                    }}
+                    titleProps={{ children: "Send To Correction" }}
+                    descriptionProps={{
+                      children:
+                        "Add a short note explaining what needs to be corrected before approval.",
+                    }}
+                    footerProps={{
+                      children: (
+                        <ActionButton
+                          type="button"
+                          loading={dumpPending}
+                          onClick={handleSendToCorrection}
+                        >
+                          Send
+                        </ActionButton>
+                      ),
+                    }}
+                  >
+                    <FormField
+                      label="Correction comment"
+                      inputType="textarea"
+                      labelPosition="out"
+                      placeholder="Mention what needs to be corrected..."
+                      value={correctionComment}
+                      onChange={(event) =>
+                        setCorrectionComment(event.currentTarget.value)
+                      }
+                    />
+                  </DialogModal>
+                )}
+
+                <ActionButton
+                  type="submit"
+                  loading={updateLoading || branchesLoading || dumpPending}
+                  className="px-5 py-5"
+                >
+                  {isSupportCorrectionFlow
+                    ? "Update Operator"
+                    : isDump
+                      ? "Approve"
+                      : "Update Operator"}
+                </ActionButton>
+              </div>
             </div>
-          </div>)}
+          )}
         </form>
       </div>
 
