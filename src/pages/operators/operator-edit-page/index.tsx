@@ -187,12 +187,11 @@ const OperatorEditPage = () => {
         }
 
         toast.success(
-          `Operator ${
-            isSupportCorrectionFlow
-              ? "updated"
-              : isDump
-                ? "approved"
-                : "updated"
+          `Operator ${isSupportCorrectionFlow
+            ? "updated"
+            : isDump
+              ? "approved"
+              : "updated"
           } successfully`,
         );
 
@@ -311,7 +310,7 @@ const OperatorEditPage = () => {
         <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
-        {isDump && locData?.comment && (
+        {isDump && locData?.comment && locData.status !== dumpStatuses.APPROVED && (
           <div className="mb-5 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
             <div className="mb-2 flex items-center gap-2 font-semibold text-amber-200">
               <MessageSquareWarning className="size-4" />
@@ -546,8 +545,8 @@ const OperatorEditPage = () => {
               changedBranches={
                 allUpdatedData?.branches
                   ? Object.fromEntries(
-                      allUpdatedData.branches.map((br) => [br.code, br]),
-                    )
+                    allUpdatedData.branches.map((br) => [br.code, br]),
+                  )
                   : {}
               }
               errors={errors.branches}
@@ -591,12 +590,13 @@ const OperatorEditPage = () => {
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
                 defaultChecked={!!defaultValues?.isActive}
                 {...register("isActive")}
+                disabled={isDump && locData?.status === dumpStatuses.APPROVED}
               />
             </div>
           </div>
 
           {/* <div className="col-span-full mt-6 flex justify-start"> </div> */}
-          <div className="col-span-full mt-6 flex gap-2 items-center">
+          {!(isDump && locData?.status === dumpStatuses.APPROVED) && (<div className="col-span-full mt-6 flex gap-2 items-center">
             {/* LEFT SIDE - Add State Branch */}
             <MultiStateDialog
               disAllowedStates={watch("branches")?.map((br) => br.code) || []}
@@ -697,7 +697,7 @@ const OperatorEditPage = () => {
                     : "Update Operator"}
               </ActionButton>
             </div>
-          </div>
+          </div>)}
         </form>
       </div>
 

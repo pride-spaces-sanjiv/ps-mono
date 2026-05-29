@@ -24,6 +24,7 @@ export default function NotificationCard({
 }) {
   const navigate = useNavigate();
   const { userLevel } = useUser();
+  const isRootAdmin = userLevel === "super-admin";
 
   const { collection, action, updatedAt, data, metadata, from, to, status } =
     datifyObjectValues(notification, ["createdAt", "updatedAt"]) || {};
@@ -152,13 +153,49 @@ export default function NotificationCard({
       });
   };
   const isSupportUser = userLevel === "support";
-  const isSupportUser = userLevel === "support";
+
 
   const isCorrectionView =
     status === "recorrect" && isSupportUser;
 
   const isCorrectionSentView =
     status === "recorrect" && !isSupportUser;
+
+  const actionButtonConfig = useMemo(() => {
+    if (status === "approved") {
+      return {
+        text: "View details",
+        disabled: false,
+        icon: <MousePointerClick className="size-3.5" />,
+        ariaLabel: `View details for ${entityTypeLabel.toLowerCase()}`,
+      };
+    }
+
+    if (status === "recorrect") {
+      if (isSupportUser) {
+        return {
+          text: "Make corrections",
+          disabled: false,
+          icon: <MessageSquareWarning className="size-3.5" />,
+          ariaLabel: `Make corrections for ${entityTypeLabel.toLowerCase()}`,
+        };
+      }
+
+      return {
+        text: "Sent for correction",
+        disabled: true,
+        icon: <MousePointerClick className="size-3.5" />,
+        ariaLabel: `Sent for correction for ${entityTypeLabel.toLowerCase()}`,
+      };
+    }
+
+    return {
+      text: "Take action",
+      disabled: false,
+      icon: <MousePointerClick className="size-3.5" />,
+      ariaLabel: `Take action on ${entityTypeLabel.toLowerCase()}`,
+    };
+  }, [status, isSupportUser, entityTypeLabel]);
 
   return (
     <Card
@@ -189,13 +226,13 @@ export default function NotificationCard({
             "rounded-full border px-2 py-0.5 text-[10px] font-medium",
 
             action === "add" &&
-              "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+            "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
 
             action === "remove" &&
-              "border-destructive/30 bg-destructive/10 text-red-300",
+            "border-destructive/30 bg-destructive/10 text-red-300",
 
             action === "update" &&
-              "border-amber-500/30 bg-amber-500/10 text-amber-300",
+            "border-amber-500/30 bg-amber-500/10 text-amber-300",
           )}
         >
           {statusText}
@@ -263,46 +300,28 @@ export default function NotificationCard({
         </p>
 
         <div className="flex shrink-0 items-center justify-end gap-1.5">
-
           <Button
             size="sm"
             variant="default"
             onClick={handleView}
-            disabled={isCorrectionSentView}
-            aria-label={
-              isCorrectionView
-                ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
-                : isCorrectionSentView
-                  ? `Sent for correction for ${entityTypeLabel.toLowerCase()}`
-                  : `Take action on ${entityTypeLabel.toLowerCase()}`
-                ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
-                : isCorrectionSentView
-                  ? `Sent for correction for ${entityTypeLabel.toLowerCase()}`
-                  : `Take action on ${entityTypeLabel.toLowerCase()}`
-            }
+            disabled={actionButtonConfig.disabled}
+            aria-label={actionButtonConfig.ariaLabel}
             className="h-7 px-2 text-xs"
           >
-            {isCorrectionView ? (
-              <MessageSquareWarning className="size-3.5" />
-            ) : (
-              <MousePointerClick className="size-3.5" />
-            )}
-            {isCorrectionView
-              ? "Make corrections"
-              : isCorrectionSentView
-                ? "Sent for correction"
-                : "Take action"}
-
-          </Button >
-                    <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => onDelete?.(notification.id)}
-            disabled={isDeleting}
-            aria-label="Delete notification"
-          >
-            <Trash2 className="w-4 h-4" />
+            {actionButtonConfig.icon}
+            {actionButtonConfig.text}
           </Button>
+
+          {isRootAdmin && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => onDelete?.(notification.id)}
+              disabled={isDeleting}
+              aria-label="Delete notification"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>)}
         </div>
       </CardContent>
     </Card>
