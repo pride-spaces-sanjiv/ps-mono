@@ -41,7 +41,7 @@ export const dumpSchema = z.object({
   to: userSchema.optional(),
   status: z.enum(Object.values(dumpStatuses)),
   comment: z.string("Comment must be a string").optional(),
-  disabled: z.boolean().default(false),
+  disabled: z.boolean().default(false).optional(),
 });
 
 export type DumpSchema = z.infer<typeof dumpSchema>;
