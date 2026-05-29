@@ -19,16 +19,12 @@ export default function NotificationList() {
 
   // const dumps = useMemo(() => res?.data?.data?.results || [], [res]);
   const dumps = useMemo(() => {
-  const results = res?.data?.data?.results || [];
+    const results = res?.data?.data?.results || [];
 
-  return [...results].sort(
-    (a, b) =>
-      new Date(b.updatedAt).getTime() -
-      new Date(a.updatedAt).getTime()
-  );
-}, [res]);
+    return results;
+  }, [res]);
 
-    const [infiniteRef] = useInfiniteScrollHook({
+  const [infiniteRef] = useInfiniteScrollHook({
     loading: isFetching,
     hasNextPage: !!res?.data?.data?.metrics?.next,
     onLoadMore: () => {
@@ -45,9 +41,7 @@ export default function NotificationList() {
           No notifications yet. Refresh the page or check back later.
         </div>
       ) : (
-        dumps.map((n) => (
-          <NotificationCard key={n.id} notification={n} />
-        ))
+        dumps.map((n) => <NotificationCard key={n.id} notification={n} />)
       )}
     </div>
   );

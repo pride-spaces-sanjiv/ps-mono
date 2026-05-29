@@ -37,6 +37,7 @@ import type { MultiStateItem } from "@/containers/multi-state/types";
 import type { Dump } from "@/types/data/dump";
 import type { Operator } from "@/types/data/operators";
 import { adminLevels } from "@/utils/data/admin";
+import { dumpStatuses } from "@/utils/data/dump";
 
 const OperatorEditPage = () => {
   const { id } = useParams();
@@ -59,9 +60,7 @@ const OperatorEditPage = () => {
   );
 
   const isSupportCorrectionFlow =
-    isDump &&
-    locData?.status === "recorrect" &&
-    userLevel === "support";
+    isDump && locData?.status === "recorrect" && userLevel === "support";
 
   const { statesData, groupedCities, citiesData } = useStatesCities();
   const [states, setStates] = useState<MultiStateItem[]>([]);
@@ -176,30 +175,29 @@ const OperatorEditPage = () => {
       });
 
       if (res.status === 200) {
-          // If support fixed a correction request,
-  // move existing dump back to pending
-  if (isSupportCorrectionFlow && locData?.id) {
-    await dumpMutator({
-      url: locData.id,
-      body: {
-        status: "pending",
-      },
-    });
-  }
+        // If support fixed a correction request,
+        // move existing dump back to pending
+        if (isSupportCorrectionFlow && locData?.id) {
+          await dumpMutator({
+            url: locData.id,
+            body: {
+              status: "pending",
+            },
+          });
+        }
 
         toast.success(
-          `Operator ${isSupportCorrectionFlow
-            ? "updated"
-            : isDump
-              ? "approved"
-              : "updated"
+          `Operator ${
+            isSupportCorrectionFlow
+              ? "updated"
+              : isDump
+                ? "approved"
+                : "updated"
           } successfully`,
         );
 
         navigate(
-          isDump || isSupportCorrectionFlow
-            ? "/notifications"
-            : "/operators",
+          isDump || isSupportCorrectionFlow ? "/notifications" : "/operators",
         );
       }
       throw new Error("Invalid response");
@@ -240,16 +238,38 @@ const OperatorEditPage = () => {
     }
   };
 
+  const handleApprove = async (body: Omit<OperatorSchema, "password">) => {
+    if (!locData?.id) {
+      throw new Error("Invalid dump ID");
+    }
+
+    try {
+      const dumpRes = await dumpMutator({
+        url: locData.id,
+        body: {
+          data: body,
+          status: dumpStatuses.APPROVED,
+        },
+      });
+      if (dumpRes.status === 200) {
+        toast.success("Approved operator changes");
+        navigate("/notifications");
+        return;
+      }
+
+      throw new Error("Invalid response");
+    } catch (err) {
+      console.error("Error approving operator changes :", err);
+      toast.error("Failed to approve operator changes");
+    }
+  };
+
   const handleBranchesUpdate = async (branches: BranchSchema[]) => {
     try {
-      const res = await branchesMutater(branches);
-
       if (isDump) {
-        const dumpRes = await dumpMutator({ url: locData?.id });
-        if (dumpRes.status !== 200) {
-          throw new Error("Dump approval failed");
-        }
+        return;
       }
+      const res = await branchesMutater(branches);
 
       if (res.status === 200 && res.data?.data?.branches) {
         toast.success("Updated state branches");
@@ -304,9 +324,12 @@ const OperatorEditPage = () => {
         )}
 
         <form
-          onSubmit={handleSubmit(onSubmit, (errors) => {
-            console.log("Operator form err", errors);
-          })}
+          onSubmit={handleSubmit(
+            isDump && userLevel !== "support" ? handleApprove : onSubmit,
+            (errors) => {
+              console.log("Operator form err", errors);
+            },
+          )}
           className="auto-form-grid"
         >
           {/* SECTION: Operator Details */}
@@ -523,10 +546,11 @@ const OperatorEditPage = () => {
               changedBranches={
                 allUpdatedData?.branches
                   ? Object.fromEntries(
-                    allUpdatedData.branches.map((br) => [br.code, br]),
-                  )
+                      allUpdatedData.branches.map((br) => [br.code, br]),
+                    )
                   : {}
               }
+              errors={errors.branches}
               onEdit={(branch, i) => {
                 const branches = (watch("branches", []) ||
                   []) as BranchSchema[];
@@ -541,7 +565,7 @@ const OperatorEditPage = () => {
                   updatedBranches,
                   branch as BranchSchema,
                 );
-                handleBranchesUpdate(updatedBranches);
+                !isDump && handleBranchesUpdate(updatedBranches);
               }}
               onDelete={(branch, i) => {
                 const branches = (watch("branches", [])?.filter(
@@ -553,7 +577,7 @@ const OperatorEditPage = () => {
                 );
                 setValue("branches", updatedBranches, { shouldValidate: true });
 
-                handleBranchesUpdate(updatedBranches);
+                !isDump && handleBranchesUpdate(updatedBranches);
               }}
             />
           </div>
@@ -591,7 +615,7 @@ const OperatorEditPage = () => {
                 setValue("branches", branches, {
                   shouldValidate: true,
                 });
-                handleBranchesUpdate(branches);
+                !isDump && handleBranchesUpdate(branches);
                 notifyPrimarySingleBranch(branches, data);
               }}
               isEditing={false}

@@ -1,12 +1,7 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/services/hooks/use-user";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquareWarning, MousePointerClick, Trash2 } from "lucide-react";
@@ -16,6 +11,7 @@ import { datifyObjectValues } from "@/utils/object/datify";
 import moment from "moment";
 import type { Operator } from "@/types/data/operators";
 import type { Space } from "@/types/data/spaces";
+import { dumpCollectionNames } from "@/utils/data/dump";
 
 export default function NotificationCard({
   notification,
@@ -28,6 +24,7 @@ export default function NotificationCard({
 }) {
   const navigate = useNavigate();
   const { userLevel } = useUser();
+
   const { collection, action, updatedAt, data, metadata, from, to, status } =
     datifyObjectValues(notification, ["createdAt", "updatedAt"]) || {};
 
@@ -45,29 +42,25 @@ export default function NotificationCard({
       case "approved":
         return {
           label: "Approved",
-          className:
-            "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+          className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
         };
 
       case "pending":
         return {
           label: "Pending",
-          className:
-            "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+          className: "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
         };
 
       case "recorrect":
         return {
           label: "Recorrect",
-          className:
-            "border-orange-500/30 bg-orange-500/10 text-orange-300",
+          className: "border-orange-500/30 bg-orange-500/10 text-orange-300",
         };
 
       default:
         return {
           label: "Unknown",
-          className:
-            "border-border bg-muted text-muted-foreground",
+          className: "border-border bg-muted text-muted-foreground",
         };
     }
   }, [status]);
@@ -75,6 +68,7 @@ export default function NotificationCard({
   const ageText = useMemo(() => {
     return moment(updatedAt || Date.now()).fromNow();
   }, [updatedAt]);
+
 
   const entityTypeLabel = collection === "operators" ? "Operator" : "Centre";
 
@@ -96,7 +90,11 @@ export default function NotificationCard({
 
     const recipient = to?.name || to?.email || "";
     const actionLabel =
-      action === "add" ? "creation" : action === "remove" ? "removal" : "update";
+      action === "add"
+        ? "creation"
+        : action === "remove"
+          ? "removal"
+          : "update";
     const subject = `${entityTypeLabel.toLowerCase()} ${metadata?.name || "N/A"}`;
 
     if (recipient) {
@@ -144,7 +142,7 @@ export default function NotificationCard({
   //     : `Centre: ${entityName}${operatorName ? ` - Operator: ${operatorName}` : ""}`;
 
   const handleView = () => {
-    if (collection === "operators")
+    if (collection === dumpCollectionNames.OPERATOR)
       navigate(`/operators/${metadata?.id}`, {
         state: { from: "notifications", data: notification },
       });
@@ -153,6 +151,7 @@ export default function NotificationCard({
         state: { from: "notifications", data: notification },
       });
   };
+  const isSupportUser = userLevel === "support";
   const isSupportUser = userLevel === "support";
 
   const isCorrectionView =
@@ -172,7 +171,6 @@ export default function NotificationCard({
         "py-1 gap-0",
       )}
     >
-
       {/* TOP RIGHT BADGES */}
       <div className="absolute right-2 top-2 flex items-center gap-1">
         {/* STATUS */}
@@ -191,13 +189,13 @@ export default function NotificationCard({
             "rounded-full border px-2 py-0.5 text-[10px] font-medium",
 
             action === "add" &&
-            "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+              "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
 
             action === "remove" &&
-            "border-destructive/30 bg-destructive/10 text-red-300",
+              "border-destructive/30 bg-destructive/10 text-red-300",
 
             action === "update" &&
-            "border-amber-500/30 bg-amber-500/10 text-amber-300",
+              "border-amber-500/30 bg-amber-500/10 text-amber-300",
           )}
         >
           {statusText}
@@ -273,6 +271,10 @@ export default function NotificationCard({
             disabled={isCorrectionSentView}
             aria-label={
               isCorrectionView
+                ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
+                : isCorrectionSentView
+                  ? `Sent for correction for ${entityTypeLabel.toLowerCase()}`
+                  : `Take action on ${entityTypeLabel.toLowerCase()}`
                 ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
                 : isCorrectionSentView
                   ? `Sent for correction for ${entityTypeLabel.toLowerCase()}`
