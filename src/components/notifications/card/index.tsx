@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquareWarning, MousePointerClick } from "lucide-react";
+import { MessageSquareWarning, MousePointerClick, Trash2 } from "lucide-react";
 import { cn } from "@/utils/className";
 import type { Dump } from "@/types/data/dump";
 import { datifyObjectValues } from "@/utils/object/datify";
@@ -19,11 +19,15 @@ import type { Space } from "@/types/data/spaces";
 
 export default function NotificationCard({
   notification,
+  onDelete,
+  isDeleting = false,
 }: {
   notification: Dump<Operator | Space>;
+  onDelete?: (id: string) => void;
+  isDeleting?: boolean;
 }) {
   const navigate = useNavigate();
-const { userLevel } = useUser();
+  const { userLevel } = useUser();
   const { collection, action, updatedAt, data, metadata, from, to, status } =
     datifyObjectValues(notification, ["createdAt", "updatedAt"]) || {};
 
@@ -71,7 +75,7 @@ const { userLevel } = useUser();
   const ageText = useMemo(() => {
     return moment(updatedAt || Date.now()).fromNow();
   }, [updatedAt]);
-  
+
   const entityTypeLabel = collection === "operators" ? "Operator" : "Centre";
 
   const title = useMemo(
@@ -96,6 +100,16 @@ const { userLevel } = useUser();
     const subject = `${entityTypeLabel.toLowerCase()} ${metadata?.name || "N/A"}`;
 
     if (recipient) {
+      if (status === "approved") {
+        return {
+          requester,
+          recipient,
+          prefix: "",
+          middle: " requested for approval - Approved by ",
+          suffix: `.`,
+        };
+      }
+
       if (status === "recorrect") {
         return {
           requester,
@@ -119,7 +133,7 @@ const { userLevel } = useUser();
       requester,
       recipient: "",
       prefix: "",
-      middle: ` requested ${actionLabel} for ${subject}.`,
+      middle: ` requested ${actionLabel}.`,
       suffix: "",
     };
   }, [action, entityTypeLabel, from, metadata, status, to]);
@@ -139,13 +153,13 @@ const { userLevel } = useUser();
         state: { from: "notifications", data: notification },
       });
   };
-const isSupportUser = userLevel === "support";
+  const isSupportUser = userLevel === "support";
 
-const isCorrectionView =
-  status === "recorrect" && isSupportUser;
+  const isCorrectionView =
+    status === "recorrect" && isSupportUser;
 
-const isCorrectionSentView =
-  status === "recorrect" && !isSupportUser;
+  const isCorrectionSentView =
+    status === "recorrect" && !isSupportUser;
 
   return (
     <Card
@@ -251,6 +265,7 @@ const isCorrectionSentView =
         </p>
 
         <div className="flex shrink-0 items-center justify-end gap-1.5">
+
           <Button
             size="sm"
             variant="default"
@@ -258,10 +273,10 @@ const isCorrectionSentView =
             disabled={isCorrectionSentView}
             aria-label={
               isCorrectionView
-  ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
-  : isCorrectionSentView
-    ? `Sent for correction for ${entityTypeLabel.toLowerCase()}`
-    : `Take action on ${entityTypeLabel.toLowerCase()}`
+                ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
+                : isCorrectionSentView
+                  ? `Sent for correction for ${entityTypeLabel.toLowerCase()}`
+                  : `Take action on ${entityTypeLabel.toLowerCase()}`
             }
             className="h-7 px-2 text-xs"
           >
@@ -271,12 +286,21 @@ const isCorrectionSentView =
               <MousePointerClick className="size-3.5" />
             )}
             {isCorrectionView
-  ? "Make corrections"
-  : isCorrectionSentView
-    ? "Sent for correction"
-    : "Take action"}
-    
+              ? "Make corrections"
+              : isCorrectionSentView
+                ? "Sent for correction"
+                : "Take action"}
+
           </Button >
+                    <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => onDelete?.(notification.id)}
+            disabled={isDeleting}
+            aria-label="Delete notification"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
       </CardContent>
     </Card>
