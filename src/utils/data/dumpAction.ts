@@ -22,6 +22,7 @@ export const dumpAdminAction = async <
     // @ts-ignore
     isNew = true,
     id = undefined,
+    senderDisabled = false,
   }: Partial<{
     fromAllowedLevels: [...F[]];
     toAllowedLevels: [...T[]];
@@ -30,6 +31,7 @@ export const dumpAdminAction = async <
      */
     isNew: N;
     id: string | (N extends true ? undefined : string);
+    senderDisabled: boolean;
   }> & {
     dump: Omit<
       N extends true ? DumpSchema : Partial<DumpSchema>,
@@ -66,30 +68,31 @@ export const dumpAdminAction = async <
       return result;
     }
 
-    // Dump
-    if (isNew) {
-      const newDump = new Dump({
-        ...dump,
-        [sender]: req.session.user,
-        status:
-          dump.status ||
-          (sender === "from" ? dumpStatuses.PENDING : dumpStatuses.APPROVED),
-      });
-      await newDump.save();
-      result.dumped = true;
-      result.doc = newDump;
-    } else {
-      const doc = await Dump.findOneAndUpdate(
-        { _id: id },
-        {
+    const preparedDump = senderDisabled
+      ? {
+          ...dump,
+          status:
+            dump.status ||
+            (sender === "from" ? dumpStatuses.PENDING : dumpStatuses.APPROVED),
+        }
+      : {
           ...dump,
           [sender]: req.session.user,
           status:
             dump.status ||
             (sender === "from" ? dumpStatuses.PENDING : dumpStatuses.APPROVED),
-        },
-        { new: true },
-      );
+        };
+
+    // Dump
+    if (isNew) {
+      const newDump = new Dump(preparedDump);
+      await newDump.save();
+      result.dumped = true;
+      result.doc = newDump;
+    } else {
+      const doc = await Dump.findOneAndUpdate({ _id: id }, preparedDump, {
+        new: true,
+      });
       if (!doc) {
         result.notFound = true;
         return result;

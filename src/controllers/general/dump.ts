@@ -216,6 +216,14 @@ export const updateDump = async (
       return;
     }
 
+    // Flag to check if last user who did to action is diff from curr
+    const doClone = !!(
+      sessionUser?.userType &&
+      sessionUser.userType !== "support" &&
+      doc.to?.id &&
+      doc.to.id !== sessionUser.id
+    );
+
     // Update approved dump in real collection
     if (
       sessionUser?.userType &&
@@ -288,12 +296,18 @@ export const updateDump = async (
     const dumpRes = await dumpAdminAction({
       dump: {
         ...body,
-        status:
-          sessionUser?.userType === "support"
+        status: doClone
+          ? doc.status
+          : sessionUser?.userType === "support"
             ? dumpStatuses.PENDING
             : body.status,
+        disabled:
+          doClone ||
+          (sessionUser?.userType === "support" &&
+            body.status === dumpStatuses.APPROVED),
       },
       req: req,
+      senderDisabled: !!doClone,
       isNew: false,
       id: req.params.id,
     });
@@ -313,6 +327,45 @@ export const updateDump = async (
     }
     if (dumpRes.error) {
       throw dumpRes.error;
+    }
+
+    // Handle cloning dump
+    if (doClone) {
+      const dumpRes = await dumpAdminAction({
+        // @ts-ignore
+        dump: {
+          ...doc.toJSON({ versionKey: false, flattenObjectIds: true }),
+          _id: undefined,
+          ...body,
+          // @ts-ignore
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : body.status,
+          disabled:
+            sessionUser?.userType === "support" &&
+            body.status === dumpStatuses.APPROVED,
+        },
+        req: req,
+        isNew: true,
+      });
+      if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+        ResponseHandler.handleUnauthorized(res, {
+          errorType: "new-dump-unauthorized",
+          message: "Dump clone was unauthorized",
+        });
+        return;
+      }
+      if (dumpRes.notFound || !dumpRes.doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "dump-not-found",
+          message: "Dump not found",
+        });
+        return;
+      }
+      if (dumpRes.error) {
+        throw dumpRes.error;
+      }
     }
 
     const data = convertDataToJSON(dumpRes.doc);
