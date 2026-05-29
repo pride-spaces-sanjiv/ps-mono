@@ -70,7 +70,6 @@ export default function NotificationCard({
     return moment(updatedAt || Date.now()).fromNow();
   }, [updatedAt]);
 
-
   const entityTypeLabel = collection === "operators" ? "Operator" : "Centre";
 
   const title = useMemo(
@@ -81,7 +80,7 @@ export default function NotificationCard({
   );
 
   const formattedTimestamp = moment(updatedAt || Date.now()).format(
-    "DD MMM YYYY [at] HH:mm A",
+    "DD MMM YYYY [at] hh:mm A",
   );
 
   const operatorName = "-";
@@ -154,12 +153,9 @@ export default function NotificationCard({
   };
   const isSupportUser = userLevel === "support";
 
+  const isCorrectionView = status === "recorrect" && isSupportUser;
 
-  const isCorrectionView =
-    status === "recorrect" && isSupportUser;
-
-  const isCorrectionSentView =
-    status === "recorrect" && !isSupportUser;
+  const isCorrectionSentView = status === "recorrect" && !isSupportUser;
 
   const actionButtonConfig = useMemo(() => {
     if (status === "approved") {
@@ -181,12 +177,12 @@ export default function NotificationCard({
         };
       }
 
-      return {
-        text: "Sent for correction",
-        disabled: true,
-        icon: <MousePointerClick className="size-3.5" />,
-        ariaLabel: `Sent for correction for ${entityTypeLabel.toLowerCase()}`,
-      };
+      // return {
+      //   text: "Sent for correction",
+      //   disabled: true,
+      //   icon: <MousePointerClick className="size-3.5" />,
+      //   ariaLabel: `Sent for correction for ${entityTypeLabel.toLowerCase()}`,
+      // };
     }
 
     return {
@@ -226,13 +222,13 @@ export default function NotificationCard({
             "rounded-full border px-2 py-0.5 text-[10px] font-medium",
 
             action === "add" &&
-            "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+              "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
 
             action === "remove" &&
-            "border-destructive/30 bg-destructive/10 text-red-300",
+              "border-destructive/30 bg-destructive/10 text-red-300",
 
             action === "update" &&
-            "border-amber-500/30 bg-amber-500/10 text-amber-300",
+              "border-amber-500/30 bg-amber-500/10 text-amber-300",
           )}
         >
           {statusText}
@@ -321,7 +317,8 @@ export default function NotificationCard({
               aria-label="Delete notification"
             >
               <Trash2 className="w-4 h-4" />
-            </Button>)}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
