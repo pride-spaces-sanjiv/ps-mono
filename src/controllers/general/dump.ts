@@ -303,7 +303,7 @@ export const updateDump = async (
             : body.status,
         disabled:
           doClone ||
-          (sessionUser?.userType === "support" &&
+          (sessionUser?.userType !== "support" &&
             body.status === dumpStatuses.APPROVED),
       },
       req: req,
@@ -343,7 +343,7 @@ export const updateDump = async (
               ? dumpStatuses.PENDING
               : body.status,
           disabled:
-            sessionUser?.userType === "support" &&
+            sessionUser?.userType !== "support" &&
             body.status === dumpStatuses.APPROVED,
         },
         req: req,
