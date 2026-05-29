@@ -267,6 +267,32 @@ const OperatorEditPage = () => {
     }
   };
 
+  const updateDumpData = async (body: Omit<OperatorSchema, "password">) => {
+    if (!locData?.id) {
+      throw new Error("Invalid dump ID");
+    }
+
+    try {
+      const dumpRes = await dumpMutator({
+        url: locData.id,
+        body: {
+          data: body,
+          status: dumpStatuses.PENDING,
+        },
+      });
+      if (dumpRes.status === 200) {
+        toast.success("Updated operator changes");
+        navigate("/notifications");
+        return;
+      }
+
+      throw new Error("Invalid response");
+    } catch (err) {
+      console.error("Error updating dump operator changes :", err);
+      toast.error("Failed to update operator changes");
+    }
+  };
+
   const handleBranchesUpdate = async (branches: BranchSchema[]) => {
     try {
       if (isDump) {
@@ -328,7 +354,11 @@ const OperatorEditPage = () => {
 
         <form
           onSubmit={handleSubmit(
-            isDump && userLevel !== "support" ? handleApprove : onSubmit,
+            isDump && userLevel !== "support"
+              ? handleApprove
+              : isDump
+                ? updateDumpData
+                : onSubmit,
             (errors) => {
               console.log("Operator form err", errors);
             },
