@@ -59,6 +59,11 @@ const OperatorEditPage = () => {
     [fromRoute, locData],
   );
 
+  const isSupportCorrectionFlow =
+    isDump &&
+    locData?.status === "recorrect" &&
+    userLevel === "support";
+
   const { statesData, groupedCities, citiesData } = useStatesCities();
   const [states, setStates] = useState<MultiStateItem[]>([]);
   const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
@@ -172,10 +177,31 @@ const OperatorEditPage = () => {
       });
 
       if (res.status === 200) {
+          // If support fixed a correction request,
+  // move existing dump back to pending
+  if (isSupportCorrectionFlow && locData?.id) {
+    await dumpMutator({
+      url: locData.id,
+      body: {
+        status: "pending",
+      },
+    });
+  }
+
         toast.success(
-          `Operator ${isDump ? "approved" : "updated"} successfully`,
+          `Operator ${isSupportCorrectionFlow
+            ? "updated"
+            : isDump
+              ? "approved"
+              : "updated"
+          } successfully`,
         );
-        navigate(isDump ? "/notifications" : "/operators");
+
+        navigate(
+          isDump || isSupportCorrectionFlow
+            ? "/notifications"
+            : "/operators",
+        );
       }
       throw new Error("Invalid response");
     } catch (err) {
@@ -520,8 +546,8 @@ const OperatorEditPage = () => {
               changedBranches={
                 allUpdatedData?.branches
                   ? Object.fromEntries(
-                      allUpdatedData.branches.map((br) => [br.code, br]),
-                    )
+                    allUpdatedData.branches.map((br) => [br.code, br]),
+                  )
                   : {}
               }
               onEdit={(branch, i) => {
@@ -609,7 +635,7 @@ const OperatorEditPage = () => {
             {/* RIGHT SIDE */}
             {/* Submit */}
             <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
-              {isDump && (
+              {isDump && !isSupportCorrectionFlow && (
                 <DialogModal
                   open={isCorrectionDialogOpen}
                   onOpenChange={setIsCorrectionDialogOpen}
@@ -663,7 +689,11 @@ const OperatorEditPage = () => {
                 loading={updateLoading || branchesLoading || dumpPending}
                 className="px-5 py-5"
               >
-                {isDump ? "Approve" : "Update Operator"}
+                {isSupportCorrectionFlow
+                  ? "Update Operator"
+                  : isDump
+                    ? "Approve"
+                    : "Update Operator"}
               </ActionButton>
             </div>
           </div>
