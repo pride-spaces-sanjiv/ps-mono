@@ -260,7 +260,7 @@ export const updateDump = async (
       delete parsed.id;
       // @ts-ignore
       const updatedDoc = await model?.findOneAndUpdate(
-        { _id: id },
+        { _id: doc.metadata?.id },
         {
           ...parsed,
           approval: {
