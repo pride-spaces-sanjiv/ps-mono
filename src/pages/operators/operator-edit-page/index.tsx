@@ -37,6 +37,7 @@ import type { MultiStateItem } from "@/containers/multi-state/types";
 import type { Dump } from "@/types/data/dump";
 import type { Operator } from "@/types/data/operators";
 import { adminLevels } from "@/utils/data/admin";
+import { dumpStatuses } from "@/utils/data/dump";
 
 const OperatorEditPage = () => {
   const { id } = useParams();
@@ -58,6 +59,14 @@ const OperatorEditPage = () => {
     [fromRoute, locData],
   );
 
+  const isSupportCorrectionFlow =
+    isDump &&
+    locData?.status === dumpStatuses.RECORRECT &&
+    userLevel === "support";
+  const isDumpDisabled =
+    isDump &&
+    !!(locData?.status === dumpStatuses.APPROVED || locData?.disabled);
+
   const { statesData, groupedCities, citiesData } = useStatesCities();
   const [states, setStates] = useState<MultiStateItem[]>([]);
   const [isStateDialogOpen, setIsStateDialogOpen] = useState(false);
@@ -72,6 +81,7 @@ const OperatorEditPage = () => {
   });
 
   console.log("operator data", res?.data);
+  console.log("Dump operator data :", locData);
 
   // Get added or changed fields
   const { mainChanges, headQuarterChanges, personChanges } = useMemo(() => {
@@ -171,10 +181,31 @@ const OperatorEditPage = () => {
       });
 
       if (res.status === 200) {
+        // If support fixed a correction request,
+        // move existing dump back to pending
+        if (isSupportCorrectionFlow && locData?.id) {
+          await dumpMutator({
+            url: locData.id,
+            body: {
+              status: "pending",
+            },
+          });
+        }
+
         toast.success(
-          `Operator ${isDump ? "approved" : "updated"} successfully`,
+          `Operator ${
+            isSupportCorrectionFlow
+              ? "updated"
+              : isDump
+                ? "approved"
+                : "updated"
+          } successfully`,
         );
-        navigate(isDump ? "/notifications" : "/operators");
+
+        navigate(
+          isDump || isSupportCorrectionFlow ? "/notifications" : "/operators",
+        );
+        return;
       }
       throw new Error("Invalid response");
     } catch (err) {
@@ -214,16 +245,64 @@ const OperatorEditPage = () => {
     }
   };
 
+  const handleApprove = async (body: Omit<OperatorSchema, "password">) => {
+    if (!locData?.id) {
+      throw new Error("Invalid dump ID");
+    }
+
+    try {
+      const dumpRes = await dumpMutator({
+        url: locData.id,
+        body: {
+          data: body,
+          status: dumpStatuses.APPROVED,
+        },
+      });
+      if (dumpRes.status === 200) {
+        toast.success("Approved operator changes");
+        navigate("/notifications");
+        return;
+      }
+
+      throw new Error("Invalid response");
+    } catch (err) {
+      console.error("Error approving operator changes :", err);
+      toast.error("Failed to approve operator changes");
+    }
+  };
+
+  const updateDumpData = async (body: Omit<OperatorSchema, "password">) => {
+    if (!locData?.id) {
+      throw new Error("Invalid dump ID");
+    }
+
+    try {
+      const dumpRes = await dumpMutator({
+        url: locData.id,
+        body: {
+          data: body,
+          status: dumpStatuses.PENDING,
+        },
+      });
+      if (dumpRes.status === 200) {
+        toast.success("Updated operator changes");
+        navigate("/notifications");
+        return;
+      }
+
+      throw new Error("Invalid response");
+    } catch (err) {
+      console.error("Error updating dump operator changes :", err);
+      toast.error("Failed to update operator changes");
+    }
+  };
+
   const handleBranchesUpdate = async (branches: BranchSchema[]) => {
     try {
-      const res = await branchesMutater(branches);
-
       if (isDump) {
-        const dumpRes = await dumpMutator({ url: locData?.id });
-        if (dumpRes.status !== 200) {
-          throw new Error("Dump approval failed");
-        }
+        return;
       }
+      const res = await branchesMutater(branches);
 
       if (res.status === 200 && res.data?.data?.branches) {
         toast.success("Updated state branches");
@@ -265,7 +344,7 @@ const OperatorEditPage = () => {
         <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
-        {isDump && locData?.comment && (
+        {isDump && locData?.comment && !isDumpDisabled && (
           <div className="mb-5 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
             <div className="mb-2 flex items-center gap-2 font-semibold text-amber-200">
               <MessageSquareWarning className="size-4" />
@@ -278,9 +357,16 @@ const OperatorEditPage = () => {
         )}
 
         <form
-          onSubmit={handleSubmit(onSubmit, (errors) => {
-            console.log("Operator form err", errors);
-          })}
+          onSubmit={handleSubmit(
+            isDump && userLevel !== "support"
+              ? handleApprove
+              : isDump
+                ? updateDumpData
+                : onSubmit,
+            (errors) => {
+              console.log("Operator form err", errors);
+            },
+          )}
           className="auto-form-grid"
         >
           {/* SECTION: Operator Details */}
@@ -492,6 +578,7 @@ const OperatorEditPage = () => {
           {/* Multi State Cards */}
           <div className="col-span-full mt-6">
             <MultiStateCard
+              onlyView={isDumpDisabled}
               // @ts-ignore
               branches={watch("branches", []) || []}
               changedBranches={
@@ -501,6 +588,7 @@ const OperatorEditPage = () => {
                     )
                   : {}
               }
+              errors={errors.branches}
               onEdit={(branch, i) => {
                 const branches = (watch("branches", []) ||
                   []) as BranchSchema[];
@@ -515,7 +603,7 @@ const OperatorEditPage = () => {
                   updatedBranches,
                   branch as BranchSchema,
                 );
-                handleBranchesUpdate(updatedBranches);
+                !isDump && handleBranchesUpdate(updatedBranches);
               }}
               onDelete={(branch, i) => {
                 const branches = (watch("branches", [])?.filter(
@@ -527,7 +615,7 @@ const OperatorEditPage = () => {
                 );
                 setValue("branches", updatedBranches, { shouldValidate: true });
 
-                handleBranchesUpdate(updatedBranches);
+                !isDump && handleBranchesUpdate(updatedBranches);
               }}
             />
           </div>
@@ -541,109 +629,120 @@ const OperatorEditPage = () => {
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
                 defaultChecked={!!defaultValues?.isActive}
                 {...register("isActive")}
+                disabled={isDumpDisabled}
               />
             </div>
           </div>
 
           {/* <div className="col-span-full mt-6 flex justify-start"> </div> */}
-          <div className="col-span-full mt-6 flex gap-2 items-center">
-            {/* LEFT SIDE - Add State Branch */}
-            <MultiStateDialog
-              disAllowedStates={watch("branches")?.map((br) => br.code) || []}
-              open={isStateDialogOpen}
-              onOpenChange={(open) => {
-                setIsStateDialogOpen(open);
-                if (!open) {
-                  setEditingState(null);
-                }
-              }}
-              onSave={(data) => {
-                const branches = setSinglePrimaryBranch(
-                  [...(watch("branches", []) || [])] as BranchSchema[],
-                  data,
-                );
-                setValue("branches", branches, {
-                  shouldValidate: true,
-                });
-                handleBranchesUpdate(branches);
-                notifyPrimarySingleBranch(branches, data);
-              }}
-              isEditing={false}
-              triggerButtonProps={{ loading: branchesLoading }}
-            />
+          {!isDumpDisabled && (
+            <div className="col-span-full mt-6 flex gap-2 items-center">
+              {/* LEFT SIDE - Add State Branch */}
+              <MultiStateDialog
+                disAllowedStates={watch("branches")?.map((br) => br.code) || []}
+                open={isStateDialogOpen}
+                onOpenChange={(open) => {
+                  setIsStateDialogOpen(open);
+                  if (!open) {
+                    setEditingState(null);
+                  }
+                }}
+                onSave={(data) => {
+                  const branches = setSinglePrimaryBranch(
+                    [...(watch("branches", []) || [])] as BranchSchema[],
+                    data,
+                  );
+                  setValue("branches", branches, {
+                    shouldValidate: true,
+                  });
+                  !isDump && handleBranchesUpdate(branches);
+                  notifyPrimarySingleBranch(branches, data);
+                }}
+                isEditing={false}
+                triggerButtonProps={{ loading: branchesLoading }}
+              />
 
-            {/* Change Password Dialog */}
-            {userLevel &&
-              adminLevels
-                .filter((lv) => lv !== "support")
-                .includes(userLevel as any) && (
-                <OperatorChangePasswordDialog
-                  id={id}
-                  triggerBtnProps={{ className: "p-5" }}
-                />
-              )}
-
-            {/* RIGHT SIDE */}
-            {/* Submit */}
-            <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
-              {isDump && (
-                <DialogModal
-                  open={isCorrectionDialogOpen}
-                  onOpenChange={setIsCorrectionDialogOpen}
-                  triggerProps={{
-                    children: (
-                      <ActionButton
-                        type="button"
-                        variant="outline"
-                        className="px-5 py-5"
-                        loading={dumpPending}
-                      >
-                        <div className="flex items-center gap-2">
-                          <MessageSquareWarning className="size-4" />
-                          <span>Send to correction</span>
-                        </div>
-                      </ActionButton>
-                    ),
-                  }}
-                  titleProps={{ children: "Send To Correction" }}
-                  descriptionProps={{
-                    children:
-                      "Add a short note explaining what needs to be corrected before approval.",
-                  }}
-                  footerProps={{
-                    children: (
-                      <ActionButton
-                        type="button"
-                        loading={dumpPending}
-                        onClick={handleSendToCorrection}
-                      >
-                        Send
-                      </ActionButton>
-                    ),
-                  }}
-                >
-                  <FormField
-                    label="Correction comment"
-                    inputType="textarea"
-                    labelPosition="out"
-                    placeholder="Mention what needs to be corrected..."
-                    value={correctionComment}
-                    onChange={(event) =>
-                      setCorrectionComment(event.currentTarget.value)
-                    }
+              {/* Change Password Dialog */}
+              {userLevel &&
+                adminLevels
+                  .filter((lv) => lv !== "support")
+                  .includes(userLevel as any) && (
+                  <OperatorChangePasswordDialog
+                    id={id}
+                    triggerBtnProps={{ className: "p-5" }}
                   />
-                </DialogModal>
-              )}
+                )}
 
-              <ActionButton
-                type="submit"
-                loading={updateLoading || branchesLoading || dumpPending}
-                className="px-5 py-5"
-              >
-                {isDump ? "Approve" : "Update Operator"}
-              </ActionButton>
+              {/* RIGHT SIDE */}
+              {/* Submit */}
+              <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
+                {isDump &&
+                  !isSupportCorrectionFlow &&
+                  userLevel !== "support" && (
+                    <DialogModal
+                      open={isCorrectionDialogOpen}
+                      onOpenChange={setIsCorrectionDialogOpen}
+                      triggerProps={{
+                        children: (
+                          <ActionButton
+                            type="button"
+                            variant="outline"
+                            className="px-5 py-5"
+                            loading={dumpPending}
+                          >
+                            <div className="flex items-center gap-2">
+                              <MessageSquareWarning className="size-4" />
+                              <span>Send to correction</span>
+                            </div>
+                          </ActionButton>
+                        ),
+                      }}
+                      titleProps={{ children: "Send To Correction" }}
+                      descriptionProps={{
+                        children:
+                          "Add a short note explaining what needs to be corrected before approval.",
+                      }}
+                      footerProps={{
+                        children: (
+                          <ActionButton
+                            type="button"
+                            loading={dumpPending}
+                            onClick={handleSendToCorrection}
+                          >
+                            Send
+                          </ActionButton>
+                        ),
+                      }}
+                    >
+                      <FormField
+                        label="Correction comment"
+                        inputType="textarea"
+                        labelPosition="out"
+                        placeholder="Mention what needs to be corrected..."
+                        value={correctionComment}
+                        onChange={(event) =>
+                          setCorrectionComment(event.currentTarget.value)
+                        }
+                      />
+                    </DialogModal>
+                  )}
+
+                <ActionButton
+                  type="submit"
+                  loading={updateLoading || branchesLoading || dumpPending}
+                  className="px-5 py-5"
+                >
+                  {isDump &&
+                  locData?.status === dumpStatuses.RECORRECT &&
+                  userLevel === "support"
+                    ? "Send for Correction"
+                    : isDump && userLevel !== "support"
+                      ? "Approve"
+                      : "Update Operator"}
+                </ActionButton>
+              </div>
             </div>
-          </div>
+          )}
         </form>
       </div>
 

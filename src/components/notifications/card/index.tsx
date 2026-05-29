@@ -1,27 +1,30 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { useUser } from "@/services/hooks/use-user";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquareWarning, MousePointerClick } from "lucide-react";
+import { MessageSquareWarning, MousePointerClick, Trash2 } from "lucide-react";
 import { cn } from "@/utils/className";
 import type { Dump } from "@/types/data/dump";
 import { datifyObjectValues } from "@/utils/object/datify";
 import moment from "moment";
 import type { Operator } from "@/types/data/operators";
 import type { Space } from "@/types/data/spaces";
+import { dumpCollectionNames } from "@/utils/data/dump";
 
 export default function NotificationCard({
   notification,
+  onDelete,
+  isDeleting = false,
 }: {
   notification: Dump<Operator | Space>;
+  onDelete?: (id: string) => void;
+  isDeleting?: boolean;
 }) {
   const navigate = useNavigate();
+  const { userLevel } = useUser();
+  const isRootAdmin = userLevel === "super-admin";
 
   const { collection, action, updatedAt, data, metadata, from, to, status } =
     datifyObjectValues(notification, ["createdAt", "updatedAt"]) || {};
@@ -35,26 +38,76 @@ export default function NotificationCard({
           : "Updated",
     [action],
   );
+  const workflowStatus = useMemo(() => {
+    switch (status) {
+      case "approved":
+        return {
+          label: "Approved",
+          className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+        };
+
+      case "pending":
+        return {
+          label: "Pending",
+          className: "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+        };
+
+      case "recorrect":
+        return {
+          label: "Recorrect",
+          className: "border-orange-500/30 bg-orange-500/10 text-orange-300",
+        };
+
+      default:
+        return {
+          label: "Unknown",
+          className: "border-border bg-muted text-muted-foreground",
+        };
+    }
+  }, [status]);
+
+  const ageText = useMemo(() => {
+    return moment(updatedAt || Date.now()).fromNow();
+  }, [updatedAt]);
 
   const entityTypeLabel = collection === "operators" ? "Operator" : "Centre";
+
   const title = useMemo(
     () =>
       // @ts-ignore
       `${entityTypeLabel}: ${metadata?.name || "N/A"}`,
     [data, entityTypeLabel, metadata],
   );
+
   const formattedTimestamp = moment(updatedAt || Date.now()).format(
-    "DD MMM YYYY [at] HH:mm A",
+    "DD MMM YYYY [at] hh:mm A",
   );
+
   const operatorName = "-";
+
   const requestDetails = useMemo(() => {
     const requester = from?.name || from?.email || "Someone";
+
     const recipient = to?.name || to?.email || "";
     const actionLabel =
-      action === "add" ? "creation" : action === "remove" ? "removal" : "update";
+      action === "add"
+        ? "creation"
+        : action === "remove"
+          ? "removal"
+          : "update";
     const subject = `${entityTypeLabel.toLowerCase()} ${metadata?.name || "N/A"}`;
 
     if (recipient) {
+      if (status === "approved") {
+        return {
+          requester,
+          recipient,
+          prefix: "",
+          middle: " requested for approval - Approved by ",
+          suffix: `.`,
+        };
+      }
+
       if (status === "recorrect") {
         return {
           requester,
@@ -78,7 +131,7 @@ export default function NotificationCard({
       requester,
       recipient: "",
       prefix: "",
-      middle: ` requested ${actionLabel} for ${subject}.`,
+      middle: ` requested ${actionLabel}.`,
       suffix: "",
     };
   }, [action, entityTypeLabel, from, metadata, status, to]);
@@ -89,7 +142,7 @@ export default function NotificationCard({
   //     : `Centre: ${entityName}${operatorName ? ` - Operator: ${operatorName}` : ""}`;
 
   const handleView = () => {
-    if (collection === "operators")
+    if (collection === dumpCollectionNames.OPERATOR)
       navigate(`/operators/${metadata?.id}`, {
         state: { from: "notifications", data: notification },
       });
@@ -98,6 +151,47 @@ export default function NotificationCard({
         state: { from: "notifications", data: notification },
       });
   };
+  const isSupportUser = userLevel === "support";
+
+  const isCorrectionView = status === "recorrect" && isSupportUser;
+
+  const isCorrectionSentView = status === "recorrect" && !isSupportUser;
+
+  const actionButtonConfig = useMemo(() => {
+    if (status === "approved") {
+      return {
+        text: "View details",
+        disabled: false,
+        icon: <MousePointerClick className="size-3.5" />,
+        ariaLabel: `View details for ${entityTypeLabel.toLowerCase()}`,
+      };
+    }
+
+    if (status === "recorrect") {
+      if (isSupportUser) {
+        return {
+          text: "Make corrections",
+          disabled: false,
+          icon: <MessageSquareWarning className="size-3.5" />,
+          ariaLabel: `Make corrections for ${entityTypeLabel.toLowerCase()}`,
+        };
+      }
+
+      // return {
+      //   text: "Sent for correction",
+      //   disabled: true,
+      //   icon: <MousePointerClick className="size-3.5" />,
+      //   ariaLabel: `Sent for correction for ${entityTypeLabel.toLowerCase()}`,
+      // };
+    }
+
+    return {
+      text: "Take action",
+      disabled: false,
+      icon: <MousePointerClick className="size-3.5" />,
+      ariaLabel: `Take action on ${entityTypeLabel.toLowerCase()}`,
+    };
+  }, [status, isSupportUser, entityTypeLabel]);
 
   return (
     <Card
@@ -110,19 +204,42 @@ export default function NotificationCard({
         "py-1 gap-0",
       )}
     >
-      <Badge
-        className={cn(
-          "absolute right-2 top-2 rounded-full border px-2 py-0.5 text-[10px] font-medium",
-          action === "add" &&
-            "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-          action === "remove" &&
-            "border-destructive/30 bg-destructive/10 text-red-300",
-          action === "update" &&
-            "border-amber-500/30 bg-amber-500/10 text-amber-300",
-        )}
-      >
-        {statusText}
-      </Badge>
+      {/* TOP RIGHT BADGES */}
+      <div className="absolute right-2 top-2 flex items-center gap-1">
+        {/* STATUS */}
+        <Badge
+          className={cn(
+            "rounded-full border px-2 py-0.5 text-[10px] font-medium",
+            workflowStatus.className,
+          )}
+        >
+          {workflowStatus.label}
+        </Badge>
+
+        {/* ACTION */}
+        <Badge
+          className={cn(
+            "rounded-full border px-2 py-0.5 text-[10px] font-medium",
+
+            action === "add" &&
+              "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+
+            action === "remove" &&
+              "border-destructive/30 bg-destructive/10 text-red-300",
+
+            action === "update" &&
+              "border-amber-500/30 bg-amber-500/10 text-amber-300",
+          )}
+        >
+          {statusText}
+        </Badge>
+        <Badge
+          variant="outline"
+          className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground border-border/60"
+        >
+          {ageText}
+        </Badge>
+      </div>
 
       <CardHeader className="px-3 py-1.5">
         <div className="flex items-start justify-between gap-2 pr-16">
@@ -183,20 +300,25 @@ export default function NotificationCard({
             size="sm"
             variant="default"
             onClick={handleView}
-            aria-label={
-              status === "recorrect"
-                ? `Make corrections for ${entityTypeLabel.toLowerCase()}`
-                : `Take action on ${entityTypeLabel.toLowerCase()}`
-            }
+            disabled={actionButtonConfig.disabled}
+            aria-label={actionButtonConfig.ariaLabel}
             className="h-7 px-2 text-xs"
           >
-            {status === "recorrect" ? (
-              <MessageSquareWarning className="size-3.5" />
-            ) : (
-              <MousePointerClick className="size-3.5" />
-            )}
-            {status === "recorrect" ? "Make corrections" : "Take action"}
+            {actionButtonConfig.icon}
+            {actionButtonConfig.text}
           </Button>
+
+          {isRootAdmin && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => onDelete?.(notification.id)}
+              disabled={isDeleting}
+              aria-label="Delete notification"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
