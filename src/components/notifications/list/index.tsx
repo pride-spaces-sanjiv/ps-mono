@@ -37,7 +37,6 @@ export default function NotificationList() {
   });
 
   // const dumps = useMemo(() => res?.data?.data?.results || [], [res]);
-  const [pagedDumps, setDumps] = useState([] as Dump[][]);
   const dumps = useMemo(() => {
     const keyResponsePairs = queryClient
       .getQueriesData<typeof res>({
