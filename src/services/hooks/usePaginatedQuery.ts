@@ -54,7 +54,12 @@ export function usePaginatedQuery<
     {
       ...onlyQueryOptions,
       // @ts-ignore
-      queryKey: [...(onlyQueryOptions?.queryKey || []), page, limit],
+      queryKey: [
+        ...(onlyQueryOptions?.queryKey || []),
+        "paginated",
+        page,
+        limit,
+      ],
       queryFn: (context) => onlyQueryOptions?.queryFn?.(page, limit, context),
     },
     queryClient,

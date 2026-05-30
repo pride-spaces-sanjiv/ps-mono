@@ -1,17 +1,19 @@
 import React, { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useInfiniteScrollHook from "react-infinite-scroll-hook";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
 import { deleteDump, getDumps } from "@/services/apis/admin/dump";
 import { queryKeys } from "@/utils/query-keys";
 import NotificationCard from "@/components/notifications/card";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Skeleton from "react-loading-skeleton";
 import { cn } from "@/utils/className";
+import type { Dump } from "@/types/data/dump";
 
 export default function NotificationList() {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const {
     data: res,
     isFetching,
@@ -23,18 +25,47 @@ export default function NotificationList() {
     queryFn: (page, limit) => getDumps({ query: { page: page + 1, limit } }),
   });
 
+  const [infiniteRef] = useInfiniteScrollHook({
+    loading: isFetching,
+    hasNextPage: !!res?.data?.data?.metrics?.next,
+    onLoadMore: () => {
+      setPage((prev) => prev + 1);
+    },
+    disabled: res?.data?.data?.metrics?.next === 0,
+    rootMargin: "0px 0px -40px 0px",
+    delayInMs: 300,
+  });
+
   // const dumps = useMemo(() => res?.data?.data?.results || [], [res]);
+  const [pagedDumps, setDumps] = useState([] as Dump[][]);
   const dumps = useMemo(() => {
-    const results = res?.data?.data?.results || [];
+    const keyResponsePairs = queryClient
+      .getQueriesData<typeof res>({
+        queryKey: [queryKeys.DUMPS, "paginated"],
+      })
+      .filter(
+        ([keys, data]) =>
+          typeof keys[2] === "number" &&
+          typeof keys[3] === "number" &&
+          keys[3] === 10 &&
+          keys[2] >= 0 &&
+          data !== undefined &&
+          data,
+      )
+      .sort((a, b) => (a[0][2] as number) - (b[0][2] as number)); // sort page wise in incremental
+    console.log("Dumps paginated responses", keyResponsePairs);
+
+    // Append page wise results flattened
+    const results = keyResponsePairs.reduce((prev, curr, i) => {
+      if (curr[1]?.data?.data?.results) {
+        prev.push(...curr[1].data.data.results);
+      }
+      return prev;
+    }, [] as Dump[]);
 
     return results;
-  }, [res]);
-  // const { mutateAsync: deleteMutater } = useMutation({
-  //   mutationFn: (id: string) => deleteDump({ query: { id } }),
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({ queryKey: [queryKeys.DUMPS] });
-  //   },
-  // });
+  }, [res, queryClient]);
+
   const { mutateAsync: deleteMutater } = useMutation({
     mutationFn: (id: string) => deleteDump({ url: id }),
   });
@@ -58,15 +89,6 @@ export default function NotificationList() {
       setDeletingId(null);
     }
   };
-  const [infiniteRef] = useInfiniteScrollHook({
-    loading: isFetching,
-    hasNextPage: !!res?.data?.data?.metrics?.next,
-    onLoadMore: () => {
-      setPage((prev) => prev + 1);
-    },
-    disabled: res?.data?.data?.metrics?.next === 0,
-    rootMargin: "0px 0px 0px 0px",
-  });
 
   return (
     <div className="flex flex-col gap-2 p-3 sm:p-4 w-full mx-auto">
@@ -96,7 +118,7 @@ export default function NotificationList() {
               className="w-full h-full"
             />
           ))}
-      {<div className="size-0 hidden" ref={infiniteRef}></div>}
+      {<div className="size-0 opacity-0" ref={infiniteRef}></div>}
     </div>
   );
 }
