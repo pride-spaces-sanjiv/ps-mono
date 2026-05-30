@@ -97,19 +97,19 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     try {
-      const res = await logoutMutater();
-      if (res.status === 200 && res.data.data?.id) {
-        tokenState.setter({
-          expiry: new Date(),
-          token: "",
-          refreshToken: "",
-        });
-        userState.setter(null);
-        secureStorage.localStorage.setItem("__aT__", null);
-        toast.success("Logout Successfully");
-        window.location.href = "/login";
-        return;
-      }
+      // const res = await logoutMutater();
+      // if (res.status === 200 && res.data.data?.id) {
+      tokenState.setter({
+        expiry: new Date(),
+        token: "",
+        refreshToken: "",
+      });
+      userState.setter(null);
+      secureStorage.localStorage.setItem("__aT__", null);
+      toast.success("Logout Successfully");
+      window.location.href = "/login";
+      return;
+      // }
     } catch (err) {
       toast.error("Logout Failed");
     }
