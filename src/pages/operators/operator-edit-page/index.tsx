@@ -735,7 +735,7 @@ const OperatorEditPage = () => {
                   {isDump &&
                   locData?.status === dumpStatuses.RECORRECT &&
                   userLevel === "support"
-                    ? "Send for Correction"
+                    ? "Resend Request"
                     : isDump && userLevel !== "support"
                       ? "Approve"
                       : "Update Operator"}
