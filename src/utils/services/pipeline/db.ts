@@ -17,6 +17,7 @@ import {
   RootFilterQuery,
   Types,
   UpdateQuery,
+  SortOrder,
 } from "mongoose";
 
 const invalidateSimilarCaches = async (
@@ -69,6 +70,18 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     }
   }
 
+  getProtectedProps = () => {
+    const props = {
+      redisKeyPrefix: this.redisKeyPrefix,
+      name: this.name,
+      model: this.model,
+      isValid: this.isValid,
+    };
+    return props;
+  };
+
+  // Cache handlers
+
   cacheDoc = async (
     redisKey: string,
     doc: HydratedDocument<T> | null,
@@ -109,17 +122,37 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     return null;
   };
 
+  // Getters
+
   getMultiData = async (
     dbOptions: Partial<{
       filter: RootFilterQuery<T> | undefined;
       projection: ProjectionType<T> | null | undefined;
       options: (QueryOptions<T> & Abortable) | undefined;
+      offset: number;
+      limit: number;
+      sortOptions: {
+        arg?:
+          | string
+          | { [key: string]: SortOrder | { $meta: any } }
+          | [string, SortOrder][]
+          | undefined
+          | null;
+        options?: { override?: boolean };
+      };
     }> = {},
     redisOptions: Partial<SetOptions> = {},
   ) => {
     this.validate();
 
-    const { filter = {}, projection = null, options = {} } = dbOptions;
+    const {
+      filter = {},
+      projection = null,
+      options = {},
+      limit = 10,
+      offset = 0,
+      sortOptions = {},
+    } = dbOptions;
     const strs = {
       filter: JSON.stringify(filter || {}),
       projection: JSON.stringify(projection || {}),
@@ -144,7 +177,12 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     } catch (err) {}
 
     // Get docs from DB
-    const docs = await this.model?.find(filter, projection, options);
+    await User.find();
+    const docs = await this.model
+      ?.find(filter, projection, options)
+      .skip(offset)
+      .sort(sortOptions?.arg, sortOptions?.options)
+      .limit(limit);
     // Cache data
     this.cacheDocs(redisKey, docs, redisOptions);
     return docs;
@@ -188,6 +226,7 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     return doc;
   };
 
+  // Updaters
   createData = async (
     dbOptions: Partial<{
       data: Partial<T> | undefined;
@@ -277,4 +316,12 @@ export const pipelineDBs = {
   STATE: new PipelineDB({ name: State.collection.name, model: State }),
   CITY: new PipelineDB({ name: City.collection.name, model: City }),
   DUMP: new PipelineDB({ name: Dump.collection.name, model: Dump }),
+};
+
+export const getPipelineDBFromModelName = (name: string) => {
+  const inst = Object.values(pipelineDBs).find((inst) => {
+    const props = inst.getProtectedProps();
+    return props.model?.modelName === name;
+  });
+  return inst;
 };

@@ -8,6 +8,10 @@ import {
 } from "mongoose";
 import { MongoError } from "mongodb";
 import {
+  getPipelineDBFromModelName,
+  pipelineDBs,
+} from "../services/pipeline/db.js";
+import {
   getFieldsandProjectors,
   getSortOptions,
   SortOptions,
@@ -80,12 +84,24 @@ export const paginatedResults = async <
       limit: limit,
     });
 
-    const results = (await model
+    const pipelineDB = getPipelineDBFromModelName(model.modelName);
+    const results = (await (
+      pipelineDB as Exclude<typeof pipelineDB, undefined>
+    ).getMultiData({
+      filter: args?.filter,
       // @ts-ignore
-      .find(args?.filter, { ...projectors, ...args?.projection }, args?.options)
-      .skip(offset)
-      .sort(sortBy ? { [sortBy]: sortOrder || "desc" } : {})
-      .limit(limit)) as FlattenMaps<T>[];
+      projection: { ...projectors, ...args?.projection },
+      options: args?.options,
+      offset: offset,
+      limit: limit,
+      sortOptions: sortBy ? { [sortBy]: sortOrder || "desc" } : {},
+    })) as FlattenMaps<T>[];
+    //  (await model
+    //   // @ts-ignore
+    //   .find(args?.filter, { ...projectors, ...args?.projection }, args?.options)
+    //   .skip(offset)
+    //   .sort(sortBy ? { [sortBy]: sortOrder || "desc" } : {})
+    //   .limit(limit)) as FlattenMaps<T>[];
     data.results = results;
     data.metrics.total = total;
     data.metrics.next = next;
