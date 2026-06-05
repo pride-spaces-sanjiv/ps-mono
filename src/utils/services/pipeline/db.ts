@@ -1,5 +1,6 @@
 import { RedisClients } from "@/utils/services/redis/redis.js";
 import {
+  HydratedDocument,
   Model,
   QueryOptions,
   RootFilterQuery,
@@ -15,6 +16,20 @@ import { Space } from "@/database/models/space.js";
 import { Dump } from "@/database/models/dump.js";
 import { Amenity } from "@/database/models/amenities.js";
 import { City, State } from "@/database/models/state-cities.js";
+import { AnyObject } from "mongoose";
+
+const invalidateSimilarCaches = async (
+  redisBaseKey: string,
+  docId?: string,
+) => {
+  try {
+    if (docId) {
+      const key = `${redisBaseKey}:${docId}:*`;
+      const res = await RedisClients.DBPIPED.del(key);
+      return res;
+    }
+  } catch (err) {}
+};
 
 type PipelineDBOptions<N extends string, T extends Record<string, any>> = {
   name: N;
@@ -22,10 +37,10 @@ type PipelineDBOptions<N extends string, T extends Record<string, any>> = {
 };
 
 class PipelineDB<N extends string, T extends Record<string, any>> {
-  redisKeyPrefix: undefined | string;
-  name: N | undefined;
-  model: Model<T> | undefined;
-  isValid = false;
+  protected redisKeyPrefix: undefined | string;
+  protected name: N | undefined;
+  protected model: Model<T> | undefined;
+  private isValid = false;
 
   constructor({ name, model }: PipelineDBOptions<N, T>) {
     try {
@@ -46,28 +61,105 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
   validate(): asserts this is this & {
     name: N;
     model: Model<T>;
+    redisKeyPrefix: string;
   } {
     if (!this.isValid) {
       throw new Error("PipelineDB is in invalid state");
     }
   }
 
-  getData = async (
+  cacheDoc = async (
+    redisKey: string,
+    doc: HydratedDocument<T> | null,
+    redisOptions: Partial<SetOptions> = {},
+  ) => {
+    if (doc) {
+      const { expiration = { type: "EX", value: 10 } } = redisOptions;
+      const cacheStr = JSON.stringify(
+        doc.toJSON({ flattenMaps: true, flattenObjectIds: true }),
+      );
+      const result = await RedisClients.DBPIPED.set(
+        redisKey.replaceAll("{{id}}", doc.id || "-"),
+        cacheStr,
+        { ...redisOptions, expiration },
+      );
+      return result;
+    }
+    return null;
+  };
+
+  cacheDocs = async (
+    redisKey: string,
+    docs: HydratedDocument<T>[] | null,
+    redisOptions: Partial<SetOptions> = {},
+  ) => {
+    if (docs) {
+      const { expiration = { type: "EX", value: 10 } } = redisOptions;
+      const convertedDocs = docs.map((doc) =>
+        doc.toJSON({ flattenMaps: true, flattenObjectIds: true }),
+      );
+      const cacheStr = JSON.stringify(convertedDocs);
+      const result = await RedisClients.DBPIPED.set(redisKey, cacheStr, {
+        ...redisOptions,
+        expiration,
+      });
+      return result;
+    }
+    return null;
+  };
+
+  getMultiData = async (
     dbOptions: Partial<{
       filter: RootFilterQuery<T> | undefined;
       projection: ProjectionType<T> | null | undefined;
-      options:
-        | (QueryOptions<T> & {
-            lean?: boolean;
-          } & Abortable)
-        | undefined;
+      options: (QueryOptions<T> & Abortable) | undefined;
     }> = {},
     redisOptions: Partial<SetOptions> = {},
   ) => {
     this.validate();
 
-    const { filter = {}, projection, options = {} } = dbOptions;
-    const { expiration = { type: "EX", value: 10 } } = redisOptions;
+    const { filter = {}, projection = null, options = {} } = dbOptions;
+    const strs = {
+      filter: JSON.stringify(filter || {}),
+      projection: JSON.stringify(projection || {}),
+      options: JSON.stringify(options || {}),
+    };
+    const redisKey = `${this.redisKeyPrefix}:multi:filt:${strs.filter}:proj:${strs.projection}:opts:${strs.options}`;
+
+    // Process if cache exists
+    try {
+      const cacheStr = await RedisClients.DBPIPED.get(redisKey);
+      if (cacheStr?.trim()) {
+        const parsed = JSON.parse(cacheStr) as T[];
+        const docs = parsed.map((data) => {
+          const doc = new this.model(data);
+          if (data._id) {
+            doc._id = Types.ObjectId.createFromHexString(data._id);
+          }
+          return doc;
+        });
+        return docs;
+      }
+    } catch (err) {}
+
+    // Get docs from DB
+    const docs = await this.model?.find(filter, projection, options);
+    // Cache data
+    this.cacheDocs(redisKey, docs, redisOptions);
+    return docs;
+  };
+
+  getData = async (
+    dbOptions: Partial<{
+      filter: RootFilterQuery<T> | undefined;
+      projection: ProjectionType<T> | null | undefined;
+      options: (QueryOptions<T> & Abortable) | undefined;
+    }> = {},
+    redisOptions: Partial<SetOptions> = {},
+  ) => {
+    this.validate();
+
+    const { filter = {}, projection = null, options = {} } = dbOptions;
     const strs = {
       filter: JSON.stringify(filter || {}),
       projection: JSON.stringify(projection || {}),
@@ -91,16 +183,36 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     // Get doc from DB
     const doc = await this.model?.findOne(filter, projection, options);
     // Cache data
-    if (doc) {
-      const cacheStr = JSON.stringify(
-        doc.toJSON({ flattenMaps: true, flattenObjectIds: true }),
-      );
-      RedisClients.DBPIPED.set(
-        redisKey.replaceAll("{{id}}", doc.id || "-"),
-        cacheStr,
-        { ...redisOptions, expiration },
-      );
-    }
+    this.cacheDoc(redisKey, doc, redisOptions);
+    return doc;
+  };
+
+  createData = async (
+    dbOptions: Partial<{
+      data: Partial<T> | undefined;
+      fields?: any | null;
+      options?: boolean | AnyObject;
+    }> = {},
+    redisOptions: Partial<SetOptions> = {},
+  ) => {
+    this.validate();
+
+    const { data, options = {}, fields = undefined } = dbOptions;
+    const strs = {
+      options: JSON.stringify(options || {}),
+    };
+    const redisBaseKey = `${this.redisKeyPrefix}:{{id}}`;
+    const redisKey = `${redisBaseKey}:single:filt:{}:proj:{}:opts:${strs.options}`;
+
+    // Create doc in DB
+    const doc = new this.model(data, fields, options);
+
+    // Invalidate similar caches
+    invalidateSimilarCaches(this.redisKeyPrefix, doc?.id).finally(() => {
+      // Cache data
+      this.cacheDoc(redisKey, doc, redisOptions);
+    });
+
     return doc;
   };
 
@@ -108,19 +220,13 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     dbOptions: Partial<{
       filter: RootFilterQuery<T> | undefined;
       updateData: UpdateQuery<T> | undefined;
-      options:
-        | (QueryOptions<T> & {
-            includeResultMetadata?: boolean;
-            lean?: boolean;
-          })
-        | undefined;
+      options: QueryOptions<T> | undefined;
     }> = {},
     redisOptions: Partial<SetOptions> = {},
   ) => {
     this.validate();
 
-    const { filter = {}, updateData, options = {} } = dbOptions;
-    const { expiration = { type: "EX", value: 10 } } = redisOptions;
+    const { filter = {}, updateData, options = { new: true } } = dbOptions;
     const strs = {
       filter: JSON.stringify(filter || {}),
       options: JSON.stringify(options || {}),
@@ -129,26 +235,33 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     const redisBaseKey = `${this.redisKeyPrefix}:{{id}}`;
     const redisKey = `${redisBaseKey}:single:filt:${strs.filter}:proj:${strs.projection}:opts:${strs.options}`;
 
-    // Update doc from DB
-    const doc = await this.model?.findOneAndUpdate(filter, updateData);
-    // Cache data
-    if (doc) {
-      const cacheStr = JSON.stringify(
-        doc.toJSON({ flattenMaps: true, flattenObjectIds: true }),
-      );
-      // Invalidate all similar caches
-      if (doc.id) {
-        RedisClients.DBPIPED.del(
-          `${redisBaseKey}:*`.replace("{{id}}", doc.id),
-        ).then((res) => {
-          RedisClients.DBPIPED.set(
-            redisKey.replaceAll("{{id}}", doc.id || "-"),
-            cacheStr,
-            { ...redisOptions, expiration },
-          );
-        });
-      }
-    }
+    // Update doc to DB
+    const doc = await this.model.findOneAndUpdate(filter, updateData, options);
+
+    // Invalidate similar caches
+    invalidateSimilarCaches(this.redisKeyPrefix, doc?.id).finally(() => {
+      // Cache data
+      this.cacheDoc(redisKey, doc, redisOptions);
+    });
+
+    return doc;
+  };
+
+  deleteData = async (
+    dbOptions: Partial<{
+      filter: RootFilterQuery<T> | undefined;
+      options: QueryOptions<T> | undefined;
+    }> = {},
+  ) => {
+    this.validate();
+
+    const { filter = {}, options = { new: true } } = dbOptions;
+
+    // Delete doc from DB
+    const doc = await this.model.findOneAndDelete(filter, options);
+
+    // Invalidate similar caches
+    invalidateSimilarCaches(this.redisKeyPrefix, doc?.id);
     return doc;
   };
 }
