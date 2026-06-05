@@ -157,8 +157,18 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
       filter: JSON.stringify(filter || {}),
       projection: JSON.stringify(projection || {}),
       options: JSON.stringify(options || {}),
+      sortArgs: JSON.stringify(
+        typeof sortOptions?.arg === "object" && sortOptions?.arg
+          ? sortOptions?.arg
+          : null,
+      ),
+      sortOptions: JSON.stringify(
+        typeof sortOptions?.options === "object" && sortOptions?.options
+          ? sortOptions?.options
+          : null,
+      ),
     };
-    const redisKey = `${this.redisKeyPrefix}:multi:filt:${strs.filter}:proj:${strs.projection}:opts:${strs.options}`;
+    const redisKey = `${this.redisKeyPrefix}:multi:filt:${strs.filter}:proj:${strs.projection}:opts:${strs.options}:limit:${limit}:page:${offset}:sortArgs:${typeof sortOptions?.arg === "object" ? strs.sortArgs : (sortOptions?.arg ?? null)}:sortOpts:${typeof sortOptions?.options === "object" ? strs.sortOptions : (sortOptions?.options ?? null)}`;
 
     // Process if cache exists
     try {
