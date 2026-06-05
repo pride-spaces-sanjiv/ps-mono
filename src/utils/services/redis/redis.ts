@@ -32,6 +32,17 @@ export const createRedisClient = (options: RedisClientOptions = {}) => {
   redisClients[database] = client;
   getRedisClient(database);
 
+  process.on("beforeExit", async (code) => {
+    try {
+      if (client && client?.isOpen) {
+        await client?.close();
+        await client?.destroy();
+      }
+    } catch (err) {
+      console.error("Error closing redis connection before exit :", err);
+    }
+  });
+
   client.on("connect", () => {
     console.log("Redis connected");
   });
