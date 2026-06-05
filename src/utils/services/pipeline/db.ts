@@ -88,7 +88,7 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     redisOptions: Partial<SetOptions> = {},
   ) => {
     if (doc) {
-      const { expiration = { type: "EX", value: 10 } } = redisOptions;
+      const { expiration = { type: "EX", value: 20 } } = redisOptions;
       const cacheStr = JSON.stringify(
         doc.toJSON({ flattenMaps: true, flattenObjectIds: true }),
       );
@@ -108,7 +108,7 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     redisOptions: Partial<SetOptions> = {},
   ) => {
     if (docs) {
-      const { expiration = { type: "EX", value: 10 } } = redisOptions;
+      const { expiration = { type: "EX", value: 20 } } = redisOptions;
       const convertedDocs = docs.map((doc) =>
         doc.toJSON({ flattenMaps: true, flattenObjectIds: true }),
       );
