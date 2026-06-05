@@ -1,5 +1,16 @@
+import { Admin, User } from "@/database/models/user.js";
+import { Operator } from "@/database/models/operator.js";
+import { Space } from "@/database/models/space.js";
+import { Dump } from "@/database/models/dump.js";
+import { Amenity } from "@/database/models/amenities.js";
+import { City, State } from "@/database/models/state-cities.js";
 import { RedisClients } from "@/utils/services/redis/redis.js";
+// types
+import { SetOptions } from "redis";
+import { Abortable } from "mongodb";
 import {
+  AnyObject,
+  ProjectionType,
   HydratedDocument,
   Model,
   QueryOptions,
@@ -7,16 +18,6 @@ import {
   Types,
   UpdateQuery,
 } from "mongoose";
-import { Admin, User } from "@/database/models/user.js";
-import { ProjectionType } from "mongoose";
-import { Abortable } from "mongodb";
-import { SetOptions } from "redis";
-import { Operator } from "@/database/models/operator.js";
-import { Space } from "@/database/models/space.js";
-import { Dump } from "@/database/models/dump.js";
-import { Amenity } from "@/database/models/amenities.js";
-import { City, State } from "@/database/models/state-cities.js";
-import { AnyObject } from "mongoose";
 
 const invalidateSimilarCaches = async (
   redisBaseKey: string,
