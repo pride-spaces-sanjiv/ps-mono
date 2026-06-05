@@ -256,6 +256,7 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
 
     // Create doc in DB
     const doc = new this.model(data, fields, options);
+    await doc.save();
 
     // Invalidate similar caches
     invalidateSimilarCaches(this.redisKeyPrefix, doc?.id).finally(() => {

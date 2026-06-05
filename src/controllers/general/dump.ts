@@ -21,6 +21,7 @@ import { cleanObject } from "@/utils/object/clean.js";
 import { dumpCollectionNames, dumpStatuses } from "@/utils/data/dump.js";
 import { spaceSchema } from "@/database/schemas/space.js";
 import { operatorSchema } from "@/database/schemas/operator.js";
+import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { validateDataAndRespond } from "@/utils/schemas/validate.js";
 import { adminLevels } from "@/utils/data/admin.js";
 import { ObjectDepthKeys } from "@/types/object.js";
@@ -134,10 +135,10 @@ export const getDump = async (
           }
         : {};
 
-    const doc = await Dump.findOne(
-      { _id: req.params.id, ...preLevelFilters },
-      projectors,
-    );
+    const doc = await pipelineDBs.DUMP.getData({
+      filter: { _id: req.params.id, ...preLevelFilters },
+      projection: projectors,
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "dump-not-found",
@@ -168,8 +169,7 @@ export const createDump = async (
 ) => {
   try {
     const body = req.body;
-    const doc = new Dump(body);
-    await doc.save();
+    const doc = await pipelineDBs.DUMP.createData(body);
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
