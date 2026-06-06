@@ -1,8 +1,15 @@
-import { Model } from "mongoose";
-import { ManagedRequest } from "@/types/request.js";
-import { ModelDocumentKeys, ModelToRaw } from "@/types/mongoose/document.js";
-import { ObjectDepthKeys } from "@/types/object.js";
+import { Model, ProjectionType } from "mongoose";
+import { Aggregator, aggregate } from "mingo";
+import { $project, $sample } from "mingo/operators/pipeline";
 import { allGeneralFieldsEnabled } from "./fields.js";
+import {
+  ModelDocumentKeys,
+  ModelToDocument,
+  ModelToRaw,
+} from "@/types/mongoose/document.js";
+import { ObjectDepthKeys } from "@/types/object.js";
+import { ManagedRequest } from "@/types/request.js";
+import { $jsonSchema } from "mingo/operators/query";
 
 export type SortOrder = "asc" | "desc";
 export type SortOptions<
@@ -79,6 +86,56 @@ export const cleanProjectors = <
     }
   }
   return cleaned;
+};
+
+export const projectiseDataToDoc = async <T extends any>(
+  model: Model<T>,
+  data: Partial<T>,
+  options: Partial<{ projection: ProjectionType<T> | null }> = {},
+) => {
+  let { projection = null } = options;
+
+  if (
+    projection &&
+    ((typeof projection === "object" && Object.keys(projection).length > 0) ||
+      (typeof projection === "string" && projection.trim()))
+  ) {
+    if (typeof projection === "string") {
+      projection = Object.fromEntries(
+        projection
+          .split(/ +/g)
+          .map((f) => [
+            f.trim().replace(/^-/, ""),
+            (f.trim().startsWith("-") ? 0 : 1) as 0 | 1,
+          ]),
+      ) as Exclude<ProjectionType<T>, string>;
+    }
+
+    // Check projection validity
+    const values = Object.values(projection);
+    const projectionType =
+      values[0] === 1 || values[0] === true
+        ? "inclusion"
+        : values[0] === 0 || values[0] === false
+          ? "exclusion"
+          : "invalid";
+    if (
+      projectionType === "invalid" ||
+      values.find((v) => (projectionType === "inclusion" ? !v : !!v))
+    ) {
+      throw new Error("Either of exclusion or inclusion allowed");
+    }
+
+    const docRaw = data;
+    const [projectedData] = new Aggregator([
+      {
+        $project: projection || {},
+        $jsonSchema,
+      },
+    ]).run([docRaw]);
+    const projectedDoc = model.hydrate(projectedData);
+    return projectedDoc;
+  }
 };
 
 const timestampFields = Object.keys(allGeneralFieldsEnabled).filter(
