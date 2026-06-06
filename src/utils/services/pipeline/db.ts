@@ -230,7 +230,7 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     } catch (err) {}
 
     // Get doc from DB
-    const doc = await this.model?.findOne(filter, projection, options);
+    const doc = await this.model.findOne(filter, projection, options);
     // Cache data
     this.cacheDoc(redisKey, doc, redisOptions);
     return doc;
