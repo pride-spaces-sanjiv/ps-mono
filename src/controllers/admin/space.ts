@@ -21,6 +21,7 @@ import { ModelToDocument } from "@/types/mongoose/document.js";
 import { dumpStatuses } from "@/utils/data/dump.js";
 import { dumpAdminAction } from "@/utils/data/dumpAction.js";
 import { Types } from "mongoose";
+import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -129,7 +130,10 @@ export const getSpace = async (
     const withOperator =
       String(req.query?.withOperator || "").toLowerCase() === "true";
 
-    const doc = await Space.findOne({ _id: req.params.id }, projectors);
+    const doc = await pipelineDBs.SPACE.getData({
+      filter: { _id: req.params.id },
+      projection: projectors,
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "space-not-found",
@@ -206,8 +210,7 @@ export const createSpace = async (
       sessionUser?.userType !== "support" &&
       adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      const doc = new Space(body);
-      await doc.save();
+      const doc = pipelineDBs.SPACE.createData({ data: body });
 
       const data = convertDataToJSON(doc);
       ResponseHandler.handleSuccess(res, {
@@ -250,7 +253,7 @@ export const updateSpace = async (
     let doc: ModelToDocument<typeof Space> | null = null;
 
     // Create dump for every update, support will request and others auto approve
-    doc = await Space.findOne({ _id: req.params.id });
+    doc = await pipelineDBs.SPACE.getData({ filter: { _id: req.params.id } });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "space-not-found",
@@ -293,8 +296,10 @@ export const updateSpace = async (
       sessionUser?.userType !== "support" &&
       adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      doc = await Space.findOneAndUpdate({ _id: req.params.id }, body, {
-        new: true,
+      doc = await pipelineDBs.SPACE.updateData({
+        filter: { _id: req.params.id },
+        updateData: body,
+        options: { new: true },
       });
       if (!doc) {
         ResponseHandler.handleNotFound(res, {
@@ -333,7 +338,9 @@ export const deleteSpace = async (
   try {
     const sessionUser = req.session.user;
 
-    const doc = await Space.findOne({ _id: req.params.id });
+    const doc = await pipelineDBs.SPACE.getData({
+      filter: { _id: req.params.id },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "space-not-found",
@@ -381,7 +388,9 @@ export const deleteSpace = async (
       sessionUser?.userType !== "support" &&
       adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      const doc = await Space.findOneAndDelete({ _id: req.params.id });
+      const doc = await pipelineDBs.SPACE.deleteData({
+        filter: { _id: req.params.id },
+      });
       if (!doc) {
         ResponseHandler.handleNotFound(res, {
           errorType: "space-not-found",
