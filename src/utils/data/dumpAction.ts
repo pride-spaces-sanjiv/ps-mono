@@ -6,6 +6,7 @@ import { Dump } from "@/database/models/dump.js";
 import { dumpStatuses } from "./dump.js";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { ModelToDocument } from "@/types/mongoose/document.js";
+import { pipelineDBs } from "../services/pipeline/db.js";
 
 export const dumpAdminAction = async <
   N extends boolean = true,
@@ -85,13 +86,14 @@ export const dumpAdminAction = async <
 
     // Dump
     if (isNew) {
-      const newDump = new Dump(preparedDump);
-      await newDump.save();
+      const newDump = await pipelineDBs.DUMP.createData(preparedDump);
       result.dumped = true;
       result.doc = newDump;
     } else {
-      const doc = await Dump.findOneAndUpdate({ _id: id }, preparedDump, {
-        new: true,
+      const doc = await pipelineDBs.DUMP.updateData({
+        filter: { _id: id },
+        updateData: preparedDump,
+        options: { new: true },
       });
       if (!doc) {
         result.notFound = true;

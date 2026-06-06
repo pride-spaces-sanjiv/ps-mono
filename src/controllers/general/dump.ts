@@ -25,7 +25,7 @@ import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { validateDataAndRespond } from "@/utils/schemas/validate.js";
 import { adminLevels } from "@/utils/data/admin.js";
 import { ObjectDepthKeys } from "@/types/object.js";
-import { ModelToRaw } from "@/types/mongoose/document.js";
+import { ModelToDocument, ModelToRaw } from "@/types/mongoose/document.js";
 import { RootFilterQuery } from "mongoose";
 import { DumpSchema } from "@/database/schemas/dump.js";
 import { dumpAdminAction } from "@/utils/data/dumpAction.js";
@@ -207,7 +207,9 @@ export const updateDump = async (
     const sessionUser = req.session.user;
     const body = req.body;
 
-    const doc = await Dump.findOne({ _id: req.params.id });
+    const doc = await pipelineDBs.DUMP.getData({
+      filter: { _id: req.params.id },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "dump-not-found",
@@ -396,7 +398,9 @@ export const approveDump = async (
   res: ManagedResponse,
 ) => {
   try {
-    const doc = await Dump.findOne({ _id: req.params.id });
+    const doc = await pipelineDBs.DUMP.getData({
+      filter: { _id: req.params.id },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "dump-not-found",
@@ -417,6 +421,12 @@ export const approveDump = async (
         ? spaceSchema
         : data?.collection === "operators"
           ? operatorSchema
+          : null;
+    const pipelineDB =
+      data?.collection === "spaces"
+        ? pipelineDBs.SPACE
+        : data?.collection === "operators"
+          ? pipelineDBs.OPERATOR
           : null;
 
     // Validate data first
@@ -443,9 +453,9 @@ export const approveDump = async (
     const id = parsed.id;
     delete parsed.id;
     // @ts-ignore
-    const updatedDoc = await model?.findOneAndUpdate(
-      { _id: id },
-      {
+    const updatedDoc = await pipelineDB?.updateData({
+      filter: { _id: id },
+      updateData: {
         ...parsed,
         approval: {
           id: req.session.user?.id,
@@ -455,12 +465,17 @@ export const approveDump = async (
           lastRequested: doc.updatedAt,
         },
       },
-      { new: true, projection: { password: 0 } },
-    );
+      options: { new: true, projection: { password: 0 } },
+    });
 
     ResponseHandler.handleSuccess(res, {
       message: "Approved dump successfully",
-      data: convertDataToJSON(updatedDoc),
+      data: convertDataToJSON(
+        // @ts-ignore
+        updatedDoc as
+          | ModelToDocument<typeof Space>
+          | ModelToDocument<typeof Operator>,
+      ),
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -475,7 +490,9 @@ export const deleteDump = async (
   res: ManagedResponse,
 ) => {
   try {
-    const doc = await Dump.findOneAndDelete({ _id: req.params.id });
+    const doc = await pipelineDBs.DUMP.deleteData({
+      filter: { _id: req.params.id },
+    });
 
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
