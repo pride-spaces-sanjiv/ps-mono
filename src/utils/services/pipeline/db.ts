@@ -28,22 +28,36 @@ const invalidateSimilarCaches = async (
   docId?: string,
 ) => {
   try {
-    if (docId) {
-      const key = `${redisBaseKey}:${docId}:*`;
-      const res = (
-        await Promise.allSettled(
-          [key, `${redisBaseKey}:multi:*`].map((k) =>
-            RedisClients.DBPIPED.del(k),
-          ),
-        )
-      ).map((r) => (r.status === "fulfilled" ? r.value : 0));
-      return res;
-    }
+    const key = `${redisBaseKey}:${docId}:*`;
+    const res = (
+      await Promise.allSettled(
+        [docId ? key : "", `${redisBaseKey}:multi:*`]
+          .filter((k) => k.trim())
+          .map((k) => RedisClients.DBPIPED.del(k)),
+      )
+    ).map((r) => (r.status === "fulfilled" ? r.value : 0));
+    return res;
   } catch (err) {}
 };
 
 const checkFilterHasId = <T extends any>(filter: RootFilterQuery<T> = {}) => {
   return Object.hasOwn(filter, "_id");
+};
+
+const hasSomeProjection = <T extends any>(
+  projection?: ProjectionType<T> | null,
+) => {
+  if (
+    typeof projection === "object" &&
+    projection !== null &&
+    !Array.isArray(projection)
+  ) {
+    return Object.keys(projection).length > 0;
+  }
+  if (Array.isArray(projection)) {
+    return projection.length > 0;
+  }
+  return !!projection?.trim();
 };
 
 type PipelineDBOptions<N extends string, T extends Record<string, any>> = {
@@ -156,10 +170,11 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
 
     const { filter = {} as any } = dbOptions;
     if (
-      filter &&
-      typeof filter === "object" &&
-      !Array.isArray(filter) &&
-      filter._id
+      dbOptions?.doc ||
+      (filter &&
+        typeof filter === "object" &&
+        !Array.isArray(filter) &&
+        filter._id)
     ) {
       const doc =
         dbOptions.doc || (await this.model.findOne({ _id: filter._id }));
@@ -333,13 +348,18 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     const doc = await this.model.findOne(filter, projection, options);
     // Cache data
     const filterHasId = checkFilterHasId(filter);
-    filterHasId
-      ? this.createMainDocCache({ filter: filter }, redisOptions)
+    const someProjection = hasSomeProjection(projection);
+    filterHasId || doc?.id
+      ? this.createMainDocCache(
+          { filter: filter, doc: someProjection ? null : doc },
+          redisOptions,
+        )
       : this.cacheDoc(redisKey, doc, redisOptions);
     return doc;
   };
 
   // Updaters
+  // Create
   createData = async (
     dbOptions: Partial<{
       data: Partial<T> | undefined;
@@ -364,7 +384,8 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     // Invalidate similar caches
     invalidateSimilarCaches(this.redisKeyPrefix, doc?.id).finally(() => {
       // Cache data
-      this.cacheDoc(redisKey, doc, redisOptions);
+      this.createMainDocCache({ doc: doc }, redisOptions);
+      // this.cacheDoc(redisKey, doc, redisOptions);
     });
 
     return doc;
@@ -396,12 +417,11 @@ class PipelineDB<N extends string, T extends Record<string, any>> {
     });
     const projectedDoc =
       doc && options.projection
-        ? this.model.hydrate(doc.toObject(), options.projection)
+        ? this.model.hydrate(doc.toJSON(), options?.projection)
         : doc;
 
     // Invalidate similar caches
     invalidateSimilarCaches(this.redisKeyPrefix, doc?.id).finally(() => {
-      // Cache data
       // Cache data
       const filterHasId = checkFilterHasId(filter);
       filterHasId || doc?.id
