@@ -1,6 +1,5 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Operator, operatorNonPassFields } from "@/database/models/operator.js";
-import { Dump } from "@/database/models/dump.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import {
   cleanPaginatedData,
@@ -22,6 +21,7 @@ import { ModelToDocument } from "@/types/mongoose/document.js";
 import { dumpStatuses } from "@/utils/data/dump.js";
 import { dumpAdminAction } from "@/utils/data/dumpAction.js";
 import { Types } from "mongoose";
+import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -108,7 +108,10 @@ export const getOperator = async (
       operatorNonPassFields,
     );
 
-    const doc = await Operator.findOne({ _id: req.params.id }, projectors);
+    const doc = await pipelineDBs.OPERATOR.getData({
+      filter: { _id: req.params.id },
+      projection: projectors,
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "operator-not-found",
@@ -181,11 +184,10 @@ export const createOperator = async (
       sessionUser?.userType !== "support" &&
       adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      const doc = new Operator({
-        ...body,
-        password: encodedPass,
+      const doc = await pipelineDBs.OPERATOR.createData({
+        // @ts-ignore
+        data: { ...body, password: encodedPass },
       });
-      await doc.save();
 
       const data = convertDataToJSON(doc);
       ResponseHandler.handleSuccess(res, {
@@ -226,8 +228,9 @@ export const updateOperator = async (
     const body = req.body;
     const sessionUser = req.session.user;
 
-    // Create dump for every update, support will request and others auto approve
-    let doc = await Operator.findOne({ _id: req.params.id });
+    let doc = await pipelineDBs.OPERATOR.getData({
+      filter: { _id: req.params.id },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "operator-not-found",
@@ -236,6 +239,7 @@ export const updateOperator = async (
       return;
     }
 
+    // Create dump for every update, support will request and others auto approve
     // Handle dumping actions
     const dumpRes = await dumpAdminAction({
       dump: {
@@ -271,8 +275,12 @@ export const updateOperator = async (
       sessionUser?.userType !== "support" &&
       adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      doc = await Operator.findOneAndUpdate({ _id: req.params.id }, body, {
-        new: true,
+      doc = await pipelineDBs.OPERATOR.updateData({
+        filter: { _id: req.params.id },
+        updateData: body,
+        options: {
+          new: true,
+        },
       });
       if (!doc) {
         ResponseHandler.handleNotFound(res, {
@@ -315,7 +323,9 @@ export const deleteOperator = async (
   try {
     const sessionUser = req.session.user;
 
-    const doc = await Operator.findOne({ _id: req.params.id });
+    const doc = await pipelineDBs.OPERATOR.getData({
+      filter: { _id: req.params.id },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "operator-not-found",
@@ -363,7 +373,9 @@ export const deleteOperator = async (
       sessionUser?.userType !== "support" &&
       adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      const doc = await Operator.findOne({ _id: req.params.id });
+      const doc = await pipelineDBs.OPERATOR.getData({
+        filter: { _id: req.params.id },
+      });
       if (!doc) {
         ResponseHandler.handleNotFound(res, {
           errorType: "operator-not-found",
@@ -398,10 +410,10 @@ export const getPassword = async (
     const body = req.body;
     const sessionUser = req.session.user;
 
-    let doc = await Operator.findOne(
-      { _id: req.params.id },
-      { password: 1, _id: 1 },
-    );
+    let doc = await pipelineDBs.OPERATOR.getData({
+      filter: { _id: req.params.id },
+      projection: { password: 1, _id: 1 },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "operator-not-found",
@@ -443,10 +455,10 @@ export const updatePassword = async (
     const sessionUser = req.session.user;
     const password = encodeCrypto(body.password);
 
-    let doc = await Operator.findOne(
-      { _id: req.params.id },
-      { password: 1, _id: 1 },
-    );
+    let doc = await pipelineDBs.OPERATOR.getData({
+      filter: { _id: req.params.id },
+      projection: { password: 1, _id: 1 },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "operator-not-found",
@@ -496,14 +508,14 @@ export const updatePassword = async (
       return;
     }
 
-    doc = await Operator.findOneAndUpdate(
-      { _id: req.params.id },
-      { password: password },
-      {
+    doc = await pipelineDBs.OPERATOR.updateData({
+      filter: { _id: req.params.id },
+      updateData: { password: password },
+      options: {
         new: true,
         projection: { password: 1, _id: 1 },
       },
-    );
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "operator-not-found",
