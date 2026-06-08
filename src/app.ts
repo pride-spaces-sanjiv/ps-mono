@@ -32,6 +32,7 @@ import { StatesRouter } from "@/routes/general/states/route.js";
 // Database
 // Services
 import { RedisClient, redisStore } from "@/utils/services/redis/redis.js";
+import { syncAllIndexes } from "@/utils/mongoose/sync-index.js";
 // Utils
 import { getIP } from "@/utils/ip.js";
 // Data
@@ -41,6 +42,9 @@ import {
   ManagedResponseWithLocalUrlIP,
 } from "@/types/request.js";
 // import { handleMailQueue } from "./utils/services/rabbitmq/email.js";
+
+// Pre handlers
+syncAllIndexes();
 
 const app = express();
 // let startDate = moment();

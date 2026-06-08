@@ -143,9 +143,16 @@ indexFieldsFromSchema(ConventionalPropertySchema, {
   singleFields: [
     "name",
     "slug",
+    "developer",
     "area.totalBuiltArea",
     "area.totalLeasedArea",
     "pricing.rent",
+    "location.city",
+    "location.country",
+    "location.state",
+    "location.area",
+    "person.name",
+    "person.email",
   ],
 });
 
