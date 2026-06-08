@@ -33,8 +33,8 @@ export const getNameSchema = ({
   keyName = "Name",
   doTrim = true,
   minLength = 4,
-  alphaRegexp = /^[A-z ]+$/,
-  alphaRegexpMsg = "must only contain alphabets",
+  alphaRegexp = /^[A-z0-9,\- ]+$/,
+  alphaRegexpMsg = "must only contain alphabets numbers and hyphens",
   schema = z.string(),
 }: Partial<NameSchemaOptions> = {}) => {
   if (doTrim) {

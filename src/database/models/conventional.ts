@@ -89,7 +89,7 @@ export const SpecsSchema = new Conn.Schema(
     source: { type: String, enum: sources },
     dealStatus: { type: String, enum: dealStatuses },
     esgScore: { type: String, enum: esgScores },
-    vacany: { type: Number, default: 0 },
+    vacancy: { type: Number, default: 0 },
     internetProviders: { type: [String], default: [] },
     nearbyInfras: { type: [String], default: [] },
     tenantMix: { type: String },
