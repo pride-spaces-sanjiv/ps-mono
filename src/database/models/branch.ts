@@ -32,6 +32,7 @@ indexFieldsFromSchema(BranchSchema, {
 
 // Model Instances
 export const Branch = Conn.model("Branch", BranchSchema, "branches");
+Branch.syncIndexes();
 
 // Field names
 export const branchFields = getFieldsOfModel(Branch, {

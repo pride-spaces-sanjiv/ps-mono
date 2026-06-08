@@ -3,8 +3,8 @@ import { SchemaToRaw } from "@/types/mongoose/document.js";
 import { ObjectDepthKeys } from "@/types/object.js";
 
 type IndexOptions<T extends string> = {
-  singleFields: T[];
-  compoundFields: T[][];
+  singleFields: [...T[]];
+  compoundFields: [...T[][]];
   createCompoundFromSingles: boolean;
 };
 export const indexFieldsFromSchema = <
