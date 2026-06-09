@@ -75,7 +75,7 @@ export default function NotificationList() {
 
       if (res.status === 200) {
         await queryClient.invalidateQueries({
-          queryKey: [queryKeys.DUMPS],
+          queryKey: [queryKeys.DUMPS, "paginated"],
         });
         toast.success("Notification deleted");
         return;
