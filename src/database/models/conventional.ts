@@ -34,7 +34,7 @@ const LocationSchema = new Conn.Schema(
     country: { type: String, required: true },
     area: { type: String, required: true },
     postalCode: { type: String },
-    landMark: { type: String },
+    landmark: { type: String },
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
   },

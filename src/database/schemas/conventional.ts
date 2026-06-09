@@ -27,7 +27,7 @@ export const locationSchema = z.object({
   country: z.string().min(1, "Country is required"),
   area: z.string().min(1, "Area is required"),
   postalCode: z.string().optional(),
-  landMark: z.string().optional(),
+  landmark: z.string().optional(),
   lat: z.number("Latitude must be a number"),
   lng: z.number("Longitude must be a number"),
 });
