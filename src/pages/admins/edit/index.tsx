@@ -195,6 +195,11 @@ export default function EditAdmin() {
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
                 defaultChecked={!!defaultValues?.isActive}
                 {...register("isActive")}
+                onCheckedChange={(checked) => {
+                  setValue("isActive", checked, {
+                    shouldValidate: true,
+                  });
+                }}
               />
             </div>
           </div>
