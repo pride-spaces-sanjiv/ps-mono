@@ -17,6 +17,7 @@ import {
   sources,
 } from "@/utils/data/conventional.js";
 import { spaceGrades } from "@/utils/data/spaceTypes.js";
+import { approvalSchema } from "./dump.js";
 
 // --- Sub-Schemas ---
 
@@ -85,13 +86,6 @@ export const pricingSchema = z.object({
   parkingCharge: z.number().default(0),
 });
 
-export const approvalSchema = z
-  .object({
-    isApproved: z.boolean().default(false),
-    approvedBy: z.string().optional(),
-  })
-  .optional();
-
 // --- Main Schema ---
 
 export const conventionalPropertySchema = z.object({
@@ -117,6 +111,6 @@ export const conventionalPropertySchema = z.object({
 });
 
 // Infer the TypeScript type
-export type ConventionalPropertyInput = z.infer<
+export type ConventionalPropertySchema = z.infer<
   typeof conventionalPropertySchema
 >;

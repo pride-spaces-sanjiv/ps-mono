@@ -142,7 +142,6 @@ const ConventionalPropertySchema = new Conn.Schema(
 indexFieldsFromSchema(ConventionalPropertySchema, {
   singleFields: [
     "name",
-    "slug",
     "developer",
     "area.totalBuiltArea",
     "area.totalLeasedArea",

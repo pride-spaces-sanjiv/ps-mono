@@ -21,6 +21,7 @@ import {
   SortOrder,
   Query,
 } from "mongoose";
+import { ConventionalProperty } from "@/database/models/conventional.js";
 // import { projectiseDoc } from "@/utils/mongoose/filters.js";
 
 const invalidateSimilarCaches = async (
@@ -65,7 +66,7 @@ type PipelineDBOptions<N extends string, T extends Record<string, any>> = {
   model: Model<T>;
 };
 
-class PipelineDB<N extends string, T extends Record<string, any>> {
+export class PipelineDB<N extends string, T extends Record<string, any>> {
   protected redisKeyPrefix: undefined | string;
   protected name: N | undefined;
   protected model: Model<T> | undefined;
@@ -457,6 +458,10 @@ export const pipelineDBs = {
   ADMIN: new PipelineDB({ name: Admin.collection.name, model: Admin }),
   OPERATOR: new PipelineDB({ name: Operator.collection.name, model: Operator }),
   SPACE: new PipelineDB({ name: Space.collection.name, model: Space }),
+  CONVENTIONAL: new PipelineDB({
+    name: ConventionalProperty.collection.name,
+    model: ConventionalProperty,
+  }),
   AMENITY: new PipelineDB({ name: Amenity.collection.name, model: Amenity }),
   STATE: new PipelineDB({ name: State.collection.name, model: State }),
   CITY: new PipelineDB({ name: City.collection.name, model: City }),
@@ -470,3 +475,9 @@ export const getPipelineDBFromModelName = (name: string) => {
   });
   return inst;
 };
+
+export type PipelineNames = keyof typeof pipelineDBs;
+export type PipelineModel<K extends PipelineNames> = Exclude<
+  ReturnType<(typeof pipelineDBs)[K]["getProtectedProps"]>["model"],
+  undefined | null
+>;

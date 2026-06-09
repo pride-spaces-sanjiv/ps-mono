@@ -9,6 +9,7 @@ import {
 import { MongoError } from "mongodb";
 import {
   getPipelineDBFromModelName,
+  PipelineDB,
   pipelineDBs,
 } from "../services/pipeline/db.js";
 import {
@@ -21,16 +22,23 @@ import { validateNumber } from "@/utils/number.js";
 import { ManagedRequest } from "@/types/request.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 
+type PipelineNames = keyof typeof pipelineDBs;
+type PipelineModel<K extends PipelineNames> = Exclude<
+  ReturnType<(typeof pipelineDBs)[K]["getProtectedProps"]>["model"],
+  undefined | null
+>;
+
 export const paginatedResults = async <
-  M extends Model<any>,
-  T extends ModelToRaw<M>,
+  M extends Model<any> | PipelineModel<PDBKey>,
+  T extends ModelToRaw<M> = ModelToRaw<M>,
   F extends string = string,
+  PDBKey extends PipelineNames = PipelineNames,
 >(
   req: ManagedRequest<
     any,
     { page?: number; limit?: number; order?: "desc" | "asc"; [k: string]: any }
   >,
-  model: M,
+  model: M | PDBKey,
   acceptedFields?: F[],
   params?: Partial<{ limit: number }>,
   args?: Partial<{
@@ -62,6 +70,12 @@ export const paginatedResults = async <
       invalidValue: 10,
     });
     const offset = (data.page - 1) * limit;
+
+    // Get model from pipelineDBs if a dbName is provided
+    model =
+      typeof model === "string"
+        ? (pipelineDBs[model].getProtectedProps().model as M)
+        : model;
     const { projectors } = getFieldsandProjectors(
       req,
       model,
