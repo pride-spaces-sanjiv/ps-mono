@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import {
   type ColumnDef,
   type ColumnFiltersState,
   flexRender,
+  type Column,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -17,9 +18,7 @@ import { keepPreviousData, useMutation } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -29,9 +28,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -40,7 +36,6 @@ import {
   ArrowUp,
   ArrowUpDown,
   ChevronDown,
-  MoreHorizontal,
 } from "lucide-react";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
 import { getSpaces, updateSpace } from "@/services/apis/admin/spaces";
@@ -72,28 +67,93 @@ type Props = {
   inputProps: Parameters<typeof Input>[0];
 } & React.JSX.IntrinsicElements["div"];
 
+const SortableHeader = ({
+  column,
+  children,
+}: {
+  column: Column<Space, unknown>;
+  children: React.ReactNode;
+}) => (
+  <Button
+    variant="ghost"
+    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+  >
+    {children}
+    {column.getIsSorted() === "asc" ? (
+      <ArrowDown />
+    ) : column.getIsSorted() === "desc" ? (
+      <ArrowUp />
+    ) : (
+      <ArrowUpDown />
+    )}
+  </Button>
+);
+
+const EmptyValue = () => <span className="text-muted-foreground">-</span>;
+
+const TextCell = ({
+  children,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) => {
+  const title = typeof children === "string" ? children : undefined;
+
+  return (
+    <div
+      className={cn("max-w-[220px] truncate whitespace-nowrap", className)}
+      title={title}
+    >
+      {children || <EmptyValue />}
+    </div>
+  );
+};
+
+const BooleanBadge = ({ value }: { value?: boolean }) => (
+  <span
+    className={cn(
+      "inline-flex rounded-md px-2 py-1 text-xs font-medium",
+      value
+        ? "bg-emerald-400/15 text-emerald-200"
+        : "bg-red-400/15 text-red-200",
+    )}
+  >
+    {value ? "Yes" : "No"}
+  </span>
+);
+
+const formatDateTime = (value?: Date | string | null) => {
+  if (!value) return "-";
+
+  return new Date(value).toLocaleString([], {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatTime = (value?: Date | string | null) => {
+  if (!value) return "-";
+
+  return new Date(value).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatList = (value?: string[] | readonly string[]) =>
+  value?.length ? value.join(", ") : "-";
+
 const SpacesTabledResults = ({
-  id,
   operatorId,
   className,
-  pagination = true,
-  tableWrapperProps,
-  tableProps,
-  tableHeaderProps,
-  tableBodyProps,
-  tableRowProps,
-  tableHeadProps,
-  tableCellProps,
-  prevButtonProps,
-  nextButtonProps,
   inputProps,
-  skeletonProps,
   ...props
 }: Partial<Props>) => {
   const navigate = useNavigate();
-
-  // Catch operator id from location state
-  const { state: locState } = useLocation();
 
   const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
@@ -178,163 +238,102 @@ const SpacesTabledResults = ({
   //     updatedAt: "2026-02-28T10:00:00.000Z",
   //   },
   // ];
-  console.log("spaces", spaces);
   //  const spaceId = spaces
   // Columns definition
   const columns: ColumnDef<Space>[] = useMemo(
     () => [
       {
         accessorKey: "serialNo",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Serial No
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{page * 10 + (row.index + 1) || "-"}</div>,
+        header: ({ column }) => (
+          <SortableHeader column={column}>Serial No</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{page * limit + (row.index + 1) || "-"}</div>,
+      },
+      {
+        accessorKey: "id",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Centre ID</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.id}</TextCell>,
+      },
+      {
+        accessorKey: "branch",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Branch ID</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.branch}</TextCell>,
       },
       {
         accessorKey: "operator",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Operator
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
+        header: ({ column }) => (
+          <SortableHeader column={column}>Operator</SortableHeader>
+        ),
         cell: ({ row }) => (
-          <div>
+          <TextCell>
             {(row.original?.operator &&
               res?.data?.data?.references?.operators?.results?.find(
                 (op) => op.id === row.original?.operator,
               )?.name) ||
-              "-"}
-          </div>
+              row.original?.operator}
+          </TextCell>
         ),
       },
       {
+        accessorKey: "operatorId",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Operator ID</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.operator}</TextCell>,
+      },
+      {
+        accessorKey: "slug",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Slug</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.slug}</TextCell>,
+      },
+      {
         accessorKey: "name",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Name
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.original?.name || "-"}</div>,
+        header: ({ column }) => (
+          <SortableHeader column={column}>Name</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell className="min-w-[220px]">{row.original?.name}</TextCell>
+        ),
       },
       {
         accessorKey: "email",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Email
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.original?.person?.email || "-"}</div>,
+        header: ({ column }) => (
+          <SortableHeader column={column}>Centre Email</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.email}</TextCell>,
       },
       {
-        accessorKey: "location",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Location
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => {
-          const location = row.original.location;
-
-          return (
-            <div>
-              {location?.city}, {location?.state}
-            </div>
-          );
-        },
+        accessorKey: "category",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Category</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.category}</TextCell>,
       },
       {
-        accessorKey: "active",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Active Status
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
+        accessorKey: "spaceType",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Space Type</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.spaceType}</TextCell>,
+      },
+      {
+        accessorKey: "grade",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Grade</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.grade}</TextCell>,
+      },
+      {
+        accessorKey: "isActive",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Active Status</SortableHeader>
+        ),
         cell: ({ row }) => (
           <div className="flex justify-center">
             <Switch
@@ -354,7 +353,7 @@ const SpacesTabledResults = ({
                     return;
                   }
                   throw new Error("Invalid response");
-                } catch (err) {
+                } catch {
                   toast.error("Failed to update space");
                 }
               }}
@@ -363,59 +362,226 @@ const SpacesTabledResults = ({
         ),
       },
       {
+        accessorKey: "isVerified",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Verified</SortableHeader>
+        ),
+        cell: ({ row }) => <BooleanBadge value={row.original?.isVerified} />,
+      },
+      {
+        accessorKey: "totalSeats",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Total Seats</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{row.original?.totalSeats ?? "-"}</div>,
+      },
+      {
+        accessorKey: "bookedSeats",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Booked Seats</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{row.original?.bookedSeats ?? "-"}</div>,
+      },
+      {
+        accessorKey: "price",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Price</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{row.original?.price ?? "-"}</div>,
+      },
+      {
+        accessorKey: "rating",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Rating</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{row.original?.rating ?? "-"}</div>,
+      },
+      {
+        accessorKey: "reviews",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Reviews</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{row.original?.reviews ?? "-"}</div>,
+      },
+      {
+        accessorKey: "operationalHrs",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Operational Hrs</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{row.original?.operationalHrs ?? "-"}</div>,
+      },
+      {
+        accessorKey: "workingSizes",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Working Sizes</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell>{formatList(row.original?.workingSizes)}</TextCell>
+        ),
+      },
+      {
+        accessorKey: "facilities",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Facilities</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell className="min-w-[240px]">
+            {formatList(row.original?.facilities)}
+          </TextCell>
+        ),
+      },
+      {
         accessorKey: "openTime",
-        header: "Open Time",
-        cell: ({ row }) => {
-          const time = row.original.openTime;
-          if (!time) return "-";
-
-          return new Date(time).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        },
+        header: ({ column }) => (
+          <SortableHeader column={column}>Open Time</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{formatTime(row.original.openTime)}</div>,
       },
       {
         accessorKey: "closeTime",
-        header: "Close Time",
-        cell: ({ row }) => {
-          const time = row.original.closeTime;
-          if (!time) return "-";
-
-          return new Date(time).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        },
+        header: ({ column }) => (
+          <SortableHeader column={column}>Close Time</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{formatTime(row.original.closeTime)}</div>,
       },
       {
         accessorKey: "openDays",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Open Days
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
+        header: ({ column }) => (
+          <SortableHeader column={column}>Open Days</SortableHeader>
+        ),
         cell: ({ row }) => {
           const openDays = row.original.openDays;
           return <div>{formatOpenDays(openDays)}</div>;
         },
       },
+      {
+        accessorKey: "location.address",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Address</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell className="min-w-[280px]">
+            {row.original?.location?.address}
+          </TextCell>
+        ),
+      },
+      {
+        accessorKey: "location.area",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Area</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.location?.area}</TextCell>,
+      },
+      {
+        accessorKey: "location.city",
+        header: ({ column }) => (
+          <SortableHeader column={column}>City</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.location?.city}</TextCell>,
+      },
+      {
+        accessorKey: "location.state",
+        header: ({ column }) => (
+          <SortableHeader column={column}>State</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.location?.state}</TextCell>,
+      },
+      {
+        accessorKey: "location.country",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Country</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell>{row.original?.location?.country}</TextCell>
+        ),
+      },
+      {
+        accessorKey: "location.postalCode",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Postal Code</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell>{row.original?.location?.postalCode}</TextCell>
+        ),
+      },
+      {
+        accessorKey: "location.lat",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Latitude</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{row.original?.location?.lat ?? "-"}</div>,
+      },
+      {
+        accessorKey: "location.lng",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Longitude</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{row.original?.location?.lng ?? "-"}</div>,
+      },
+      {
+        accessorKey: "person.name",
+        header: ({ column }) => (
+          <SortableHeader column={column}>POC Name</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.person?.name}</TextCell>,
+      },
+      {
+        accessorKey: "person.email",
+        header: ({ column }) => (
+          <SortableHeader column={column}>POC Email</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.person?.email}</TextCell>,
+      },
+      {
+        accessorKey: "person.contactNo",
+        header: ({ column }) => (
+          <SortableHeader column={column}>POC Contact</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell>{row.original?.person?.contactNo}</TextCell>
+        ),
+      },
+      {
+        accessorKey: "person.role",
+        header: ({ column }) => (
+          <SortableHeader column={column}>POC Role</SortableHeader>
+        ),
+        cell: ({ row }) => <TextCell>{row.original?.person?.role}</TextCell>,
+      },
+      {
+        accessorKey: "description",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Description</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell className="min-w-[260px]">
+            {row.original?.description}
+          </TextCell>
+        ),
+      },
+      {
+        accessorKey: "createdAt",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Created At</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{formatDateTime(row.original?.createdAt)}</div>,
+      },
+      {
+        accessorKey: "updatedAt",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Updated At</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{formatDateTime(row.original?.updatedAt)}</div>,
+      },
     ],
-    [res?.data],
+    [
+      isUpdating,
+      limit,
+      page,
+      refetch,
+      res?.data?.data?.references?.operators?.results,
+      updateMutater,
+    ],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -428,7 +594,6 @@ const SpacesTabledResults = ({
 
   const table = useReactTable({
     data: spaces,
-    // @ts-ignore
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -464,7 +629,7 @@ const SpacesTabledResults = ({
 
   useEffect(() => {
     setPage(0);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, setPage]);
 
   return (
     <div {...props} className={cn("", className)}>
@@ -563,7 +728,7 @@ const SpacesTabledResults = ({
                   onDoubleClick={() => navigate(`/spaces/${row.original?.id}`)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-normal">
+                    <TableCell key={cell.id} className="whitespace-nowrap">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
