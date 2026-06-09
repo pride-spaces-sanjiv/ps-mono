@@ -83,7 +83,7 @@ const BuilderSchema = new Conn.Schema(
   { timestamps: true },
 );
 indexFieldsFromSchema(BuilderSchema, {
-  singleFields: ["name"],
+  singleFields: ["name", "brandName"],
 });
 
 // Model Instances

@@ -104,7 +104,7 @@ export const conventionalPropertySchema = z.object({
   facilities: z.array(z.string()).optional(),
   person: personSchema.optional(),
   gstNo: z.string().optional(),
-  approval: approvalSchema,
+  approval: approvalSchema.optional(),
   canImmediateAvail: z.boolean().default(false),
   isSez: z.boolean().default(false),
   isActive: z.boolean().default(true),
