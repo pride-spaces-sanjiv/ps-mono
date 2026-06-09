@@ -84,7 +84,7 @@ const OperatorSchema = new Conn.Schema(
   { timestamps: true },
 );
 indexFieldsFromSchema(OperatorSchema, {
-  singleFields: ["name", "slug", "person.name", "person.email"],
+  singleFields: ["name", "person.name", "person.email"],
 });
 
 // Model Instances

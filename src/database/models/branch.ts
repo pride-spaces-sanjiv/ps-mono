@@ -27,7 +27,7 @@ const BranchSchema = new Conn.Schema(
   { timestamps: true },
 );
 indexFieldsFromSchema(BranchSchema, {
-  singleFields: ["name", "email", "operator"],
+  singleFields: ["name", "operator"],
 });
 
 // Model Instances
