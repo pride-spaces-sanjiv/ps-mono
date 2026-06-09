@@ -2,6 +2,7 @@ export const dumpCollectionNames = {
   SPACE: "spaces",
   OPERATOR: "operators",
   CONVENTIONAL: "conventionals",
+  BUILDER: "builders",
 } as const;
 
 export type DumpCollectionName =

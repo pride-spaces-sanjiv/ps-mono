@@ -2,6 +2,8 @@ import { Aggregator, aggregate } from "mingo";
 import { Admin, User } from "@/database/models/user.js";
 import { Operator } from "@/database/models/operator.js";
 import { Space } from "@/database/models/space.js";
+import { Builder } from "@/database/models/builder.js";
+import { ConventionalProperty } from "@/database/models/conventional.js";
 import { Dump } from "@/database/models/dump.js";
 import { Amenity } from "@/database/models/amenities.js";
 import { City, State } from "@/database/models/state-cities.js";
@@ -21,7 +23,6 @@ import {
   SortOrder,
   Query,
 } from "mongoose";
-import { ConventionalProperty } from "@/database/models/conventional.js";
 // import { projectiseDoc } from "@/utils/mongoose/filters.js";
 
 const invalidateSimilarCaches = async (
@@ -458,6 +459,7 @@ export const pipelineDBs = {
   ADMIN: new PipelineDB({ name: Admin.collection.name, model: Admin }),
   OPERATOR: new PipelineDB({ name: Operator.collection.name, model: Operator }),
   SPACE: new PipelineDB({ name: Space.collection.name, model: Space }),
+  BUILDER: new PipelineDB({ name: Builder.collection.name, model: Builder }),
   CONVENTIONAL: new PipelineDB({
     name: ConventionalProperty.collection.name,
     model: ConventionalProperty,
