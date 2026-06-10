@@ -31,12 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronDown,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown } from "lucide-react";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
 import { getSpaces, updateSpace } from "@/services/apis/admin/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
@@ -250,20 +245,6 @@ const SpacesTabledResults = ({
         cell: ({ row }) => <div>{page * limit + (row.index + 1) || "-"}</div>,
       },
       {
-        accessorKey: "id",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Centre ID</SortableHeader>
-        ),
-        cell: ({ row }) => <TextCell>{row.original?.id}</TextCell>,
-      },
-      {
-        accessorKey: "branch",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Branch ID</SortableHeader>
-        ),
-        cell: ({ row }) => <TextCell>{row.original?.branch}</TextCell>,
-      },
-      {
         accessorKey: "operator",
         header: ({ column }) => (
           <SortableHeader column={column}>Operator</SortableHeader>
@@ -274,16 +255,9 @@ const SpacesTabledResults = ({
               res?.data?.data?.references?.operators?.results?.find(
                 (op) => op.id === row.original?.operator,
               )?.name) ||
-              row.original?.operator}
+              "-"}
           </TextCell>
         ),
-      },
-      {
-        accessorKey: "operatorId",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Operator ID</SortableHeader>
-        ),
-        cell: ({ row }) => <TextCell>{row.original?.operator}</TextCell>,
       },
       {
         accessorKey: "slug",
@@ -320,7 +294,13 @@ const SpacesTabledResults = ({
         header: ({ column }) => (
           <SortableHeader column={column}>Space Type</SortableHeader>
         ),
-        cell: ({ row }) => <TextCell>{row.original?.spaceType}</TextCell>,
+        cell: ({ row }) => (
+          <TextCell>
+            {row.original?.spaceType === "Both"
+              ? "Flex & MOS"
+              : row.original?.spaceType || "-"}
+          </TextCell>
+        ),
       },
       {
         accessorKey: "grade",
@@ -360,13 +340,6 @@ const SpacesTabledResults = ({
             />
           </div>
         ),
-      },
-      {
-        accessorKey: "isVerified",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Verified</SortableHeader>
-        ),
-        cell: ({ row }) => <BooleanBadge value={row.original?.isVerified} />,
       },
       {
         accessorKey: "totalSeats",
@@ -594,6 +567,7 @@ const SpacesTabledResults = ({
 
   const table = useReactTable({
     data: spaces,
+    // @ts-ignore
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
