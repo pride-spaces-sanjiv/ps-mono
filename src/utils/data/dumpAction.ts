@@ -86,7 +86,7 @@ export const dumpAdminAction = async <
 
     // Dump
     if (isNew) {
-      const newDump = await pipelineDBs.DUMP.createData(preparedDump);
+      const newDump = await pipelineDBs.DUMP.createData({ data: preparedDump });
       result.dumped = true;
       result.doc = newDump;
     } else {
