@@ -105,6 +105,7 @@ export const dumpAdminAction = async <
 
     return result;
   } catch (err: any) {
+    console.error("Dump action error :", err);
     result.error = err;
     return result;
   }
