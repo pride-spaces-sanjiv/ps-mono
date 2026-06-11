@@ -7,6 +7,7 @@ import type {
   DumpStatus,
 } from "@/utils/data/dump";
 import type { AdminLevel } from "@/utils/data/admin";
+import type { DeepInfer } from "./infer";
 
 type DumpUser = {
   id: string;
@@ -27,9 +28,8 @@ export type RawDump<T extends any = any> = {
   disabled?: boolean;
 };
 
-export type Dump<T extends any = any> = GeneralData & RawDump<T>;
+export type Dump<T extends any = any> = DeepInfer<GeneralData & RawDump<T>>;
 
-export type DatifiedDump<T extends any = any> = Datified<
-  Dump<T>,
-  ["createdAt", "updatedAt"]
+export type DatifiedDump<T extends any = any> = DeepInfer<
+  Datified<Dump<T>, ["createdAt", "updatedAt"]>
 >;

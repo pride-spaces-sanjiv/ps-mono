@@ -1,8 +1,13 @@
 import type { Datified } from "@/utils/object/datify";
 import type { OperatorSchema } from "@/utils/schemas/operators";
 import type { GeneralData } from "./general";
+import type { DeepInfer } from "./infer";
 
-export type Operator = GeneralData &
-  Omit<Partial<OperatorSchema & { totalSpaces: number }>, "password">;
+export type Operator = DeepInfer<
+  GeneralData &
+    Omit<Partial<OperatorSchema & { totalSpaces: number }>, "password">
+>;
 
-export type DatifiedOperator = Datified<Operator, ["createdAt", "updatedAt"]>;
+export type DatifiedOperator = DeepInfer<
+  Datified<Operator, ["createdAt", "updatedAt"]>
+>;
