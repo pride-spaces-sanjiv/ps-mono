@@ -72,7 +72,7 @@ Returns matched paginated data objects with more things if any
 
 ## GET `/<base-route>/<path>/:id`
 
-Get details of a specific builder by ID.
+Get details of a data object by ID.
 
 ### Path Parameters
 
@@ -97,8 +97,25 @@ Get details of a specific builder by ID.
    | `sName`   | `string` | No       | -       | Filter by data field name  |
    | `sEmail`  | `string` | No       | -       | Filter by data field email |
 
-   ## <!--  -->
-
 ### Response
 
 Returns matched single data objects with more things if any
+
+## <!--  -->
+
+<!-- POST single route example pattern -->
+
+## POST `<base-route>/<path>`
+
+Create a new data object.
+
+### Body
+
+<!-- This body structure refered from the schema used in RequestMiddleware.bodyValidator -->
+
+| Field      | Type     | Required | Description                                                                               |
+| ---------- | -------- | -------- | ----------------------------------------------------------------------------------------- |
+| `name`     | `string` | Yes      | Builder's official name (minimum 4 characters, alphanumeric with hyphens)                 |
+| `email`    | `string` | Yes      | Unique and valid email address for the builder                                            |
+| `password` | `string` | Yes      | Secure password (minimum 4 characters, requires lowercase, uppercase, number, and symbol) |
+| `slug`     | `string` | Yes      | URL-friendly identifier for the builder (auto-lowercased, hyphens allowed)                |
