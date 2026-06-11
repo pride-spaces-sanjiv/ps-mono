@@ -71,9 +71,9 @@ export const operatorSchema = z.object({
     .trim()
     .refine((v) => !v.match(/ +/), "CIN cannot have spaces")
     .optional(),
-  headquarter: headQuarterSchema,
+  headquarter: headQuarterSchema.partial().optional(),
   branches: z.array(branchSchema).optional(),
-  person: headQuarterPersonSchema,
+  person: headQuarterPersonSchema.partial().optional(),
   isActive: z.boolean().optional().default(true),
   // approval: approvalSchema,
 });

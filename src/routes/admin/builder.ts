@@ -6,7 +6,7 @@ import {
   checkUserExistenceByBodyValue,
 } from "@/middlewares/checkUser.js";
 import { Builder } from "@/database/models/builder.js";
-import { operatorSchema } from "@/database/schemas/operator.js";
+import { builderSchema } from "@/database/schemas/builder.js";
 // Controllers
 import {
   createBuilder,
@@ -31,7 +31,7 @@ router.get(
 );
 router.post(
   "/",
-  RequestMiddleware.bodyValidator(operatorSchema, {
+  RequestMiddleware.bodyValidator(builderSchema, {
     validateOnlyPresent: false,
     overridePostValidation: true,
     extractOnlyRequiredFields: true,
@@ -43,7 +43,7 @@ router.post(
 router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  RequestMiddleware.bodyValidator(operatorSchema.omit({ password: true }), {
+  RequestMiddleware.bodyValidator(builderSchema.omit({ password: true }), {
     allowEmpty: true,
     validateOnlyPresent: true,
     overridePostValidation: true,
@@ -72,7 +72,7 @@ router.put(
   allowAdminLevelsToPass({
     allowedLevels: adminLevels.filter((level) => level !== "support"),
   }),
-  RequestMiddleware.bodyValidator(operatorSchema.pick({ password: true }), {
+  RequestMiddleware.bodyValidator(builderSchema.pick({ password: true }), {
     validateOnlyPresent: true,
     overridePostValidation: true,
     extractOnlyRequiredFields: true,
