@@ -364,7 +364,7 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
   // Create
   createData = async (
     dbOptions: Partial<{
-      data: Partial<T> | undefined;
+      data: Partial<T & { _id: string | number | Types.ObjectId }> | undefined;
       fields?: any | null;
       options?: boolean | AnyObject;
     }> = {},

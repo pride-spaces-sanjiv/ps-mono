@@ -170,6 +170,7 @@ export const createSpace = async (
   try {
     const sessionUser = req.session.user;
     const body = req.body;
+    const id = new Types.ObjectId().toHexString();
 
     // Handle dumping actions
     const dumpRes = await dumpAdminAction({
@@ -178,7 +179,7 @@ export const createSpace = async (
         collection: "spaces",
         data: { ...body, isActive: undefined },
         metadata: {
-          id: new Types.ObjectId().toHexString(),
+          id: id,
           name: body.name,
         },
         action: "add",
@@ -210,7 +211,7 @@ export const createSpace = async (
       sessionUser?.userType !== "support" &&
       adminLevels.includes(sessionUser.userType as AdminLevel)
     ) {
-      const doc = pipelineDBs.SPACE.createData({ data: body });
+      const doc = pipelineDBs.SPACE.createData({ data: { ...body, _id: id } });
 
       const data = convertDataToJSON(doc);
       ResponseHandler.handleSuccess(res, {

@@ -144,6 +144,7 @@ export const createOperator = async (
     const sessionUser = req.session.user;
     const body = req.body;
     const encodedPass = encodeCrypto(body.password);
+    const id = new Types.ObjectId().toHexString();
 
     // Handle dumping actions
     const dumpRes = await dumpAdminAction({
@@ -152,7 +153,7 @@ export const createOperator = async (
         collection: "operators",
         data: { ...body, password: encodedPass, isActive: undefined },
         metadata: {
-          id: new Types.ObjectId().toHexString(),
+          id: id,
           name: body.brandName || body.name,
         },
         action: "add",
@@ -186,7 +187,7 @@ export const createOperator = async (
     ) {
       const doc = await pipelineDBs.OPERATOR.createData({
         // @ts-ignore
-        data: { ...body, password: encodedPass },
+        data: { ...body, password: encodedPass, _id: id },
       });
 
       const data = convertDataToJSON(doc);

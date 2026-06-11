@@ -143,6 +143,7 @@ export const createBuilder = async (
     const sessionUser = req.session.user;
     const body = req.body;
     const encodedPass = encodeCrypto(body.password);
+    const id = new Types.ObjectId().toHexString();
 
     // Handle dumping actions
     const dumpRes = await dumpAdminAction({
@@ -151,7 +152,7 @@ export const createBuilder = async (
         collection: "builders",
         data: { ...body, password: encodedPass, isActive: undefined },
         metadata: {
-          id: new Types.ObjectId().toHexString(),
+          id: id,
           name: body.brandName || body.name,
         },
         action: "add",
@@ -185,7 +186,7 @@ export const createBuilder = async (
     ) {
       const doc = await pipelineDBs.BUILDER.createData({
         // @ts-ignore
-        data: { ...body, password: encodedPass },
+        data: { ...body, password: encodedPass, _id: id },
       });
 
       const data = convertDataToJSON(doc);

@@ -136,6 +136,7 @@ export const createConventional = async (
   try {
     const sessionUser = req.session.user;
     const body = req.body;
+    const id = new Types.ObjectId().toHexString();
 
     // Handle dumping actions
     const dumpRes = await dumpAdminAction({
@@ -144,7 +145,7 @@ export const createConventional = async (
         collection: "conventionals",
         data: { ...body },
         metadata: {
-          id: new Types.ObjectId().toHexString(),
+          id: id,
           name: body.name,
         },
         action: "add",
@@ -178,7 +179,7 @@ export const createConventional = async (
     ) {
       const doc = await pipelineDBs.CONVENTIONAL.createData({
         // @ts-ignore
-        data: body,
+        data: { ...body, _id: id },
       });
 
       const data = convertDataToJSON(doc);
