@@ -70,7 +70,7 @@ export const builderSchema = z.object({
     .trim()
     .refine((v) => !v.match(/ +/), "CIN cannot have spaces")
     .optional(),
-  headquarter: headQuarterSchema,
+  headquarter: headQuarterSchema.partial(),
   branches: z.array(branchSchema).optional(),
   isActive: z.boolean().optional().default(true),
   // approval: approvalSchema.optional(),
