@@ -59,6 +59,16 @@ export const ADMIN_OPERATOR = ADMIN.create({
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
+export const ADMIN_BUILDER = ADMIN.create({
+  baseURL: baseUrl + "/admin/builders",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const ADMIN_CONVENTIONAL = ADMIN.create({
+  baseURL: baseUrl + "/admin/conventionals",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
 export const ADMIN_SPACE = ADMIN.create({
   baseURL: baseUrl + "/admin/spaces",
   headers: jsonContentHeadersAuth,

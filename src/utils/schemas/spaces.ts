@@ -54,13 +54,9 @@ export const pricingSchema = z.object({
     .number()
     .min(0, "Dedicated desk price must be a positive number")
     .default(0),
-  flexiDesk: z
+  meetingRoom: z
     .number()
     .min(0, "Flexi desk price must be a positive number")
-    .default(0),
-  privateCabin: z
-    .number()
-    .min(0, "Private cabin price must be a positive number")
     .default(0),
 });
 
