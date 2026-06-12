@@ -65,7 +65,7 @@ export const ADMIN_BUILDER = ADMIN.create({
   withCredentials: true,
 });
 export const ADMIN_CONVENTIONAL = ADMIN.create({
-  baseURL: baseUrl + "/admin/conventional",
+  baseURL: baseUrl + "/admin/conventionals",
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });
