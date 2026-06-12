@@ -39,7 +39,7 @@ export default function LandlordEditPage() {
     watch,
     setValue,
     formState: { errors, defaultValues },
-  } = useForm<ConventionalPropertySchema>({
+  } = useForm({
     resolver: zodResolver(conventionalPropertySchema),
     defaultValues: {
       canImmediateAvail: false,
