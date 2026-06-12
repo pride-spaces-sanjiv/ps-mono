@@ -17,6 +17,7 @@ import {
 import {
   BellIcon,
   BuildingIcon,
+  Building2Icon,
   GlobeIcon,
   Home,
   LogOutIcon,
@@ -48,6 +49,11 @@ const items = [
     title: "Centres",
     url: "/spaces",
     icon: BuildingIcon,
+  },
+  {
+    title: "Conventional",
+    url: "/conventional",
+    icon: Building2Icon,
   },
   {
     title: "Amenities",

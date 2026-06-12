@@ -8,6 +8,8 @@ const keys = [
   "credits",
   "spaces",
   "operators",
+  "builders",
+  "conventional",
   "admins",
   "amenities",
   "analytics",

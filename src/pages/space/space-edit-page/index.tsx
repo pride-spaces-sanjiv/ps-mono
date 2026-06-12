@@ -102,27 +102,27 @@ const SpaceEditPage = () => {
       ...mainChanges.allData,
       ...(locationChanges.allFields.length
         ? {
-            location: {
-              ...res?.data?.data?.location,
-              ...locationChanges.allData,
-            },
-          }
+          location: {
+            ...res?.data?.data?.location,
+            ...locationChanges.allData,
+          },
+        }
         : {}),
       ...(personChanges.allFields.length
         ? {
-            person: {
-              ...res?.data?.data?.person,
-              ...personChanges.allData,
-            },
-          }
+          person: {
+            ...res?.data?.data?.person,
+            ...personChanges.allData,
+          },
+        }
         : {}),
       ...(pricingChanges.allFields.length
         ? {
-            pricing: {
-              ...res?.data?.data?.pricing,
-              ...pricingChanges.allData,
-            },
-          }
+          pricing: {
+            ...res?.data?.data?.pricing,
+            ...pricingChanges.allData,
+          },
+        }
         : {}),
     };
   }, [
@@ -177,8 +177,7 @@ const SpaceEditPage = () => {
         dayPass: 0,
         dedicatedDesk: 0,
         perSeat: 0,
-        flexiDesk: 0,
-        privateCabin: 0,
+        meetingRoom: 0,
       },
     },
   });
@@ -755,26 +754,15 @@ const SpaceEditPage = () => {
             {...changedFieldProps(pricingChanges.allData, "dedicatedDesk")}
           />
           <FormField
-            label="Flexi Desk"
+            label="Meeting Room"
             labelPosition="embedded"
             placeholder="1500"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.flexiDesk")}
-            error={errors.pricing?.flexiDesk}
-            {...changedFieldProps(pricingChanges.allData, "flexiDesk")}
-          />
-          <FormField
-            label="Private Cabin"
-            labelPosition="embedded"
-            placeholder="4000"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            {...register("pricing.privateCabin")}
-            error={errors.pricing?.privateCabin}
-            {...changedFieldProps(pricingChanges.allData, "privateCabin")}
+            {...register("pricing.meetingRoom")}
+            error={errors.pricing?.meetingRoom}
+            {...changedFieldProps(pricingChanges.allData, "meetingRoom")}
           />
 
           {/* Location */}

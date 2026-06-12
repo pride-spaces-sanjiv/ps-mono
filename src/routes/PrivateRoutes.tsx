@@ -27,6 +27,14 @@ const Space = lazy(() => import("@/pages/space"));
 const SpaceOperators = lazy(() => import("@/pages/operators"));
 const SpaceCreatePage = lazy(() => import("@/pages/space/space-create"));
 const SpaceEditPage = lazy(() => import("@/pages/space/space-edit-page"));
+// Conventional
+const Conventional = lazy(() => import("@/pages/conventional"));
+const BuilderEditPage = lazy(
+  () => import("@/pages/conventional/builder-edit"),
+);
+const LandlordEditPage = lazy(
+  () => import("@/pages/conventional/landlord-edit"),
+);
 // Operator
 const OperatorCreate = lazy(() => import("@/pages/operators/operator-create"));
 const OperatorEditPage = lazy(
@@ -125,6 +133,32 @@ const PrivateRoutes = () => {
         />
         <Route path="/spaces/:id" element={<SpaceEditPage />} />
         <Route path="/spaces/new" element={<SpaceCreatePage />} />
+
+        {/* Conventional */}
+        <Route
+          path="/conventional"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<Conventional />} />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path="/conventional/builder/:id"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<BuilderEditPage />} />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path="/conventional/landlord/:id"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<LandlordEditPage />} />
+            </SuspensedView>
+          }
+        />
 
         <Route
           path="/operators"

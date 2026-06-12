@@ -68,8 +68,7 @@ const SpaceCreatePage = () => {
         dayPass: 0,
         dedicatedDesk: 0,
         perSeat: 0,
-        flexiDesk: 0,
-        privateCabin: 0,
+        meetingRoom:0,
       },
     },
   });
@@ -528,24 +527,14 @@ const SpaceCreatePage = () => {
             error={errors.pricing?.dedicatedDesk}
           />
           <FormField
-            label="Flexi Desk"
+            label="Meeting Room"
             labelPosition="embedded"
             placeholder="1500"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.flexiDesk")}
-            error={errors.pricing?.flexiDesk}
-          />
-          <FormField
-            label="Private Cabin"
-            labelPosition="embedded"
-            placeholder="4000"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            {...register("pricing.privateCabin")}
-            error={errors.pricing?.privateCabin}
+            {...register("pricing.meetingRoom")}
+            error={errors.pricing?.meetingRoom}
           />
 
           {/* Location */}
