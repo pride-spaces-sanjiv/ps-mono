@@ -6,6 +6,7 @@ import {
   getPhoneSchema,
   getSlugSchema,
 } from "./string.js";
+import { personSchema } from "./person.js";
 
 const gstNoSchema = z
   .string()
@@ -17,23 +18,14 @@ const gstNoSchema = z
   );
 
 // 1. Head Quarter Person
-export const headQuarterPersonSchema = z.object({
-  name: getNameSchema({
-    keyName: "POC Name",
-    alphaRegexp: /^[A-Za-z0-9, ]+$/,
-    alphaRegexpMsg: "must only contain alpha numeric characters",
-  }),
-  email: getEmailSchema({ keyName: "POC Email" }),
-  contactNo: getPhoneSchema({ keyName: "POC Contact Number" }),
-  role: z.string().trim().min(1, "POC Designation is required"),
-});
+export const headQuarterPersonSchema = personSchema;
 
 export type HeadQuarterPersonSchema = z.infer<typeof headQuarterPersonSchema>;
 
 // 2. Head Quarter
 export const headQuarterSchema = z.object({
-  address: z.string().trim().min(1, "HQ Address is required"),
-  contactNo: getPhoneSchema({ keyName: "HQ Contact No" }),
+  address: z.string().trim().min(1, "Address is required"),
+  contactNo: getPhoneSchema({ keyName: "Contact No" }),
 });
 
 export type HeadQuarterSchema = z.infer<typeof headQuarterSchema>;
@@ -58,31 +50,30 @@ export const branchSchema = z.object({
 export type BranchSchema = z.infer<typeof branchSchema>;
 
 // 4. Operator
-export const operatorSchema = z.object({
+export const builderSchema = z.object({
   name: getNameSchema({
-    keyName: "Operator Name",
+    keyName: "Builder Name",
     alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
     alphaRegexpMsg: "must only contain alpha numeric characters",
   }),
   email: getEmailSchema(),
   password: getPasswordSchema(),
-  slug: getSlugSchema({ keyName: "Operator Slug" }),
+  slug: getSlugSchema({ keyName: "Builder Slug" }),
   brandName: getNameSchema({
     keyName: "Brand Name",
     alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
     alphaRegexpMsg: "must only contain alpha numeric characters",
   }),
-  gstNo: gstNoSchema,
+  gstNo: gstNoSchema.optional(),
   cinNo: z
     .string()
     .trim()
     .refine((v) => !v.match(/ +/), "CIN cannot have spaces")
     .optional(),
-  headquarter: headQuarterSchema.partial().optional(),
+  headquarter: headQuarterSchema.partial(),
   branches: z.array(branchSchema).optional(),
-  person: headQuarterPersonSchema.partial().optional(),
   isActive: z.boolean().optional().default(true),
-  // approval: approvalSchema,
+  // approval: approvalSchema.optional(),
 });
 
-export type OperatorSchema = z.infer<typeof operatorSchema>;
+export type BuilderSchema = z.infer<typeof builderSchema>;

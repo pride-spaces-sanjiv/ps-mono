@@ -10,6 +10,7 @@ const keys = [
   "operators",
   "admins",
   "amenities",
+  "analytics",
   "states",
   "cities",
   "dumps",
