@@ -18,7 +18,12 @@ import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { cleanObject } from "@/utils/object/clean.js";
-import { dumpCollectionNames, dumpStatuses } from "@/utils/data/dump.js";
+import {
+  dumpCollectionModels,
+  dumpCollectionNames,
+  dumpCollectionSchemas,
+  dumpStatuses,
+} from "@/utils/data/dump.js";
 import { spaceSchema } from "@/database/schemas/space.js";
 import { operatorSchema } from "@/database/schemas/operator.js";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
@@ -232,18 +237,22 @@ export const updateDump = async (
       sessionUser.userType !== "support" &&
       body.status === dumpStatuses.APPROVED
     ) {
+      if (!Object.keys(dumpCollectionModels).includes(doc.collection)) {
+        ResponseHandler.handleError(res, {
+          errorType: "invalid-dump-collection",
+          message: "Invalid dump collection",
+        });
+        return;
+      }
+
       const model =
-        doc?.collection === "spaces"
-          ? Space
-          : doc?.collection === "operators"
-            ? Operator
-            : null;
+        dumpCollectionModels[
+          doc.collection as keyof typeof dumpCollectionModels
+        ];
       const schema =
-        doc?.collection === "spaces"
-          ? spaceSchema.partial()
-          : doc?.collection === "operators"
-            ? operatorSchema.partial()
-            : null;
+        dumpCollectionSchemas[
+          doc.collection as keyof typeof dumpCollectionSchemas
+        ];
 
       // Validate data first
       const { error, valid, parsed, handled } = validateDataAndRespond(
