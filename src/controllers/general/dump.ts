@@ -18,12 +18,11 @@ import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { cleanObject } from "@/utils/object/clean.js";
+import { dumpCollectionNames, dumpStatuses } from "@/utils/data/dump.js";
 import {
   dumpCollectionModels,
-  dumpCollectionNames,
   dumpCollectionSchemas,
-  dumpStatuses,
-} from "@/utils/data/dump.js";
+} from "@/utils/data/dump-maps.js";
 import { spaceSchema } from "@/database/schemas/space.js";
 import { operatorSchema } from "@/database/schemas/operator.js";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
