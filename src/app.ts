@@ -96,7 +96,11 @@ app.use(
     secret: process.env.SESSION_SECRET as string,
     cookie: {
       maxAge: moment.duration(7, "days").asMilliseconds(),
-      secure: process.env.ENV === "dev" ? false : true,
+      secure:
+        process.env.ENV === "dev" &&
+        process.env.SESSION_SECURE?.trim().toLowerCase() !== "true"
+          ? false
+          : true,
       sameSite: "none",
       httpOnly: true,
     },
