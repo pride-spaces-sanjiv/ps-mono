@@ -111,8 +111,10 @@ app.use(
 
 // Parser middlewares
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: false, limit: "1mb" }));
-app.use(express.json());
+app.use(
+  express.urlencoded({ extended: false, limit: "30mb", parameterLimit: 100 }),
+);
+app.use(express.json({ limit: "1mb" }));
 app.use((req, res, next) => {
   console.log("Query", req.query);
   if (!req.query || !Object.keys(req.query).length) {
