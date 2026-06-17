@@ -22,8 +22,6 @@ import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
 
 const Dashboard = lazy(() => import("@/pages/dashboard"));
-// Space
-const Space = lazy(() => import("@/pages/space"));
 const SpaceOperators = lazy(() => import("@/pages/operators"));
 const SpaceCreatePage = lazy(() => import("@/pages/space/space-create"));
 const SpaceEditPage = lazy(() => import("@/pages/space/space-edit-page"));
@@ -127,7 +125,7 @@ const PrivateRoutes = () => {
           path="/spaces"
           element={
             <SuspensedView>
-              <AutoNavigateRender El={<Space />} />
+              <AutoNavigateRender El={<SpaceOperators defaultTab="centre" />} />
             </SuspensedView>
           }
         />
