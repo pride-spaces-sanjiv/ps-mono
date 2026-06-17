@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
 import { RequestMiddleware } from "@/middlewares/request.js";
-
 import { validateFileUpload } from "@/middlewares/file.js";
 import { getUUIdSchema } from "@/database/schemas/string.js";
 import { getImageFile, getLayoutFile } from "@/controllers/general/file.js";

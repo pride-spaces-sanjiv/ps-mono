@@ -1,18 +1,5 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Amenity, amenityFields } from "@/database/models/amenities.js";
-import {
-  cleanPaginatedData,
-  paginatedResults,
-} from "@/utils/mongoose/pagination.js";
-import {
-  getFieldsandProjectors,
-  getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { AmenitySchema } from "@/database/schemas/amenity.js";
 import { MediaType, mediaTypes } from "@/utils/data/media.js";
 import path from "path";
 import fs from "fs";
