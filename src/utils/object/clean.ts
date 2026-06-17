@@ -30,3 +30,16 @@ export const deleteObjectFields = <
   }
   return obj as Omit<T, F>;
 };
+
+export const pickObjectFields = <
+  T extends Record<string, any>,
+  F extends keyof T,
+>(
+  obj: T,
+  { includeFields = [] }: Partial<{ includeFields: [...F[]] }> = {},
+) => {
+  const newObj = Object.fromEntries(
+    Object.entries(obj).filter(([key]) => includeFields.includes(key as F)),
+  ) as Pick<T, F>;
+  return newObj;
+};

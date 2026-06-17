@@ -2,11 +2,11 @@ import path from "path";
 import multer, { MulterError, ErrorCode } from "multer";
 import { v7 } from "uuid";
 import { ResponseHandler } from "./request.js";
+import { multerErrorMapping } from "@/utils/data/multer.js";
+import { pickObjectFields } from "@/utils/object/clean.js";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { NextFunction } from "express";
 import { MediaType } from "@/utils/data/media.js";
-import { multerErrorMapping } from "@/utils/data/multer.js";
-import { deleteObjectFields } from "@/utils/object/clean.js";
 
 export const allowedExtensions = {
   image: ["jpg", "jpeg", "png", "gif"],
@@ -56,7 +56,7 @@ export const validateFileUpload = <K extends string>(
         },
         ...uploadOptions,
         limits: {
-          files: 5,
+          files: fileType === "image" ? 5 : 3,
           fileSize: fileType === "image" ? 4 * 1024 * 1024 : 10 * 1024 * 1024,
           ...uploadOptions?.limits,
         },
@@ -70,10 +70,16 @@ export const validateFileUpload = <K extends string>(
           const code = err.code;
           const errorData = multerErrorMapping[code];
           const files = (Array.isArray(req.files) ? req.files : []).map((dt) =>
-            deleteObjectFields(
-              { ...dt },
-              { excludeFields: ["buffer", "destination", "stream", "path"] },
-            ),
+            pickObjectFields(dt, {
+              includeFields: [
+                "fieldname",
+                "originalname",
+                "filename",
+                "encoding",
+                "mimetype",
+                "size",
+              ],
+            }),
           );
           if (errorData) {
             return ResponseHandler.handleError(res, {
