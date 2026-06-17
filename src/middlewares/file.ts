@@ -1,11 +1,12 @@
-import { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { NextFunction } from "express";
-import { ResponseHandler } from "./request.js";
-import { MediaType } from "@/utils/data/media.js";
 import path from "path";
 import multer, { MulterError, ErrorCode } from "multer";
 import { v7 } from "uuid";
-import { Types } from "mongoose";
+import { ResponseHandler } from "./request.js";
+import { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { NextFunction } from "express";
+import { MediaType } from "@/utils/data/media.js";
+import { multerErrorMapping } from "@/utils/data/multer.js";
+import { deleteObjectFields } from "@/utils/object/clean.js";
 
 export const allowedExtensions = {
   image: ["jpg", "jpeg", "png", "gif"],
@@ -62,11 +63,47 @@ export const validateFileUpload = <K extends string>(
       } as multer.Options;
       res.locals = { ...res.locals, fileType: fileType };
       const upload = multer(totalOpts);
-      return upload.any()(req, res, next);
+
+      // Handle multer err if any customly
+      return upload.any()(req, res, (err: Error | MulterError | string) => {
+        if (err instanceof multer.MulterError) {
+          const code = err.code;
+          const errorData = multerErrorMapping[code];
+          const files = (Array.isArray(req.files) ? req.files : []).map((dt) =>
+            deleteObjectFields(
+              { ...dt },
+              { excludeFields: ["buffer", "destination", "stream", "path"] },
+            ),
+          );
+          if (errorData) {
+            return ResponseHandler.handleError(res, {
+              errorType: errorData.errorType,
+              message: errorData.message,
+              data: {
+                files,
+              },
+            });
+          }
+
+          ResponseHandler.handleError(res, {
+            errorType: `file-parser-error-invalid`,
+            message: `Invalid file parser error occurred`,
+          });
+          return;
+        }
+        if (err instanceof Error) {
+          ResponseHandler.handleError(res, {
+            errorType: `file-parser-error-unknown`,
+            message: `Unexpected file parser error occurred`,
+          });
+          return;
+        }
+        next?.();
+      });
     } catch (err) {
       ResponseHandler.handleError(res, {
-        errorType: `file-${errorKey}-error`,
-        message: `Failed to upload ${errorMsgKey}`,
+        errorType: `file-parser-error`,
+        message: `Failed to parse files`,
       });
     }
   };
