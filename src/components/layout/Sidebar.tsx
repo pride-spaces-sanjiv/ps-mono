@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import * as secureStorage from "@secure-storage/common";
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/sidebar";
 import {
   BellIcon,
-  BuildingIcon,
   Building2Icon,
   GlobeIcon,
   Home,
@@ -41,17 +40,13 @@ const items = [
     icon: Home,
   },
   {
-    title: "Operators",
+    title: "Space Operators",
     url: "/operators",
     icon: GlobeIcon,
+    activeUrls: ["/operators", "/spaces"],
   },
   {
-    title: "Centres",
-    url: "/spaces",
-    icon: BuildingIcon,
-  },
-  {
-    title: "Conventional",
+    title: "Conventional Spaces",
     url: "/conventional",
     icon: Building2Icon,
   },
@@ -83,6 +78,7 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const location = useLocation();
   const tokenState = tokenStore();
   const userState = userStore();
   const { userLevel } = useUser();
@@ -137,11 +133,19 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      className={({ isActive }) =>
-                        `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-white hover:bg-primary ${
-                          isActive ? "text-accent-foreground font-medium" : ""
-                        }`
-                      }
+                      className={({ isActive }) => {
+                        const isRouteActive =
+                          isActive ||
+                          item.activeUrls?.some((url) =>
+                            location.pathname.startsWith(url),
+                          );
+
+                        return `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-white hover:bg-primary ${
+                          isRouteActive
+                            ? "text-accent-foreground font-medium"
+                            : ""
+                        }`;
+                      }}
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
