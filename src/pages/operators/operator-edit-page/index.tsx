@@ -23,7 +23,7 @@ import {
   notifyPrimarySingleBranch,
 } from "@/utils/data/branches";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
-import { compareFields } from "@/utils/object/compare";
+import { compareFields, getPaths } from "@/utils/object/compare";
 import { queryKeys } from "@/utils/query-keys";
 import { DialogModal } from "@/components/dialog";
 import SpacesTabledResults from "@/containers/spaces-table";
@@ -103,6 +103,7 @@ const OperatorEditPage = () => {
       ),
     };
   }, [res?.data, locData?.data, fromRoute]);
+  // console.log("All operator field paths:", getPaths(res?.data?.data));
 
   const {
     changedFields,
