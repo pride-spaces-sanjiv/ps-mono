@@ -7,21 +7,37 @@ import { pickObjectFields } from "@/utils/object/clean.js";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { NextFunction } from "express";
 import { MediaType } from "@/utils/data/media.js";
+import { existsSync, mkdirSync } from "fs";
 
 export const allowedExtensions = {
   image: ["jpg", "jpeg", "png", "gif"],
   layout: ["pdf"],
 };
 
+export const tempDir = path.resolve(process.cwd(), "./tmp");
+
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    cb(null, path.resolve(process.cwd(), "./tmp"));
+    cb(null, tempDir);
   },
   filename(req, file, cb) {
     const ext = path.extname(file.originalname).toLowerCase();
     cb(null, `${v7()}${ext}`);
   },
 });
+
+export const createTempDir = () => {
+  try {
+    if (!existsSync(tempDir)) {
+      mkdirSync(tempDir, { recursive: true });
+      return true;
+    }
+    return existsSync(tempDir);
+  } catch (err) {
+    console.error("Errror creating temp dir :", err);
+    return false;
+  }
+};
 
 export const validateFileUpload = <K extends string>(
   options: Partial<{

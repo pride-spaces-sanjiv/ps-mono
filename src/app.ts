@@ -35,6 +35,7 @@ import { RedisClient, redisStore } from "@/utils/services/redis/redis.js";
 import { syncAllIndexes } from "@/utils/mongoose/sync-index.js";
 // Utils
 import { getIP } from "@/utils/ip.js";
+import { createTempDir } from "./middlewares/file.js";
 // Data
 // Types
 import {
@@ -45,7 +46,7 @@ import {
 
 // Pre handlers
 syncAllIndexes();
-
+createTempDir();
 const app = express();
 // let startDate = moment();
 

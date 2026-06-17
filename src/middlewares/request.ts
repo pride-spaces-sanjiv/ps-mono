@@ -241,7 +241,7 @@ export class RequestMiddleware {
     }
   };
 
-  static paramValidator = <T extends z.ZodString>(
+  static paramValidator = <T extends z.ZodString | z.ZodEmail | z.ZodUUID>(
     schema: T,
     field: string,
     options?: Partial<{ validateOnlyPresent: boolean; allowEmpty: boolean }>,

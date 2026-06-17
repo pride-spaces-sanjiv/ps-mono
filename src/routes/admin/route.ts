@@ -13,6 +13,7 @@ import { BranchRouter } from "./branch.js";
 import { AmenityRouter } from "./amenity.js";
 import { DataRouter } from "./data.js";
 import { DumpRouter } from "./dump.js";
+import { FileRouter } from "./file.js";
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.use("/builders", BuilderRouter);
 router.use("/conventionals", ConventionalRouter);
 router.use("/branches", BranchRouter);
 router.use("/amenities", AmenityRouter);
+router.use("/files", FileRouter);
 router.use("/dumps", DumpRouter);
 router.use("/", DataRouter);
 

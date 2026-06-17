@@ -1,5 +1,5 @@
 import { isObjectIdOrHexString } from "mongoose";
-import { minLength, z } from "zod";
+import { minLength, uuidv7, z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js/min";
 
 type StringSchemaOptions = {
@@ -20,6 +20,24 @@ export const getIdSchema = ({
   schema = schema.refine((val) => isObjectIdOrHexString(val), {
     error: `${keyName} is invalid`,
   });
+  return schema;
+};
+
+// UUID
+type UUIDSchemaOptions = {
+  keyName: string;
+  doTrim: boolean;
+  schema: z.ZodUUID;
+};
+export const getUUIdSchema = ({
+  keyName = "Id",
+  doTrim = true,
+  schema,
+}: Partial<UUIDSchemaOptions> = {}) => {
+  schema = schema || z.uuidv7({ error: `${keyName} is invalid, must be UUID` });
+  if (doTrim) {
+    schema = schema.trim();
+  }
   return schema;
 };
 
