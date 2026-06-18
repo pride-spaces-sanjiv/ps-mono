@@ -111,6 +111,7 @@ export const validateFileUpload = <K extends string>(
               message: errorData.message,
               data: {
                 files,
+                raw: req.files,
               },
             });
           }
