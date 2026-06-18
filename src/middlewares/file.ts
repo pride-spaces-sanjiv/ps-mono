@@ -45,6 +45,22 @@ export const createTempDir = () => {
   }
 };
 
+const multerFileFilter =
+  (fileType: MediaType): multer.Options["fileFilter"] =>
+  (req, file, cb) => {
+    const ext = path
+      .extname(file.originalname)
+      .toLowerCase()
+      .replace(/^\.+/g, "");
+
+    if (!allowedExtensions[fileType]?.includes(ext)) {
+      console.log("Multer file filter [invalid-file]", { ...file, ext });
+      return cb(new MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
+    }
+
+    cb(null, true);
+  };
+
 export const validateFileUpload = <K extends string>(
   options: Partial<{
     fileType: MediaType;
@@ -67,19 +83,7 @@ export const validateFileUpload = <K extends string>(
     try {
       const totalOpts = {
         storage: storageEngine,
-        fileFilter(req, file, cb) {
-          const ext = path
-            .extname(file.originalname)
-            .toLowerCase()
-            .replace(/^\.+/g, "");
-
-          if (!allowedExtensions[fileType]?.includes(ext)) {
-            console.log("Multer file filter [invalid-file]", { ...file, ext });
-            return cb(new MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
-          }
-
-          cb(null, true);
-        },
+        fileFilter: multerFileFilter(fileType),
         ...uploadOptions,
         limits: {
           files: fileType === "image" ? 5 : 3,
