@@ -6,7 +6,7 @@ import { multerErrorMapping } from "@/utils/data/multer.js";
 import { pickObjectFields } from "@/utils/object/clean.js";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { NextFunction } from "express";
-import { MediaType } from "@/utils/data/media.js";
+import { MediaType, mediaTypes } from "@/utils/data/media.js";
 import { existsSync, mkdirSync } from "fs";
 
 export const allowedExtensions = {
@@ -21,8 +21,12 @@ const storage = multer.diskStorage({
     cb(null, tempDir);
   },
   filename(req, file, cb) {
+    const { fileType = mediaTypes.IMAGE } = req.res?.locals || {};
     const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${v7()}${ext}`);
+    cb(
+      null,
+      `${fileType?.trim() || ""}s/${v7()}${ext}`.replace(/^s\//, "unknown"),
+    );
   },
 });
 
