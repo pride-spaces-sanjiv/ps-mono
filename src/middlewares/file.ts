@@ -93,7 +93,13 @@ export const validateFileUpload = <K extends string>(
         if (err instanceof multer.MulterError) {
           const code = err.code;
           const errorData = multerErrorMapping[code];
-          const files = (Array.isArray(req.files) ? req.files : []).map((dt) =>
+          const files = (
+            Array.isArray(req.files)
+              ? req.files
+              : typeof req.files === "object"
+                ? Object.values(req.files).flatMap((f) => f)
+                : []
+          ).map((dt) =>
             pickObjectFields(dt, {
               includeFields: [
                 "fieldname",
@@ -111,7 +117,7 @@ export const validateFileUpload = <K extends string>(
               message: errorData.message,
               data: {
                 files,
-                raw: req.files,
+                body: req.body,
               },
             });
           }
