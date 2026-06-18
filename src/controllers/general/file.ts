@@ -9,6 +9,8 @@ import {
   HeadObjectCommand,
   ListObjectsV2Command,
   ErrorDetails,
+  ErrorDetails$,
+  S3ServiceException,
 } from "@aws-sdk/client-s3";
 import { pickObjectFields } from "@/utils/object/clean.js";
 import { MediaQuerySchema } from "@/database/schemas/media.js";
@@ -65,8 +67,32 @@ const getFile = async (
         },
       },
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error getting file : ", { fileType }, err);
+
+    // Handle s3 error
+    if (err instanceof S3ServiceException) {
+      if (
+        err.$metadata.httpStatusCode === 404 ||
+        err.name === "NoSuchKey" ||
+        err.name === "NotFound"
+      ) {
+        return ResponseHandler.handleNotFound(res, {
+          errorType: notFoundOptions?.errorType || "file-not-found",
+          message: notFoundOptions?.message || "File not found",
+          data: {
+            error: {
+              name: err.name,
+              status: err.$metadata.httpStatusCode,
+              cause: err.cause,
+              fault: err.$fault,
+              // message: err.message,
+            },
+          },
+        });
+      }
+    }
+
     ResponseHandler.handleError(res, {
       errorType: errorOptions?.errorType || "get-file-error-failure",
       message: errorOptions?.message || "Failed to get file",
