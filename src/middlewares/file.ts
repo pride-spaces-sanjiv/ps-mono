@@ -129,6 +129,17 @@ export const validateFileUpload = <K extends string>(
           ResponseHandler.handleError(res, {
             errorType: `file-parser-error-invalid`,
             message: `Invalid file parser error occurred`,
+            data: {
+              files,
+              body: req.body,
+              error: {
+                code: err.code,
+                name: err.name,
+                message: err.message,
+                cause: err.cause,
+                field: err.field,
+              },
+            },
           });
           return;
         }
@@ -136,6 +147,10 @@ export const validateFileUpload = <K extends string>(
           ResponseHandler.handleError(res, {
             errorType: `file-parser-error-unknown`,
             message: `Unexpected file parser error occurred`,
+            data: {
+              files: [],
+              body: req.body,
+            },
           });
           return;
         }
