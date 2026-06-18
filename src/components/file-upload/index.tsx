@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/utils/cn";
-import type { MediaType } from "@/utils/data/media";
+import { allowedExtensions, type MediaType } from "@/utils/data/media";
+import { toast } from "sonner";
 
 interface UploadedFile {
   id: string;
@@ -71,7 +72,24 @@ export default function FileUpload({
   };
 
   const handleFiles = (newFiles: FileList | File[]) => {
-    const fileArray = Array.from(newFiles);
+    const fileArray = Array.from(newFiles)
+      .map((file) => {
+        const ext = file.name.match(/\.([^.]+)$/)?.[1];
+        if (!ext) {
+          toast.error("Got Unexpected file type");
+          return undefined;
+        }
+        if (!allowedExtensions[fileType]?.includes(ext)) {
+          toast.error(`.${ext} File type is not supported`);
+          return undefined;
+        }
+        return file;
+      })
+      .filter((file) => typeof file !== "undefined");
+
+    // Validate files
+
+    // Handle
     const newUploads: UploadedFile[] = fileArray.map((file) => ({
       id: Math.random().toString(36).substring(2) + Date.now().toString(36),
       file,
@@ -122,8 +140,8 @@ export default function FileUpload({
   }, [files]);
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <Card>
+    <div className="max-w-[1200px] w-full mx-auto p-6 col-span-full">
+      <Card className="w-full py-0">
         <CardContent className="p-10">
           <div className="text-center mb-10">
             <div className="mx-auto w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
@@ -141,7 +159,7 @@ export default function FileUpload({
             onDragLeave={onDragLeave}
             onClick={() => document.getElementById("file-input")?.click()}
             className={cn(
-              "border-2 border-dashed rounded-2xl p-16 cursor-pointer transition-all hover:bg-muted/50",
+              "border-2 border-dashed px-4 py-16 rounded-2xl cursor-pointer transition-all hover:bg-muted/50",
               isDragging
                 ? "border-primary bg-primary/5 scale-[1.01]"
                 : "border-muted-foreground/30",

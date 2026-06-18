@@ -31,6 +31,8 @@ import type { Space } from "@/types/data/spaces";
 import { compareFields } from "@/utils/object/compare";
 import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
+import FileUpload from "@/components/file-upload";
+import { mediaTypes } from "@/utils/data/media";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -102,27 +104,27 @@ const SpaceEditPage = () => {
       ...mainChanges.allData,
       ...(locationChanges.allFields.length
         ? {
-          location: {
-            ...res?.data?.data?.location,
-            ...locationChanges.allData,
-          },
-        }
+            location: {
+              ...res?.data?.data?.location,
+              ...locationChanges.allData,
+            },
+          }
         : {}),
       ...(personChanges.allFields.length
         ? {
-          person: {
-            ...res?.data?.data?.person,
-            ...personChanges.allData,
-          },
-        }
+            person: {
+              ...res?.data?.data?.person,
+              ...personChanges.allData,
+            },
+          }
         : {}),
       ...(pricingChanges.allFields.length
         ? {
-          pricing: {
-            ...res?.data?.data?.pricing,
-            ...pricingChanges.allData,
-          },
-        }
+            pricing: {
+              ...res?.data?.data?.pricing,
+              ...pricingChanges.allData,
+            },
+          }
         : {}),
     };
   }, [
@@ -862,6 +864,15 @@ const SpaceEditPage = () => {
             {...register("location.address")}
             error={errors.location?.address}
             {...changedFieldProps(locationChanges.allData, "address")}
+          />
+
+          {/* Images */}
+          <FormSectionTitle>Images</FormSectionTitle>
+          <FileUpload
+            fileType={mediaTypes.IMAGE}
+            onFilesUpload={(files) => {
+              console.log("All uploaded images :", files);
+            }}
           />
 
           {/* SECTION: Centre Point of Contact */}
