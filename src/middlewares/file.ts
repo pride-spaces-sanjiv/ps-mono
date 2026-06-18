@@ -89,6 +89,7 @@ export const validateFileUpload = <K extends string>(
 
       // Handle multer err if any customly
       return upload.any()(req, res, (err: Error | MulterError | string) => {
+        err && console.error("Multer upload error:", err);
         if (err instanceof multer.MulterError) {
           const code = err.code;
           const errorData = multerErrorMapping[code];
