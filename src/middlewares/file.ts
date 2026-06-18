@@ -72,7 +72,7 @@ export const validateFileUpload = <K extends string>(
           const ext = path.extname(file.originalname).toLowerCase();
 
           if (!allowedExtensions[fileType]?.includes(ext)) {
-            console.log("Multer file filter [invalid-file]", file);
+            console.log("Multer file filter [invalid-file]", { ...file, ext });
             return cb(new MulterError("LIMIT_UNEXPECTED_FILE", file.fieldname));
           }
 
