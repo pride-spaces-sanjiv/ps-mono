@@ -3,8 +3,9 @@ import { z } from "zod";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { validateFileUpload } from "@/middlewares/file.js";
 import { getUUIdSchema } from "@/database/schemas/string.js";
-import { getImageFile, getLayoutFile } from "@/controllers/general/file.js";
+import { getImageFile, getLayoutFile, uploadImageFiles, uploadLayoutFiles } from "@/controllers/general/file.js";
 import { mediaTypes } from "@/utils/data/media.js";
+import { mediaQuerySchema } from "@/database/schemas/media.js";
 
 const router = Router();
 
@@ -13,15 +14,21 @@ const uuidSchema = z.object({});
 // File Getters
 // Image
 router.get(
-  "/image/:id",
-  RequestMiddleware.paramValidator(getUUIdSchema(), "id"),
+  "/image",
+  RequestMiddleware.queryValidator(mediaQuerySchema(mediaTypes.IMAGE), {
+    validateOnlyPresent: false,
+    allowEmpty: false,
+  }),
   getImageFile,
 );
 
 // Layout
 router.get(
-  "/layout/:id",
-  RequestMiddleware.paramValidator(getUUIdSchema(), "id"),
+  "/layout",
+  RequestMiddleware.queryValidator(mediaQuerySchema(mediaTypes.LAYOUT), {
+    validateOnlyPresent: false,
+    allowEmpty: false,
+  }),
   getLayoutFile,
 );
 
@@ -29,12 +36,12 @@ router.get(
 router.post(
   "/image",
   validateFileUpload({ fileType: mediaTypes.IMAGE }),
-  getImageFile,
+  uploadImageFiles,
 );
 router.post(
   "/layout",
   validateFileUpload({ fileType: mediaTypes.LAYOUT }),
-  getLayoutFile,
+  uploadLayoutFiles,
 );
 
 export { router as FileRouter };

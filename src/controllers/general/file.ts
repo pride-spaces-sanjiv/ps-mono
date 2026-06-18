@@ -5,10 +5,76 @@ import path from "path";
 import fs from "fs";
 import { allowedExtensions, tempDir } from "@/middlewares/file.js";
 import { rustfsClient } from "@/utils/services/s3/instance.js";
-import { ListObjectsV2Command } from "@aws-sdk/client-s3";
+import {
+  HeadObjectCommand,
+  ListObjectsV2Command,
+  ErrorDetails,
+} from "@aws-sdk/client-s3";
 import { pickObjectFields } from "@/utils/object/clean.js";
+import { MediaQuerySchema } from "@/database/schemas/media.js";
 
 const getFile = async (
+  req: ManagedRequest<any, MediaQuerySchema>,
+  res: ManagedResponse,
+  options: Partial<
+    Record<
+      "error" | "notFound" | "success",
+      Partial<{ errorType: string; message: string }>
+    > & { fileType: MediaType }
+  > = {},
+) => {
+  const {
+    error: errorOptions,
+    notFound: notFoundOptions,
+    success: successOptions,
+    fileType = mediaTypes.IMAGE,
+  } = options;
+  try {
+    const fileName = `${req.query.id}.${req.query.ext}`;
+    const destination = `${fileType?.trim() || ""}s/`.replace(
+      /^s\//,
+      "unknown/",
+    );
+    const key = path.join(destination, fileName);
+    const existsRes = await rustfsClient.send(
+      new HeadObjectCommand({
+        Bucket: "pridespaces",
+        Key: key,
+      }),
+    );
+    // existsRes.
+
+    if (existsRes.$metadata.httpStatusCode === 404) {
+      return ResponseHandler.handleNotFound(res, {
+        errorType: notFoundOptions?.errorType || "file-not-found",
+        message: notFoundOptions?.message || "File not found",
+      });
+    }
+    ResponseHandler.handleSuccess(res, {
+      message: successOptions?.message || "File retrieved successfully",
+      data: {
+        bucket: "pridespaces",
+        file: {
+          path: key,
+          destination: destination,
+          fileName: fileName,
+          mimeType: existsRes.ContentType,
+          size: existsRes.ContentLength,
+          lastModified: existsRes.LastModified,
+          encoding: existsRes.ContentEncoding,
+        },
+      },
+    });
+  } catch (err) {
+    console.error("Error getting file : ", { fileType }, err);
+    ResponseHandler.handleError(res, {
+      errorType: errorOptions?.errorType || "get-file-error-failure",
+      message: errorOptions?.message || "Failed to get file",
+    });
+  }
+};
+
+const getUploadedFiles = async (
   req: ManagedRequest<any>,
   res: ManagedResponse,
   options: Partial<
@@ -25,97 +91,45 @@ const getFile = async (
     fileType = mediaTypes.IMAGE,
   } = options;
   try {
-    const destination = `${fileType?.trim() || ""}s/`.replace(
-      /^s\//,
-      "unknown/",
-    );
-    const listRes = await rustfsClient.send(
-      new ListObjectsV2Command({
-        Bucket: "pridespaces",
-        Prefix: destination,
-      }),
-    );
-
     const parserFiles = Array.isArray(req.files) ? req.files : [];
     const parserFileNames = parserFiles.map((f) => f.filename);
-    // S3 files
-    const cloudFiles =
-      listRes.Contents?.filter(
-        (obj) =>
-          (obj.Size ?? 0) > 0 &&
-          typeof obj.Key === "string" &&
-          parserFileNames.includes(obj.Key as string),
-      ).map((obj) => ({
-        fileName: obj.Key as string,
-        path: path.join(destination, obj.Key as string),
-        size: obj.Size as number,
-        lastModified: obj.LastModified,
-      })) || [];
-
-    const files = parserFiles
-      .map((file) =>
-        pickObjectFields(file, {
-          includeFields: [
-            "filename",
-            "fieldname",
-            "destination",
-            "path",
-            "mimetype",
-            "originalname",
-            "size",
-          ],
-        }),
-      )
-      .map((file) => ({
-        ...file,
-        uploadStats:
-          cloudFiles.find((f) => file.filename.includes(f.fileName)) || null,
-      }));
-
-    // const dirStats = fs.readdirSync(tempDir, {
-    //   withFileTypes: true,
-    //   encoding: "utf8",
-    // });
-    // const files = dirStats
-    //   .filter(
-    //     (dirent) =>
-    //       dirent.isFile() &&
-    //       allowedExtensions[fileType].includes(path.extname(dirent.name)),
-    //   )
-    //   .map((file) => {
-    //     const filePath = path.join(tempDir, file.name);
-    //     const stats = fs.statSync(filePath);
-
-    //     return {
-    //       name: file.name,
-    //       size: stats.size,
-    //       createdAt: stats.birthtime,
-    //       modifiedAt: stats.mtime,
-    //       isFile: stats.isFile(),
-    //       isDirectory: stats.isDirectory(),
-    //     };
-    //   });
+    const files = parserFiles.map((file) =>
+      pickObjectFields(file, {
+        includeFields: [
+          "filename",
+          "fieldname",
+          "destination",
+          "path",
+          "mimetype",
+          "originalname",
+          "size",
+        ],
+      }),
+    );
     if (files.length === 0) {
       return ResponseHandler.handleNotFound(res, {
-        errorType: notFoundOptions?.errorType || "file-not-found",
-        message: notFoundOptions?.message || "File not found",
+        errorType: notFoundOptions?.errorType || "files-not-uploaded",
+        message: notFoundOptions?.message || "No files were uploaded",
       });
     }
     ResponseHandler.handleSuccess(res, {
-      message: successOptions?.message || "File retrieved successfully",
+      status: 201,
+      message: successOptions?.message || "Files uploaded successfully",
       data: { files, bucket: "pridespaces" },
     });
   } catch (err) {
-    console.error("Error getting file : ", { fileType }, err);
+    console.error("Error getting uploaded files : ", { fileType }, err);
     ResponseHandler.handleError(res, {
-      errorType: errorOptions?.errorType || "get-file-error-failure",
-      message: errorOptions?.message || "Failed to get file",
+      errorType: errorOptions?.errorType || "upload-files-error-failure",
+      message: errorOptions?.message || "Failed to upload files",
     });
   }
 };
 
+//
+
 export const getImageFile = async (
-  req: ManagedRequest<any>,
+  req: ManagedRequest<any, MediaQuerySchema>,
   res: ManagedResponse,
 ) => {
   try {
@@ -142,7 +156,7 @@ export const getImageFile = async (
 };
 
 export const getLayoutFile = async (
-  req: ManagedRequest<any>,
+  req: ManagedRequest<any, MediaQuerySchema>,
   res: ManagedResponse,
 ) => {
   try {
@@ -168,36 +182,56 @@ export const getLayoutFile = async (
   }
 };
 
-// export const createImageFile = async (
-//   req: ManagedRequest<AmenitySchema>,
-//   res: ManagedResponse,
-// ) => {
-//   try {
-//     const body = req.body;
+export const uploadImageFiles = async (
+  req: ManagedRequest<any>,
+  res: ManagedResponse,
+) => {
+  try {
+    await getUploadedFiles(req, res, {
+      fileType: mediaTypes.IMAGE,
+      error: {
+        errorType: "upload-images-error-failure",
+        message: "Failed to upload image files",
+      },
+      notFound: {
+        errorType: "images-not-uploaded",
+        message: "No image files were uploaded",
+      },
+      success: {
+        message: "Image files uploaded successfully",
+      },
+    });
+  } catch (err: any) {
+    ResponseHandler.handleError(res, {
+      errorType: "upload-images-error-failure",
+      message: "Failed to upload image files",
+    });
+  }
+};
 
-//     const doc = new Amenity(body);
-//     await doc.save();
-
-//     const data = convertDataToJSON(doc);
-
-//     ResponseHandler.handleSuccess(res, {
-//       status: 201,
-//       message: "Created amenity successfully",
-//       data,
-//     });
-//   } catch (err: any) {
-//     const errorData = handleMongooseError(err, res, {
-//       uniqueError: {
-//         errorType: "amenity-unique-error",
-//         msgPre: "Amenities",
-//       },
-//     });
-
-//     if (errorData.handled) return;
-
-//     ResponseHandler.handleError(res, {
-//       errorType: "create-amenity-error-failure",
-//       message: "Failed to create amenity",
-//     });
-//   }
-// };
+export const uploadLayoutFiles = async (
+  req: ManagedRequest<any>,
+  res: ManagedResponse,
+) => {
+  try {
+    await getUploadedFiles(req, res, {
+      fileType: mediaTypes.LAYOUT,
+      error: {
+        errorType: "upload-layouts-error-failure",
+        message: "Failed to upload layout files",
+      },
+      notFound: {
+        errorType: "layouts-not-uploaded",
+        message: "No layout files were uploaded",
+      },
+      success: {
+        message: "Layout files uploaded successfully",
+      },
+    });
+  } catch (err: any) {
+    ResponseHandler.handleError(res, {
+      errorType: "upload-layouts-error-failure",
+      message: "Failed to upload layout files",
+    });
+  }
+};

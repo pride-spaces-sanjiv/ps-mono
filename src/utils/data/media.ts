@@ -6,6 +6,13 @@ export const mediaTypes = {
 } as const;
 export type MediaType = (typeof mediaTypes)[keyof typeof mediaTypes];
 
+export const allowedExtensions = {
+  image: ["jpg", "jpeg", "png", "gif"],
+  layout: ["pdf"],
+};
+export type AllowedExtension =
+  (typeof allowedExtensions)[keyof typeof allowedExtensions];
+
 // Media Status
 export const mediaStatuses = {
   UPLOAD: "uploaded",

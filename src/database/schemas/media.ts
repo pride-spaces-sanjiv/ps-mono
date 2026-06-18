@@ -6,8 +6,14 @@ import {
   getPasswordSchema,
   getPhoneSchema,
   getSlugSchema,
+  getUUIdSchema,
 } from "./string.js";
-import { mediaStatuses, mediaTypes } from "@/utils/data/media.js";
+import {
+  allowedExtensions,
+  mediaStatuses,
+  MediaType,
+  mediaTypes,
+} from "@/utils/data/media.js";
 
 export const mediaTempSchema = z.object({
   fileId: z.string().min(1, "File Id is required"),
@@ -17,3 +23,25 @@ export const mediaTempSchema = z.object({
 });
 
 export type MediaTempSchema = z.infer<typeof mediaTempSchema>;
+
+export const mediaQuerySchema = (fileType: MediaType = mediaTypes.IMAGE) =>
+  z.object({
+    id: getUUIdSchema({ keyName: "File ID" }),
+    ext: z.enum(
+      allowedExtensions[fileType] || [],
+      `Invalid ${fileType} file extension`,
+    ),
+  });
+
+export type MediaQuerySchema = z.infer<ReturnType<typeof mediaQuerySchema>>;
+
+export const mediaDelSchema = (fileType = mediaTypes.IMAGE as MediaType) =>
+  z.object({
+    id: getUUIdSchema({ keyName: "File ID" }),
+    ext: z.enum(
+      allowedExtensions[fileType] || [],
+      `Invalid ${fileType} file extension`,
+    ),
+  });
+
+export type MediaDelSchema = z.infer<typeof mediaDelSchema>;
