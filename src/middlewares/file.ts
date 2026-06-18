@@ -94,27 +94,29 @@ export const validateFileUpload = <K extends string>(
       // Handle multer err if any customly
       return upload.any()(req, res, (err: Error | MulterError | string) => {
         err && console.error("Multer upload error:", err);
+
+        const files = (
+          Array.isArray(req.files)
+            ? req.files
+            : typeof req.files === "object"
+              ? Object.values(req.files).flatMap((f) => f)
+              : []
+        ).map((dt) =>
+          pickObjectFields(dt, {
+            includeFields: [
+              "fieldname",
+              "originalname",
+              "filename",
+              "encoding",
+              "mimetype",
+              "size",
+            ],
+          }),
+        );
         if (err instanceof multer.MulterError) {
           const code = err.code;
           const errorData = multerErrorMapping[code];
-          const files = (
-            Array.isArray(req.files)
-              ? req.files
-              : typeof req.files === "object"
-                ? Object.values(req.files).flatMap((f) => f)
-                : []
-          ).map((dt) =>
-            pickObjectFields(dt, {
-              includeFields: [
-                "fieldname",
-                "originalname",
-                "filename",
-                "encoding",
-                "mimetype",
-                "size",
-              ],
-            }),
-          );
+
           if (errorData) {
             return ResponseHandler.handleError(res, {
               errorType: errorData.errorType,
@@ -148,7 +150,7 @@ export const validateFileUpload = <K extends string>(
             errorType: `file-parser-error-unknown`,
             message: `Unexpected file parser error occurred`,
             data: {
-              files: [],
+              files: files,
               body: req.body,
             },
           });
