@@ -69,7 +69,10 @@ export const validateFileUpload = <K extends string>(
       const totalOpts = {
         storage,
         fileFilter(req, file, cb) {
-          const ext = path.extname(file.originalname).toLowerCase();
+          const ext = path
+            .extname(file.originalname)
+            .toLowerCase()
+            .replace(/^\.+/g, "");
 
           if (!allowedExtensions[fileType]?.includes(ext)) {
             console.log("Multer file filter [invalid-file]", { ...file, ext });
