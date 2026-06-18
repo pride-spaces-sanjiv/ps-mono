@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
   DeleteObjectCommandInput,
 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import { v7 } from "uuid";
 import { DiskStorageOptions, StorageEngine } from "multer";
 import { mediaTypes } from "@/utils/data/media.js";
@@ -104,23 +105,51 @@ export class S3StorageEngine {
         } as PutObjectCommandInput;
 
         // Upload the file to S3
-        this.s3Client?.send(new PutObjectCommand(uploadParams), (err, data) => {
-          console.log("Step 3: Uploading file", {
-            file,
-            key,
-            data,
-            filename,
-            destination,
-          });
-          if (err) {
-            console.log("Error uploading file", err);
-            return cb(err); // Callback with the error
-          }
-
-          // Callback with the file metadata
-          // @ts-ignore
-          cb(null, { destination, filename, path: key, storageStats: data });
+        console.log("Step 3: Uploading file", {
+          file,
+          key,
+          filename,
+          destination,
         });
+        const upload = new Upload({
+          client: this.s3Client,
+          params: {
+            Bucket: this.bucketName,
+            Key: key,
+            Body: file.stream,
+            ContentType: file.mimetype,
+          },
+        });
+
+        upload
+          .done()
+          .then((data) => {
+            cb(null, {
+              destination,
+              filename,
+              path: key,
+              // @ts-ignore
+              storageStats: data,
+            });
+          })
+          .catch((err) => cb(err));
+        // this.s3Client?.send(new PutObjectCommand(uploadParams), (err, data) => {
+        //   console.log("Step 3: Uploading file", {
+        //     file,
+        //     key,
+        //     data,
+        //     filename,
+        //     destination,
+        //   });
+        //   if (err) {
+        //     console.log("Error uploading file", err);
+        //     return cb(err); // Callback with the error
+        //   }
+
+        //   // Callback with the file metadata
+        //   // @ts-ignore
+        //   // cb(null, { destination, filename, path: key, storageStats: data });
+        // });
       });
     });
   };
