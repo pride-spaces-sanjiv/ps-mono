@@ -113,12 +113,7 @@ export class S3StorageEngine {
         });
         const upload = new Upload({
           client: this.s3Client,
-          params: {
-            Bucket: this.bucketName,
-            Key: key,
-            Body: file.stream,
-            ContentType: file.mimetype,
-          },
+          params: uploadParams,
         });
 
         upload
