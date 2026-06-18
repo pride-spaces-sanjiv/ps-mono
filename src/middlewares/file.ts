@@ -8,6 +8,7 @@ import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { NextFunction } from "express";
 import { MediaType, mediaTypes } from "@/utils/data/media.js";
 import { existsSync, mkdirSync } from "fs";
+import { S3StorageEngine } from "@/utils/services/s3/instance.js";
 
 export const allowedExtensions = {
   image: ["jpg", "jpeg", "png", "gif"],
@@ -16,19 +17,21 @@ export const allowedExtensions = {
 
 export const tempDir = path.resolve(process.cwd(), "./tmp");
 
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, tempDir);
-  },
-  filename(req, file, cb) {
-    const { fileType = mediaTypes.IMAGE } = req.res?.locals || {};
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(
-      null,
-      `${fileType?.trim() || ""}s/${v7()}${ext}`.replace(/^s\//, "unknown"),
-    );
-  },
-});
+const storageEngine = new S3StorageEngine({ bucketName: "pridespaces" });
+// const storage = multer.diskStorage({
+//   destination(req, file, cb) {
+//     cb(null, tempDir);
+//   },
+//   filename(req, file, cb) {
+//     const { fileType = mediaTypes.IMAGE } = req.res?.locals || {};
+//     const ext = path.extname(file.originalname).toLowerCase();
+//     cb(
+//       null,
+//       `${fileType?.trim() || ""}s/${v7()}${ext}`.replace(/^s\//, "unknown"),
+//     );
+//   },
+// });
+const storage = multer.diskStorage(storageEngine);
 
 export const createTempDir = () => {
   try {

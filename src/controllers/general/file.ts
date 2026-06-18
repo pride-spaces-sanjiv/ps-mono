@@ -4,6 +4,9 @@ import { MediaType, mediaTypes } from "@/utils/data/media.js";
 import path from "path";
 import fs from "fs";
 import { allowedExtensions, tempDir } from "@/middlewares/file.js";
+import { rustfsClient } from "@/utils/services/s3/instance.js";
+import { ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { pickObjectFields } from "@/utils/object/clean.js";
 
 const getFile = async (
   req: ManagedRequest<any>,
@@ -22,29 +25,76 @@ const getFile = async (
     fileType = mediaTypes.IMAGE,
   } = options;
   try {
-    const dirStats = fs.readdirSync(tempDir, {
-      withFileTypes: true,
-      encoding: "utf8",
-    });
-    const files = dirStats
-      .filter(
-        (dirent) =>
-          dirent.isFile() &&
-          allowedExtensions[fileType].includes(path.extname(dirent.name)),
-      )
-      .map((file) => {
-        const filePath = path.join(tempDir, file.name);
-        const stats = fs.statSync(filePath);
+    const destination = `${fileType?.trim() || ""}s/`.replace(
+      /^s\//,
+      "unknown/",
+    );
+    const listRes = await rustfsClient.send(
+      new ListObjectsV2Command({
+        Bucket: "pridespaces",
+        Prefix: destination,
+      }),
+    );
 
-        return {
-          name: file.name,
-          size: stats.size,
-          createdAt: stats.birthtime,
-          modifiedAt: stats.mtime,
-          isFile: stats.isFile(),
-          isDirectory: stats.isDirectory(),
-        };
-      });
+    const parserFiles = Array.isArray(req.files) ? req.files : [];
+    const parserFileNames = parserFiles.map((f) => f.filename);
+    // S3 files
+    const cloudFiles =
+      listRes.Contents?.filter(
+        (obj) =>
+          (obj.Size ?? 0) > 0 &&
+          typeof obj.Key === "string" &&
+          parserFileNames.includes(obj.Key as string),
+      ).map((obj) => ({
+        fileName: obj.Key as string,
+        path: path.join(destination, obj.Key as string),
+        size: obj.Size as number,
+        lastModified: obj.LastModified,
+      })) || [];
+
+    const files = parserFiles
+      .map((file) =>
+        pickObjectFields(file, {
+          includeFields: [
+            "filename",
+            "fieldname",
+            "destination",
+            "path",
+            "mimetype",
+            "originalname",
+            "size",
+          ],
+        }),
+      )
+      .map((file) => ({
+        ...file,
+        uploadStats:
+          cloudFiles.find((f) => file.filename.includes(f.fileName)) || null,
+      }));
+
+    // const dirStats = fs.readdirSync(tempDir, {
+    //   withFileTypes: true,
+    //   encoding: "utf8",
+    // });
+    // const files = dirStats
+    //   .filter(
+    //     (dirent) =>
+    //       dirent.isFile() &&
+    //       allowedExtensions[fileType].includes(path.extname(dirent.name)),
+    //   )
+    //   .map((file) => {
+    //     const filePath = path.join(tempDir, file.name);
+    //     const stats = fs.statSync(filePath);
+
+    //     return {
+    //       name: file.name,
+    //       size: stats.size,
+    //       createdAt: stats.birthtime,
+    //       modifiedAt: stats.mtime,
+    //       isFile: stats.isFile(),
+    //       isDirectory: stats.isDirectory(),
+    //     };
+    //   });
     if (files.length === 0) {
       return ResponseHandler.handleNotFound(res, {
         errorType: notFoundOptions?.errorType || "file-not-found",
@@ -53,7 +103,7 @@ const getFile = async (
     }
     ResponseHandler.handleSuccess(res, {
       message: successOptions?.message || "File retrieved successfully",
-      data: { files },
+      data: { files, bucket: "pridespaces" },
     });
   } catch (err) {
     console.error("Error getting file : ", { fileType }, err);
