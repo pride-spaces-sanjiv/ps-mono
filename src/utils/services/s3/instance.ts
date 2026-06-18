@@ -76,19 +76,19 @@ export class S3StorageEngine {
       if (err) {
         return cb(err);
       }
-      file.destination = destination;
+      // file.destination = destination;
 
       // Secondly handle filename
       this.filename(req, file, (err, filename) => {
         if (err) {
           return cb(err);
         }
-        file.filename = filename;
+        // file.filename = filename;
 
         // Now upload lastly
         // Define the parameters for the S3 upload
-        const key = path.join(file.destination, file.filename);
-        file.path = key;
+        const key = path.join(destination, filename);
+        // file.path = key;
         const uploadParams = {
           Bucket: this.bucketName,
           Key: key,
@@ -105,7 +105,7 @@ export class S3StorageEngine {
 
           // Callback with the file metadata
           // @ts-ignore
-          cb(null, { ...file, storageStats: data });
+          cb(null, { destination, filename, path: key, storageStats: data });
         });
       });
     });
@@ -116,9 +116,10 @@ export class S3StorageEngine {
     this.validate(); // Pre Validate
 
     // Define the parameters for the S3 deletion
+    const key = path.join(file.destination, file.filename);
     const deleteParams = {
       Bucket: this.bucketName,
-      Key: file.filename,
+      Key: key,
     } as DeleteObjectCommandInput;
 
     // Delete the file from S3
