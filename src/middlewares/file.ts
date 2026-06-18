@@ -31,7 +31,6 @@ const storageEngine = new S3StorageEngine({ bucketName: "pridespaces" });
 //     );
 //   },
 // });
-const storage = multer.diskStorage(storageEngine);
 
 export const createTempDir = () => {
   try {
@@ -67,7 +66,7 @@ export const validateFileUpload = <K extends string>(
     } = options;
     try {
       const totalOpts = {
-        storage,
+        storage: storageEngine,
         fileFilter(req, file, cb) {
           const ext = path
             .extname(file.originalname)
