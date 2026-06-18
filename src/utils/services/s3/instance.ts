@@ -69,10 +69,11 @@ export class S3StorageEngine {
   // Main method to handle file upload
   _handleFile: StorageEngine["_handleFile"] = (req, file, cb) => {
     this.validate(); // Pre Validate
-    console.log("Uploading file", file.originalname, file.filename);
+    console.log("Uploading file", file);
 
     // Handle Destination firstly
     this.destination(req, file, (err, destination) => {
+      console.log("Step 1: Handling destination", { file, destination });
       if (err) {
         return cb(err);
       }
@@ -80,6 +81,12 @@ export class S3StorageEngine {
 
       // Secondly handle filename
       this.filename(req, file, (err, filename) => {
+        console.log("Step 2: Handling filename", {
+          file,
+          filename,
+          destination,
+        });
+
         if (err) {
           return cb(err);
         }
@@ -98,6 +105,13 @@ export class S3StorageEngine {
 
         // Upload the file to S3
         this.s3Client?.send(new PutObjectCommand(uploadParams), (err, data) => {
+          console.log("Step 3: Uploading file", {
+            file,
+            key,
+            data,
+            filename,
+            destination,
+          });
           if (err) {
             console.log("Error uploading file", err);
             return cb(err); // Callback with the error
