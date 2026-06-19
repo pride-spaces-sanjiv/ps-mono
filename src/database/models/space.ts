@@ -7,6 +7,7 @@ import {
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 import { spaceTypes, spaceGrades } from "@/utils/data/spaceTypes.js";
 import { workingSizes } from "@/utils/data/workingSizes.js";
+import { FilesSchema } from "./files-schema.js";
 
 const PersonSchema = new Conn.Schema(
   {
@@ -71,6 +72,7 @@ const SpaceSchema = new Conn.Schema(
     pricing: { type: PricingSchema, required: true },
     rating: { type: Number },
     reviews: { type: Number },
+    files: { type: FilesSchema },
     approval: { type: ApprovalSchema },
   },
   { timestamps: true },

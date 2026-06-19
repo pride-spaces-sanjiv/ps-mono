@@ -12,6 +12,7 @@ import { approvalSchema } from "./dump.js";
 import { personSchema } from "./person.js";
 import { spaceGrades, spaceTypes } from "@/utils/data/spaceTypes.js";
 import { workingSizes } from "@/utils/data/workingSizes.js";
+import { filesSchema } from "./files.js";
 
 // --- Location Schema ---
 export const locationSchema = z.object({
@@ -116,6 +117,7 @@ export const spaceSchema = z.object({
   pricing: pricingSchema,
   facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
   workingSizes: z.array(z.enum(workingSizes)).default([]),
+  files: filesSchema.partial().optional(),
   // approval: approvalSchema,
 });
 
