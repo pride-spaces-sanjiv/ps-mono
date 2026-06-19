@@ -33,6 +33,7 @@ import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 import FileUpload from "@/components/file-upload";
 import { mediaTypes } from "@/utils/data/media";
+import { useMappedFilesState } from "@/services/hooks/use-file";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -195,6 +196,12 @@ const SpaceEditPage = () => {
   const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
   const [correctionComment, setCorrectionComment] = useState("");
   const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = useState(false);
+  const {
+    images: [images, setImages],
+    layouts: [layouts, setLayouts],
+  } = useMappedFilesState({
+    names: ["images", "layouts"],
+  });
 
   // useEffect(() => {
   //   if (data) {
@@ -868,12 +875,35 @@ const SpaceEditPage = () => {
 
           {/* Images */}
           <FormSectionTitle>Images</FormSectionTitle>
-          <FileUpload
-            fileType={mediaTypes.IMAGE}
-            onFilesUpload={(files) => {
-              console.log("All uploaded images :", files);
+          {images.map((img, i) => (
+            <div
+              key={i}
+              className="flex gap-2 items-center bg-secondary-foreground"
+            >
+              <div className="object-contain size-[200px] aspect-square">
+                <img
+                  src={img.imageSrc}
+                  alt="Preview"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                {img.file.name} : {img.file.size}
+              </div>
+            </div>
+          ))}
+          <DialogModal
+            triggerProps={{
+              children: <ActionButton>Upload Images</ActionButton>,
             }}
-          />
+          >
+            <FileUpload
+              fileType={mediaTypes.IMAGE}
+              onFilesUpload={(files) => {
+                console.log("All uploaded images :", files);
+              }}
+            />
+          </DialogModal>
 
           {/* SECTION: Centre Point of Contact */}
 

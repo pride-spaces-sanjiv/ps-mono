@@ -6,14 +6,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/utils/cn";
 import { allowedExtensions, type MediaType } from "@/utils/data/media";
 import { toast } from "sonner";
+import { getFileIntoBase64 } from "@/utils/object/file";
 
-interface UploadedFile {
+export type UploadedFile = {
   id: string;
   file: File;
+  imageSrc?: string;
   progress: number;
   status: "pending" | "uploading" | "completed" | "error";
   error?: string;
-}
+};
 
 type Props = {
   fileType: MediaType;
@@ -71,7 +73,7 @@ export default function FileUpload({
     }, 180);
   };
 
-  const handleFiles = (newFiles: FileList | File[]) => {
+  const handleFiles = async (newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles)
       .map((file) => {
         const ext = file.name.match(/\.([^.]+)$/)?.[1];
@@ -90,12 +92,28 @@ export default function FileUpload({
     // Validate files
 
     // Handle
-    const newUploads: UploadedFile[] = fileArray.map((file) => ({
-      id: Math.random().toString(36).substring(2) + Date.now().toString(36),
-      file,
-      progress: 0,
-      status: "pending",
-    }));
+    const prs = await Promise.allSettled(
+      fileArray.map(async (file) => {
+        let imageSrc: string | undefined = undefined;
+        if (fileType === "image") {
+          try {
+            imageSrc = await getFileIntoBase64(file);
+          } catch (err) {}
+        }
+        const data = {
+          id: Math.random().toString(36).substring(2) + Date.now().toString(36),
+          file,
+          imageSrc: imageSrc,
+          progress: 0,
+          status: "pending",
+        } as UploadedFile;
+        return data;
+      }),
+    );
+
+    const newUploads = prs
+      .filter((rs) => rs.status === "fulfilled")
+      .map((result) => result.value);
 
     setFiles((prev) => [...prev, ...newUploads]);
 
