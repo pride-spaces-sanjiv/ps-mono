@@ -21,6 +21,7 @@ type Props = {
   triggerProps: React.ComponentProps<typeof DialogTrigger>;
   showClose: boolean;
   showHeader: boolean;
+  useDefaultLayout: boolean;
 } & React.ComponentProps<typeof Dialog>;
 
 export function DialogModal({
@@ -34,6 +35,7 @@ export function DialogModal({
   triggerProps,
   showClose = true,
   showHeader = true,
+  useDefaultLayout = true,
   ...props
 }: Partial<Props>) {
   return (
@@ -50,7 +52,10 @@ export function DialogModal({
       <DialogContent
         {...contentProps}
         className={cn(
-          "sm:max-w-[425px] grid-rows-[auto_1fr]",
+          "",
+          useDefaultLayout
+            ? "sm:max-w-[425px] grid-rows-[auto_1fr]"
+            : "sm:max-w-none",
           contentProps?.className,
         )}
       >
