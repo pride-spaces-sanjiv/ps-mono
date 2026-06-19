@@ -7,6 +7,7 @@ import { allowedExtensions, type MediaType } from "@/utils/data/media";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import moment from "moment";
 
 export type UploadedFile = {
   id: string;
@@ -23,7 +24,13 @@ type Props = {
   processFileUpload: (
     file: UploadedFile,
     filesStateSetter: React.Dispatch<React.SetStateAction<UploadedFile[]>>,
-  ) => any;
+  ) => Promise<Pick<UploadedFile, "id" | "progress" | "status" | "error">>;
+  simulationOptions: Partial<{
+    flowType: "linear" | "random";
+    linearPause: number;
+    estimatedTime: number;
+    linearStep: number;
+  }>;
 };
 
 export const simulateFileUpload = (
@@ -75,6 +82,7 @@ export default function FileUpload({
   fileType = "image",
   onFilesUpload,
   processFileUpload,
+  simulationOptions = {},
 }: Partial<Props>) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -88,31 +96,71 @@ export default function FileUpload({
     return <FileText className="w-10 h-10 text-gray-500" />;
   };
 
-  const simulateUpload = (fileId: string) => {
+  const simulateUpload = async (file: UploadedFile) => {
     let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 18;
-      if (progress >= 100) {
+    const {
+      flowType = "linear",
+      linearPause = 80,
+      estimatedTime = 60,
+      linearStep = 2,
+    } = simulationOptions;
+    const estimatedMs = estimatedTime * 1000;
+    const estimatedMsStep = estimatedMs * 0.01 * linearStep;
+    const fileId = file.id;
+
+    // Just process and flag update after its done
+    let processedState: UploadedFile["status"] | undefined = undefined;
+    const startTime = Date.now();
+    processFileUpload?.(file, setFiles)
+      .then((data) => {
+        processedState = data.status;
+      })
+      .catch((err) => {
+        processedState = "error";
+      });
+
+    // Only for linear animation
+    if (flowType === "linear") {
+      const interval = setInterval(() => {
+        progress += linearStep;
+        const duration = moment
+          .duration(Date.now() - startTime, "ms")
+          .asSeconds();
+        if (
+          progress >= 100 ||
+          duration >= estimatedTime ||
+          processedState === "completed" ||
+          processedState === "error"
+        ) {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === fileId
+                ? {
+                    ...f,
+                    progress: 100,
+                    status: processFileUpload
+                      ? processedState || "error"
+                      : "completed",
+                  }
+                : f,
+            ),
+          );
+          clearInterval(interval);
+          return;
+        }
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === fileId ? { ...f, progress: 100, status: "completed" } : f,
+            f.id === fileId
+              ? {
+                  ...f,
+                  progress: Math.min(Math.floor(progress), linearPause),
+                  status: "uploading",
+                }
+              : f,
           ),
         );
-        clearInterval(interval);
-        return;
-      }
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === fileId
-            ? {
-                ...f,
-                progress: Math.min(Math.floor(progress), 99),
-                status: "uploading",
-              }
-            : f,
-        ),
-      );
-    }, 180);
+      }, estimatedMsStep);
+    }
   };
 
   const handleFiles = async (newFiles: FileList | File[]) => {
