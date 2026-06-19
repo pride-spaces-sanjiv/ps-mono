@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { MessageSquareWarning } from "lucide-react";
+import { ImagePlus, MessageSquareWarning } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
 import { useUser } from "@/services/hooks/use-user";
@@ -875,32 +875,48 @@ const SpaceEditPage = () => {
 
           {/* Images */}
           <FormSectionTitle>Images</FormSectionTitle>
-          {images.map((img, i) => (
-            <div
-              key={i}
-              className="flex gap-2 items-center bg-secondary-foreground"
-            >
-              <div className="object-contain size-[200px] aspect-square">
-                <img
-                  src={img.imageSrc}
-                  alt="Preview"
-                  className="w-full h-full object-contain"
-                />
+          <div className="col-span-full flex gap-2 flex-wrap">
+            {images.map((img, i) => (
+              <div
+                key={i}
+                className="flex gap-2 items-center bg-secondary w-fit"
+              >
+                <div className="object-contain size-[140px] aspect-square">
+                  <img
+                    src={img.imageSrc}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div>
+                  {img.file.name} : {img.file.size}
+                </div>
               </div>
-              <div>
-                {img.file.name} : {img.file.size}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
           <DialogModal
+            useDefaultLayout={false}
             triggerProps={{
-              children: <ActionButton>Upload Images</ActionButton>,
+              children: (
+                <ActionButton
+                  variant={"secondary"}
+                  className="max-w-fit px-5 py-6"
+                >
+                  <div className="flex gap-2 items-center">
+                    Upload Images <ImagePlus />
+                  </div>
+                </ActionButton>
+              ),
+            }}
+            contentProps={{
+              className: "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none",
             }}
           >
             <FileUpload
               fileType={mediaTypes.IMAGE}
               onFilesUpload={(files) => {
                 console.log("All uploaded images :", files);
+                setImages(files);
               }}
             />
           </DialogModal>
