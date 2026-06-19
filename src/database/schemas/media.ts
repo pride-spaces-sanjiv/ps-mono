@@ -1,11 +1,5 @@
 import { z } from "zod";
 import {
-  getEmailSchema,
-  getIdSchema,
-  getNameSchema,
-  getPasswordSchema,
-  getPhoneSchema,
-  getSlugSchema,
   getUUIdSchema,
 } from "./string.js";
 import {
