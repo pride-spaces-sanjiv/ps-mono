@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Upload, X, FileText, Image, Video, Music } from "lucide-react";
+import { cn } from "@/utils/cn";
+import { getFileIntoBase64, formatFileSize } from "@/utils/object/file";
+import { allowedExtensions, type MediaType } from "@/utils/data/media";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/utils/cn";
-import { allowedExtensions, type MediaType } from "@/utils/data/media";
-import { toast } from "sonner";
-import { getFileIntoBase64 } from "@/utils/object/file";
 
 export type UploadedFile = {
   id: string;
@@ -36,14 +36,6 @@ export default function FileUpload({
       return <Video className="w-10 h-10 text-purple-500" />;
     if (type === "audio") return <Music className="w-10 h-10 text-green-500" />;
     return <FileText className="w-10 h-10 text-gray-500" />;
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const simulateUpload = (fileId: string) => {

@@ -34,6 +34,7 @@ import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 import FileUpload from "@/components/file-upload";
 import { mediaTypes } from "@/utils/data/media";
 import { useMappedFilesState } from "@/services/hooks/use-file";
+import FilePreview from "@/components/file/preview";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -877,21 +878,18 @@ const SpaceEditPage = () => {
           <FormSectionTitle>Images</FormSectionTitle>
           <div className="col-span-full flex gap-2 flex-wrap">
             {images.map((img, i) => (
-              <div
-                key={i}
-                className="flex gap-2 items-center bg-secondary w-fit"
-              >
-                <div className="object-contain size-[140px] aspect-square">
+              <FilePreview
+                key={`image-${i}`}
+                file={img}
+                canPreview={true}
+                renderPreview={(file) => (
                   <img
-                    src={img.imageSrc}
+                    src={file?.imageSrc}
                     alt="Preview"
                     className="w-full h-full object-contain"
                   />
-                </div>
-                <div>
-                  {img.file.name} : {img.file.size}
-                </div>
-              </div>
+                )}
+              />
             ))}
           </div>
           <DialogModal

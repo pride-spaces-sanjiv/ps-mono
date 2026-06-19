@@ -53,7 +53,9 @@ export function DialogModal({
         {...contentProps}
         className={cn(
           "",
-          useDefaultLayout ? "sm:max-w-[425px] grid-rows-[auto_1fr]" : "sm:max-w-none",
+          useDefaultLayout
+            ? "sm:max-w-[425px] grid-rows-[auto_1fr]"
+            : "sm:max-w-none",
           contentProps?.className,
         )}
       >
