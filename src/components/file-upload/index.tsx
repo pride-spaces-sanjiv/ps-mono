@@ -20,11 +20,61 @@ export type UploadedFile = {
 type Props = {
   fileType: MediaType;
   onFilesUpload: (files: UploadedFile[]) => any;
+  processFileUpload: (
+    file: UploadedFile,
+    filesStateSetter: React.Dispatch<React.SetStateAction<UploadedFile[]>>,
+  ) => any;
+};
+
+export const simulateFileUpload = (
+  fileId: string,
+  filesStateSetter: React.Dispatch<React.SetStateAction<UploadedFile[]>>,
+  options: Partial<{
+    flowType: "linear" | "random";
+    linearPause: number;
+    estimatedTime: number;
+    linearStep: number;
+  }> = {},
+) => {
+  let progress = 0;
+  const {
+    flowType = "linear",
+    linearPause = 80,
+    estimatedTime = 1000,
+    linearStep = 18,
+  } = options;
+  const estimatedMsStep = (estimatedTime * 1000) / linearStep;
+  if (flowType === "linear") {
+    const interval = setInterval(() => {
+      progress += linearStep;
+      if (progress >= 100) {
+        filesStateSetter((prev) =>
+          prev.map((f) =>
+            f.id === fileId ? { ...f, progress: 100, status: "completed" } : f,
+          ),
+        );
+        clearInterval(interval);
+        return;
+      }
+      filesStateSetter((prev) =>
+        prev.map((f) =>
+          f.id === fileId
+            ? {
+                ...f,
+                progress: Math.min(Math.floor(progress), 99),
+                status: "uploading",
+              }
+            : f,
+        ),
+      );
+    }, estimatedMsStep);
+  }
 };
 
 export default function FileUpload({
   fileType = "image",
   onFilesUpload,
+  processFileUpload,
 }: Partial<Props>) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
