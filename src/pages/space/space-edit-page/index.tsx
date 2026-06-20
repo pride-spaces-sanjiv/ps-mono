@@ -35,6 +35,7 @@ import FileUpload from "@/components/file-upload";
 import { mediaTypes } from "@/utils/data/media";
 import { useMappedFilesState } from "@/services/hooks/use-file";
 import FilePreview from "@/components/file/preview";
+import { sleep } from "@/utils/time/sleep";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -907,14 +908,25 @@ const SpaceEditPage = () => {
               ),
             }}
             contentProps={{
-              className: "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none",
+              className: "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh]",
             }}
           >
             <FileUpload
               fileType={mediaTypes.IMAGE}
               onFilesUpload={(files) => {
                 console.log("All uploaded images :", files);
-                setImages(files);
+                setImages((prev) =>
+                  [...prev, ...files].filter(
+                    (file) => file.status === "completed",
+                  ),
+                );
+              }}
+              simulationOptions={{ estimatedTime: 20 }}
+              processFileUpload={async (file, setter) => {
+                await sleep(10);
+                return {
+                  status: "completed",
+                };
               }}
             />
           </DialogModal>

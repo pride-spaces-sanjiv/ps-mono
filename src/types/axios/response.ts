@@ -5,7 +5,7 @@ export type GeneralResponse<T extends any = any> = {
 };
 export type GeneralResponseWithError<
   T extends any = any,
-  E = string
+  E = string,
 > = GeneralResponse<T> & {
   errorType?: E;
 };

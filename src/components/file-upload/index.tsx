@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Upload, X, FileText, Image, Video, Music } from "lucide-react";
 import { cn } from "@/utils/cn";
@@ -24,7 +24,10 @@ type Props = {
   processFileUpload: (
     file: UploadedFile,
     filesStateSetter: React.Dispatch<React.SetStateAction<UploadedFile[]>>,
-  ) => Promise<Pick<UploadedFile, "id" | "progress" | "status" | "error">>;
+  ) => Promise<
+    Pick<UploadedFile, "status" | "error"> &
+      Partial<Omit<UploadedFile, "status" | "error">>
+  >;
   simulationOptions: Partial<{
     flowType: "linear" | "random";
     linearPause: number;
@@ -87,6 +90,32 @@ export default function FileUpload({
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
+  const {
+    flowType,
+    linearPause,
+    estimatedTime,
+    linearStep,
+    estimatedMs,
+    estimatedMsStep,
+  } = useMemo(() => {
+    const {
+      flowType = "linear",
+      linearPause = 80,
+      estimatedTime = 60,
+      linearStep = 2,
+    } = simulationOptions;
+    const estimatedMs = estimatedTime * 1000;
+    const estimatedMsStep = estimatedMs * 0.01 * linearStep;
+    return {
+      flowType,
+      linearPause,
+      estimatedTime,
+      linearStep,
+      estimatedMs,
+      estimatedMsStep,
+    };
+  }, [simulationOptions]);
+
   const getFileIcon = (file: File) => {
     const type = file.type.split("/")[0];
     if (type === "image") return <Image className="w-10 h-10 text-blue-500" />;
@@ -98,17 +127,9 @@ export default function FileUpload({
 
   const simulateUpload = async (file: UploadedFile) => {
     let progress = 0;
-    const {
-      flowType = "linear",
-      linearPause = 80,
-      estimatedTime = 60,
-      linearStep = 2,
-    } = simulationOptions;
-    const estimatedMs = estimatedTime * 1000;
-    const estimatedMsStep = estimatedMs * 0.01 * linearStep;
     const fileId = file.id;
 
-    // Just process and flag update after its done
+    // Just process and flag update after its done, if process handle exists
     let processedState: UploadedFile["status"] | undefined = undefined;
     const startTime = Date.now();
     processFileUpload?.(file, setFiles)
@@ -125,40 +146,51 @@ export default function FileUpload({
         progress += linearStep;
         const duration = moment
           .duration(Date.now() - startTime, "ms")
-          .asSeconds();
+          .seconds();
+        // console.log("File Progress :", {
+        //   progress,
+        //   processedState,
+        //   duration,
+        //   estimatedTime,
+        // });
         if (
           progress >= 100 ||
           duration >= estimatedTime ||
           processedState === "completed" ||
           processedState === "error"
         ) {
-          setFiles((prev) =>
-            prev.map((f) =>
+          const status = processFileUpload
+            ? processedState || "error"
+            : "completed";
+          setFiles((prev) => {
+            const updatedFiles = prev.map((f) =>
               f.id === fileId
                 ? {
                     ...f,
                     progress: 100,
-                    status: processFileUpload
-                      ? processedState || "error"
-                      : "completed",
+                    status: status,
                   }
                 : f,
-            ),
-          );
+            );
+            return updatedFiles;
+          });
           clearInterval(interval);
           return;
         }
-        setFiles((prev) =>
-          prev.map((f) =>
+
+        progress = Math.min(Math.floor(progress), linearPause);
+        setFiles((prev) => {
+          const updatedFiles = prev.map((f) =>
             f.id === fileId
               ? {
                   ...f,
-                  progress: Math.min(Math.floor(progress), linearPause),
-                  status: "uploading",
+                  progress: progress,
+                  status: "uploading" as const,
                 }
               : f,
-          ),
-        );
+          );
+          return updatedFiles;
+        });
       }, estimatedMsStep);
     }
   };
@@ -214,8 +246,8 @@ export default function FileUpload({
             f.id === upload.id ? { ...f, status: "uploading" } : f,
           ),
         );
-        simulateUpload(upload.id);
-      }, 80);
+        simulateUpload(upload);
+      }, 10);
     });
   };
 
@@ -248,7 +280,7 @@ export default function FileUpload({
   }, [files]);
 
   return (
-    <div className="max-w-[1200px] w-full mx-auto p-6 col-span-full">
+    <div className="max-w-[1200px] w-full mx-auto p-6 col-span-full h-full overflow-y-auto">
       <Card className="w-full py-0">
         <CardContent className="p-10">
           <div className="text-center mb-10">
@@ -261,6 +293,7 @@ export default function FileUpload({
             </p>
           </div>
 
+          {/* DND Section */}
           <div
             onDrop={onDrop}
             onDragOver={onDragOver}
@@ -323,7 +356,11 @@ export default function FileUpload({
                           {formatFileSize(upload.file.size)}
                         </p>
                       </div>
-                      <Progress value={upload.progress} className="h-2 mb-2" />
+                      <Progress
+                        value={upload.progress}
+                        className="h-2 mb-2 ease-in-out"
+                        style={{ transitionDuration: `${estimatedMsStep}ms` }}
+                      />
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span
                           className={

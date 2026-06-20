@@ -101,6 +101,7 @@ export default function FilePreview({
         </div>
         <Button
           variant={"destructive"}
+          type="button"
           {...delBtnProps}
           className={cn(
             "absolute size-fit has-[>svg]:p-0.5 aspect-square rounded-[50%] bottom-[-4px] opacity-0 right-[2px]",
