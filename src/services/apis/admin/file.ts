@@ -24,7 +24,11 @@ export const uploadImageFile = APIBodyValidationWrapper<
       (param?.url || "") +
       queryToString(param?.query)
     ).replace(/\/+/g, "/");
-    const res = await ADMIN_FILE.post<FileUploadRes>(url, param?.body, config);
+    const res = await ADMIN_FILE.postForm<FileUploadRes>(
+      url,
+      param?.body,
+      config,
+    );
     return res;
   },
 });
@@ -40,7 +44,11 @@ export const uploadLayoutFile = APIBodyValidationWrapper<
       (param?.url || "") +
       queryToString(param?.query)
     ).replace(/\/+/g, "/");
-    const res = await ADMIN_FILE.post<FileUploadRes>(url, param?.body, config);
+    const res = await ADMIN_FILE.postForm<FileUploadRes>(
+      url,
+      param?.body,
+      config,
+    );
     return res;
   },
 });

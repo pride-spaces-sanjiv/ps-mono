@@ -30,9 +30,10 @@ import type { Dump } from "@/types/data/dump";
 import type { Space } from "@/types/data/spaces";
 import { compareFields } from "@/utils/object/compare";
 import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
+import { uploadImageFile } from "@/services/apis/admin/file";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
-import FileUpload from "@/components/file-upload";
-import { mediaTypes } from "@/utils/data/media";
+import FileUpload, { type UploadedFile } from "@/components/file-upload";
+import { mediaTypes, type MediaType } from "@/utils/data/media";
 import { useMappedFilesState } from "@/services/hooks/use-file";
 import FilePreview from "@/components/file/preview";
 import { sleep } from "@/utils/time/sleep";
@@ -236,6 +237,12 @@ const SpaceEditPage = () => {
     mutationFn: updateSpace,
   });
 
+  // File Image Mutater
+  const { mutateAsync: imageUploadMutater, isPending: imageUploadPending } =
+    useMutation({
+      mutationFn: uploadImageFile,
+    });
+
   const { mutateAsync: approvalMutater, isPending: approvalPending } =
     useMutation({
       mutationKey: [queryKeys.DUMPS, id, "delete"],
@@ -304,6 +311,42 @@ const SpaceEditPage = () => {
     } catch (err) {
       console.error("Error sending correction:", err);
       toast.error("Failed to send correction");
+    }
+  };
+
+  // File Upload
+  const handleFileUpload = async (
+    file: UploadedFile,
+    fileType = "image" as MediaType,
+  ) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file.file);
+      formData.append("name", file.file.name);
+      formData.append("id", file.id);
+      formData.append("contentType", file.file.type);
+      formData.append("fileType", fileType);
+      const res = await uploadImageFile({ body: formData });
+      if (res.status === 201 && res?.data?.data?.files) {
+        const resFile = res.data?.data?.files[0];
+        const oldFiles = watch("files", {});
+        setValue("files", {
+          ...oldFiles,
+          [`${fileType}s`]: [
+            ...(oldFiles?.[`${fileType}s`] || []),
+            resFile.filename,
+          ],
+        });
+        toast.success(
+          `File uploaded successfully: ${fileType} ${file.file.name}`,
+        );
+        return true;
+      }
+      throw new Error("Invalid response");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast.error(`Failed to upload ${fileType} : ${file.file.name}`);
+      throw error;
     }
   };
 
@@ -908,7 +951,8 @@ const SpaceEditPage = () => {
               ),
             }}
             contentProps={{
-              className: "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh]",
+              className:
+                "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh]",
             }}
           >
             <FileUpload
@@ -923,10 +967,17 @@ const SpaceEditPage = () => {
               }}
               simulationOptions={{ estimatedTime: 20 }}
               processFileUpload={async (file, setter) => {
-                await sleep(10);
-                return {
-                  status: "completed",
-                };
+                try {
+                  const done = await handleFileUpload(file, mediaTypes.IMAGE);
+                  if (!done) {
+                    throw new Error("Incomplete");
+                  }
+                  return {
+                    status: "completed",
+                  };
+                } catch (err) {
+                  return { status: "error" };
+                }
               }}
             />
           </DialogModal>
