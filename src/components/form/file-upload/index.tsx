@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { Upload, X, FileText, Image, Video, Music } from "lucide-react";
 import { cn } from "@/utils/cn";
@@ -122,6 +128,8 @@ export default function FileUpload({
       estimatedMsStep,
     };
   }, [simulationOptions]);
+
+  const inpRef = useRef<HTMLInputElement | null>(null);
 
   const getFileIcon = (file: File) => {
     const type = file.type.split("/")[0];
@@ -306,9 +314,9 @@ export default function FileUpload({
             <div className="mx-auto w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
               <Upload className="w-10 h-10 text-primary" />
             </div>
-            <h2 className="text-3xl font-semibold mb-2">Multi File Upload</h2>
+            <h2 className="text-3xl font-semibold mb-2">{`Multi ${fileType.toUpperCase()} Upload`}</h2>
             <p className="text-muted-foreground text-lg">
-              Drag & drop or click to upload multiple files
+              {`Drag & drop or click to upload multiple ${fileType}s`}
             </p>
           </div>
 
@@ -317,7 +325,7 @@ export default function FileUpload({
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            onClick={() => document.getElementById("file-input")?.click()}
+            onClick={() => inpRef.current?.click()}
             className={cn(
               "border-2 border-dashed px-4 py-16 rounded-2xl cursor-pointer transition-all hover:bg-muted/50",
               isDragging
@@ -326,7 +334,8 @@ export default function FileUpload({
             )}
           >
             <input
-              id="file-input"
+              ref={inpRef}
+              placeholder="file"
               type="file"
               multiple
               className="hidden"
@@ -334,10 +343,10 @@ export default function FileUpload({
             />
             <div className="text-center">
               <Upload className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-xl font-medium">Drop your files here</p>
+              <p className="text-xl font-medium">{`Drop your ${fileType}s here`}</p>
               <p className="text-sm text-muted-foreground mt-2">
                 or{" "}
-                <span className="text-primary font-medium">browse files</span>
+                <span className="text-primary font-medium">{`browse ${fileType}s`}</span>
               </p>
             </div>
           </div>
