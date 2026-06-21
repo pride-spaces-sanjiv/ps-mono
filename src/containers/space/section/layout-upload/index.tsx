@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import FormSectionTitle from "@/components/form/section/title";
 import { DialogModal } from "@/components/dialog";
-import { type MediaType } from "@/utils/data/media";
+import { mediaTypes, type MediaType } from "@/utils/data/media";
 import FilePreview from "@/components/file/preview";
 import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
 import ActionButton from "@/components/buttons/action-btn";
@@ -11,17 +11,20 @@ type Props = {
   titleProps: React.ComponentProps<typeof FormSectionTitle>;
   fileType: MediaType;
   files: UploadedFile[];
+  processUpload: React.ComponentProps<typeof FileUpload>["processFileUpload"];
 };
 
-export default function SpaceFileUploadSection({
+export default function SpaceLayoutsUploadSection({
   titleProps,
   fileType = "image",
-  files = [],
+  // files = [],
+  processUpload,
 }: Partial<Props>) {
+  const [files, setFiles] = useState<UploadedFile[]>([]);
   return (
     <>
       <FormSectionTitle {...titleProps}>
-        {titleProps?.children || "Files"}
+        {titleProps?.children || "Layouts"}
       </FormSectionTitle>
       {/* File Previews */}
       <div className="col-span-full flex gap-2 flex-wrap">
@@ -47,7 +50,7 @@ export default function SpaceFileUploadSection({
           children: (
             <ActionButton variant={"secondary"} className="max-w-fit px-5 py-6">
               <div className="flex gap-2 items-center">
-                Upload Images <ImagePlus />
+                Upload Layouts <ImagePlus />
               </div>
             </ActionButton>
           ),
@@ -58,27 +61,15 @@ export default function SpaceFileUploadSection({
         }}
       >
         <FileUpload
-          fileType={mediaTypes.IMAGE}
+          fileType={mediaTypes.LAYOUT}
           onFilesUpload={(files) => {
-            console.log("All uploaded images :", files);
-            setImages((prev) =>
+            console.log("All uploaded layouts :", files);
+            setFiles((prev) =>
               [...prev, ...files].filter((file) => file.status === "completed"),
             );
           }}
           simulationOptions={{ estimatedTime: 20 }}
-          processFileUpload={async (file, setter) => {
-            try {
-              const done = await handleFileUpload(file, mediaTypes.IMAGE);
-              if (!done) {
-                throw new Error("Incomplete");
-              }
-              return {
-                status: "completed",
-              };
-            } catch (err) {
-              return { status: "error" };
-            }
-          }}
+          processFileUpload={processUpload}
         />
       </DialogModal>
     </>

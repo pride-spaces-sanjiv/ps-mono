@@ -2,7 +2,12 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Upload, X, FileText, Image, Video, Music } from "lucide-react";
 import { cn } from "@/utils/cn";
-import { getFileIntoBase64, formatFileSize } from "@/utils/object/file";
+import {
+  getFileIntoBase64,
+  formatFileSize,
+  type FileSizeNotation,
+  resolveFileSize,
+} from "@/utils/object/file";
 import { allowedExtensions, type MediaType } from "@/utils/data/media";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -20,6 +25,7 @@ export type UploadedFile = {
 
 type Props = {
   fileType: MediaType;
+  sizeLimit: { val: number; notation?: FileSizeNotation };
   onFilesUpload: (files: UploadedFile[]) => any;
   processFileUpload: (
     file: UploadedFile,
@@ -86,6 +92,7 @@ export default function FileUpload({
   onFilesUpload,
   processFileUpload,
   simulationOptions = {},
+  sizeLimit = { val: 0 },
 }: Partial<Props>) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -199,6 +206,7 @@ export default function FileUpload({
     const fileArray = Array.from(newFiles)
       .map((file) => {
         const ext = file.name.match(/\.([^.]+)$/)?.[1];
+        // Validate files
         if (!ext) {
           toast.error("Got Unexpected file type");
           return undefined;
@@ -207,11 +215,21 @@ export default function FileUpload({
           toast.error(`.${ext} File type is not supported`);
           return undefined;
         }
+        const limitSize = resolveFileSize(sizeLimit.val, sizeLimit.notation);
+        if (file.size > limitSize) {
+          toast.error(
+            `File size exceeds the limit of ${formatFileSize(limitSize)}`,
+          );
+          return undefined;
+        }
+        if (!allowedExtensions[fileType]?.includes(ext)) {
+          toast.error(`.${ext} File type is not supported`);
+          return undefined;
+        }
+        // Return post validations
         return file;
       })
       .filter((file) => typeof file !== "undefined");
-
-    // Validate files
 
     // Handle
     const prs = await Promise.allSettled(
@@ -251,6 +269,7 @@ export default function FileUpload({
     });
   };
 
+  // Events
   const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
