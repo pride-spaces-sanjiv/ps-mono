@@ -68,6 +68,7 @@ export default function SpaceLayoutsUploadSection({
               [...prev, ...files].filter((file) => file.status === "completed"),
             );
           }}
+          sizeLimit={{ val: 10, notation: "mb" }}
           simulationOptions={{ estimatedTime: 20 }}
           processFileUpload={processUpload}
         />

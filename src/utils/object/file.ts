@@ -15,7 +15,15 @@ export const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
-export type FileSizeNotation = "M" | "G" | "T" | "K" | "B";
+type BaseFileSizeNotation<T extends string> =
+  | Uppercase<T>
+  | Lowercase<T>
+  | (Uppercase<T> extends "B" | "" | "BYTES"
+      ? never
+      : Uppercase<`${T}B`> | Lowercase<`${T}B`>);
+export type FileSizeNotation = BaseFileSizeNotation<
+  "M" | "G" | "T" | "K" | "B" | "bytes"
+>;
 /**
  * @param {FileSizeNotation} notation - Defaults to `"B"`
  */
@@ -31,7 +39,9 @@ export const resolveFileSize = (
   notation: FileSizeNotation = "B",
 ) => {
   if (val === 0) return 0;
-  const k = notationMults[notation];
+  const k =
+    notationMults[notation[0].toUpperCase() as keyof typeof notationMults] ||
+    notationMults.B;
   const bytes = val * k;
   return Number(parseFloat(bytes.toFixed(2)));
 };
