@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react";
 import { cn } from "@/utils/cn";
-import type { UploadedFile } from "@/components/file-upload";
+import type { UploadedFile } from "@/components/form/file-upload";
 import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/utils/object/file";
 import { Trash2, X } from "lucide-react";

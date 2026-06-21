@@ -32,7 +32,7 @@ import { compareFields } from "@/utils/object/compare";
 import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
 import { uploadImageFile } from "@/services/apis/admin/file";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
-import FileUpload, { type UploadedFile } from "@/components/file-upload";
+import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
 import { mediaTypes, type MediaType } from "@/utils/data/media";
 import { useMappedFilesState } from "@/services/hooks/use-file";
 import FilePreview from "@/components/file/preview";

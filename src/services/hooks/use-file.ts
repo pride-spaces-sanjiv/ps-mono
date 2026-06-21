@@ -1,4 +1,4 @@
-import type { UploadedFile } from "@/components/file-upload";
+import type { UploadedFile } from "@/components/form/file-upload";
 import { useMemo, useState } from "react";
 
 type Params<K extends string> = {
