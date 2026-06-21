@@ -317,6 +317,15 @@ export default function FileUpload({
             <h2 className="text-3xl font-semibold mb-2">{`Multi ${fileType.toUpperCase()} Upload`}</h2>
             <p className="text-muted-foreground text-lg">
               {`Drag & drop or click to upload multiple ${fileType}s`}
+              {!!sizeLimit?.val && (
+                <span className="block text-sm text-muted-foreground">
+                  {"("}Max file size:{" "}
+                  {formatFileSize(
+                    resolveFileSize(sizeLimit.val, sizeLimit.notation),
+                  )}
+                  {")"}
+                </span>
+              )}
             </p>
           </div>
 
