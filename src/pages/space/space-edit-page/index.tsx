@@ -30,7 +30,7 @@ import type { Dump } from "@/types/data/dump";
 import type { Space } from "@/types/data/spaces";
 import { compareFields } from "@/utils/object/compare";
 import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
-import { uploadImageFile } from "@/services/apis/admin/file";
+import { uploadImageFile, uploadLayoutFile } from "@/services/apis/admin/file";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
 import { mediaTypes, type MediaType } from "@/utils/data/media";
@@ -244,6 +244,11 @@ const SpaceEditPage = () => {
     useMutation({
       mutationFn: uploadImageFile,
     });
+  // File Layout Mutater
+  const { mutateAsync: layoutUploadMutater, isPending: layoutUploadPending } =
+    useMutation({
+      mutationFn: uploadLayoutFile,
+    });
 
   const { mutateAsync: approvalMutater, isPending: approvalPending } =
     useMutation({
@@ -328,7 +333,9 @@ const SpaceEditPage = () => {
       formData.append("id", file.id);
       formData.append("contentType", file.file.type);
       formData.append("fileType", fileType);
-      const res = await uploadImageFile({ body: formData });
+      const res = await (fileType === "image"
+        ? uploadImageFile({ body: formData })
+        : uploadLayoutFile({ body: formData }));
       if (res.status === 201 && res?.data?.data?.files) {
         const resFile = res.data?.data?.files[0];
         const oldFiles = watch("files", {});
@@ -1105,7 +1112,12 @@ const SpaceEditPage = () => {
 
               <ActionButton
                 type="submit"
-                loading={updateLoading || approvalPending}
+                loading={
+                  updateLoading ||
+                  approvalPending ||
+                  layoutUploadPending ||
+                  imageUploadPending
+                }
                 className="max-w-fit"
               >
                 {isDump ? "Approve" : "Update Centre"}
