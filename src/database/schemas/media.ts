@@ -1,7 +1,5 @@
 import { z } from "zod";
-import {
-  getUUIdSchema,
-} from "./string.js";
+import { getUUIdSchema } from "./string.js";
 import {
   allowedExtensions,
   mediaStatuses,

@@ -23,7 +23,8 @@ export const multerErrorMapping = {
   },
   LIMIT_UNEXPECTED_FILE: {
     errorType: "unexpected-file",
-    message: "Unexpected file field encountered. Please check the field name.",
+    message:
+      "Unexpected file encountered. Please check the file type and field name.",
   },
   LIMIT_FILE_SIZE: {
     errorType: "file-size-limit",
