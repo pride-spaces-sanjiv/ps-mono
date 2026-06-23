@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { MessageSquareWarning } from "lucide-react";
+import { ImagePlus, MessageSquareWarning } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
 import { useUser } from "@/services/hooks/use-user";
@@ -31,6 +31,10 @@ import type { Space } from "@/types/data/spaces";
 import { compareFields } from "@/utils/object/compare";
 import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
+import FileUpload from "@/components/file-upload";
+import { mediaTypes } from "@/utils/data/media";
+import { useMappedFilesState } from "@/services/hooks/use-file";
+import FilePreview from "@/components/file/preview";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -102,27 +106,27 @@ const SpaceEditPage = () => {
       ...mainChanges.allData,
       ...(locationChanges.allFields.length
         ? {
-          location: {
-            ...res?.data?.data?.location,
-            ...locationChanges.allData,
-          },
-        }
+            location: {
+              ...res?.data?.data?.location,
+              ...locationChanges.allData,
+            },
+          }
         : {}),
       ...(personChanges.allFields.length
         ? {
-          person: {
-            ...res?.data?.data?.person,
-            ...personChanges.allData,
-          },
-        }
+            person: {
+              ...res?.data?.data?.person,
+              ...personChanges.allData,
+            },
+          }
         : {}),
       ...(pricingChanges.allFields.length
         ? {
-          pricing: {
-            ...res?.data?.data?.pricing,
-            ...pricingChanges.allData,
-          },
-        }
+            pricing: {
+              ...res?.data?.data?.pricing,
+              ...pricingChanges.allData,
+            },
+          }
         : {}),
     };
   }, [
@@ -193,6 +197,12 @@ const SpaceEditPage = () => {
   const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
   const [correctionComment, setCorrectionComment] = useState("");
   const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = useState(false);
+  const {
+    images: [images, setImages],
+    layouts: [layouts, setLayouts],
+  } = useMappedFilesState({
+    names: ["images", "layouts"],
+  });
 
   // useEffect(() => {
   //   if (data) {
@@ -863,6 +873,51 @@ const SpaceEditPage = () => {
             error={errors.location?.address}
             {...changedFieldProps(locationChanges.allData, "address")}
           />
+
+          {/* Images */}
+          <FormSectionTitle>Images</FormSectionTitle>
+          <div className="col-span-full flex gap-2 flex-wrap">
+            {images.map((img, i) => (
+              <FilePreview
+                key={`image-${i}`}
+                file={img}
+                canPreview={true}
+                renderPreview={(file) => (
+                  <img
+                    src={file?.imageSrc}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                )}
+              />
+            ))}
+          </div>
+          <DialogModal
+            useDefaultLayout={false}
+            triggerProps={{
+              children: (
+                <ActionButton
+                  variant={"secondary"}
+                  className="max-w-fit px-5 py-6"
+                >
+                  <div className="flex gap-2 items-center">
+                    Upload Images <ImagePlus />
+                  </div>
+                </ActionButton>
+              ),
+            }}
+            contentProps={{
+              className: "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none",
+            }}
+          >
+            <FileUpload
+              fileType={mediaTypes.IMAGE}
+              onFilesUpload={(files) => {
+                console.log("All uploaded images :", files);
+                setImages(files);
+              }}
+            />
+          </DialogModal>
 
           {/* SECTION: Centre Point of Contact */}
 

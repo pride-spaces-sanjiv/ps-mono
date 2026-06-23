@@ -23,10 +23,7 @@ type ListRes<T> = GeneralResponseWithError<
 >;
 
 const listUrl = (param?: { url?: string; query?: Record<string, any> }) =>
-  (`/` + (param?.url || "") + queryToString(param?.query)).replace(
-    /\/+/g,
-    "/",
-  );
+  (`/` + (param?.url || "") + queryToString(param?.query)).replace(/\/+/g, "/");
 
 export const getBuilders = APIBodyValidationWrapper({
   handle: async (param, config) => {
