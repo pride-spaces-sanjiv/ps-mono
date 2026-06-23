@@ -19,7 +19,10 @@ export default function Layout({
       <AppSidebar />
       <main
         {...props}
-        className={cn("relative h-full w-full grow-0", props?.className)}
+        className={cn(
+          "relative h-full min-w-0 w-full grow overflow-x-hidden",
+          props?.className,
+        )}
       >
         <SidebarTrigger
           className={cn(

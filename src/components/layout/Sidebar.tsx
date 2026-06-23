@@ -23,7 +23,6 @@ import {
   GlobeIcon,
   Home,
   LogOutIcon,
-  Settings,
   UserIcon,
   UsersIcon,
   type LucideIcon,
@@ -113,9 +112,9 @@ const items: SidebarItem[] = [
     icon: UserIcon,
   },
   {
-    title: "Settings",
+    title: "Profile",
     url: "/settings",
-    icon: Settings,
+    icon: UserIcon,
   },
 ];
 

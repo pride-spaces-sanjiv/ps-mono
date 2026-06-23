@@ -40,6 +40,8 @@ const OperatorEditPage = lazy(
 );
 // Notifications
 const NotificationsPage = lazy(() => import("@/pages/notifications"));
+// Profile
+const Profile = lazy(() => import("@/pages/settings"));
 // Amenity
 const Amenities = lazy(() => import("@/pages/amenities"));
 const CreateAmenity = lazy(() => import("@/pages/amenities/create"));
@@ -174,6 +176,15 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <AutoNavigateRender El={<NotificationsPage />} />
+            </SuspensedView>
+          }
+        />
+        {/* Profile */}
+        <Route
+          path="/settings"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<Profile />} />
             </SuspensedView>
           }
         />
