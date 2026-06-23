@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react";
 import { cn } from "@/utils/cn";
-import type { UploadedFile } from "@/components/file-upload";
+import type { UploadedFile } from "@/components/form/file-upload";
 import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/utils/object/file";
 import { Trash2, X } from "lucide-react";
@@ -101,6 +101,7 @@ export default function FilePreview({
         </div>
         <Button
           variant={"destructive"}
+          type="button"
           {...delBtnProps}
           className={cn(
             "absolute size-fit has-[>svg]:p-0.5 aspect-square rounded-[50%] bottom-[-4px] opacity-0 right-[2px]",
