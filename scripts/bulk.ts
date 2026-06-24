@@ -32,8 +32,9 @@ const { default: convertedParsed } = await import(
 
 // const csvFile =
 //   "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
-const csvFile =
-  "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - KA Operator HQ.csv";
+// const csvFile =
+//   "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - KA Operator HQ.csv";
+const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centes New.csv";
 
 // npm run test scripts/bulk -- --env=dev
 

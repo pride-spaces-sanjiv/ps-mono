@@ -15,24 +15,45 @@ import {
 } from "@/utils/string/validify-string.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
-import { Document, Types } from "mongoose";
+import { Document, RootFilterQuery, Types } from "mongoose";
+import { Amenity } from "@/database/models/amenities.js";
+import { Space } from "@/database/models/space.js";
+import { SpaceSchema } from "@/database/schemas/space.js";
+import moment from "moment";
 
 const CSVHeaders = {
-  OPERATORREGISTEREDNAME: "operatorregisteredname",
-  GST: "gst",
-  OPERATORBRANDNAME: "operatorbrandname",
   OPERATORSLUG: "operatorslug",
-  OPERATORHQADDRESS: "operatorhqaddress",
-  STATE: "state",
+  OPERATORBRANDNAME: "operatorbrandname",
+  CENTRENAME: "centrename",
+  ADDRESS: "address",
+  AREAMICROMARKET: "areamicromarket",
   CITY: "city",
-  ZIPPINCODE: "zippincode",
-  HQEMAILFORLOGINID: "hqemailforloginid",
-  HQPOCEMAIL: "hqpocemail",
-  HQPOCMOBILENO: "hqpocmobileno",
-  HQLANDLINECUSTOMERCARENO: "hqlandlinecustomercareno",
-  HQPOCNAME: "hqpocname",
-  HQPOCDESIGNATION: "hqpocdesignation",
-  CIN: "cin",
+  BUILDINGGRADE: "buildinggrade",
+  SEZNONSEZ: "seznonsez",
+  OPERATIONALSINCE: "operationalsince",
+  TOTALSEATS: "totalseats",
+  CENTREAREAINSQFTAPPROX: "centreareainsqftapprox",
+  TYPE: "type",
+  STATE: "state",
+  CENTERPOCNAME: "centerpocname",
+  CENTERPOCEMAIL: "centerpocemail",
+  CENTERPOCCONTACTNO: "centerpoccontactno",
+  LOCKIN: "lockin",
+  NOTICEPERIOD: "noticeperiod",
+  SECURITYDEPOSIT: "securitydeposit",
+  OPENINGDAY: "openingday",
+  CLOSINGDAY: "closingday",
+  OPENINGTIME: "openingtime",
+  CLOSINGTIME: "closingtime",
+  CATEGORY: "category",
+  DAYPASS: "daypass",
+  MEETINGROOM: "meetingroom",
+  DEDICATEDDESK: "dedicateddesk",
+  FLEXIHOTDESK: "flexihotdesk",
+  PERSEAT: "perseat",
+  VOSERVICE: "voservice",
+  VOPRICE: "voprice",
+  WORKSTATIONSIZE: "workstationsize",
 } as const;
 type CSVHeadersValues = (typeof CSVHeaders)[keyof typeof CSVHeaders];
 type RowData = Record<CSVHeadersValues, string | null | undefined>;
@@ -68,6 +89,32 @@ const extractCSV = (csvFile: string) => {
   });
 };
 
+// Get states data
+const getStatesData = async () => {
+  const states = await State.find({}).lean();
+  return states;
+};
+type StatesData = Awaited<ReturnType<typeof getStatesData>>;
+
+// Get Amenities data
+const getAmenitiesData = async () => {
+  const amenities = await Amenity.find({}).lean();
+  return amenities;
+};
+type AmenitiesData = Awaited<ReturnType<typeof getAmenitiesData>>;
+
+// Get Operators data
+const getOperatorsData = async (
+  options: Partial<{
+    filter: RootFilterQuery<ModelToRaw<typeof Operator>>;
+  }> = {},
+) => {
+  const operators = await Operator.find(options.filter || {}).lean();
+  return operators;
+};
+type OperatorsData = Awaited<ReturnType<typeof getOperatorsData>>;
+
+// Slug gen
 const generateSlug = (row: RowData) => {
   const slug =
     (row.operatorbrandname?.trim() || row.operatorregisteredname?.trim())
@@ -88,13 +135,6 @@ const generateSlugs = (rows: RowData[]) => {
   };
 };
 
-// Get states data
-const getStatesData = async () => {
-  const states = await State.find({}).lean();
-  return states;
-};
-type StatesData = Awaited<ReturnType<typeof getStatesData>>;
-
 const convertAsPhoneNo = (val: string) => {
   val =
     `+91${validifyStringValues(val?.replace(/[^0-9]+/g, "").match(/\d{8,10}$/)?.[0]).trim()}`
@@ -107,6 +147,7 @@ const convertAsPhoneNo = (val: string) => {
 const getBranchesData = (
   rows: (RowData & { slug: string })[],
   states: StatesData,
+  amenities: AmenitiesData,
 ) => {
   const branches = rows
     .map((row) => ({
@@ -168,31 +209,56 @@ const ensureSinglePrimaryBranch = (branches: BranchSchema[]) => {
   return ensured;
 };
 
-const prepareData = (
-  row: RowData & { slug: string; branches: BranchSchema[] },
-) => {
+const generateGrade = (grade?: string | null) => {
+  const str = validifyStringValues(grade)
+    .toLowerCase()
+    .replace(/[^A-z0-9\-]/g, "");
+  const val: SpaceSchema["grade"] =
+    str.includes(`gradea+`) || str.match(/multi.*tower.*tech.*park/)
+      ? "A+"
+      : str.includes(`gradea`)
+        ? "A"
+        : "B";
+  return val;
+};
+
+const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
   try {
-    const prepared: Partial<OperatorSchema> = {
-      name: validifyStringValues(row.operatorregisteredname),
-      brandName: validifyStringValues(row.operatorbrandname),
-      email: validifyStringValues(row.hqemailforloginid || row.hqpocemail),
-      slug: row.slug,
-      password: encodeCrypto("Pass123@" + row.slug),
-      gstNo: validifyStringValues(row.gst),
-      cinNo: validifyStringValues(row.cin),
-      headquarter: {
-        address: validifyStringValues(row.operatorhqaddress),
+    const opPerson =
+      operator?.branches.find((br) => br.isPrimary)?.person || operator?.person;
+    const prepared: Partial<SpaceSchema> = {
+      name: validifyStringValues(row.centrename),
+      // email: validifyStringValues(row.hqemailforloginid || row.hqpocemail),
+      person: {
+        name: validifyStringValues(row.centerpocname || opPerson?.name),
+        email: validifyStringValues(row.centerpocemail || opPerson?.email),
+        role: validifyStringValues(opPerson?.role),
         contactNo: convertAsPhoneNo(
-          validifyStringValues(row.hqlandlinecustomercareno),
+          validifyStringValues(row.centerpoccontactno || opPerson?.contactNo),
         ),
       },
-      person: {
-        name: validifyStringValues(row.hqpocname) || "Admin",
-        email: validifyStringValues(row.hqpocemail || row.hqemailforloginid),
-        role: validifyStringValues(row.hqpocdesignation) || "Admin",
-        contactNo: convertAsPhoneNo(validifyStringValues(row.hqpocmobileno)),
+      location: {
+        address: validifyStringValues(row.address),
+        area: validifyStringValues(row.areamicromarket),
+        state: validifyStringValues(row.state),
+        city: validifyStringValues(row.city),
+        postalCode:
+          validifyStringValues(row.address).match(/ ([0-9]{6}) /)?.[1] || "",
+        country: "India",
+        lat: 0,
+        lng: 0,
       },
-      branches: ensureSinglePrimaryBranch(row.branches),
+      // Create a util to generate from open days
+      openDays: Array(6)
+        .fill(false)
+        .map((_, i) => i + 1),
+      openTime: moment(row.openingtime, "hh:mm", true).isValid()
+        ? moment(row.openingtime, "hh:mm", true).toDate()
+        : undefined,
+      closeTime: moment(row.closingtime, "hh:mm", true).isValid()
+        ? moment(row.closingtime, "hh:mm", true).toDate()
+        : undefined,
+      grade: generateGrade(row.buildinggrade),
     };
     return prepared;
   } catch (err) {
@@ -200,74 +266,46 @@ const prepareData = (
   }
 };
 
-export const parseBulkOperatorsData = async (fileName: string) => {
+export const parseBulkSpacesData = async (fileName: string) => {
   try {
     const rows = await extractCSV(fileName);
     const statesData = await getStatesData();
+    const amenitiesData = await getAmenitiesData();
+
     const sluggedRows = rows
       .map((row) => ({
         ...row,
-        slug: generateSlug(row),
-      }))
-      .reduce(
-        (prev, curr, i, self) => {
-          const foundInd = prev.findIndex((dt) => dt.slug === curr.slug);
-
-          // Update branches only if found
-          if (foundInd >= 0) {
-            const branches = removeDuplicateBranches(
-              getBranchesData([curr], statesData),
-              true,
-            );
-            prev[foundInd].branches.push(...branches);
-          }
-          // Add new branches if not found
-          else {
-            prev.push({
-              ...curr,
-              branches: removeDuplicateBranches(
-                getBranchesData([curr], statesData),
-                true,
-              ),
-            });
-          }
-          return prev;
-        },
-        [] as (RowData & { slug: string; branches: BranchSchema[] })[],
-      )
-      .map((row) => ({
-        ...row,
-        branches: removeDuplicateBranches(row.branches, true),
+        // slug: generateSlug(row),
       }))
       .map((row) => prepareData(row))
       .filter((row) => !!row);
     return sluggedRows;
   } catch (err) {
-    console.error("Failed to parse bulk operators data:", err);
+    console.error("Failed to parse bulk spaces data:", err);
     return null;
   }
 };
 
-export const pushBulkOperatorsData = async (
-  operators: OperatorSchema[],
+export const pushBulkSpacesData = async (
+  spaces: SpaceSchema[],
   fresh = false,
 ) => {
   try {
     if (fresh) {
-      await Operator.deleteMany({});
+      await Space.deleteMany({});
     }
     // Try pushing data
-    const insertedDocs = [] as ModelToRaw<typeof Operator>[];
+    const insertedDocs = [] as ModelToRaw<typeof Space>[];
     const insertedErrors = [] as Error[];
     try {
-      const insertedRes = await Operator.insertMany(
-        operators.map((op) => op),
+      const insertedRes = await Space.insertMany(
+        spaces.map((sp) => sp),
         { ordered: false, rawResult: true },
       );
       insertedDocs.push(
         ...insertedRes.mongoose.results
           .filter<
-            Document<Types.ObjectId, any, ModelToRaw<typeof Operator>>
+            Document<Types.ObjectId, any, ModelToRaw<typeof Space>>
           >((res) => res instanceof Document)
           .map((doc) => doc.toObject()),
       );
@@ -275,62 +313,62 @@ export const pushBulkOperatorsData = async (
         ...insertedRes.mongoose.results.filter((res) => res instanceof Error),
       );
     } catch (err) {
-      console.log("Failure insert operators :", err);
+      console.log("Failure insert spaces :", err);
     }
 
-    console.log("Bulk inserted :", insertedDocs.length, "/", operators.length);
+    console.log("Bulk inserted :", insertedDocs.length, "/", spaces.length);
     console.log(
       "Bulk inserted errors :",
       insertedErrors.map((err) => err.message),
     );
     const insertedDocsSlugs = insertedDocs.map((doc) => doc.name);
-    const remOperators = operators.filter(
-      (op) => !insertedDocsSlugs.includes(op.slug),
+    const remSpaces = spaces.filter(
+      (sp) => !insertedDocsSlugs.includes(sp.slug),
     );
 
-    // Updating remaningOperators
+    // Updating remaningSpaces
     console.log(
-      "Remaining operators to update:",
-      remOperators.length,
+      "Remaining spaces to update:",
+      remSpaces.length,
       "/",
-      operators.length,
+      spaces.length,
     );
-    if (remOperators.length > 0) {
+    if (remSpaces.length > 0) {
       // Get old data
-      const oldDocs = await Operator.find({
-        slug: { $in: remOperators.map((op) => op.slug) },
+      const oldDocs = await Space.find({
+        slug: { $in: remSpaces.map((sp) => sp.slug) },
       }).lean();
 
       // Cleaning branches data
-      for (let i = 0; i < remOperators.length; i++) {
-        const op = remOperators[i];
+      for (let i = 0; i < remSpaces.length; i++) {
+        const sp = remSpaces[i];
         const oldBranches =
           (oldDocs
-            .find((doc) => doc.slug === op.slug)
+            .find((doc) => doc.slug === sp.slug)
             ?.branches?.map((br) => br) as BranchSchema[]) || [];
         const newBranches = ensureSinglePrimaryBranch(
-          removeDuplicateBranches([...oldBranches, ...(op.branches || [])]),
+          removeDuplicateBranches([...oldBranches, ...(sp.branches || [])]),
         );
-        remOperators[i].branches = newBranches;
+        remSpaces[i].branches = newBranches;
       }
-      const updateRes = await Operator.bulkWrite(
-        remOperators.map((op) => ({
+      const updateRes = await Space.bulkWrite(
+        remSpaces.map((sp) => ({
           updateOne: {
-            filter: { slug: op.slug },
-            update: { branches: op.branches },
+            filter: { slug: sp.slug },
+            update: { branches: sp.branches },
           },
         })),
       );
       console.log(
-        "Updated operators :",
+        "Updated spaces :",
         updateRes.modifiedCount,
         "/",
-        remOperators.length,
+        remSpaces.length,
         "/",
-        operators.length,
+        spaces.length,
       );
     }
   } catch (err: any) {
-    console.error("Failed to push bulk operators data:", err);
+    console.error("Failed to push bulk spaces data:", err);
   }
 };
