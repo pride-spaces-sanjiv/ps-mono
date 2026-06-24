@@ -18,6 +18,7 @@ import {
   parseBulkOperatorsData,
   pushBulkOperatorsData,
 } from "../src/utils/scripts/bulk/operator";
+import { parseBulkSpacesData } from "../src/utils/scripts/bulk/space.js";
 import { getSpaceCountsOfOperator } from "../src/utils/mongoose/relations/space-operator.js";
 const { default: parsedData } = await import("../data/parsed-data.json", {
   assert: { type: "json" },
@@ -116,11 +117,24 @@ const convertData = (data: (typeof parsedData)[number]) => {
 //   "./data/converted-spaces.json",
 //   JSON.stringify(convertedSpaces, null, 2),
 // );
+// Operator
+// console.time("Scripting Time :");
+// const bulkedOperators = await parseBulkOperatorsData(csvFile);
+// fs.writeFileSync(
+//   "./data/bulked-operators.json",
+//   JSON.stringify(bulkedOperators, null, 2),
+// );
+// console.timeEnd("Scripting Time :");
+// console.time("Push Time :");
+// bulkedOperators && (await pushBulkOperatorsData(bulkedOperators));
+// console.timeEnd("Push Time :");
+
+// Spaces
 console.time("Scripting Time :");
-const bulkedOperators = await parseBulkOperatorsData(csvFile);
+const bulkedSpaces = await parseBulkSpacesData(csvFile);
 fs.writeFileSync(
-  "./data/bulked-operators.json",
-  JSON.stringify(bulkedOperators, null, 2),
+  "./data/bulked-spaces.json",
+  JSON.stringify(bulkedSpaces, null, 2),
 );
 console.timeEnd("Scripting Time :");
 // console.time("Push Time :");

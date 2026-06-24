@@ -20,6 +20,7 @@ import { Amenity } from "@/database/models/amenities.js";
 import { Space } from "@/database/models/space.js";
 import { SpaceSchema } from "@/database/schemas/space.js";
 import moment from "moment";
+import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 
 const CSVHeaders = {
   OPERATORSLUG: "operatorslug",
@@ -57,6 +58,9 @@ const CSVHeaders = {
 } as const;
 type CSVHeadersValues = (typeof CSVHeaders)[keyof typeof CSVHeaders];
 type RowData = Record<CSVHeadersValues, string | null | undefined>;
+
+// Objects
+const spaceCounts = {} as Record<string, number>;
 
 const extractCSV = (csvFile: string) => {
   const rows: RowData[] = [];
@@ -115,24 +119,20 @@ const getOperatorsData = async (
 type OperatorsData = Awaited<ReturnType<typeof getOperatorsData>>;
 
 // Slug gen
-const generateSlug = (row: RowData) => {
-  const slug =
-    (row.operatorbrandname?.trim() || row.operatorregisteredname?.trim())
-      ?.toLowerCase()
-      .replace(/( |[^A-z0-9])+/g, "-") || "";
-  return !invalidValues.includes(slug as (typeof invalidValues)[number])
-    ? slug
-    : "";
-};
-
-const generateSlugs = (rows: RowData[]) => {
-  const slugs = rows
-    .map((dt) => generateSlug(dt))
-    .filter((slug): slug is string => !!slug);
-  return {
-    slugs,
-    metrics: { slugsCount: slugs.length, originalCount: rows.length },
-  };
+const generateSlug = (
+  row: RowData,
+  ind: number,
+  operator?: OperatorsData[number],
+) => {
+  if (operator?.slug) {
+    const slug =
+      `${operator.slug}-${operator.branches.find((br) => br.name.toLowerCase().trim() === row.state?.trim().toLowerCase())?.code || ""}-${(spaceCounts[operator._id.toHexString()] || 0) + ind + 1}`.replace(
+        /\-+/g,
+        "-",
+      );
+    return slug;
+  }
+  return "";
 };
 
 const convertAsPhoneNo = (val: string) => {
@@ -143,72 +143,7 @@ const convertAsPhoneNo = (val: string) => {
   return val;
 };
 
-// Make branch
-const getBranchesData = (
-  rows: (RowData & { slug: string })[],
-  states: StatesData,
-  amenities: AmenitiesData,
-) => {
-  const branches = rows
-    .map((row) => ({
-      code:
-        states.find(
-          (st) =>
-            st.name.trim().toLowerCase() === row.state?.trim().toLowerCase(),
-        )?.code || "",
-      name: validifyStringValues(row.state),
-      city: validifyStringValues(row.city),
-      postalCode: validifyStringValues(row.zippincode),
-      address: validifyStringValues(row.operatorhqaddress),
-      isPrimary: true,
-      gstNo: validifyStringValues(row.gst),
-      person: {
-        name: validifyStringValues(row.hqpocname) || undefined,
-        email:
-          validifyStringValues(row.hqpocemail || row.hqemailforloginid) ||
-          undefined,
-        role: validifyStringValues(row.hqpocdesignation) || undefined,
-        contactNo: convertAsPhoneNo(validifyStringValues(row.hqpocmobileno)),
-      },
-    }))
-    .filter((br) => br.code.trim());
-  return branches;
-};
-
-const removeDuplicateBranches = (
-  branches: BranchSchema[],
-  storeLatest = false,
-) => {
-  const unique = (storeLatest ? branches.toReversed() : branches).reduce(
-    (prev, curr, i, self) => {
-      if (!prev.some((br) => br.code === curr.code)) {
-        prev.push(curr);
-      }
-      return prev;
-    },
-    [] as BranchSchema[],
-  );
-  return unique;
-};
-
-const ensureSinglePrimaryBranch = (branches: BranchSchema[]) => {
-  let ensured = [...branches];
-
-  // If no primary
-  if (branches.filter((br) => br.isPrimary).length < 1 && branches.length > 0) {
-    ensured[0] = { ...ensured[0], isPrimary: true };
-  }
-  // If more than 1 primary found
-  if (branches.filter((br) => br.isPrimary).length > 1) {
-    const firstPrimaryInd = branches.findIndex((br) => br.isPrimary);
-    ensured = ensured.map((br, i) => ({
-      ...br,
-      isPrimary: i === firstPrimaryInd,
-    }));
-  }
-  return ensured;
-};
-
+// Utils
 const generateGrade = (grade?: string | null) => {
   const str = validifyStringValues(grade)
     .toLowerCase()
@@ -222,11 +157,96 @@ const generateGrade = (grade?: string | null) => {
   return val;
 };
 
+const generateSpaceType = (spaceType?: string | null) => {
+  const str = validifyStringValues(spaceType)
+    .toLowerCase()
+    .replace(/[^A-z0-9\-]/g, "");
+  const val: SpaceSchema["spaceType"] =
+    str.includes(`flex`) && str.includes("mos")
+      ? "Both"
+      : str.includes(`mos`)
+        ? "MOS"
+        : "Flex";
+  return val;
+};
+
+const generateCategory = (cat?: string | null) => {
+  const str = validifyStringValues(cat)
+    .toLowerCase()
+    .replace(/[^A-z0-9\-]/g, "");
+  const val: SpaceSchema["category"] = str.includes(`elite`)
+    ? "Elite"
+    : str.includes(`apex`)
+      ? "Apex"
+      : "Classic";
+  return val;
+};
+
+const generatePricing = (row?: RowData) => {
+  const pricing: SpaceSchema["pricing"] = {
+    dayPass:
+      Number(validifyStringValues(row?.daypass).replace(/[^0-9]/g, "")) || 0,
+    perSeat:
+      Number(validifyStringValues(row?.perseat).replace(/[^0-9]/g, "")) || 0,
+    dedicatedDesk:
+      Number(validifyStringValues(row?.dedicateddesk).replace(/[^0-9]/g, "")) ||
+      0,
+    meetingRoom:
+      Number(validifyStringValues(row?.meetingroom).replace(/[^0-9]/g, "")) ||
+      0,
+    flexiDesk:
+      Number(validifyStringValues(row?.flexihotdesk).replace(/[^0-9]/g, "")) ||
+      0,
+    privateCabin: 0,
+  };
+  return pricing;
+};
+
+const generateWorkSizes = (str?: string | null) => {
+  const sizes =
+    str
+      ?.replace(/ +/g, "")
+      .toLowerCase()
+      .split(",")
+      .filter((s) => s.match(/[0-9]+([\`\'\"]|)x[0-9]+([\`\'\"]|)/))
+      .map((s) => {
+        const matches = s.match(/([0-9]+)([\`\'\"]|)x([0-9]+)([\`\'\"]|)/);
+        if (matches) {
+          const height = Number(matches?.[1]);
+          const width = Number(matches?.[3]);
+          const sym = matches?.[2];
+          if (sym.trim()) {
+            return `${height * 300}x${width * 300}`;
+          }
+          return `${height}x${width}`;
+        }
+        return "";
+      })
+      .filter((s) => s) || [];
+  return sizes as SpaceSchema["workingSizes"];
+};
+
+const generateTimedDate = (str?: string | null) => {
+  const match = str
+    ?.trim()
+    .replace(/ +/g, "")
+    .match(/([0-9]{1,2}:[0-9]{1,2})/);
+  if (match) {
+    const date = moment();
+    const [hours, minutes] = match[1].split(":").map(Number);
+    date.hours(hours);
+    date.minutes(minutes);
+    return date.toDate();
+  }
+  return undefined;
+};
+
 const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
   try {
     const opPerson =
       operator?.branches.find((br) => br.isPrimary)?.person || operator?.person;
     const prepared: Partial<SpaceSchema> = {
+      operator: operator?._id.toHexString() || "",
       name: validifyStringValues(row.centrename),
       // email: validifyStringValues(row.hqemailforloginid || row.hqpocemail),
       person: {
@@ -243,7 +263,9 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
         state: validifyStringValues(row.state),
         city: validifyStringValues(row.city),
         postalCode:
-          validifyStringValues(row.address).match(/ ([0-9]{6}) /)?.[1] || "",
+          validifyStringValues(row.address).match(
+            /([^0-9A-z]| )([0-9]{6})([^0-9]|)/,
+          )?.[2] || "",
         country: "India",
         lat: 0,
         lng: 0,
@@ -252,13 +274,24 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
       openDays: Array(6)
         .fill(false)
         .map((_, i) => i + 1),
-      openTime: moment(row.openingtime, "hh:mm", true).isValid()
-        ? moment(row.openingtime, "hh:mm", true).toDate()
-        : undefined,
-      closeTime: moment(row.closingtime, "hh:mm", true).isValid()
-        ? moment(row.closingtime, "hh:mm", true).toDate()
-        : undefined,
+      openTime: generateTimedDate(row.openingtime),
+      closeTime: generateTimedDate(row.closingtime),
       grade: generateGrade(row.buildinggrade),
+      totalSeats:
+        Number(validifyStringValues(row.totalseats).replace(/[^0-9]/g, "")) ||
+        0,
+      bookedSeats: 0,
+      spaceType: generateSpaceType(row.buildinggrade),
+      category: generateCategory(row.category),
+      pricing: generatePricing(row),
+      area:
+        Number(
+          validifyStringValues(row.centreareainsqftapprox).replace(
+            /[^0-9]/g,
+            "",
+          ),
+        ) || 0,
+      workingSizes: generateWorkSizes(row.workstationsize),
     };
     return prepared;
   } catch (err) {
@@ -271,14 +304,41 @@ export const parseBulkSpacesData = async (fileName: string) => {
     const rows = await extractCSV(fileName);
     const statesData = await getStatesData();
     const amenitiesData = await getAmenitiesData();
+    const operatorsData = await getOperatorsData();
+
+    const spaceCountsRes = await getSpaceCountsOfOperator(
+      operatorsData.map((op) => op._id.toHexString()),
+    );
+    for (const key in spaceCountsRes) {
+      spaceCounts[key] = spaceCountsRes[key];
+    }
 
     const sluggedRows = rows
-      .map((row) => ({
-        ...row,
-        // slug: generateSlug(row),
-      }))
-      .map((row) => prepareData(row))
-      .filter((row) => !!row);
+      .map((row) => {
+        const op = operatorsData.find(
+          (op) =>
+            op.slug ===
+              validifyStringValues(row.operatorslug).trim().toLowerCase() ||
+            op.brandName?.trim().toLowerCase().replace(/ +/g, "") ===
+              validifyStringValues(row.operatorbrandname)
+                .trim()
+                .toLowerCase()
+                .replace(/ +/g, ""),
+        );
+        const prepared = prepareData(row, op);
+        const data = {
+          row,
+          prepared,
+          operator: op,
+        };
+        return data;
+      })
+      .filter((dt) => !!dt.prepared)
+      .map((dt, i) => ({
+        ...dt.prepared,
+        slug: generateSlug(dt.row, i, dt.operator),
+      }));
+
     return sluggedRows;
   } catch (err) {
     console.error("Failed to parse bulk spaces data:", err);
@@ -286,89 +346,89 @@ export const parseBulkSpacesData = async (fileName: string) => {
   }
 };
 
-export const pushBulkSpacesData = async (
-  spaces: SpaceSchema[],
-  fresh = false,
-) => {
-  try {
-    if (fresh) {
-      await Space.deleteMany({});
-    }
-    // Try pushing data
-    const insertedDocs = [] as ModelToRaw<typeof Space>[];
-    const insertedErrors = [] as Error[];
-    try {
-      const insertedRes = await Space.insertMany(
-        spaces.map((sp) => sp),
-        { ordered: false, rawResult: true },
-      );
-      insertedDocs.push(
-        ...insertedRes.mongoose.results
-          .filter<
-            Document<Types.ObjectId, any, ModelToRaw<typeof Space>>
-          >((res) => res instanceof Document)
-          .map((doc) => doc.toObject()),
-      );
-      insertedErrors.push(
-        ...insertedRes.mongoose.results.filter((res) => res instanceof Error),
-      );
-    } catch (err) {
-      console.log("Failure insert spaces :", err);
-    }
+// export const pushBulkSpacesData = async (
+//   spaces: SpaceSchema[],
+//   fresh = false,
+// ) => {
+//   try {
+//     if (fresh) {
+//       await Space.deleteMany({});
+//     }
+//     // Try pushing data
+//     const insertedDocs = [] as ModelToRaw<typeof Space>[];
+//     const insertedErrors = [] as Error[];
+//     try {
+//       const insertedRes = await Space.insertMany(
+//         spaces.map((sp) => sp),
+//         { ordered: false, rawResult: true },
+//       );
+//       insertedDocs.push(
+//         ...insertedRes.mongoose.results
+//           .filter<
+//             Document<Types.ObjectId, any, ModelToRaw<typeof Space>>
+//           >((res) => res instanceof Document)
+//           .map((doc) => doc.toObject()),
+//       );
+//       insertedErrors.push(
+//         ...insertedRes.mongoose.results.filter((res) => res instanceof Error),
+//       );
+//     } catch (err) {
+//       console.log("Failure insert spaces :", err);
+//     }
 
-    console.log("Bulk inserted :", insertedDocs.length, "/", spaces.length);
-    console.log(
-      "Bulk inserted errors :",
-      insertedErrors.map((err) => err.message),
-    );
-    const insertedDocsSlugs = insertedDocs.map((doc) => doc.name);
-    const remSpaces = spaces.filter(
-      (sp) => !insertedDocsSlugs.includes(sp.slug),
-    );
+//     console.log("Bulk inserted :", insertedDocs.length, "/", spaces.length);
+//     console.log(
+//       "Bulk inserted errors :",
+//       insertedErrors.map((err) => err.message),
+//     );
+//     const insertedDocsSlugs = insertedDocs.map((doc) => doc.name);
+//     const remSpaces = spaces.filter(
+//       (sp) => !insertedDocsSlugs.includes(sp.slug),
+//     );
 
-    // Updating remaningSpaces
-    console.log(
-      "Remaining spaces to update:",
-      remSpaces.length,
-      "/",
-      spaces.length,
-    );
-    if (remSpaces.length > 0) {
-      // Get old data
-      const oldDocs = await Space.find({
-        slug: { $in: remSpaces.map((sp) => sp.slug) },
-      }).lean();
+//     // Updating remaningSpaces
+//     console.log(
+//       "Remaining spaces to update:",
+//       remSpaces.length,
+//       "/",
+//       spaces.length,
+//     );
+//     if (remSpaces.length > 0) {
+//       // Get old data
+//       const oldDocs = await Space.find({
+//         slug: { $in: remSpaces.map((sp) => sp.slug) },
+//       }).lean();
 
-      // Cleaning branches data
-      for (let i = 0; i < remSpaces.length; i++) {
-        const sp = remSpaces[i];
-        const oldBranches =
-          (oldDocs
-            .find((doc) => doc.slug === sp.slug)
-            ?.branches?.map((br) => br) as BranchSchema[]) || [];
-        const newBranches = ensureSinglePrimaryBranch(
-          removeDuplicateBranches([...oldBranches, ...(sp.branches || [])]),
-        );
-        remSpaces[i].branches = newBranches;
-      }
-      const updateRes = await Space.bulkWrite(
-        remSpaces.map((sp) => ({
-          updateOne: {
-            filter: { slug: sp.slug },
-            update: { branches: sp.branches },
-          },
-        })),
-      );
-      console.log(
-        "Updated spaces :",
-        updateRes.modifiedCount,
-        "/",
-        remSpaces.length,
-        "/",
-        spaces.length,
-      );
-    }
-  } catch (err: any) {
-    console.error("Failed to push bulk spaces data:", err);
-  }
-};
+//       // Cleaning branches data
+//       for (let i = 0; i < remSpaces.length; i++) {
+//         const sp = remSpaces[i];
+//         const oldBranches =
+//           (oldDocs
+//             .find((doc) => doc.slug === sp.slug)
+//             ?.branches?.map((br) => br) as BranchSchema[]) || [];
+//         const newBranches = ensureSinglePrimaryBranch(
+//           removeDuplicateBranches([...oldBranches, ...(sp.branches || [])]),
+//         );
+//         remSpaces[i].branches = newBranches;
+//       }
+//       const updateRes = await Space.bulkWrite(
+//         remSpaces.map((sp) => ({
+//           updateOne: {
+//             filter: { slug: sp.slug },
+//             update: { branches: sp.branches },
+//           },
+//         })),
+//       );
+//       console.log(
+//         "Updated spaces :",
+//         updateRes.modifiedCount,
+//         "/",
+//         remSpaces.length,
+//         "/",
+//         spaces.length,
+//       );
+//     }
+//   } catch (err: any) {
+//     console.error("Failed to push bulk spaces data:", err);
+//   }
+// };
