@@ -20,7 +20,7 @@ export default function Layout({
       <main
         {...props}
         className={cn(
-          "relative h-full min-w-0 w-full grow overflow-x-hidden",
+          "relative h-full w-full overflow-x-hidden",
           props?.className,
         )}
       >

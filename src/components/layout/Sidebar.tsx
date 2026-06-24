@@ -40,7 +40,7 @@ type SidebarItem = {
   url: string;
   icon: LucideIcon;
   activeUrls?: string[];
-  children?: SidebarSubItem[];
+  tabs?: SidebarSubItem[];
 };
 
 type SidebarSubItem = {
@@ -60,17 +60,17 @@ const items: SidebarItem[] = [
     title: "Space Operators",
     url: "/operators",
     icon: GlobeIcon,
-    activeUrls: ["/operators", "/spaces"],
-    children: [
+    // activeUrls: ["/operators", "/spaces"],
+    tabs: [
       {
         title: "Operator",
-        url: "/operators?tab=operator",
-        activeUrls: ["/operators?tab=operator"],
+        url: "/operators",
+        activeUrls: ["/operators"],
       },
       {
         title: "Centre",
-        url: "/operators?tab=centre",
-        activeUrls: ["/operators?tab=centre", "/spaces"],
+        url: "/spaces",
+        activeUrls: ["/operators", "/spaces"],
       },
     ],
   },
@@ -78,16 +78,16 @@ const items: SidebarItem[] = [
     title: "Conventional Spaces",
     url: "/conventional",
     icon: Building2Icon,
-    children: [
+    tabs: [
       {
         title: "Grade A",
-        url: "/conventional?tab=builder",
-        activeUrls: ["/conventional?tab=builder"],
+        url: "/conventional?grade=A",
+        activeUrls: ["/conventional?grade=A"],
       },
       {
         title: "Others",
-        url: "/conventional?tab=landlord",
-        activeUrls: ["/conventional?tab=landlord"],
+        url: "/conventional?grade=other",
+        activeUrls: ["/conventional?grade=other"],
       },
     ],
   },
@@ -192,9 +192,9 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={item.url}
+                      to={item.tabs ? "" : item.url}
                       onClick={() => {
-                        if (item.children?.length) {
+                        if (item.tabs?.length) {
                           toggleSubtabs(item.title);
                         }
                       }}
@@ -210,7 +210,7 @@ export function AppSidebar() {
                       <span className="min-w-0 flex-1 truncate">
                         {item.title}
                       </span>
-                      {item.children?.length ? (
+                      {item.tabs?.length ? (
                         <ChevronDown
                           className={cn(
                             "h-4 w-4 shrink-0 transition-transform",
@@ -220,25 +220,25 @@ export function AppSidebar() {
                       ) : null}
                     </NavLink>
                   </SidebarMenuButton>
-                  {item.children?.length && openSubtabs[item.title] ? (
+                  {item.tabs?.length && openSubtabs[item.title] ? (
                     <SidebarMenuSub className="mx-0 ml-[31px] mt-1 gap-0 border-l border-accent-foreground/20 px-0 py-1">
-                      {item.children.map((child) => (
-                        <SidebarMenuSubItem key={child.title}>
+                      {item.tabs.map((tab) => (
+                        <SidebarMenuSubItem key={tab.title}>
                           <NavLink
-                            to={child.url}
+                            to={tab.url}
                             className={() =>
                               `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm text-accent-foreground transition-all hover:text-white hover:bg-primary ${
-                                isItemActive(child) ? "font-medium" : ""
+                                isItemActive(tab) ? "font-medium" : ""
                               }`
                             }
                           >
                             <span
                               className={cn(
                                 "h-1.5 w-1.5 shrink-0 rounded-full bg-accent-foreground/50 transition-colors group-hover:bg-white",
-                                isItemActive(child) ? "bg-white" : "",
+                                isItemActive(tab) ? "bg-white" : "",
                               )}
                             />
-                            <span>{child.title}</span>
+                            <span>{tab.title}</span>
                           </NavLink>
                         </SidebarMenuSubItem>
                       ))}

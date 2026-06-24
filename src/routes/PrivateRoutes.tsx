@@ -27,9 +27,7 @@ const SpaceCreatePage = lazy(() => import("@/pages/space/space-create"));
 const SpaceEditPage = lazy(() => import("@/pages/space/space-edit-page"));
 // Conventional
 const Conventional = lazy(() => import("@/pages/conventional"));
-const BuilderEditPage = lazy(
-  () => import("@/pages/conventional/builder-edit"),
-);
+const BuilderEditPage = lazy(() => import("@/pages/conventional/builder-edit"));
 const LandlordEditPage = lazy(
   () => import("@/pages/conventional/landlord-edit"),
 );
