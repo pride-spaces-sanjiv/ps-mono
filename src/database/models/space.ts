@@ -79,6 +79,8 @@ const FlagsSchema = new Conn.Schema(
   {
     isOc: { type: Boolean, default: false },
     isSez: { type: Boolean, default: false },
+    isVerified: { type: Boolean },
+    isActive: { type: Boolean },
   },
   { _id: false },
 );
@@ -98,8 +100,6 @@ const SpaceSchema = new Conn.Schema(
     flags: { type: FlagsSchema },
     description: { type: String },
     facilities: { type: [String] },
-    isVerified: { type: Boolean },
-    isActive: { type: Boolean },
     price: { type: Number, default: 0 },
     pricing: { type: PricingSchema, required: true },
     rating: { type: Number },

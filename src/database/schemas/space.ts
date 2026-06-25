@@ -83,6 +83,8 @@ const seatsSchema = z.object({
 const flagsSchema = z.object({
   isOc: z.boolean().default(false).optional(),
   isSez: z.boolean().default(false).optional(),
+  isVerified: z.boolean().default(false).optional(),
+  isActive: z.boolean().default(false).optional(),
 });
 
 // --- Pricing
@@ -132,8 +134,6 @@ export const spaceSchema = z.object({
   seats: seatsSchema,
   flags: flagsSchema,
   description: z.string().optional(),
-  isVerified: z.boolean().default(false).optional(),
-  isActive: z.boolean().default(false).optional(),
   rating: z.number().optional().default(0),
   reviews: z.number().optional().default(0),
   price: z
