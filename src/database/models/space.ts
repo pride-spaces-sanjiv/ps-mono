@@ -11,10 +11,10 @@ import { FilesSchema } from "./files-schema.js";
 
 const PersonSchema = new Conn.Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    contactNo: { type: String, required: true },
-    role: { type: String, required: true },
+    name: { type: String },
+    email: { type: String },
+    contactNo: { type: String },
+    role: { type: String },
   },
   { _id: false },
 );
@@ -46,10 +46,11 @@ const PricingSchema = new Conn.Schema(
 
 const SpaceSchema = new Conn.Schema(
   {
-    branch: { type: String, required: true },
+    branch: { type: String },
     operator: { type: String, required: true },
     name: { type: String, required: true },
-    email: { type: String, required: true },
+    email: { type: String },
+    operationalSince: { type: Date },
     location: { type: LocationSchema, required: true },
     person: { type: PersonSchema, required: true },
     slug: { type: String, required: true, unique: true },

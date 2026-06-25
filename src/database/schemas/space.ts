@@ -61,14 +61,19 @@ export const pricingSchema = z.object({
 
 // --- Space Schema ---
 export const spaceSchema = z.object({
-  branch: getIdSchema({ keyName: "Branch ID" }),
+  branch: getIdSchema({ keyName: "Branch ID" }).optional(),
   operator: getIdSchema({ keyName: "Operator ID" }),
   name: getNameSchema({
     keyName: "Space Name",
     alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
     alphaRegexpMsg: "must only contain alpha numeric characters",
   }),
-  email: getEmailSchema(),
+  email: getEmailSchema().optional(),
+  operationalSince: z
+    .date("Operational Since must be a valid date")
+    .min(new Date(1800, 0, 1), "Operational Since must be a after 01/01/1800")
+    .max(new Date(), `Operational Since must be before current date`)
+    .optional(),
   location: locationSchema,
   person: personSchema,
   slug: getSlugSchema({ keyName: "Space Slug" }),
