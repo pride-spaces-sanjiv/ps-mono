@@ -18,7 +18,10 @@ import {
   parseBulkOperatorsData,
   pushBulkOperatorsData,
 } from "../src/utils/scripts/bulk/operator";
-import { parseBulkSpacesData } from "../src/utils/scripts/bulk/space.js";
+import {
+  parseBulkSpacesData,
+  pushBulkSpacesData,
+} from "../src/utils/scripts/bulk/space.js";
 import { getSpaceCountsOfOperator } from "../src/utils/mongoose/relations/space-operator.js";
 const { default: parsedData } = await import("../data/parsed-data.json", {
   assert: { type: "json" },
@@ -35,8 +38,6 @@ const { default: convertedParsed } = await import(
 //   "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
 // const csvFile =
 //   "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - KA Operator HQ.csv";
-const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centes New.csv";
-
 // npm run test scripts/bulk -- --env=dev
 
 const rows: any[] = [];
@@ -130,6 +131,7 @@ const convertData = (data: (typeof parsedData)[number]) => {
 // console.timeEnd("Push Time :");
 
 // Spaces
+const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centes New.csv";
 console.time("Scripting Time :");
 const bulkedSpaces = await parseBulkSpacesData(csvFile);
 fs.writeFileSync(
@@ -137,8 +139,8 @@ fs.writeFileSync(
   JSON.stringify(bulkedSpaces, null, 2),
 );
 console.timeEnd("Scripting Time :");
-// console.time("Push Time :");
-// bulkedOperators && (await pushBulkOperatorsData(bulkedOperators));
+console.time("Push Time :");
+bulkedSpaces && (await pushBulkSpacesData(bulkedSpaces, true));
 // console.timeEnd("Push Time :");
 
 let saves = 0;

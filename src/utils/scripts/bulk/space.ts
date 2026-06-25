@@ -126,10 +126,10 @@ const generateSlug = (
 ) => {
   if (operator?.slug) {
     const slug =
-      `${operator.slug}-${operator.branches.find((br) => br.name.toLowerCase().trim() === row.state?.trim().toLowerCase())?.code || ""}-${(spaceCounts[operator._id.toHexString()] || 0) + ind + 1}`.replace(
-        /\-+/g,
-        "-",
-      );
+      `${operator.slug}-${operator.branches.find((br) => br.name.toLowerCase().trim() === row.state?.trim().toLowerCase())?.code || ""}-${(spaceCounts[operator._id.toHexString()] || 0) + ind + 1}`
+        .replace(/\-+/g, "-")
+        .toLowerCase()
+        .trim();
     return slug;
   }
   return "";
@@ -241,6 +241,17 @@ const generateTimedDate = (str?: string | null) => {
   return undefined;
 };
 
+const generateOperationalSince = (str?: string | null) => {
+  const parsedMoments = ["MM-YYYY", "YYYY-MM", "MM/YYYY", "YYYY/MM"].map(
+    (format) => moment(str, format, true),
+  );
+  const date = parsedMoments.find((d) => d.isValid());
+  if (date) {
+    return date.toDate();
+  }
+  return undefined;
+};
+
 const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
   try {
     const opPerson =
@@ -248,6 +259,7 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
     const prepared: Partial<SpaceSchema> = {
       operator: operator?._id.toHexString() || "",
       name: validifyStringValues(row.centrename),
+      operationalSince: generateOperationalSince(row.operationalsince),
       // email: validifyStringValues(row.hqemailforloginid || row.hqpocemail),
       person: {
         name: validifyStringValues(row.centerpocname || opPerson?.name),
@@ -292,6 +304,8 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
           ),
         ) || 0,
       workingSizes: generateWorkSizes(row.workstationsize),
+      isActive: true,
+      isVerified: false,
     };
     return prepared;
   } catch (err) {
@@ -346,89 +360,78 @@ export const parseBulkSpacesData = async (fileName: string) => {
   }
 };
 
-// export const pushBulkSpacesData = async (
-//   spaces: SpaceSchema[],
-//   fresh = false,
-// ) => {
-//   try {
-//     if (fresh) {
-//       await Space.deleteMany({});
-//     }
-//     // Try pushing data
-//     const insertedDocs = [] as ModelToRaw<typeof Space>[];
-//     const insertedErrors = [] as Error[];
-//     try {
-//       const insertedRes = await Space.insertMany(
-//         spaces.map((sp) => sp),
-//         { ordered: false, rawResult: true },
-//       );
-//       insertedDocs.push(
-//         ...insertedRes.mongoose.results
-//           .filter<
-//             Document<Types.ObjectId, any, ModelToRaw<typeof Space>>
-//           >((res) => res instanceof Document)
-//           .map((doc) => doc.toObject()),
-//       );
-//       insertedErrors.push(
-//         ...insertedRes.mongoose.results.filter((res) => res instanceof Error),
-//       );
-//     } catch (err) {
-//       console.log("Failure insert spaces :", err);
-//     }
+export const pushBulkSpacesData = async (
+  spaces: SpaceSchema[],
+  fresh = false,
+) => {
+  try {
+    if (fresh) {
+      await Space.deleteMany({});
+    }
+    // Try pushing data
+    const insertedDocs = [] as ModelToRaw<typeof Space>[];
+    const insertedErrors = [] as Error[];
+    try {
+      const insertedRes = await Space.insertMany(
+        spaces.filter((sp) => sp.slug),
+        { ordered: false, rawResult: true },
+      );
+      insertedDocs.push(
+        ...insertedRes.mongoose.results
+          .filter<
+            Document<Types.ObjectId, any, ModelToRaw<typeof Space>>
+          >((res) => res instanceof Document)
+          .map((doc) => doc.toObject()),
+      );
+      insertedErrors.push(
+        ...insertedRes.mongoose.results.filter((res) => res instanceof Error),
+      );
+    } catch (err) {
+      console.log("Failure insert spaces :", err);
+    }
 
-//     console.log("Bulk inserted :", insertedDocs.length, "/", spaces.length);
-//     console.log(
-//       "Bulk inserted errors :",
-//       insertedErrors.map((err) => err.message),
-//     );
-//     const insertedDocsSlugs = insertedDocs.map((doc) => doc.name);
-//     const remSpaces = spaces.filter(
-//       (sp) => !insertedDocsSlugs.includes(sp.slug),
-//     );
+    console.log("Bulk inserted :", insertedDocs.length, "/", spaces.length);
+    console.log(
+      "Bulk inserted errors :",
+      insertedErrors.map((err) => err.message),
+    );
+    const insertedDocsSlugs = insertedDocs.map((doc) => doc.slug);
+    const remSpaces = spaces.filter(
+      (sp) => !insertedDocsSlugs.includes(sp.slug),
+    );
 
-//     // Updating remaningSpaces
-//     console.log(
-//       "Remaining spaces to update:",
-//       remSpaces.length,
-//       "/",
-//       spaces.length,
-//     );
-//     if (remSpaces.length > 0) {
-//       // Get old data
-//       const oldDocs = await Space.find({
-//         slug: { $in: remSpaces.map((sp) => sp.slug) },
-//       }).lean();
+    // Updating remaningSpaces
+    console.log(
+      "Remaining spaces to update:",
+      remSpaces.length,
+      "/",
+      spaces.length,
+    );
+    // if (remSpaces.length > 0) {
+    //   // Get old data
+    //   const oldDocs = await Space.find({
+    //     slug: { $in: remSpaces.map((sp) => sp.slug) },
+    //   }).lean();
 
-//       // Cleaning branches data
-//       for (let i = 0; i < remSpaces.length; i++) {
-//         const sp = remSpaces[i];
-//         const oldBranches =
-//           (oldDocs
-//             .find((doc) => doc.slug === sp.slug)
-//             ?.branches?.map((br) => br) as BranchSchema[]) || [];
-//         const newBranches = ensureSinglePrimaryBranch(
-//           removeDuplicateBranches([...oldBranches, ...(sp.branches || [])]),
-//         );
-//         remSpaces[i].branches = newBranches;
-//       }
-//       const updateRes = await Space.bulkWrite(
-//         remSpaces.map((sp) => ({
-//           updateOne: {
-//             filter: { slug: sp.slug },
-//             update: { branches: sp.branches },
-//           },
-//         })),
-//       );
-//       console.log(
-//         "Updated spaces :",
-//         updateRes.modifiedCount,
-//         "/",
-//         remSpaces.length,
-//         "/",
-//         spaces.length,
-//       );
-//     }
-//   } catch (err: any) {
-//     console.error("Failed to push bulk spaces data:", err);
-//   }
-// };
+    //   // Cleaning branches data
+    //   const updateRes = await Space.bulkWrite(
+    //     remSpaces.map((sp) => ({
+    //       updateOne: {
+    //         filter: { slug: sp.slug },
+    //         update: { branches: sp.branches },
+    //       },
+    //     })),
+    //   );
+    //   console.log(
+    //     "Updated spaces :",
+    //     updateRes.modifiedCount,
+    //     "/",
+    //     remSpaces.length,
+    //     "/",
+    //     spaces.length,
+    //   );
+    // }
+  } catch (err: any) {
+    console.error("Failed to push bulk spaces data:", err);
+  }
+};
