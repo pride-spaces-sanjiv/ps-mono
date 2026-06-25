@@ -15,8 +15,13 @@ import { DialogModal } from "@/components/dialog";
 import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 
-export default function AdminChangePasswordDialog() {
-  const { id = "" } = useParams();
+type Props = {
+  id?: string;
+};
+
+export default function AdminChangePasswordDialog({ id: adminId }: Props) {
+  const { id: routeId = "" } = useParams();
+  const id = adminId || routeId;
 
   const {
     register,
@@ -30,6 +35,7 @@ export default function AdminChangePasswordDialog() {
   const { data: passwordRes, isFetching } = useQuery({
     queryKey: [queryKeys.ADMINS, "password", id],
     queryFn: () => getAdminPassword({ url: id }),
+    enabled: !!id,
   });
 
   const { mutateAsync: updateMutater, isPending: isUpdating } = useMutation({
@@ -80,7 +86,7 @@ export default function AdminChangePasswordDialog() {
           label="Password"
           inputType="password"
           placeholder="••••••••"
-          defaultValue={defaultValues?.password}
+          value={watch("password") || ""}
           onChange={(e) => {
             const val = e.currentTarget.value;
             setValue("password", val, { shouldValidate: true });

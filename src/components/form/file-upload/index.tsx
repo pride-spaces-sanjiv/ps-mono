@@ -1,12 +1,24 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { Upload, X, FileText, Image, Video, Music } from "lucide-react";
 import { cn } from "@/utils/cn";
-import { getFileIntoBase64, formatFileSize } from "@/utils/object/file";
+import {
+  getFileIntoBase64,
+  formatFileSize,
+  type FileSizeNotation,
+  resolveFileSize,
+} from "@/utils/object/file";
 import { allowedExtensions, type MediaType } from "@/utils/data/media";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import moment from "moment";
 
 export type UploadedFile = {
   id: string;
@@ -19,31 +31,46 @@ export type UploadedFile = {
 
 type Props = {
   fileType: MediaType;
+  sizeLimit: { val: number; notation?: FileSizeNotation };
   onFilesUpload: (files: UploadedFile[]) => any;
+  processFileUpload: (
+    file: UploadedFile,
+    filesStateSetter: React.Dispatch<React.SetStateAction<UploadedFile[]>>,
+  ) => Promise<
+    Pick<UploadedFile, "status" | "error"> &
+      Partial<Omit<UploadedFile, "status" | "error">>
+  >;
+  simulationOptions: Partial<{
+    flowType: "linear" | "random";
+    linearPause: number;
+    estimatedTime: number;
+    linearStep: number;
+  }>;
 };
 
-export default function FileUpload({
-  fileType = "image",
-  onFilesUpload,
-}: Partial<Props>) {
-  const [files, setFiles] = useState<UploadedFile[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const getFileIcon = (file: File) => {
-    const type = file.type.split("/")[0];
-    if (type === "image") return <Image className="w-10 h-10 text-blue-500" />;
-    if (type === "video")
-      return <Video className="w-10 h-10 text-purple-500" />;
-    if (type === "audio") return <Music className="w-10 h-10 text-green-500" />;
-    return <FileText className="w-10 h-10 text-gray-500" />;
-  };
-
-  const simulateUpload = (fileId: string) => {
-    let progress = 0;
+export const simulateFileUpload = (
+  fileId: string,
+  filesStateSetter: React.Dispatch<React.SetStateAction<UploadedFile[]>>,
+  options: Partial<{
+    flowType: "linear" | "random";
+    linearPause: number;
+    estimatedTime: number;
+    linearStep: number;
+  }> = {},
+) => {
+  let progress = 0;
+  const {
+    flowType = "linear",
+    linearPause = 80,
+    estimatedTime = 1000,
+    linearStep = 18,
+  } = options;
+  const estimatedMsStep = (estimatedTime * 1000) / linearStep;
+  if (flowType === "linear") {
     const interval = setInterval(() => {
-      progress += Math.random() * 18;
+      progress += linearStep;
       if (progress >= 100) {
-        setFiles((prev) =>
+        filesStateSetter((prev) =>
           prev.map((f) =>
             f.id === fileId ? { ...f, progress: 100, status: "completed" } : f,
           ),
@@ -51,7 +78,7 @@ export default function FileUpload({
         clearInterval(interval);
         return;
       }
-      setFiles((prev) =>
+      filesStateSetter((prev) =>
         prev.map((f) =>
           f.id === fileId
             ? {
@@ -62,13 +89,132 @@ export default function FileUpload({
             : f,
         ),
       );
-    }, 180);
+    }, estimatedMsStep);
+  }
+};
+
+export default function FileUpload({
+  fileType = "image",
+  onFilesUpload,
+  processFileUpload,
+  simulationOptions = {},
+  sizeLimit = { val: 0 },
+}: Partial<Props>) {
+  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const {
+    flowType,
+    linearPause,
+    estimatedTime,
+    linearStep,
+    estimatedMs,
+    estimatedMsStep,
+  } = useMemo(() => {
+    const {
+      flowType = "linear",
+      linearPause = 80,
+      estimatedTime = 60,
+      linearStep = 2,
+    } = simulationOptions;
+    const estimatedMs = estimatedTime * 1000;
+    const estimatedMsStep = estimatedMs * 0.01 * linearStep;
+    return {
+      flowType,
+      linearPause,
+      estimatedTime,
+      linearStep,
+      estimatedMs,
+      estimatedMsStep,
+    };
+  }, [simulationOptions]);
+
+  const inpRef = useRef<HTMLInputElement | null>(null);
+
+  const getFileIcon = (file: File) => {
+    const type = file.type.split("/")[0];
+    if (type === "image") return <Image className="w-10 h-10 text-blue-500" />;
+    if (type === "video")
+      return <Video className="w-10 h-10 text-purple-500" />;
+    if (type === "audio") return <Music className="w-10 h-10 text-green-500" />;
+    return <FileText className="w-10 h-10 text-gray-500" />;
+  };
+
+  const simulateUpload = async (file: UploadedFile) => {
+    let progress = 0;
+    const fileId = file.id;
+
+    // Just process and flag update after its done, if process handle exists
+    let processedState: UploadedFile["status"] | undefined = undefined;
+    const startTime = Date.now();
+    processFileUpload?.(file, setFiles)
+      .then((data) => {
+        processedState = data.status;
+      })
+      .catch((err) => {
+        processedState = "error";
+      });
+
+    // Only for linear animation
+    if (flowType === "linear") {
+      const interval = setInterval(() => {
+        progress += linearStep;
+        const duration = moment
+          .duration(Date.now() - startTime, "ms")
+          .seconds();
+        // console.log("File Progress :", {
+        //   progress,
+        //   processedState,
+        //   duration,
+        //   estimatedTime,
+        // });
+        if (
+          progress >= 100 ||
+          duration >= estimatedTime ||
+          processedState === "completed" ||
+          processedState === "error"
+        ) {
+          const status = processFileUpload
+            ? processedState || "error"
+            : "completed";
+          setFiles((prev) => {
+            const updatedFiles = prev.map((f) =>
+              f.id === fileId
+                ? {
+                    ...f,
+                    progress: 100,
+                    status: status,
+                  }
+                : f,
+            );
+            return updatedFiles;
+          });
+          clearInterval(interval);
+          return;
+        }
+
+        progress = Math.min(Math.floor(progress), linearPause);
+        setFiles((prev) => {
+          const updatedFiles = prev.map((f) =>
+            f.id === fileId
+              ? {
+                  ...f,
+                  progress: progress,
+                  status: "uploading" as const,
+                }
+              : f,
+          );
+          return updatedFiles;
+        });
+      }, estimatedMsStep);
+    }
   };
 
   const handleFiles = async (newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles)
       .map((file) => {
         const ext = file.name.match(/\.([^.]+)$/)?.[1];
+        // Validate files
         if (!ext) {
           toast.error("Got Unexpected file type");
           return undefined;
@@ -77,11 +223,21 @@ export default function FileUpload({
           toast.error(`.${ext} File type is not supported`);
           return undefined;
         }
+        const limitSize = resolveFileSize(sizeLimit.val, sizeLimit.notation);
+        if (file.size > limitSize) {
+          toast.error(
+            `File size exceeds the limit of ${formatFileSize(limitSize)}`,
+          );
+          return undefined;
+        }
+        if (!allowedExtensions[fileType]?.includes(ext)) {
+          toast.error(`.${ext} File type is not supported`);
+          return undefined;
+        }
+        // Return post validations
         return file;
       })
       .filter((file) => typeof file !== "undefined");
-
-    // Validate files
 
     // Handle
     const prs = await Promise.allSettled(
@@ -116,11 +272,12 @@ export default function FileUpload({
             f.id === upload.id ? { ...f, status: "uploading" } : f,
           ),
         );
-        simulateUpload(upload.id);
-      }, 80);
+        simulateUpload(upload);
+      }, 10);
     });
   };
 
+  // Events
   const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
@@ -150,24 +307,34 @@ export default function FileUpload({
   }, [files]);
 
   return (
-    <div className="max-w-[1200px] w-full mx-auto p-6 col-span-full">
+    <div className="max-w-[1200px] w-full mx-auto p-6 col-span-full h-full overflow-y-auto">
       <Card className="w-full py-0">
         <CardContent className="p-10">
           <div className="text-center mb-10">
             <div className="mx-auto w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
               <Upload className="w-10 h-10 text-primary" />
             </div>
-            <h2 className="text-3xl font-semibold mb-2">Multi File Upload</h2>
+            <h2 className="text-3xl font-semibold mb-2">{`Multi ${fileType.toUpperCase()} Upload`}</h2>
             <p className="text-muted-foreground text-lg">
-              Drag & drop or click to upload multiple files
+              {`Drag & drop or click to upload multiple ${fileType}s`}
+              {!!sizeLimit?.val && (
+                <span className="block text-sm text-muted-foreground">
+                  {"("}Max file size:{" "}
+                  {formatFileSize(
+                    resolveFileSize(sizeLimit.val, sizeLimit.notation),
+                  )}
+                  {")"}
+                </span>
+              )}
             </p>
           </div>
 
+          {/* DND Section */}
           <div
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            onClick={() => document.getElementById("file-input")?.click()}
+            onClick={() => inpRef.current?.click()}
             className={cn(
               "border-2 border-dashed px-4 py-16 rounded-2xl cursor-pointer transition-all hover:bg-muted/50",
               isDragging
@@ -176,7 +343,8 @@ export default function FileUpload({
             )}
           >
             <input
-              id="file-input"
+              ref={inpRef}
+              placeholder="file"
               type="file"
               multiple
               className="hidden"
@@ -184,10 +352,10 @@ export default function FileUpload({
             />
             <div className="text-center">
               <Upload className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-xl font-medium">Drop your files here</p>
+              <p className="text-xl font-medium">{`Drop your ${fileType}s here`}</p>
               <p className="text-sm text-muted-foreground mt-2">
                 or{" "}
-                <span className="text-primary font-medium">browse files</span>
+                <span className="text-primary font-medium">{`browse ${fileType}s`}</span>
               </p>
             </div>
           </div>
@@ -225,7 +393,11 @@ export default function FileUpload({
                           {formatFileSize(upload.file.size)}
                         </p>
                       </div>
-                      <Progress value={upload.progress} className="h-2 mb-2" />
+                      <Progress
+                        value={upload.progress}
+                        className="h-2 mb-2 ease-in-out"
+                        style={{ transitionDuration: `${estimatedMsStep}ms` }}
+                      />
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span
                           className={

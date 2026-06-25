@@ -27,9 +27,7 @@ const SpaceCreatePage = lazy(() => import("@/pages/space/space-create"));
 const SpaceEditPage = lazy(() => import("@/pages/space/space-edit-page"));
 // Conventional
 const Conventional = lazy(() => import("@/pages/conventional"));
-const BuilderEditPage = lazy(
-  () => import("@/pages/conventional/builder-edit"),
-);
+const BuilderEditPage = lazy(() => import("@/pages/conventional/builder-edit"));
 const LandlordEditPage = lazy(
   () => import("@/pages/conventional/landlord-edit"),
 );
@@ -40,6 +38,8 @@ const OperatorEditPage = lazy(
 );
 // Notifications
 const NotificationsPage = lazy(() => import("@/pages/notifications"));
+// Profile
+const Profile = lazy(() => import("@/pages/settings"));
 // Amenity
 const Amenities = lazy(() => import("@/pages/amenities"));
 const CreateAmenity = lazy(() => import("@/pages/amenities/create"));
@@ -174,6 +174,15 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <AutoNavigateRender El={<NotificationsPage />} />
+            </SuspensedView>
+          }
+        />
+        {/* Profile */}
+        <Route
+          path="/settings"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<Profile />} />
             </SuspensedView>
           }
         />

@@ -28,6 +28,7 @@ import ActionButton from "@/components/buttons/action-btn";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import type { Operator } from "@/types/data/operators";
 import { validateNumber } from "@/utils/number";
+import { getOperators } from "@/services/apis/admin/operators";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -38,12 +39,35 @@ type LocState = {
 const SpaceCreatePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { operatorData } = useMemo(
-    () => location.state as Partial<LocState>,
-    [location.state],
-  );
+  const { operatorData: locationOperatorData } = useMemo(() => {
+    const state = location.state as Partial<LocState> | null | undefined;
+
+    return state || {};
+  }, [location.state]);
+  const [selectedOperatorData, setSelectedOperatorData] =
+    useState<Operator | null>(locationOperatorData || null);
+  const operatorData = selectedOperatorData || locationOperatorData || null;
 
   const { amenitiesData } = useAmenities();
+  const { data: operatorsRes } = useQuery({
+    queryKey: [queryKeys.OPERATORS, "space-create"],
+    queryFn: () =>
+      getOperators({
+        query: {
+          page: 1,
+          limit: 1000,
+          sortBy: "name",
+          sortOrder: "asc",
+        },
+      }),
+    enabled: !locationOperatorData,
+  });
+
+  const operators = useMemo(
+    () =>
+      ((operatorsRes?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
+    [operatorsRes?.data?.data?.results],
+  );
 
   // form builder
   const {
@@ -75,8 +99,14 @@ const SpaceCreatePage = () => {
   const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
 
   useEffect(() => {
+    const primaryBranch =
+      operatorData?.branches?.find((branch) => branch.isPrimary) ||
+      operatorData?.branches?.[0];
+
     reset({
       ...defaultValues,
+      operator: operatorData?.id || defaultValues?.operator,
+      branch: primaryBranch?.id || defaultValues?.branch,
       slug: operatorData?.slug
         ? generateSlug(
           operatorData?.slug,
@@ -116,7 +146,7 @@ const SpaceCreatePage = () => {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold  w-full">
-          Edit Centre: {watch("name", "")}
+          Add Centre: {watch("name", "")}
         </h1>
       </div>
 
@@ -166,11 +196,48 @@ const SpaceCreatePage = () => {
           <FormField
             label="Operator"
             labelPosition="embedded"
-            value={operatorData?.name || "None"}
-            readOnly
-            disabled
-            error={errors.operator}
-          />
+            value={locationOperatorData ? operatorData?.name || "None" : undefined}
+            readOnly={!!locationOperatorData}
+            disabled={!!locationOperatorData}
+            error={errors.operator || errors.branch}
+          >
+            {!locationOperatorData && (
+              <GroupedSearchSelect
+                type="single"
+                items={operators.map((operator) => ({
+                  label: operator.name || operator.email || operator.id,
+                  value: operator.id,
+                  searchValue: [operator.name, operator.email, operator.slug]
+                    .filter(Boolean)
+                    .join(" "),
+                }))}
+                triggerProps={{
+                  children: (
+                    <ActionButton type="button" variant="outline">
+                      {operatorData?.name || "Select Operator"}
+                    </ActionButton>
+                  ),
+                }}
+                onSelect={(item) => {
+                  const selectedOperator =
+                    operators.find((operator) => operator.id === item.value) ||
+                    null;
+                  const primaryBranch =
+                    selectedOperator?.branches?.find(
+                      (branch) => branch.isPrimary,
+                    ) || selectedOperator?.branches?.[0];
+
+                  setSelectedOperatorData(selectedOperator);
+                  setValue("operator", selectedOperator?.id || "", {
+                    shouldValidate: true,
+                  });
+                  setValue("branch", primaryBranch?.id || "", {
+                    shouldValidate: true,
+                  });
+                }}
+              />
+            )}
+          </FormField>
 
           <FormField
             key={`space-cat-${defaultValues?.category}`}
