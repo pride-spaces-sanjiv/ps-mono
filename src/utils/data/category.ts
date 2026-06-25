@@ -1,1 +1,6 @@
-export const spaceCategories = ["Classic", "Elite", "Apex"] as const;
+export const spaceCategories = [
+  "Standard",
+  "Classic",
+  "Elite",
+  "Apex",
+] as const;

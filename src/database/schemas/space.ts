@@ -31,6 +31,60 @@ export const locationSchema = z.object({
   lng: z.number(),
 });
 
+// Specs
+const specsSchema = z.object({
+  category: z.enum(spaceCategories).default("Standard"),
+  spaceType: z.enum(spaceTypes).default("Flex"),
+  grade: z.enum(spaceGrades).default("B"),
+  area: z.number().min(0, "Area must be a positive number").optional(),
+  workingSizes: z.array(z.enum(workingSizes)).default([]),
+});
+
+// Timing
+const timingSchema = z.object({
+  openTime: z.date().optional(),
+  closeTime: z.date().optional(),
+  openDays: z.array(
+    z
+      .number()
+      .int("Day must be an integer")
+      .positive("Day must be a positive integer")
+      .min(1, "Day must be atleast 1")
+      .max(7, "Day must be atmost 7"),
+  ),
+  operationalHrs: z
+    .number()
+    .int("Operational hours must be an integer")
+    .min(0, "Operational hours must be a positive number")
+    .max(24, "Operational hours must be at most 24")
+    .default(0),
+  operationalSince: z
+    .date("Operational Since must be a valid date")
+    .min(new Date(1800, 0, 1), "Operational Since must be a after 01/01/1800")
+    .max(new Date(), `Operational Since must be before current date`)
+    .optional(),
+});
+
+// Seats
+const seatsSchema = z.object({
+  total: z
+    .number()
+    .min(0)
+    .int("Total seats must be a positive integer")
+    .default(0),
+  booked: z
+    .number()
+    .min(0)
+    .int("Booked seats must be a positive integer")
+    .default(0),
+});
+
+// Flags
+const flagsSchema = z.object({
+  isOc: z.boolean().default(false).optional(),
+  isSez: z.boolean().default(false).optional(),
+});
+
 // --- Pricing
 export const pricingSchema = z.object({
   dayPass: z
@@ -57,6 +111,7 @@ export const pricingSchema = z.object({
     .number()
     .min(0, "Private cabin price must be a positive number")
     .default(0),
+  vo: z.number().min(0, "VO price must be a positive number").default(0),
 });
 
 // --- Space Schema ---
@@ -69,52 +124,18 @@ export const spaceSchema = z.object({
     alphaRegexpMsg: "must only contain alpha numeric characters",
   }),
   email: getEmailSchema().optional(),
-  operationalSince: z
-    .date("Operational Since must be a valid date")
-    .min(new Date(1800, 0, 1), "Operational Since must be a after 01/01/1800")
-    .max(new Date(), `Operational Since must be before current date`)
-    .optional(),
   location: locationSchema,
   person: personSchema,
   slug: getSlugSchema({ keyName: "Space Slug" }),
-  area: z.number().min(0, "Area must be a positive number").optional(),
-  category: z.enum(spaceCategories).default("Classic"),
-  spaceType: z.enum(spaceTypes).default("Flex"),
-  grade: z.enum(spaceGrades).default("B"),
+  specs: specsSchema,
+  timing: timingSchema,
+  seats: seatsSchema,
+  flags: flagsSchema,
   description: z.string().optional(),
-  openTime: z.date().optional(),
-  closeTime: z.date().optional(),
-  openDays: z.array(
-    z
-      .number()
-      .int("Day must be an integer")
-      .positive("Day must be a positive integer")
-      .min(1, "Day must be atleast 1")
-      .max(7, "Day must be at most 7"),
-  ),
-  operationalHrs: z
-    .number()
-    .int("Operational hours must be an integer")
-    .min(0, "Operational hours must be a positive number")
-    .max(24, "Operational hours must be at most 24")
-    .default(0),
-  trainingRoom: z.number().optional().default(0),
-  meetingRoom: z.number().optional().default(0),
-  conferenceRoom: z.number().optional().default(0),
-  isVerified: z.boolean().optional().default(false),
-  isActive: z.boolean().optional().default(false),
+  isVerified: z.boolean().default(false).optional(),
+  isActive: z.boolean().default(false).optional(),
   rating: z.number().optional().default(0),
   reviews: z.number().optional().default(0),
-  totalSeats: z
-    .number()
-    .min(0)
-    .int("Total seats must be a positive integer")
-    .default(0),
-  bookedSeats: z
-    .number()
-    .min(0)
-    .int("Booked seats must be a positive integer")
-    .default(0),
   price: z
     .number()
     .min(0, "Price must be a positive number")

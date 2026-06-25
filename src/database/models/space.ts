@@ -7,7 +7,7 @@ import {
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 import { spaceTypes, spaceGrades } from "@/utils/data/spaceTypes.js";
 import { workingSizes } from "@/utils/data/workingSizes.js";
-import { FilesSchema } from "./files-schema.js";
+import { FilesSchema } from "./schemas/files.js";
 
 const PersonSchema = new Conn.Schema(
   {
@@ -40,6 +40,45 @@ const PricingSchema = new Conn.Schema(
     dedicatedDesk: { type: Number, required: true, default: 0 },
     flexiDesk: { type: Number, required: true, default: 0 },
     privateCabin: { type: Number, required: true, default: 0 },
+    vo: { type: Number, required: true, default: 0 },
+  },
+  { _id: false },
+);
+
+const SpecsSchema = new Conn.Schema(
+  {
+    category: { type: String, default: "Classic" },
+    spaceType: { type: String, enum: spaceTypes, default: "Flex" },
+    grade: { type: String, enum: spaceGrades, default: "B" },
+    area: { type: Number },
+    workingSizes: { type: [{ type: String, enum: workingSizes }], default: [] },
+  },
+  { _id: false },
+);
+
+const TimingSchema = new Conn.Schema(
+  {
+    openTime: { type: Date },
+    closeTime: { type: Date },
+    openDays: { type: [Number] },
+    operationalHrs: { type: Number },
+    operationalSince: { type: Date },
+  },
+  { _id: false },
+);
+
+const SeatsSchema = new Conn.Schema(
+  {
+    total: { type: Number, default: 0 },
+    booked: { type: Number, default: 0 },
+  },
+  { _id: false },
+);
+
+const FlagsSchema = new Conn.Schema(
+  {
+    isOc: { type: Boolean, default: false },
+    isSez: { type: Boolean, default: false },
   },
   { _id: false },
 );
@@ -50,25 +89,17 @@ const SpaceSchema = new Conn.Schema(
     operator: { type: String, required: true },
     name: { type: String, required: true },
     email: { type: String },
-    operationalSince: { type: Date },
     location: { type: LocationSchema, required: true },
     person: { type: PersonSchema, required: true },
     slug: { type: String, required: true, unique: true },
-    area: { type: Number },
+    specs: { type: SpecsSchema },
+    timing: { type: TimingSchema },
+    seats: { type: SeatsSchema },
+    flags: { type: FlagsSchema },
     description: { type: String },
-    category: { type: String, default: "Classic" },
-    spaceType: { type: String, enum: spaceTypes, default: "Flex" },
-    grade: { type: String, enum: spaceGrades, default: "B" },
-    openTime: { type: Date },
-    closeTime: { type: Date },
-    openDays: { type: [Number] },
-    operationalHrs: { type: Number },
     facilities: { type: [String] },
-    workingSizes: { type: [{ type: String, enum: workingSizes }], default: [] },
     isVerified: { type: Boolean },
     isActive: { type: Boolean },
-    totalSeats: { type: Number, default: 0 },
-    bookedSeats: { type: Number, default: 0 },
     price: { type: Number, default: 0 },
     pricing: { type: PricingSchema, required: true },
     rating: { type: Number },
