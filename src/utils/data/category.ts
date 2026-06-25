@@ -4,3 +4,5 @@ export const spaceCategories = [
   "Elite",
   "Apex",
 ] as const;
+
+export type SpaceCategory = (typeof spaceCategories)[number];

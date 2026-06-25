@@ -21,6 +21,7 @@ import { Space } from "@/database/models/space.js";
 import { SpaceSchema } from "@/database/schemas/space.js";
 import moment from "moment";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
+import { SpaceGrade, SpaceType } from "@/utils/data/spaceTypes.js";
 
 const CSVHeaders = {
   OPERATORSLUG: "operatorslug",
@@ -30,6 +31,7 @@ const CSVHeaders = {
   AREAMICROMARKET: "areamicromarket",
   CITY: "city",
   BUILDINGGRADE: "buildinggrade",
+  OCNONOC: "ocnonoc",
   SEZNONSEZ: "seznonsez",
   OPERATIONALSINCE: "operationalsince",
   TOTALSEATS: "totalseats",
@@ -148,7 +150,7 @@ const generateGrade = (grade?: string | null) => {
   const str = validifyStringValues(grade)
     .toLowerCase()
     .replace(/[^A-z0-9\-]/g, "");
-  const val: SpaceSchema["grade"] =
+  const val: SpaceGrade =
     str.includes(`gradea+`) || str.match(/multi.*tower.*tech.*park/)
       ? "A+"
       : str.includes(`gradea`)
@@ -161,8 +163,8 @@ const generateSpaceType = (spaceType?: string | null) => {
   const str = validifyStringValues(spaceType)
     .toLowerCase()
     .replace(/[^A-z0-9\-]/g, "");
-  const val: SpaceSchema["spaceType"] =
-    str.includes(`flex`) && str.includes("mos")
+  const val: SpaceType =
+    (str.includes(`flex`) && str.includes("mos")) || str.includes("hybrid")
       ? "Both"
       : str.includes(`mos`)
         ? "MOS"
@@ -174,11 +176,13 @@ const generateCategory = (cat?: string | null) => {
   const str = validifyStringValues(cat)
     .toLowerCase()
     .replace(/[^A-z0-9\-]/g, "");
-  const val: SpaceSchema["category"] = str.includes(`elite`)
+  const val: SpaceSchema["specs"]["category"] = str.includes(`elite`)
     ? "Elite"
     : str.includes(`apex`)
       ? "Apex"
-      : "Classic";
+      : str.includes(`classic`)
+        ? "Classic"
+        : "Standard";
   return val;
 };
 
@@ -195,6 +199,9 @@ const generatePricing = (row?: RowData) => {
       Number(validifyStringValues(row?.meetingroom).replace(/[^0-9]/g, "")) ||
       0,
     flexiDesk:
+      Number(validifyStringValues(row?.flexihotdesk).replace(/[^0-9]/g, "")) ||
+      0,
+    vo:
       Number(validifyStringValues(row?.flexihotdesk).replace(/[^0-9]/g, "")) ||
       0,
     privateCabin: 0,
@@ -252,6 +259,87 @@ const generateOperationalSince = (str?: string | null) => {
   return undefined;
 };
 
+// Sub schema fields gen
+const generateSpecsData = (row: RowData) => {
+  const specs: SpaceSchema["specs"] = {
+    category: generateCategory(row.category),
+    spaceType: generateSpaceType(row.type),
+    grade: generateGrade(row.buildinggrade),
+    area:
+      Number(
+        validifyStringValues(row.centreareainsqftapprox)
+          .replace(/[^0-9\.]/g, "")
+          .match(/[0-9]+\.?[0-9]*/)?.[0]
+          ?.replace(/(\.+)$/g, ""),
+      ) || undefined,
+    workingSizes: generateWorkSizes(row.workstationsize),
+  };
+  return specs;
+};
+
+const generateTimingData = (row: RowData) => {
+  const data: SpaceSchema["timing"] = {
+    // Create a util to generate from open days
+    openDays: Array(6)
+      .fill(false)
+      .map((_, i) => i + 1),
+    openTime: generateTimedDate(row.openingtime),
+    closeTime: generateTimedDate(row.closingtime),
+    operationalSince: generateOperationalSince(row.operationalsince),
+    operationalHrs: 12,
+  };
+  return data;
+};
+
+const generateSeatsData = (row: RowData) => {
+  const data: SpaceSchema["seats"] = {
+    total:
+      Number(validifyStringValues(row.totalseats).replace(/[^0-9]/g, "")) || 0,
+    booked: 0,
+  };
+  return data;
+};
+
+const generateFlagsData = (row: RowData) => {
+  const grade = generateGrade(row.buildinggrade);
+  const data: SpaceSchema["flags"] = {
+    isOc:
+      grade === "B"
+        ? validifyStringValues(row.ocnonoc)
+            .trim()
+            .toLowerCase()
+            ?.match(/(oc|yes)/)
+          ? true
+          : false
+        : true,
+    isSez:
+      grade === "B"
+        ? false
+        : validifyStringValues(row.seznonsez)
+              .trim()
+              .toLowerCase()
+              ?.match(/(sez|yes)/)
+          ? true
+          : false,
+    isVerified: false,
+    isActive: true,
+  };
+  return data;
+};
+
+// Space counts updation
+const updateSpaceCounts = async (
+  operatorsData: Awaited<ReturnType<typeof getOperatorsData>>,
+  reset = false,
+) => {
+  const spaceCountsRes = await getSpaceCountsOfOperator(
+    operatorsData.map((op) => op._id.toHexString()),
+  );
+  for (const key in spaceCountsRes) {
+    spaceCounts[key] = reset ? 0 : spaceCountsRes[key];
+  }
+};
+
 const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
   try {
     const opPerson =
@@ -259,7 +347,6 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
     const prepared: Partial<SpaceSchema> = {
       operator: operator?._id.toHexString() || "",
       name: validifyStringValues(row.centrename),
-      operationalSince: generateOperationalSince(row.operationalsince),
       // email: validifyStringValues(row.hqemailforloginid || row.hqpocemail),
       person: {
         name: validifyStringValues(row.centerpocname || opPerson?.name),
@@ -282,30 +369,11 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
         lat: 0,
         lng: 0,
       },
-      // Create a util to generate from open days
-      openDays: Array(6)
-        .fill(false)
-        .map((_, i) => i + 1),
-      openTime: generateTimedDate(row.openingtime),
-      closeTime: generateTimedDate(row.closingtime),
-      grade: generateGrade(row.buildinggrade),
-      totalSeats:
-        Number(validifyStringValues(row.totalseats).replace(/[^0-9]/g, "")) ||
-        0,
-      bookedSeats: 0,
-      spaceType: generateSpaceType(row.buildinggrade),
-      category: generateCategory(row.category),
+      specs: generateSpecsData(row),
+      timing: generateTimingData(row),
+      seats: generateSeatsData(row),
       pricing: generatePricing(row),
-      area:
-        Number(
-          validifyStringValues(row.centreareainsqftapprox).replace(
-            /[^0-9]/g,
-            "",
-          ),
-        ) || 0,
-      workingSizes: generateWorkSizes(row.workstationsize),
-      isActive: true,
-      isVerified: false,
+      flags: generateFlagsData(row),
     };
     return prepared;
   } catch (err) {
@@ -320,12 +388,7 @@ export const parseBulkSpacesData = async (fileName: string) => {
     const amenitiesData = await getAmenitiesData();
     const operatorsData = await getOperatorsData();
 
-    const spaceCountsRes = await getSpaceCountsOfOperator(
-      operatorsData.map((op) => op._id.toHexString()),
-    );
-    for (const key in spaceCountsRes) {
-      spaceCounts[key] = spaceCountsRes[key];
-    }
+    await updateSpaceCounts(operatorsData);
 
     const sluggedRows = rows
       .map((row) => {
@@ -368,6 +431,21 @@ export const pushBulkSpacesData = async (
     if (fresh) {
       await Space.deleteMany({});
     }
+
+    // Space counts realtime update
+    const operatorsData = await getOperatorsData();
+    await updateSpaceCounts(operatorsData, fresh);
+
+    // Rewrite slugs
+    for (let i = 0; i < spaces.length; i++) {
+      const spaceEl = spaces[i];
+      spaceCounts[spaceEl.operator] = (spaceCounts[spaceEl.operator] || 0) + 1;
+      spaces[i].slug = spaceEl.slug.replace(
+        /\-[0-9]+$/,
+        `-${String(spaceCounts[spaceEl.operator]).padStart(4, "0000")}`,
+      );
+    }
+
     // Try pushing data
     const insertedDocs = [] as ModelToRaw<typeof Space>[];
     const insertedErrors = [] as Error[];
