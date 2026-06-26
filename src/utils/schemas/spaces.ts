@@ -120,14 +120,14 @@ export const spaceSchema = z.object({
   branch: getIdSchema({ keyName: "Branch ID" }).optional(),
   operator: getIdSchema({ keyName: "Operator ID" }),
   name: getNameSchema({
-    keyName: "Space Name",
+    keyName: "Centre Name",
     alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
     alphaRegexpMsg: "must only contain alpha numeric characters",
   }),
   email: getEmailSchema().optional(),
   location: locationSchema,
   person: personSchema,
-  slug: getSlugSchema({ keyName: "Space Slug" }),
+  slug: getSlugSchema({ keyName: "Centre Slug" }),
   specs: specsSchema,
   timing: timingSchema,
   seats: seatsSchema,
@@ -137,7 +137,7 @@ export const spaceSchema = z.object({
   reviews: z.number().optional().default(0),
   price: z
     .number()
-    .min(0, "Price must be a positive number")
+    .min(0, "Price must be a positive integer")
     .int("Price must be a positive integer"),
   pricing: pricingSchema,
   facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
