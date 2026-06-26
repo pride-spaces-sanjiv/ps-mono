@@ -21,5 +21,8 @@ router.use("/spaces", SpaceRouter);
 router.use("/branches", BranchRouter);
 router.use("/dumps", DumpRouter);
 router.use("/", DataRouter);
+router.get("/", (req, res) => {
+  res.json({ message: "Welcome to the Operator API" });
+});
 
 export { router as OperatorRouter };
