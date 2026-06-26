@@ -23,7 +23,9 @@ export function useAmenities({ promiseDelay = 1 }: Partial<Props> = {}) {
     queryFn: () => {
       amenitiesStoreState.increaseFetchCount();
       return delayPromise(
-        getAmenities({ query: { limit: 100 } }),
+        getAmenities({
+          query: { limit: 100, sortBy: "name", sortOrder: "asc" },
+        }),
         promiseDelay,
       );
     },
