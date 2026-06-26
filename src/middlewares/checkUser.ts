@@ -24,7 +24,7 @@ export const checkUserExistenceByBodyValue = <T extends any, K extends string>(
   }> = {},
 ) => {
   const handler = async (
-    req: ManagedRequest<Record<string, any> & Record<K, any>>,
+    req: ManagedRequest<Record<string, any> & Partial<Record<K, any>>>,
     res: ManagedResponse,
     next: NextFunction,
   ) => {

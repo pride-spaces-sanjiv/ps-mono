@@ -2,6 +2,7 @@ import { ResponseHandler } from "./request.js";
 import { NextFunction } from "express";
 import { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import moment from "moment";
+import { ObjectDepthKeys } from "@/types/object.js";
 
 type Options<T extends Record<string, any>, K extends keyof T> = {
   fields: [...K[]];
@@ -11,7 +12,10 @@ type Options<T extends Record<string, any>, K extends keyof T> = {
  * @description Accepts `string` and `number` field values
  */
 export const preParseDateFieldsFromBody =
-  <T extends Record<string, any>, K extends keyof T = keyof T>(
+  <
+    T extends Record<string, any>,
+    K extends ObjectDepthKeys<T> = ObjectDepthKeys<T>,
+  >(
     options: Partial<Options<T, K>> = {},
   ) =>
   async (req: ManagedRequest, res: ManagedResponse, next: NextFunction) => {
@@ -20,6 +24,7 @@ export const preParseDateFieldsFromBody =
       if (typeof req.body === "object" && req.body) {
         for (const field of fields) {
           if (
+            Object.hasOwn(req.body, field) &&
             (typeof req.body[field] === "string" ||
               typeof req.body[field] === "number") &&
             moment(req.body[field]).isValid()
