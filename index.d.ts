@@ -6,6 +6,7 @@ type UserType =
   | "lead"
   | "support"
   | "operator"
+  | "builder"
   | "user";
 declare module "express-session" {
   interface SessionData extends OldData {
