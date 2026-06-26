@@ -78,8 +78,9 @@ const OperatorSchema = new Conn.Schema(
     gstNo: { type: String },
     cinNo: { type: String },
     approval: { type: ApprovalSchema },
-    isActive: { type: Boolean, default: true },
     branches: { type: [BranchSchema] },
+    establishedOn: { type: Date },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

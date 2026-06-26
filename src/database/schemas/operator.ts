@@ -65,6 +65,7 @@ export const operatorSchema = z.object({
     alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
     alphaRegexpMsg: "must only contain alpha numeric characters",
   }),
+  person: headQuarterPersonSchema.partial().optional(),
   gstNo: gstNoSchema,
   cinNo: z
     .string()
@@ -73,7 +74,7 @@ export const operatorSchema = z.object({
     .optional(),
   headquarter: headQuarterSchema.partial().optional(),
   branches: z.array(branchSchema).optional(),
-  person: headQuarterPersonSchema.partial().optional(),
+  establishedOn: z.date().optional(),
   isActive: z.boolean().optional().default(true),
   // approval: approvalSchema,
 });

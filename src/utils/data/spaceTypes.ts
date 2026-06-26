@@ -12,6 +12,11 @@ export const labelledSpaceTypes = spaceTypes.map((v, i) => ({
   value: v,
 }));
 export const spaceGrades = ["A+", "A", "B"] as const;
+export const labelledSpaceGrades = [
+  { label: "Grade A+ - Multi Tower Tech Park", value: "A+" },
+  { label: "Grade A - Standalone Tower", value: "A" },
+  { label: "Grade B", value: "B" },
+] as { label: string; value: SpaceGrade }[];
 
 export type SpaceType = (typeof spaceTypes)[number];
 export type SpaceGrade = (typeof spaceGrades)[number];
