@@ -19,6 +19,7 @@ export const login =
     req: ManagedRequest<{ email: string; password: string; [k: string]: any }>,
     res: ManagedResponse,
   ) => {
+    console.log("Inside login middleware");
     const { projectors = [], keyName = "data", level } = options;
     try {
       const { email, password } = req.body;
