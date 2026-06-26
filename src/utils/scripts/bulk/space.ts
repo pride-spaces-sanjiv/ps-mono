@@ -335,8 +335,20 @@ const updateSpaceCounts = async (
   const spaceCountsRes = await getSpaceCountsOfOperator(
     operatorsData.map((op) => op._id.toHexString()),
   );
+  // console.log(
+  //   "Spaces count res :",
+  //   spaceCountsRes,
+  //   "from operators ->",
+  //   operatorsData.length,
+  // );
   for (const key in spaceCountsRes) {
-    spaceCounts[key] = reset ? 0 : spaceCountsRes[key];
+    const val = reset ? 0 : spaceCountsRes[key];
+    spaceCounts[key] = val;
+    // console.log("Updating count of spaces for operator :", {
+    //   operator: key,
+    //   count: val,
+    //   updatedVal: spaceCounts[key],
+    // });
   }
 };
 
@@ -429,17 +441,24 @@ export const pushBulkSpacesData = async (
 ) => {
   try {
     if (fresh) {
-      await Space.deleteMany({});
+      const delRes = await Space.deleteMany({});
+      console.log("Deleted spaces :", delRes.deletedCount);
     }
 
     // Space counts realtime update
     const operatorsData = await getOperatorsData();
+    console.log("Fresh data :", fresh);
     await updateSpaceCounts(operatorsData, fresh);
+    console.log("Space counts :", spaceCounts);
 
     // Rewrite slugs
     for (let i = 0; i < spaces.length; i++) {
       const spaceEl = spaces[i];
-      spaceCounts[spaceEl.operator] = (spaceCounts[spaceEl.operator] || 0) + 1;
+      const prevSpacesCount = spaceCounts[spaceEl.operator] || 0;
+      spaceCounts[spaceEl.operator] = prevSpacesCount + 1;
+      // console.log("Current spaces in operator :", spaceEl.operator, {
+      //   count: spaceCounts[spaceEl.operator],
+      // });
       spaces[i].slug = spaceEl.slug.replace(
         /\-[0-9]+$/,
         `-${String(spaceCounts[spaceEl.operator]).padStart(4, "0000")}`,

@@ -141,7 +141,7 @@ fs.writeFileSync(
 console.timeEnd("Scripting Time :");
 console.time("Push Time :");
 bulkedSpaces && (await pushBulkSpacesData(bulkedSpaces, true));
-// console.timeEnd("Push Time :");
+console.timeEnd("Push Time :");
 
 let saves = 0;
 // await Space.deleteMany();
