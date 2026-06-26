@@ -64,11 +64,6 @@ app.use(
       if (!origin) {
         return callback(null, true);
       }
-      if (
-        origin.includes("chrome-extension://opmeopcambhfimffbomjgemehjkbbmji")
-      ) {
-        return callback(null, true);
-      }
       if (origin?.match(/^http(s|)[:]\/\/localhost[:][345]00[0-9]{0,3}/)) {
         return callback(null, true);
       }
