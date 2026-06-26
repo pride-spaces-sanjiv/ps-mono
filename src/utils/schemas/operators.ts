@@ -81,6 +81,7 @@ export const operatorSchema = z.object({
   headquarter: headQuarterSchema.partial().optional(),
   branches: z.array(branchSchema).optional(),
   person: headQuarterPersonSchema.partial().optional(),
+  establishedOn: z.date().optional(),
   isActive: z.boolean().optional().default(true),
   // approval: approvalSchema,
 });
