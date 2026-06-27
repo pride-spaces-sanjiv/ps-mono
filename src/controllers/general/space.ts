@@ -43,6 +43,8 @@ type GetOptions = Partial<{
 type CreateOptions = Omit<GetOptions, "preFilters"> &
   Partial<{
     preBody: Partial<SpaceSchema>;
+    onlyDump: boolean;
+    skipDump: boolean;
   }>;
 
 export const getSpaces = async (
@@ -137,10 +139,11 @@ export const getSpaces = async (
       },
     });
   } catch (err) {
-    ResponseHandler.handleError(res, {
-      errorType: "get-spaces-error-failure",
-      message: "Failed to get spaces list",
-    });
+    throw err;
+    // ResponseHandler.handleError(res, {
+    //   errorType: "get-spaces-error-failure",
+    //   message: "Failed to get spaces list",
+    // });
   }
 };
 
@@ -208,7 +211,12 @@ export const createSpace = async (
   options: CreateOptions = {},
 ) => {
   try {
-    const { preBody, response: responseOpts } = options;
+    const {
+      preBody,
+      response: responseOpts,
+      onlyDump = false,
+      skipDump = false,
+    } = options;
 
     const body = { ...preBody, ...req.body } as SpaceSchema;
     const doc = await pipelineDBs.SPACE.createData({
