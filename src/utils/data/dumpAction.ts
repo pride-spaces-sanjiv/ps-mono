@@ -115,13 +115,13 @@ export const dumpAdminAction = async <
 type UserLevel = RequiredSessionData["user"]["userType"];
 export const dumpUserAction = async <
   N extends boolean = true,
-  F extends UserLevel = "support",
-  T extends UserLevel = "super-admin" | "admin" | "lead",
+  F extends UserLevel = "support" | "operator" | "builder",
+  T extends UserLevel = "super-admin" | "admin" | "lead" | "support",
 >(
   // @ts-ignore
   {
     fromAllowedLevels = ["support", "operator", "builder"] as [...F[]],
-    toAllowedLevels = ["super-admin", "admin", "lead"] as [...T[]],
+    toAllowedLevels = ["super-admin", "admin", "lead", "support"] as [...T[]],
     // @ts-ignore
     dump = {},
     req,

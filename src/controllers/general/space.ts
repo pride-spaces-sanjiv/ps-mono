@@ -21,9 +21,12 @@ import {
   AnyObject,
   InclusionProjection,
   ExclusionProjection,
+  Types,
 } from "mongoose";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
+import { dumpUserAction } from "@/utils/data/dumpAction.js";
+import { dumpStatuses } from "@/utils/data/dump.js";
 
 type RawOfModel = ModelToRaw<typeof Space>;
 type GetOptions = Partial<{
@@ -45,6 +48,7 @@ type CreateOptions = Omit<GetOptions, "preFilters"> &
     preBody: Partial<SpaceSchema>;
     onlyDump: boolean;
     skipDump: boolean;
+    dumpArgs: Parameters<typeof dumpUserAction>[0];
   }>;
 
 export const getSpaces = async (
@@ -216,19 +220,73 @@ export const createSpace = async (
       response: responseOpts,
       onlyDump = false,
       skipDump = false,
+      dumpArgs,
     } = options;
 
     const body = { ...preBody, ...req.body } as SpaceSchema;
-    const doc = await pipelineDBs.SPACE.createData({
-      // @ts-ignore
-      data: body,
-    });
+    const id = new Types.ObjectId().toHexString();
 
+    // Dump handle
+    if (!skipDump) {
+      const dumpRes = await dumpUserAction({
+        isNew: true,
+        // @ts-ignore
+        dump: {
+          ...dumpArgs?.dump,
+          collection: "spaces",
+          data: {
+            ...dumpArgs?.dump?.data,
+            ...body,
+            flags: { ...body.flags, isActive: undefined },
+          },
+          metadata: {
+            id: id,
+            name: body.name,
+          },
+          action: "add",
+        },
+        req: req,
+      });
+      if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+        ResponseHandler.handleUnauthorized(res, {
+          errorType: "dump-unauthorized",
+          message: "Dump action was unauthorized",
+        });
+        return;
+      }
+      if (dumpRes.error) {
+        ResponseHandler.handleUnauthorized(res, {
+          errorType: "dump-failed",
+          message: "Dump action was failed",
+        });
+        return;
+      }
+    }
+
+    // Allowed to create
+    if (!onlyDump) {
+      const doc = await pipelineDBs.SPACE.createData({
+        // @ts-ignore
+        data: body,
+      });
+      const data = convertDataToJSON(doc);
+      ResponseHandler.handleSuccess(res, {
+        ...responseOpts?.success,
+        status: responseOpts?.success?.status || 201,
+        message: responseOpts?.success?.message || "Created space successfully",
+        data: { ...responseOpts?.success?.data, ...data },
+      });
+      return;
+    }
+
+    // Allowed to dump only
+    const doc = Space.hydrate({ _id: id, ...body });
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
       ...responseOpts?.success,
       status: responseOpts?.success?.status || 201,
-      message: responseOpts?.success?.message || "Created space successfully",
+      message:
+        responseOpts?.success?.message || "Dumped new space successfully",
       data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err: any) {
@@ -261,6 +319,9 @@ export const updateSpace = async (
       preFilters,
       preProjections,
       preOptions,
+      onlyDump = false,
+      skipDump = false,
+      dumpArgs,
     } = options;
 
     const body = { ...preBody, ...req.body };
