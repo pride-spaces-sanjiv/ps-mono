@@ -36,10 +36,14 @@ type GetOptions = Partial<{
   response: Partial<{
     error: typeof ResponseHandler.options.handleErrorOptions;
     notFound: typeof ResponseHandler.options.handleNotFound;
-    unauthorized: typeof ResponseHandler.options.handleUnauthorizedOptions;
+    unAuthorized: typeof ResponseHandler.options.handleUnauthorizedOptions;
     success: typeof ResponseHandler.options.handleSuccess;
   }>;
 }>;
+type CreateOptions = Omit<GetOptions, "preFilters"> &
+  Partial<{
+    preBody: Partial<SpaceSchema>;
+  }>;
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -190,27 +194,34 @@ export const getSpace = async (
       },
     });
   } catch (err) {
-    ResponseHandler.handleError(res, {
-      errorType: "get-space-error-failure",
-      message: "Failed to get space details",
-    });
+    throw err;
+    // ResponseHandler.handleError(res, {
+    //   errorType: "get-space-error-failure",
+    //   message: "Failed to get space details",
+    // });
   }
 };
 
 export const createSpace = async (
-  req: ManagedRequest<Omit<SpaceSchema, "operator">>,
+  req: ManagedRequest<Partial<SpaceSchema>>,
   res: ManagedResponse,
+  options: CreateOptions = {},
 ) => {
   try {
-    const body = req.body;
-    const doc = new Space({ ...body, operator: req.session.user?.id });
-    await doc.save();
+    const { preBody, response: responseOpts } = options;
+
+    const body = { ...preBody, ...req.body } as SpaceSchema;
+    const doc = await pipelineDBs.SPACE.createData({
+      // @ts-ignore
+      data: body,
+    });
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
-      status: 201,
-      message: "Created space successfully",
-      data: data,
+      ...responseOpts?.success,
+      status: responseOpts?.success?.status || 201,
+      message: responseOpts?.success?.message || "Created space successfully",
+      data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
@@ -222,37 +233,50 @@ export const createSpace = async (
     if (errorData.handled) {
       return;
     }
-    ResponseHandler.handleError(res, {
-      errorType: "create-user-error-failure",
-      message: "Failed to create user",
-    });
+    throw err;
+    // ResponseHandler.handleError(res, {
+    //   errorType: "create-user-error-failure",
+    //   message: "Failed to create user",
+    // });
   }
 };
 
 export const updateSpace = async (
-  req: ManagedRequest<Omit<SpaceSchema, "branch" | "operator">>,
+  req: ManagedRequest<Omit<Partial<SpaceSchema>, "branch" | "operator">>,
   res: ManagedResponse,
+  options: CreateOptions & Pick<GetOptions, "preFilters"> = {},
 ) => {
   try {
-    const body = req.body;
-    const doc = await Space.findOneAndUpdate(
-      { _id: req.params.id, operator: req.session.user?.id },
-      body,
-      {
+    const {
+      preBody,
+      response: responseOpts,
+      preFilters,
+      preProjections,
+      preOptions,
+    } = options;
+
+    const body = { ...preBody, ...req.body };
+    const doc = await pipelineDBs.SPACE.updateData({
+      filter: { ...preFilters, _id: req.params.id },
+      updateData: body,
+      options: {
+        ...preOptions,
         new: true,
       },
-    );
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "space-not-found",
-        message: "Space not found",
+        ...responseOpts?.notFound,
+        errorType: responseOpts?.notFound?.errorType || "space-not-found",
+        message: responseOpts?.notFound?.message || "Space not found",
       });
       return;
     }
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
-      data: data,
+      ...responseOpts?.success,
+      data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
@@ -264,38 +288,55 @@ export const updateSpace = async (
     if (errorData.handled) {
       return;
     }
-    ResponseHandler.handleError(res, {
-      errorType: "update-space-error-failure",
-      message: "Failed to update space details",
-    });
+    throw err;
+    // ResponseHandler.handleError(res, {
+    //   errorType: "update-space-error-failure",
+    //   message: "Failed to update space details",
+    // });
   }
 };
 
 export const deleteSpace = async (
   req: ManagedRequest,
   res: ManagedResponse,
+  options: GetOptions = {},
 ) => {
   try {
-    const doc = await Space.findOneAndDelete({
-      _id: req.params.id,
-      operator: req.session.user?.id,
+    const {
+      preFilters,
+      preProjections,
+      preOptions,
+      response: responseOpts,
+    } = options;
+
+    const doc = await pipelineDBs.SPACE.deleteData({
+      filter: {
+        ...preFilters,
+        _id: req.params.id,
+      },
+      options: {
+        ...preOptions,
+      },
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
-        errorType: "space-not-found",
-        message: "Space not found",
+        ...responseOpts?.notFound,
+        errorType: responseOpts?.notFound?.errorType || "space-not-found",
+        message: responseOpts?.notFound?.message || "Space not found",
       });
       return;
     }
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
-      data: { id: data?.id },
+      ...responseOpts?.success,
+      data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err) {
-    ResponseHandler.handleError(res, {
-      errorType: "delete-space-error-failure",
-      message: "Failed to delete space",
-    });
+    throw err;
+    // ResponseHandler.handleError(res, {
+    //   errorType: "delete-space-error-failure",
+    //   message: "Failed to delete space",
+    // });
   }
 };
