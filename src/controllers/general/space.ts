@@ -329,7 +329,9 @@ export const updateSpace = async (
 
     // Check exists or not first
     let doc = await pipelineDBs.SPACE.getData({
-      filter: { _id: req.params.id },
+      filter: { ...preFilters, _id: req.params.id },
+      projection: { ...preProjections },
+      options: { ...preOptions },
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
