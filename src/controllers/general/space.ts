@@ -325,13 +325,11 @@ export const updateSpace = async (
     } = options;
 
     const body = { ...preBody, ...req.body };
-    const doc = await pipelineDBs.SPACE.updateData({
-      filter: { ...preFilters, _id: req.params.id },
-      updateData: body,
-      options: {
-        ...preOptions,
-        new: true,
-      },
+    const id = req.params.id;
+
+    // Check exists or not first
+    let doc = await pipelineDBs.SPACE.getData({
+      filter: { _id: req.params.id },
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
@@ -342,9 +340,77 @@ export const updateSpace = async (
       return;
     }
 
+    // Dump handle
+    if (!skipDump) {
+      const dumpRes = await dumpUserAction({
+        ...dumpArgs,
+        // @ts-ignore
+        dump: {
+          ...dumpArgs?.dump,
+          collection: "spaces",
+          data: {
+            ...dumpArgs?.dump?.data,
+            ...body,
+          },
+          metadata: {
+            id: id,
+            name: body.name,
+          },
+          action: "update",
+        },
+        req: req,
+      });
+      if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+        ResponseHandler.handleUnauthorized(res, {
+          errorType: "dump-unauthorized",
+          message: "Dump action was unauthorized",
+        });
+        return;
+      }
+      if (dumpRes.error) {
+        ResponseHandler.handleUnauthorized(res, {
+          errorType: "dump-failed",
+          message: "Dump action was failed",
+        });
+        return;
+      }
+    }
+
+    // Allowed to update
+    if (!onlyDump) {
+      doc = await pipelineDBs.SPACE.updateData({
+        filter: { ...preFilters, _id: req.params.id },
+        updateData: body,
+        options: {
+          ...preOptions,
+          new: true,
+        },
+      });
+
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          ...responseOpts?.notFound,
+          errorType: responseOpts?.notFound?.errorType || "space-not-found",
+          message: responseOpts?.notFound?.message || "Space not found",
+        });
+        return;
+      }
+      const data = convertDataToJSON(doc);
+      ResponseHandler.handleSuccess(res, {
+        ...responseOpts?.success,
+        message: responseOpts?.success?.message || "Space updated successfully",
+        data: { ...responseOpts?.success?.data, ...data },
+      });
+      return;
+    }
+
+    // Allowed to dump only
+    doc = Space.hydrate({ _id: id, ...body });
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
       ...responseOpts?.success,
+      message:
+        responseOpts?.success?.message || "Dumped space data successfully",
       data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err: any) {
