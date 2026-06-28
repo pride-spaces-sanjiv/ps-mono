@@ -26,7 +26,7 @@ import {
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { dumpUserAction } from "@/utils/data/dumpAction.js";
-import { dumpStatuses } from "@/utils/data/dump.js";
+import { dumpActions, dumpStatuses } from "@/utils/data/dump.js";
 
 type RawOfModel = ModelToRaw<typeof Space>;
 type GetOptions = Partial<{
@@ -46,9 +46,12 @@ type GetOptions = Partial<{
 type CreateOptions = Omit<GetOptions, "preFilters"> &
   Partial<{
     preBody: Partial<SpaceSchema>;
+    bodyHandle: <T = Partial<SpaceSchema>>(body: T) => T | Promise<T>;
     onlyDump: boolean;
     skipDump: boolean;
-    dumpArgs: Parameters<typeof dumpUserAction>[0];
+    dumpArgs: Partial<
+      Exclude<Parameters<typeof dumpUserAction>[0], undefined | null>
+    >;
   }>;
 
 export const getSpaces = async (
@@ -217,18 +220,25 @@ export const createSpace = async (
   try {
     const {
       preBody,
+      bodyHandle,
       response: responseOpts,
       onlyDump = false,
       skipDump = false,
       dumpArgs,
     } = options;
 
-    const body = { ...preBody, ...req.body } as SpaceSchema;
+    // Body creation
+    let body = { ...preBody, ...req.body } as SpaceSchema;
+    if (bodyHandle) {
+      body = await bodyHandle(body);
+    }
+
     const id = new Types.ObjectId().toHexString();
 
     // Dump handle
     if (!skipDump) {
       const dumpRes = await dumpUserAction({
+        ...dumpArgs,
         isNew: true,
         // @ts-ignore
         dump: {
@@ -315,6 +325,7 @@ export const updateSpace = async (
   try {
     const {
       preBody,
+      bodyHandle,
       response: responseOpts,
       preFilters,
       preProjections,
@@ -324,12 +335,17 @@ export const updateSpace = async (
       dumpArgs,
     } = options;
 
-    const body = { ...preBody, ...req.body };
+    // Body creation
+    let body = { ...preBody, ...req.body } as SpaceSchema;
+    if (bodyHandle) {
+      body = await bodyHandle(body);
+    }
+
     const id = req.params.id;
 
     // Check exists or not first
     let doc = await pipelineDBs.SPACE.getData({
-      filter: { ...preFilters, _id: req.params.id },
+      filter: { ...preFilters, _id: id },
       projection: { ...preProjections },
       options: { ...preOptions },
     });
@@ -346,6 +362,7 @@ export const updateSpace = async (
     if (!skipDump) {
       const dumpRes = await dumpUserAction({
         ...dumpArgs,
+        isNew: true,
         // @ts-ignore
         dump: {
           ...dumpArgs?.dump,
@@ -356,7 +373,7 @@ export const updateSpace = async (
           },
           metadata: {
             id: id,
-            name: body.name,
+            name: doc.name,
           },
           action: "update",
         },
@@ -381,7 +398,7 @@ export const updateSpace = async (
     // Allowed to update
     if (!onlyDump) {
       doc = await pipelineDBs.SPACE.updateData({
-        filter: { ...preFilters, _id: req.params.id },
+        filter: { ...preFilters, _id: id },
         updateData: body,
         options: {
           ...preOptions,
@@ -407,7 +424,6 @@ export const updateSpace = async (
     }
 
     // Allowed to dump only
-    doc = Space.hydrate({ _id: id, ...body });
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
       ...responseOpts?.success,
@@ -436,24 +452,27 @@ export const updateSpace = async (
 export const deleteSpace = async (
   req: ManagedRequest,
   res: ManagedResponse,
-  options: GetOptions = {},
+  options: GetOptions &
+    Pick<CreateOptions, "onlyDump" | "skipDump" | "dumpArgs"> = {},
 ) => {
   try {
     const {
       preFilters,
       preProjections,
       preOptions,
+      onlyDump = false,
+      skipDump = false,
+      dumpArgs,
       response: responseOpts,
     } = options;
 
-    const doc = await pipelineDBs.SPACE.deleteData({
-      filter: {
-        ...preFilters,
-        _id: req.params.id,
-      },
-      options: {
-        ...preOptions,
-      },
+    const id = req.params.id;
+
+    // Check exists or not first
+    let doc = await pipelineDBs.SPACE.getData({
+      filter: { ...preFilters, _id: id },
+      projection: { ...preProjections },
+      options: { ...preOptions },
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
@@ -464,9 +483,73 @@ export const deleteSpace = async (
       return;
     }
 
+    // Dump handle
+    if (!skipDump) {
+      const dumpRes = await dumpUserAction({
+        ...dumpArgs,
+        isNew: true,
+        // @ts-ignore
+        dump: {
+          ...dumpArgs?.dump,
+          collection: "spaces",
+          data: {
+            ...dumpArgs?.dump?.data,
+            id: id,
+            name: doc.name,
+          },
+          metadata: {
+            id: id,
+            name: doc.name,
+          },
+          action: dumpActions.REMOVE,
+        },
+        req: req,
+      });
+      if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+        ResponseHandler.handleUnauthorized(res, {
+          errorType: "dump-unauthorized",
+          message: "Dump action was unauthorized",
+        });
+        return;
+      }
+      if (dumpRes.error) {
+        ResponseHandler.handleUnauthorized(res, {
+          errorType: "dump-failed",
+          message: "Dump action was failed",
+        });
+        return;
+      }
+    }
+
+    // Allowed to delete directly
+    if (!onlyDump) {
+      doc = await pipelineDBs.SPACE.deleteData({
+        filter: { ...preFilters, _id: id },
+        options: { ...preOptions },
+      });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          ...responseOpts?.notFound,
+          errorType: responseOpts?.notFound?.errorType || "space-not-found",
+          message: responseOpts?.notFound?.message || "Space not found",
+        });
+        return;
+      }
+      const data = convertDataToJSON(doc);
+      ResponseHandler.handleSuccess(res, {
+        ...responseOpts?.success,
+        message: responseOpts?.success?.message || "Space deleted successfully",
+        data: { ...responseOpts?.success?.data, ...data },
+      });
+      return;
+    }
+
+    // Allowed to dump only
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
       ...responseOpts?.success,
+      message:
+        responseOpts?.success?.message || "Dumped space deletion successfully",
       data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err) {
