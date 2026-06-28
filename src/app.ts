@@ -143,6 +143,7 @@ app.use((req, res, next) => {
     for (const key in headers) {
       res.setHeader(key, headers[key]);
     }
+    console.log("Logged Route :", req.url, req.originalUrl, req.path);
     next?.();
   } catch (err) {
     ResponseHandler.handleError(res, {
