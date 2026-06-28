@@ -2,17 +2,23 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { tokenStore, userStore } from "@/services/store/user";
 import { getSelfData as getAdminData } from "@/services/apis/admin/auth";
+import { getSelfData as getOperatorData } from "@/services/apis/operator/auth";
 import { getSelfData as getEnterpriseData } from "@/services/apis/self/enterprise";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { validateNumber } from "@/utils/number";
 // import { validateNumber } from "@/utils/number";
 import { delayPromise } from "@/utils/promise";
 import { queryKeys } from "@/utils/query-keys";
+import type { NonAdminUserType } from "@/utils/data/userTypes";
 
-type Props = {
+type Props<T extends NonAdminUserType | "admin"> = {
   promiseDelay: number;
+  userType: T;
 };
-export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
+export function useUser<T extends NonAdminUserType | "admin" = "admin">({
+  promiseDelay = 1,
+  userType = "admin" as T,
+}: Partial<Props<T>> = {}) {
   const userStoreState = userStore((state) => state);
   const tokenStoreState = tokenStore((state) => state);
   const userData = userStore((state) => state.value);
@@ -28,11 +34,14 @@ export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
   );
 
   const queryState = useQuery({
-    queryKey: [queryKeys.USERDATA, tokenStoreState.value?.expiry],
+    queryKey: [queryKeys.USERDATA, userType, tokenStoreState.value?.expiry],
     queryFn: () => {
       userStoreState.increaseFetchCount();
       return tokenStoreState
-        ? delayPromise(getAdminData(), promiseDelay)
+        ? delayPromise(
+            userType === "admin" ? getAdminData() : getOperatorData(),
+            promiseDelay,
+          )
         : null;
     },
     retry: 3,
@@ -56,8 +65,14 @@ export function useUser({ promiseDelay = 1 }: Partial<Props> = {}) {
 
   useEffect(() => {
     // @ts-ignore
-    setUserLevel(userData?.level || userStoreState.level);
-  }, [userData]);
+    userType === "admin" &&
+      // @ts-ignore
+      setUserLevel(userData?.level || userStoreState.level);
+  }, [userData, userType]);
+
+  useEffect(() => {
+    userType !== "admin" && setUserLevel(userType);
+  }, [userType]);
 
   useEffect(() => {}, [queryState.fetchStatus]);
 
