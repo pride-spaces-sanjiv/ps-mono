@@ -25,6 +25,7 @@ import {
   LogOutIcon,
   UserIcon,
   UsersIcon,
+  CircleUser,
   type LucideIcon,
 } from "lucide-react";
 import { tokenStore, userStore } from "@/services/store/user";
@@ -51,6 +52,11 @@ type SidebarSubItem = {
 
 // Menu items with icons and routes
 const items: SidebarItem[] = [
+    {
+    title: "Profile",
+    url: "/settings",
+    icon: CircleUser,
+  },
   {
     title: "Dashboard",
     url: "/dashboard",
@@ -97,11 +103,6 @@ const items: SidebarItem[] = [
     icon: LogOutIcon,
   },
   {
-    title: "Notifications",
-    url: "/notifications",
-    icon: BellIcon,
-  },
-  {
     title: "Team",
     url: "/team",
     icon: UsersIcon,
@@ -111,10 +112,10 @@ const items: SidebarItem[] = [
     url: "/users",
     icon: UserIcon,
   },
-  {
-    title: "Profile",
-    url: "/settings",
-    icon: UserIcon,
+    {
+    title: "Notifications",
+    url: "/notifications",
+    icon: BellIcon,
   },
 ];
 
