@@ -301,7 +301,7 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
     } catch (err) {}
 
     // Get docs from DB
-    await User.find();
+    // await User.find();
     const docs = await this.model
       ?.find(filter, projection, options)
       .skip(offset)

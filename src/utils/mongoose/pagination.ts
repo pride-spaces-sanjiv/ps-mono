@@ -108,7 +108,7 @@ export const paginatedResults = async <
       options: args?.options,
       offset: offset,
       limit: limit,
-      sortOptions: sortBy ? { [sortBy]: sortOrder || "desc" } : {},
+      sortOptions: sortBy ? { arg: { [sortBy]: sortOrder || "desc" } } : {},
     })) as FlattenMaps<T>[];
     //  (await model
     //   // @ts-ignore
