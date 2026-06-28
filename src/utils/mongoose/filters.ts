@@ -183,6 +183,10 @@ export const getSortOptions = <
       req.query[String(options?.fields?.sortOrder)] === "asc"
         ? "asc"
         : options?.defaultSortOrder || "desc";
+    console.log("Finalised sorting field :", {
+      sortBy: field,
+      sortOrder: order as SortOrder,
+    });
 
     if (typeof field !== "string") {
       throw new Error("Sort field is not valid type, required string");
