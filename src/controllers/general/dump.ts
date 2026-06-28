@@ -27,12 +27,13 @@ import { spaceSchema } from "@/database/schemas/space.js";
 import { operatorSchema } from "@/database/schemas/operator.js";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { validateDataAndRespond } from "@/utils/schemas/validate.js";
-import { adminLevels } from "@/utils/data/admin.js";
+import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+import { NonAdminUserType, nonAdminUserTypes } from "@/utils/data/userTypes.js";
 import { ObjectDepthKeys } from "@/types/object.js";
 import { ModelToDocument, ModelToRaw } from "@/types/mongoose/document.js";
 import { RootFilterQuery } from "mongoose";
 import { DumpSchema } from "@/database/schemas/dump.js";
-import { dumpAdminAction } from "@/utils/data/dumpAction.js";
+import { dumpAdminAction, dumpUserAction } from "@/utils/data/dumpAction.js";
 
 export const getDumps = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -56,7 +57,8 @@ export const getDumps = async (
     });
 
     const preLevelFilters: RootFilterQuery<ModelToRaw<typeof Dump>> =
-      selfLevel === "support"
+      selfLevel === "support" ||
+      nonAdminUserTypes.includes(selfLevel as NonAdminUserType)
         ? {
             $or: [
               { "from.id": req.session.user?.id },
@@ -123,6 +125,8 @@ export const getDump = async (
   res: ManagedResponse,
 ) => {
   try {
+    const selfLevel = req.session.user?.userType;
+
     const { fields, projectors } = getFieldsandProjectors(
       req,
       Dump,
@@ -130,7 +134,8 @@ export const getDump = async (
     );
 
     const preLevelFilters: RootFilterQuery<ModelToRaw<typeof Dump>> =
-      req.session.user?.userType === "support"
+      selfLevel === "support" ||
+      nonAdminUserTypes.includes(selfLevel as NonAdminUserType)
         ? {
             $or: [
               { "from.id": req.session.user?.id },
@@ -210,6 +215,10 @@ export const updateDump = async (
   try {
     const sessionUser = req.session.user;
     const body = req.body;
+    const isHigherAdmin =
+      !!sessionUser?.userType &&
+      adminLevels.includes(sessionUser.userType as AdminLevel) &&
+      sessionUser.userType !== "support";
 
     const doc = await pipelineDBs.DUMP.getData({
       filter: { _id: req.params.id },
@@ -224,18 +233,13 @@ export const updateDump = async (
 
     // Flag to check if last user who did to action is diff from curr
     const doClone = !!(
-      sessionUser?.userType &&
-      sessionUser.userType !== "support" &&
+      isHigherAdmin &&
       doc.to?.id &&
       doc.to.id !== sessionUser.id
     );
 
     // Update approved dump in real collection
-    if (
-      sessionUser?.userType &&
-      sessionUser.userType !== "support" &&
-      body.status === dumpStatuses.APPROVED
-    ) {
+    if (isHigherAdmin && body.status === dumpStatuses.APPROVED) {
       if (!Object.keys(dumpCollectionModels).includes(doc.collection)) {
         ResponseHandler.handleError(res, {
           errorType: "invalid-dump-collection",
@@ -303,18 +307,16 @@ export const updateDump = async (
     }
 
     // Handle dumping actions
-    const dumpRes = await dumpAdminAction({
+    const dumpRes = await dumpUserAction({
       dump: {
         ...body,
         status: doClone
           ? doc.status
-          : sessionUser?.userType === "support"
+          : !isHigherAdmin
             ? dumpStatuses.PENDING
             : body.status,
         disabled:
-          doClone ||
-          (sessionUser?.userType !== "support" &&
-            body.status === dumpStatuses.APPROVED),
+          doClone || (isHigherAdmin && body.status === dumpStatuses.APPROVED),
       },
       req: req,
       senderDisabled: !!doClone,
