@@ -22,13 +22,18 @@ const jsonContentHeadersAuth = {
   Authorization: `Bearer ${token}`,
 };
 
-// Admin configs
-
 export const BASE = axios.create({
   baseURL: baseUrl,
   headers: jsonContentHeaders,
   withCredentials: true,
 });
+export const BASE_WITH_BEARER = axios.create({
+  baseURL: baseUrl,
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+
+// Admin configs
 export const ADMIN = axios.create({
   baseURL: baseUrl + "/admin",
   headers: jsonContentHeadersAuth,

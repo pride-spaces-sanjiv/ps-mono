@@ -10,9 +10,13 @@ import { isAxiosError } from "axios";
 import { tokenStore, userStore } from "@/services/store/user";
 // import { loginAPI, googleAuthAPI } from "@/services/apis/auth";
 import {
-  getSelfData,
-  loginAdmin as loginAPI,
+  getSelfData as getAdminData,
+  loginAdmin,
 } from "@/services/apis/admin/auth";
+import {
+  getSelfData as getOperatorData,
+  loginOperator,
+} from "@/services/apis/operator/auth";
 import {
   adminSchema,
   type AdminSchema,
@@ -20,10 +24,7 @@ import {
   // type GoogleAuthSchema,
   // type LoginSchema,
 } from "@/utils/schemas/user";
-import {
-  operatorSchema,
-  type OperatorSchema,
-} from "@/utils/schemas/operators";
+import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
 import { reConfigureAuthToken } from "@/utils/axios/configure";
 import { handleAxiosErrorCases } from "@/utils/axios/error";
 import { datifyObjectValues } from "@/utils/object/datify";
@@ -34,8 +35,15 @@ import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 import GoogleButton from "@/components/buttons/google-btn";
 import AuthCard from "@/containers/auth-card";
+import { getTokenInfo } from "@/services/apis/general/token";
 
 type LoginSchema = Pick<AdminSchema, "email" | "password">;
+const validLoginTypes = ["admin", "operator", "builder"] as const;
+const loginTypeAPIsMap = {
+  admin: { login: loginAdmin, getSelfData: getAdminData },
+  operator: { login: loginOperator, getSelfData: getOperatorData },
+  builder: { login: loginOperator, getSelfData: getOperatorData },
+} as const;
 
 export default function LoginPage({
   className,
@@ -43,14 +51,23 @@ export default function LoginPage({
   ...props
 }: JSX.IntrinsicElements["div"] &
   Partial<{ loginAs: "admin" | "enterprise" }>) {
+  const userStoreState = userStore((state) => state);
+  const tokenStoreState = tokenStore((state) => state);
+
   const tokenData = tokenStore((state) => state.value);
   const setTokenData = tokenStore((state) => state.setter);
   const setUserData = userStore((state) => state.setter);
+  const setUserLevel = userStore((state) => state.setLevel);
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const loginAsParam = useMemo(
-    () => searchParams.get("as") || "admin",
+    () =>
+      validLoginTypes.includes(
+        (searchParams.get("as")?.toLowerCase().trim() as any) || "admin",
+      )
+        ? (searchParams.get("as") as (typeof validLoginTypes)[number])
+        : "admin",
     [searchParams],
   );
 
@@ -75,7 +92,7 @@ export default function LoginPage({
     isSuccess: loginFinished,
   } = useMutation({
     mutationFn: (body: LoginSchema) =>
-      delayPromise(loginAPI({ body: body }), 1),
+      delayPromise(loginTypeAPIsMap[loginAsParam].login?.({ body: body }), 1),
   });
 
   // const {
@@ -90,9 +107,19 @@ export default function LoginPage({
   //     delayPromise(googleAuthAPI({ body: body }), 1),
   // });
 
+  const { mutateAsync: mutatedTokenInfo } = useMutation({
+    mutationKey: ["token-info"],
+    mutationFn: async () => {
+      return getTokenInfo().finally(() =>
+        userStoreState.increaseTokeInfoFetches(),
+      );
+    },
+    retry: 3,
+  });
   const { mutateAsync: mutatedUserData } = useMutation({
-    mutationKey: [queryKeys.USERDATA],
-    mutationFn: () => getSelfData(),
+    mutationKey: [queryKeys.USERDATA, loginAsParam],
+    mutationFn: () =>
+      delayPromise(loginTypeAPIsMap[loginAsParam].getSelfData?.(), 0.3),
   });
 
   const login = async (body: LoginSchema) => {
@@ -117,23 +144,31 @@ export default function LoginPage({
         }
         setTokenData({ ...tokenData, ...modified } as typeof tokenData);
 
-        const userRes = await mutatedUserData();
-        const userData = userRes.data?.data;
-        if (userRes.status === 200 && res.data?.success && userData?.id) {
-          const modified = datifyObjectValues(userData, [
-            "createdAt",
-            "updatedAt",
-          ]);
-          setUserData(modified);
-          toast.success("Login Successful");
-          navigate("/dashboard");
-          return true;
+        // Get Token Info to save user level
+        const tokenInfoRes = await mutatedTokenInfo();
+        const tokenInfoLevel = tokenInfoRes?.data?.data?.level;
+        if (tokenInfoRes.status === 200 && tokenInfoLevel) {
+          setUserLevel(tokenInfoLevel);
+
+          // Then update user data
+          const userRes = await mutatedUserData();
+          const userData = userRes.data?.data;
+          if (userRes.status === 200 && res.data?.success && userData?.id) {
+            const modified = datifyObjectValues(userData, [
+              "createdAt",
+              "updatedAt",
+            ]);
+            setUserData(modified);
+            toast.success("Login Successful");
+            navigate("/dashboard");
+            return true;
+          }
         }
       }
       throw new Error("Invalid response");
     } catch (err) {
       const handled = handleAxiosErrorCases<
-        Awaited<ReturnType<typeof loginAPI>>["data"]
+        Awaited<ReturnType<typeof loginAdmin>>["data"]
       >(err, [
         {
           status: 400,

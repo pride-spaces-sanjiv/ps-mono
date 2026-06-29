@@ -56,7 +56,14 @@ interface SuspensedViewProps {
 const PrivateRoutes = () => {
   const navigate = useNavigate();
 
-  const { data: res, isFetching, tokenStoreState } = useUser();
+  const {
+    data: res,
+    isFetching,
+    tokenStoreState,
+    userLevel,
+    fetchCount,
+    tokeInfoFetches,
+  } = useUser();
   const {} = useStatesCities();
 
   const AutoNavigateRender = useCallback(
@@ -74,12 +81,12 @@ const PrivateRoutes = () => {
   );
 
   useEffect(() => {
-    if (!res?.data?.data?.id && !isFetching) {
+    if (!res?.data?.data?.id && !isFetching && userLevel) {
       toast.error("Something wrong ! Please relogin");
     }
   }, [isFetching, res?.data?.data?.id]);
 
-  if (isFetching) {
+  if (!tokeInfoFetches || isFetching) {
     return (
       <div className="w-full h-full min-h-dvh flex flex-col gap-3 justify-center items-center px-2 py-4">
         <RotatingLoader className="size-[50px] text-accent-foreground" />
