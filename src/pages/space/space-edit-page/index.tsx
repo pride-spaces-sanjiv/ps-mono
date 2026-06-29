@@ -110,27 +110,27 @@ const SpaceEditPage = () => {
       ...mainChanges.allData,
       ...(locationChanges.allFields.length
         ? {
-            location: {
-              ...res?.data?.data?.location,
-              ...locationChanges.allData,
-            },
-          }
+          location: {
+            ...res?.data?.data?.location,
+            ...locationChanges.allData,
+          },
+        }
         : {}),
       ...(personChanges.allFields.length
         ? {
-            person: {
-              ...res?.data?.data?.person,
-              ...personChanges.allData,
-            },
-          }
+          person: {
+            ...res?.data?.data?.person,
+            ...personChanges.allData,
+          },
+        }
         : {}),
       ...(pricingChanges.allFields.length
         ? {
-            pricing: {
-              ...res?.data?.data?.pricing,
-              ...pricingChanges.allData,
-            },
-          }
+          pricing: {
+            ...res?.data?.data?.pricing,
+            ...pricingChanges.allData,
+          },
+        }
         : {}),
     };
   }, [
@@ -174,20 +174,42 @@ const SpaceEditPage = () => {
   } = useForm({
     resolver: zodResolver(spaceSchema),
     defaultValues: {
-      openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
-      category: "Classic",
-      spaceType: "Flex",
-      grade: "B",
-      openTime: defaultTime,
-      closeTime: defaultTime,
-      operationalHrs: 0,
+      timing: {
+        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
+        openTime: defaultTime,
+        closeTime: defaultTime,
+        operationalHrs: 0,
+      },
+
+      specs: {
+        category: "Classic",
+        spaceType: "Flex",
+        grade: "B",
+        area: 0,
+        workingSizes: [],
+      },
+
+      seats: {
+        total: 0,
+        booked: 0,
+      },
+
+      flags: {
+        isActive: true,
+        isVerified: false,
+        isOc: false,
+        isSez: false,
+      },
+
       pricing: {
         dayPass: 0,
-        dedicatedDesk: 0,
         perSeat: 0,
-        meetingRoom: 0,
+        dedicatedDesk: 0,
+        flexiDesk: 0,
+        privateCabin: 0,
+        vo: 0,
       },
-    },
+    }
   });
 
   const operatorData = useMemo(
@@ -217,13 +239,21 @@ const SpaceEditPage = () => {
     if (res?.data?.data) {
       const modified = datifyObjectValues(
         { ...res?.data?.data, ...allUpdatedData },
-        ["closeTime", "openTime", "createdAt", "updatedAt"],
+        [
+          "createdAt",
+          "updatedAt",
+        ]
       );
-      reset?.({
-        openTime: defaultTime,
-        closeTime: defaultTime,
-        slug: modified?.references?.operator?.slug,
+      reset({
         ...modified,
+        slug: modified?.references?.operator?.slug,
+
+        timing: {
+          ...modified?.timing,
+          openTime: modified?.timing?.openTime ?? defaultTime,
+          closeTime: modified?.timing?.closeTime ?? defaultTime,
+        },
+
         person: {
           ...(POCSameAsOperator
             ? operatorData?.person
@@ -418,16 +448,6 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            label="Email"
-            labelPosition="embedded"
-            type="email"
-            placeholder="centre@example.com"
-            {...register("email")}
-            error={errors.email}
-            {...changedFieldProps(mainChanges.allData, "email")}
-          />
-
-          <FormField
             label="Operator"
             labelPosition="embedded"
             value={operatorData?.name || "None"}
@@ -438,81 +458,96 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            key={`space-cat-${defaultValues?.category}`}
+            key={`space-cat-${defaultValues?.specs?.category}`}
             label="Category"
             labelPosition="embedded"
             inputType="select"
             items={spaceCategories.map((cat) => ({ label: cat, value: cat }))}
-            error={errors.category}
+            error={errors.specs?.category}
             pickerProps={{
               wrapperProps: {
-                defaultValue: defaultValues?.category,
+                defaultValue: defaultValues?.specs?.category,
                 onValueChange: (val) =>
-                  setValue("category", val as SpaceSchema["category"], {
+                  setValue("specs.category", val as SpaceSchema["specs"]["category"], {
                     shouldValidate: true,
-                  }),
+                  })
               },
             }}
             {...changedFieldProps(mainChanges.allData, "category")}
           />
 
           <FormField
-            key={`space-type-${defaultValues?.spaceType}`}
+            key={`space-type-${defaultValues?.specs?.spaceType}`}
             label="Space Type"
             labelPosition="embedded"
             inputType="select"
             items={labelledSpaceTypes}
             pickerProps={{
               wrapperProps: {
-                defaultValue: defaultValues?.spaceType,
+                defaultValue: defaultValues?.specs?.spaceType,
                 onValueChange: (val) =>
-                  setValue("spaceType", val as SpaceSchema["spaceType"], {
+                  setValue("specs.spaceType", val as SpaceSchema["specs"]["spaceType"], {
                     shouldValidate: true,
                   }),
               },
             }}
-            error={errors.spaceType}
+            error={errors.specs?.spaceType}
             {...changedFieldProps(mainChanges.allData, "spaceType")}
           />
 
           <FormField
-            key={`space-grade-${defaultValues?.grade}`}
+            key={`space-grade-${defaultValues?.specs?.grade}`}
             label="Grade"
             labelPosition="embedded"
             inputType="select"
             items={spaceGrades.map((grade) => ({ label: grade, value: grade }))}
-            error={errors.grade}
+            error={errors.specs?.grade}
             pickerProps={{
               wrapperProps: {
-                defaultValue: defaultValues?.grade,
+                defaultValue: defaultValues?.specs?.grade,
                 onValueChange: (val) =>
-                  setValue("grade", val as SpaceSchema["grade"], {
+                  setValue("specs.grade", val as SpaceSchema["specs"]["grade"], {
                     shouldValidate: true,
                   }),
               },
             }}
             {...changedFieldProps(mainChanges.allData, "grade")}
           />
-
+          <div className="flex items-center gap-4">
+            <label className="text-white text-sm">OC</label>
+            <Switch
+              key={defaultValues?.flags?.isOc ? "oc" : "non-oc"}
+              defaultChecked={!!defaultValues?.flags?.isOc}
+              {...register("flags.isOc")}
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <label className="text-white text-sm">SEZ</label>
+            <Switch
+              key={defaultValues?.flags?.isSez ? "sez" : "non-sez"}
+              defaultChecked={!!defaultValues?.flags?.isSez}
+              {...register("flags.isSez")}
+            />
+          </div>
           {/* Open Time */}
 
           <FormField
             label="Open Time"
             labelPosition="embedded"
             type="time"
-            key={defaultValues?.openTime?.toISOString()}
+            key={String(defaultValues?.timing?.openTime)}
             defaultValue={
-              defaultValues?.openTime
-                ? moment(defaultValues?.openTime).format("HH:mm")
+              defaultValues?.timing?.openTime
+                ? moment(defaultValues?.timing?.openTime).format("HH:mm")
                 : undefined
             }
             onChange={(e) => {
               const val = e.currentTarget.value;
-              setValue("openTime", moment(val, "HH:mm", true).toDate(), {
+              setValue("timing.openTime", moment(val, "HH:mm", true).toDate(), {
                 shouldValidate: true,
               });
             }}
-            error={errors.openTime}
+            error={errors.timing?.openTime}
             {...changedFieldProps(mainChanges.allData, "openTime")}
           />
 
@@ -522,19 +557,19 @@ const SpaceEditPage = () => {
             label="Close Time"
             labelPosition="embedded"
             type="time"
-            key={defaultValues?.closeTime?.toISOString()}
+            key={String(defaultValues?.timing?.closeTime)}
             defaultValue={
-              defaultValues?.closeTime
-                ? moment(defaultValues?.closeTime).format("HH:mm")
+              defaultValues?.timing?.closeTime
+                ? moment(defaultValues?.timing?.closeTime).format("HH:mm")
                 : undefined
             }
             onChange={(e) => {
               const val = e.currentTarget.value;
-              setValue("closeTime", moment(val, "HH:mm", true).toDate(), {
+              setValue("timing.closeTime", moment(val, "HH:mm", true).toDate(), {
                 shouldValidate: true,
               });
             }}
-            error={errors.closeTime}
+            error={errors.timing?.closeTime}
             {...changedFieldProps(mainChanges.allData, "closeTime")}
           />
 
@@ -542,8 +577,10 @@ const SpaceEditPage = () => {
             label="Total Seats"
             labelPosition="embedded"
             type="number"
-            {...register("totalSeats", { valueAsNumber: true })}
-            error={errors.totalSeats}
+            {...register("seats.total", {
+              valueAsNumber: true,
+            })}
+            error={errors.seats?.total}
             {...changedFieldProps(mainChanges.allData, "totalSeats")}
           />
 
@@ -551,30 +588,32 @@ const SpaceEditPage = () => {
             label="Booked Seats"
             labelPosition="embedded"
             type="number"
-            {...register("bookedSeats", { valueAsNumber: true })}
-            error={errors.bookedSeats}
+            {...register("seats.booked", {
+              valueAsNumber: true,
+            })}
+            error={errors.seats?.booked}
             {...changedFieldProps(mainChanges.allData, "bookedSeats")}
           />
 
           {/* Open Days */}
 
-          {watch("spaceType", "Flex") !== "MOS" && (
+          {watch("specs.spaceType", "Flex") !== "MOS" && (
             <FormField
               label="Operational Days"
               labelPosition="embedded"
               // embeddedWrapperProps={{className: "max-w-full"}}
               error={{
-                message: errors.openDays?.message,
-                type: errors.openDays?.type || "validate",
+                message: errors.timing?.openDays?.message,
+                type: errors.timing?.openDays?.type || "validate",
               }}
               {...changedFieldProps(mainChanges.allData, "openDays")}
             >
               <GroupedSearchSelect
-                key={`days-${defaultValues?.openDays?.length}`}
+                key={`days-${defaultValues?.timing?.openDays?.length}`}
                 type="multiple"
                 showSearch={false}
                 defaultSelected={
-                  defaultValues?.openDays ||
+                  defaultValues?.timing?.openDays ||
                   days.map((_, i) => i + 1).filter((_, i) => i < 7)
                 }
                 items={days.map((dt, i) => ({
@@ -590,10 +629,10 @@ const SpaceEditPage = () => {
                         "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
                       }
                     >
-                      {watch("openDays", []).length > 0 ? (
+                      {watch("timing.openDays", []).length > 0 ? (
                         <ChippedElements
                           className=""
-                          elements={watch("openDays", [])
+                          elements={watch("timing.openDays", [])
                             .sort((a, b) => a - b)
                             .map((s) => shortDays[s - 1])
                             .filter((v) => !!v)}
@@ -607,16 +646,16 @@ const SpaceEditPage = () => {
                 contentProps={{ className: "max-h-[300px]" }}
                 onSelect={(items) => {
                   setValue(
-                    "openDays",
+                    "timing.openDays",
                     items.filter((val) => typeof val === "number"),
-                  );
+                  )
                 }}
               />
             </FormField>
           )}
 
           {/* Operational Hours */}
-          {watch("spaceType", "Flex") !== "Flex" && (
+          {watch("specs.spaceType", "Flex") !== "Flex" && (
             <FormField
               type="number"
               inputMode="numeric"
@@ -624,8 +663,8 @@ const SpaceEditPage = () => {
               max={24}
               label="Operational Hours"
               labelPosition="embedded"
-              error={errors.operationalHrs}
-              {...register("operationalHrs")}
+              error={errors.timing?.operationalHrs}
+              {...register("timing.operationalHrs")}
               {...changedFieldProps(mainChanges.allData, "operationalHrs")}
             />
           )}
@@ -678,20 +717,20 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             error={{
               message:
-                errors.workingSizes?.[0]?.message ||
-                errors?.workingSizes?.message,
+                errors.specs?.workingSizes?.[0]?.message ||
+                errors?.specs?.workingSizes?.message,
               type:
-                errors.workingSizes?.[0]?.type ||
-                errors?.workingSizes?.type ||
+                errors.specs?.workingSizes?.[0]?.type ||
+                errors?.specs?.workingSizes?.type ||
                 "validate",
             }}
             {...changedFieldProps(mainChanges.allData, "workingSizes")}
           >
             <GroupedSearchSelect
-              key={`working-sizes-${defaultValues?.workingSizes?.length}`}
+              key={`working-sizes-${defaultValues?.specs?.workingSizes?.length}`}
               type="multiple"
               showSearch={false}
-              defaultSelected={defaultValues?.workingSizes}
+              defaultSelected={defaultValues?.specs?.workingSizes}
               items={workingSizes.map((dt, i) => ({
                 label: dt + " mm",
                 value: dt,
@@ -705,9 +744,9 @@ const SpaceEditPage = () => {
                       "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
                     }
                   >
-                    {(watch("workingSizes", [])?.length || 0) > 0 ? (
+                    {(watch("specs.workingSizes", [])?.length || 0) > 0 ? (
                       <ChippedElements
-                        elements={watch("workingSizes", [])?.map(
+                        elements={watch("specs.workingSizes", [])?.map(
                           (s) => s + " mm",
                         )}
                       />
@@ -720,7 +759,7 @@ const SpaceEditPage = () => {
               contentProps={{ className: "max-h-[300px]" }}
               onSelect={(items) => {
                 setValue(
-                  "workingSizes",
+                  "specs.workingSizes",
                   items.filter(
                     (val) => typeof val === "string",
                   ) as WorkingSize[],
@@ -737,50 +776,10 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("area")}
-            error={errors.area}
+            {...register("specs.area")}
+            error={errors.specs?.area}
             {...changedFieldProps(mainChanges.allData, "area")}
           />
-          <FormField
-            label="Training Room"
-            labelPosition="embedded"
-            placeholder="20 (pax)"
-            type="number"
-            min={0}
-            {...register("trainingRoom")}
-            error={errors.trainingRoom}
-            {...changedFieldProps(mainChanges.allData, "trainingRoom")}
-          />
-          <FormField
-            label="Meeting Room"
-            labelPosition="embedded"
-            placeholder="4 (pax)"
-            type="number"
-            min={0}
-            {...register("meetingRoom")}
-            error={errors.meetingRoom}
-            {...changedFieldProps(mainChanges.allData, "meetingRoom")}
-          />
-          <FormField
-            label="Conference Room"
-            labelPosition="embedded"
-            placeholder="10 (pax)"
-            type="number"
-            min={0}
-            {...register("conferenceRoom")}
-            error={errors.conferenceRoom}
-            {...changedFieldProps(mainChanges.allData, "conferenceRoom")}
-          />
-          <FormField
-            label="Description"
-            labelPosition="embedded"
-            placeholder="Enter description"
-            {...register("description")}
-            error={errors.description}
-            inputType="textarea"
-            {...changedFieldProps(mainChanges.allData, "description")}
-          />
-
           {/* Pricing Details */}
           <FormSectionTitle>Pricing Details</FormSectionTitle>
           <FormField
@@ -1033,19 +1032,23 @@ const SpaceEditPage = () => {
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">Active</label>
               <Switch
-                key={defaultValues?.isActive ? "active" : "inactive"}
+                key={defaultValues?.flags?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-                defaultChecked={!!defaultValues?.isActive}
-                {...register("isActive")}
+                defaultChecked={!!defaultValues?.flags?.isActive}
+                {...register("flags.isActive")}
               />
             </div>
 
             <div className="flex items-center  gap-4">
               <label className="text-white text-sm">Verified</label>
               <Switch
-                key={defaultValues?.isVerified ? "verified" : "unverified"}
-                defaultChecked={!!defaultValues?.isVerified}
-                {...register("isVerified")}
+                key={
+                  defaultValues?.flags?.isVerified
+                    ? "verified"
+                    : "unverified"
+                }
+                defaultChecked={!!defaultValues?.flags?.isVerified}
+                {...register("flags.isVerified")}
               />
             </div>
             <div className="flex items-center gap-4">
