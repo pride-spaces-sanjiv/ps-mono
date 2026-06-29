@@ -25,6 +25,8 @@ export const tokenStore = create<ZustandStore<TokenData | null>>((set) => ({
 type UserStoreExtras = {
   fetchCount: number;
   increaseFetchCount: (count?: number) => void;
+  tokeInfoFetches: number;
+  increaseTokeInfoFetches: (count?: number) => void;
   level: UserType | null;
   setLevel: (level: UserType | null) => void;
 };
@@ -48,4 +50,7 @@ export const userStore = create<
   fetchCount: 0,
   increaseFetchCount: (count = 1) =>
     set((prev) => ({ fetchCount: prev.fetchCount + count })),
+  tokeInfoFetches: 0,
+  increaseTokeInfoFetches: (count = 1) =>
+    set((prev) => ({ tokeInfoFetches: prev.tokeInfoFetches + count })),
 }));

@@ -10,6 +10,8 @@ import { validateNumber } from "@/utils/number";
 import { delayPromise } from "@/utils/promise";
 import { queryKeys } from "@/utils/query-keys";
 import type { NonAdminUserType } from "@/utils/data/userTypes";
+import { getTokenInfo } from "../apis/general/token";
+import { adminLevels, type AdminLevel } from "@/utils/data/admin";
 
 type Props<T extends NonAdminUserType | "admin"> = {
   promiseDelay: number;
@@ -23,6 +25,7 @@ export function useUser<T extends NonAdminUserType | "admin" = "admin">({
   const tokenStoreState = tokenStore((state) => state);
   const userData = userStore((state) => state.value);
   const fetchCount = userStore((state) => state.fetchCount);
+  const tokeInfoFetches = userStore((state) => state.tokeInfoFetches);
   const userLevel = useMemo(() => userStoreState.level, [userStoreState]);
   const setUserLevel = useMemo(() => userStoreState.setLevel, [userStoreState]);
 
@@ -33,15 +36,39 @@ export function useUser<T extends NonAdminUserType | "admin" = "admin">({
     [tokenStoreState.value],
   );
 
-  const queryState = useQuery({
-    queryKey: [queryKeys.USERDATA, userType, tokenStoreState.value?.expiry],
+  // Get user level from token
+  const { data: tokenInfoRes } = useQuery({
+    queryKey: ["token-info", tokenStoreState.value?.expiry],
     queryFn: () => {
-      userStoreState.increaseFetchCount();
-      return tokenStoreState
+      return isTokenValid
+        ? getTokenInfo().finally(() => userStoreState.increaseTokeInfoFetches())
+        : null;
+    },
+    retry: 3,
+  });
+  const tokenUserLevel = useMemo(
+    () => tokenInfoRes?.data?.data?.level,
+    [tokenInfoRes],
+  );
+  console.log("Token info :", tokenInfoRes?.data?.data);
+
+  const queryState = useQuery({
+    queryKey: [
+      queryKeys.USERDATA,
+      tokenUserLevel,
+      tokenStoreState.value?.expiry,
+    ],
+    queryFn: () => {
+      return tokenStoreState && tokenUserLevel
         ? delayPromise(
-            userType === "admin" ? getAdminData() : getOperatorData(),
+            adminLevels.includes(tokenUserLevel as AdminLevel)
+              ? getAdminData()
+              : getOperatorData(),
             promiseDelay,
-          )
+          ).then((res) => {
+            userStoreState.increaseFetchCount();
+            return res;
+          })
         : null;
     },
     retry: 3,
@@ -63,16 +90,16 @@ export function useUser<T extends NonAdminUserType | "admin" = "admin">({
     }
   }, [res?.data?.data?.id]);
 
-  useEffect(() => {
-    // @ts-ignore
-    userType === "admin" &&
-      // @ts-ignore
-      setUserLevel(userData?.level || userStoreState.level);
-  }, [userData, userType]);
+  // useEffect(() => {
+  //   // @ts-ignore
+  //   userType === "admin" &&
+  //     // @ts-ignore
+  //     setUserLevel(userData?.level || userStoreState.level);
+  // }, [userData, userType]);
 
   useEffect(() => {
-    userType !== "admin" && setUserLevel(userType);
-  }, [userType]);
+    tokenUserLevel && setUserLevel(tokenUserLevel);
+  }, [tokenUserLevel]);
 
   useEffect(() => {}, [queryState.fetchStatus]);
 
@@ -86,6 +113,7 @@ export function useUser<T extends NonAdminUserType | "admin" = "admin">({
     setUserLevel,
     isTokenValid,
     fetchCount,
+    tokeInfoFetches,
     ...queryState,
   };
 }

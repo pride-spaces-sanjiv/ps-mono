@@ -91,7 +91,7 @@ const AppRoutes = () => {
   }, []);
 
   useEffect(() => {
-    console.log("Token status :", expired, tokenData);
+    console.log("Token status :", { expired, tokenData });
   }, [expired]);
 
   return (
