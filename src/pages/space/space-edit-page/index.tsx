@@ -211,7 +211,7 @@ const SpaceEditPage = () => {
       },
     }
   });
-
+  const selectedGrade = watch("specs.grade");
   const operatorData = useMemo(
     () =>
       (res?.data?.data?.references?.operator as
@@ -236,6 +236,19 @@ const SpaceEditPage = () => {
   //   }
   // }, [data]);
   useEffect(() => {
+    if (!selectedGrade) return;
+    if (selectedGrade === "A+" || selectedGrade === "A") {
+      // Grade A+/A => Always OC
+      setValue("flags.isOc", true);
+
+      // Optional: reset SEZ if needed
+      // setValue("flags.isSez", false);
+    }
+
+    if (selectedGrade === "B") {
+      // Grade B => Not SEZ
+      setValue("flags.isSez", false);
+    }
     if (res?.data?.data) {
       const modified = datifyObjectValues(
         { ...res?.data?.data, ...allUpdatedData },
@@ -262,8 +275,22 @@ const SpaceEditPage = () => {
         },
       } as NonNullable<typeof modified>);
     }
-  }, [res, POCSameAsOperator, operatorData, allUpdatedData]);
+  }, [selectedGrade, setValue, res, POCSameAsOperator, operatorData, allUpdatedData]);
 
+  const gradeItems = [
+    {
+      label: "A+ - Multi Tower",
+      value: "A+",
+    },
+    {
+      label: "A - Single Tower",
+      value: "A",
+    },
+    {
+      label: "B",
+      value: "B",
+    },
+  ];
   // Update Mutater
   const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationFn: updateSpace,
@@ -500,7 +527,7 @@ const SpaceEditPage = () => {
             label="Grade"
             labelPosition="embedded"
             inputType="select"
-            items={spaceGrades.map((grade) => ({ label: grade, value: grade }))}
+            items={gradeItems}
             error={errors.specs?.grade}
             pickerProps={{
               wrapperProps: {
@@ -513,22 +540,6 @@ const SpaceEditPage = () => {
             }}
             {...changedFieldProps(mainChanges.allData, "grade")}
           />
-          <div className="flex items-center gap-4">
-            <label className="text-white text-sm">OC</label>
-            <Switch
-              key={defaultValues?.flags?.isOc ? "oc" : "non-oc"}
-              defaultChecked={!!defaultValues?.flags?.isOc}
-              {...register("flags.isOc")}
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <label className="text-white text-sm">SEZ</label>
-            <Switch
-              key={defaultValues?.flags?.isSez ? "sez" : "non-sez"}
-              defaultChecked={!!defaultValues?.flags?.isSez}
-              {...register("flags.isSez")}
-            />
-          </div>
           {/* Open Time */}
 
           <FormField
@@ -1051,6 +1062,25 @@ const SpaceEditPage = () => {
                 {...register("flags.isVerified")}
               />
             </div>
+            {selectedGrade === "B" && (
+              <div className="flex items-center gap-4">
+                <label>OC</label>
+                <Switch
+                  key={watch("flags.isOc") ? "oc" : "non-oc"}
+                  {...register("flags.isOc")}
+                />
+              </div>
+            )}
+
+            {(selectedGrade === "A" || selectedGrade === "A+") && (
+              <div className="flex items-center gap-4">
+                <label>SEZ</label>
+                <Switch
+                  key={watch("flags.isSez") ? "sez" : "non-sez"}
+                  {...register("flags.isSez")}
+                />
+              </div>
+            )}
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">Same As Operator</label>
               <Switch
