@@ -2,11 +2,14 @@ import * as apiConfigs from "@/services/apis/config";
 import * as secureStorage from "@secure-storage/common";
 import type { AxiosInstance } from "axios";
 import type { TokenData } from "@/services/store/user";
+import { isAxiosInstance } from "./instance";
 
 const configs = {
-  ...apiConfigs,
+  ...Object.fromEntries(
+    Object.entries(apiConfigs).filter(([, v]) => isAxiosInstance(v)),
+  ),
 };
-type ConfigInstance = keyof typeof configs;
+type ConfigInstance = keyof typeof apiConfigs;
 
 /**
  * @description Saves token securely to `__aT__` key, then configures all instances
@@ -19,7 +22,7 @@ export const reConfigureAuthToken = <T extends ConfigInstance>(
   /** @description The expiration date of token */
   expiry: Date,
   /** @description Excludes configuring these instances  */
-  discardConfigs?: [...T[]]
+  discardConfigs?: [...T[]],
 ) => {
   try {
     if (typeof token !== "string" || !token.trim()) {
@@ -38,7 +41,7 @@ export const reConfigureAuthToken = <T extends ConfigInstance>(
 
     const data = {
       ...secureStorage.localStorage.getItem<Partial<TokenData> | null>(
-        "__aT__"
+        "__aT__",
       ),
       token: token,
       expiry: expiry,
