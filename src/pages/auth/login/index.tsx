@@ -36,6 +36,8 @@ import ActionButton from "@/components/buttons/action-btn";
 import GoogleButton from "@/components/buttons/google-btn";
 import AuthCard from "@/containers/auth-card";
 import { getTokenInfo } from "@/services/apis/general/token";
+import { SelectPicker } from "@/components/select";
+import { cn } from "@/utils/className";
 
 type LoginSchema = Pick<AdminSchema, "email" | "password">;
 const validLoginTypes = ["admin", "operator", "builder"] as const;
@@ -64,11 +66,14 @@ export default function LoginPage({
   const loginAsParam = useMemo(
     () =>
       validLoginTypes.includes(
-        (searchParams.get("as")?.toLowerCase().trim() as any) || "admin",
+        (searchParams.get("as")?.toLowerCase().trim() as any) || "",
       )
-        ? (searchParams.get("as") as (typeof validLoginTypes)[number])
+        ? (searchParams
+            .get("as")
+            ?.toLowerCase()
+            .trim() as (typeof validLoginTypes)[number])
         : "admin",
-    [searchParams],
+    [searchParams.toString()],
   );
 
   const {
@@ -264,19 +269,19 @@ export default function LoginPage({
   //   }
   // };
 
-  useEffect(() => {
-    searchParams.get("as") &&
-      !["admin", "enterprise"].includes(searchParams.get("as") as string) &&
-      setSearchParams((prev) => ({ ...prev, as: "admin" }));
-  }, [searchParams.toString()]);
+  // useEffect(() => {
+  //   searchParams.get("as") &&
+  //     !["admin", "enterprise"].includes(searchParams.get("as") as string) &&
+  //     setSearchParams((prev) => ({ ...prev, as: "admin" }));
+  // }, [searchParams.toString()]);
 
   return (
     <AuthCard
       titleProps={{
-        children: `Login to your ${loginAsParam === "admin" ? "admin" : "enterprise"} account`,
+        children: `Login to your ${loginAsParam} account`,
       }}
       descriptionProps={{
-        children: `Enter your details below to login as ${loginAsParam === "admin" ? "admin or team support" : "enterprise"}`,
+        children: `Enter your details below to login as ${loginAsParam}`,
       }}
     >
       <form onSubmit={handleSubmit(login)}>
@@ -291,6 +296,7 @@ export default function LoginPage({
           <FormField
             inputType="password"
             label="Password"
+            placeholder="•••••••••••"
             required
             error={errors.password}
             {...register("password")}
@@ -298,23 +304,48 @@ export default function LoginPage({
           {/* <ForgotPasswordModal /> */}
           <div className="flex flex-col gap-3">
             <ActionButton type="submit" className="w-full" loading={loading}>
-              Login
+              Login as{" "}
+              {`${loginAsParam?.[0].toUpperCase() + loginAsParam?.slice(1)}`}
             </ActionButton>
             <ActionButton
               type="button"
               className="w-full hidden"
-              onClick={() => {
-                navigate(
-                  "/login?as=" +
-                    (loginAsParam === "admin" ? "enterprise" : "admin"),
-                );
-              }}
+              // onClick={() => {
+              //   navigate(
+              //     "/login?as=" +
+              //       (loginAsParam),
+              //   );
+              // }}
               // onError={(err)=>{
               //   console.error()
               // }}
             >
-              Login as {loginAsParam === "admin" ? "Enterprise" : "Admin"}
+              Login as
             </ActionButton>
+            <SelectPicker
+              // key={`picker-at-${loginAsParam}`}
+              labelProps={{ children: "Select account type" }}
+              items={validLoginTypes.map((type) => ({
+                label: type[0].toUpperCase() + type.slice(1),
+                value: type,
+              }))}
+              valueProps={{
+                placeholder: "Select account type",
+                title: "Login As",
+              }}
+              contentProps={{ defaultValue: loginAsParam }}
+              className={cn("")}
+              wrapperProps={{
+                defaultValue: loginAsParam,
+
+                onValueChange: (val) => {
+                  setSearchParams((prev) => {
+                    prev.set("as", val);
+                    return prev;
+                  });
+                },
+              }}
+            />
           </div>
         </div>
       </form>
