@@ -133,7 +133,8 @@ const convertData = (data: (typeof parsedData)[number]) => {
 // Spaces
 const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centes New.csv";
 console.time("Scripting Time :");
-const bulkedSpaces = await parseBulkSpacesData(csvFile);
+let bulkedSpaces = await parseBulkSpacesData(csvFile);
+bulkedSpaces = bulkedSpaces?.filter((_, i) => i < 3) || null;
 fs.writeFileSync(
   "./data/bulked-spaces.json",
   JSON.stringify(bulkedSpaces, null, 2),

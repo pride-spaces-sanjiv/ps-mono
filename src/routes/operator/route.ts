@@ -7,6 +7,7 @@ import { AuthRouter } from "./auth.js";
 import { SpaceRouter } from "./space.js";
 import { BranchRouter } from "./branch.js";
 import { DataRouter } from "./data.js";
+import { AmenityRouter } from "./amenity.js";
 import { DumpRouter } from "./dump.js";
 
 const router = Router();
@@ -19,6 +20,7 @@ router.use(RequestMiddleware.authenticateUser(Operator, "operator"));
 // router.use("/users", UserRouter);
 router.use("/spaces", SpaceRouter);
 router.use("/branches", BranchRouter);
+router.use("/amenities", AmenityRouter);
 router.use("/dumps", DumpRouter);
 router.use("/", DataRouter);
 router.get("/", (req, res) => {
