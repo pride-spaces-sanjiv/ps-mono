@@ -33,7 +33,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown } from "lucide-react";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { getSpaces, updateSpace } from "@/services/apis/admin/spaces";
+import {
+  getSpaces as getAdminSpaces,
+  updateSpace,
+} from "@/services/apis/admin/spaces";
+
+import { getSpaces as getOperatorSpaces } from "@/services/apis/operator/spaces";
+
+import { useUser } from "@/services/hooks/use-user";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { formatOpenDays } from "@/utils/data/days";
 import { queryKeys } from "@/utils/query-keys";
@@ -44,7 +51,6 @@ import { SelectPicker } from "@/components/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import TablePaginationFooter from "@/components/table/pagination";
-
 type Props = {
   id: string | null;
   operatorId: string | null;
@@ -149,10 +155,12 @@ const SpacesTabledResults = ({
   ...props
 }: Partial<Props>) => {
   const navigate = useNavigate();
+  const { userLevel } = useUser();
 
   const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
-
+  const getSpacesApi =
+    userLevel === "operator" ? getOperatorSpaces : getAdminSpaces;
   const {
     data: res,
     isFetching,
@@ -170,7 +178,7 @@ const SpacesTabledResults = ({
       operatorId,
     ],
     queryFn: (page, limit) =>
-      getSpaces({
+      getSpacesApi({
         query: {
           page: page + 1,
           limit: limit,
