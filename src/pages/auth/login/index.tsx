@@ -10,9 +10,13 @@ import { isAxiosError } from "axios";
 import { tokenStore, userStore } from "@/services/store/user";
 // import { loginAPI, googleAuthAPI } from "@/services/apis/auth";
 import {
-  getSelfData,
-  loginAdmin as loginAPI,
+  getSelfData as getAdminData,
+  loginAdmin,
 } from "@/services/apis/admin/auth";
+import {
+  getSelfData as getOperatorData,
+  loginOperator,
+} from "@/services/apis/operator/auth";
 import {
   adminSchema,
   type AdminSchema,
@@ -20,10 +24,7 @@ import {
   // type GoogleAuthSchema,
   // type LoginSchema,
 } from "@/utils/schemas/user";
-import {
-  operatorSchema,
-  type OperatorSchema,
-} from "@/utils/schemas/operators";
+import { operatorSchema, type OperatorSchema } from "@/utils/schemas/operators";
 import { reConfigureAuthToken } from "@/utils/axios/configure";
 import { handleAxiosErrorCases } from "@/utils/axios/error";
 import { datifyObjectValues } from "@/utils/object/datify";
@@ -34,8 +35,17 @@ import FormField from "@/components/form/field";
 import ActionButton from "@/components/buttons/action-btn";
 import GoogleButton from "@/components/buttons/google-btn";
 import AuthCard from "@/containers/auth-card";
+import { getTokenInfo } from "@/services/apis/general/token";
+import { SelectPicker } from "@/components/select";
+import { cn } from "@/utils/className";
 
 type LoginSchema = Pick<AdminSchema, "email" | "password">;
+const validLoginTypes = ["admin", "operator", "builder"] as const;
+const loginTypeAPIsMap = {
+  admin: { login: loginAdmin, getSelfData: getAdminData },
+  operator: { login: loginOperator, getSelfData: getOperatorData },
+  builder: { login: loginOperator, getSelfData: getOperatorData },
+} as const;
 
 export default function LoginPage({
   className,
@@ -43,15 +53,27 @@ export default function LoginPage({
   ...props
 }: JSX.IntrinsicElements["div"] &
   Partial<{ loginAs: "admin" | "enterprise" }>) {
+  const userStoreState = userStore((state) => state);
+  const tokenStoreState = tokenStore((state) => state);
+
   const tokenData = tokenStore((state) => state.value);
   const setTokenData = tokenStore((state) => state.setter);
   const setUserData = userStore((state) => state.setter);
+  const setUserLevel = userStore((state) => state.setLevel);
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const loginAsParam = useMemo(
-    () => searchParams.get("as") || "admin",
-    [searchParams],
+    () =>
+      validLoginTypes.includes(
+        (searchParams.get("as")?.toLowerCase().trim() as any) || "",
+      )
+        ? (searchParams
+            .get("as")
+            ?.toLowerCase()
+            .trim() as (typeof validLoginTypes)[number])
+        : "admin",
+    [searchParams.toString()],
   );
 
   const {
@@ -75,7 +97,7 @@ export default function LoginPage({
     isSuccess: loginFinished,
   } = useMutation({
     mutationFn: (body: LoginSchema) =>
-      delayPromise(loginAPI({ body: body }), 1),
+      delayPromise(loginTypeAPIsMap[loginAsParam].login?.({ body: body }), 1),
   });
 
   // const {
@@ -90,9 +112,19 @@ export default function LoginPage({
   //     delayPromise(googleAuthAPI({ body: body }), 1),
   // });
 
+  const { mutateAsync: mutatedTokenInfo } = useMutation({
+    mutationKey: ["token-info"],
+    mutationFn: async () => {
+      return getTokenInfo().finally(() =>
+        userStoreState.increaseTokeInfoFetches(),
+      );
+    },
+    retry: 3,
+  });
   const { mutateAsync: mutatedUserData } = useMutation({
-    mutationKey: [queryKeys.USERDATA],
-    mutationFn: () => getSelfData(),
+    mutationKey: [queryKeys.USERDATA, loginAsParam],
+    mutationFn: () =>
+      delayPromise(loginTypeAPIsMap[loginAsParam].getSelfData?.(), 0.3),
   });
 
   const login = async (body: LoginSchema) => {
@@ -117,23 +149,31 @@ export default function LoginPage({
         }
         setTokenData({ ...tokenData, ...modified } as typeof tokenData);
 
-        const userRes = await mutatedUserData();
-        const userData = userRes.data?.data;
-        if (userRes.status === 200 && res.data?.success && userData?.id) {
-          const modified = datifyObjectValues(userData, [
-            "createdAt",
-            "updatedAt",
-          ]);
-          setUserData(modified);
-          toast.success("Login Successful");
-          navigate("/dashboard");
-          return true;
+        // Get Token Info to save user level
+        const tokenInfoRes = await mutatedTokenInfo();
+        const tokenInfoLevel = tokenInfoRes?.data?.data?.level;
+        if (tokenInfoRes.status === 200 && tokenInfoLevel) {
+          setUserLevel(tokenInfoLevel);
+
+          // Then update user data
+          const userRes = await mutatedUserData();
+          const userData = userRes.data?.data;
+          if (userRes.status === 200 && res.data?.success && userData?.id) {
+            const modified = datifyObjectValues(userData, [
+              "createdAt",
+              "updatedAt",
+            ]);
+            setUserData(modified);
+            toast.success("Login Successful");
+            navigate("/dashboard");
+            return true;
+          }
         }
       }
       throw new Error("Invalid response");
     } catch (err) {
       const handled = handleAxiosErrorCases<
-        Awaited<ReturnType<typeof loginAPI>>["data"]
+        Awaited<ReturnType<typeof loginAdmin>>["data"]
       >(err, [
         {
           status: 400,
@@ -229,19 +269,19 @@ export default function LoginPage({
   //   }
   // };
 
-  useEffect(() => {
-    searchParams.get("as") &&
-      !["admin", "enterprise"].includes(searchParams.get("as") as string) &&
-      setSearchParams((prev) => ({ ...prev, as: "admin" }));
-  }, [searchParams.toString()]);
+  // useEffect(() => {
+  //   searchParams.get("as") &&
+  //     !["admin", "enterprise"].includes(searchParams.get("as") as string) &&
+  //     setSearchParams((prev) => ({ ...prev, as: "admin" }));
+  // }, [searchParams.toString()]);
 
   return (
     <AuthCard
       titleProps={{
-        children: `Login to your ${loginAsParam === "admin" ? "admin" : "enterprise"} account`,
+        children: `Login to your ${loginAsParam} account`,
       }}
       descriptionProps={{
-        children: `Enter your details below to login as ${loginAsParam === "admin" ? "admin or team support" : "enterprise"}`,
+        children: `Enter your details below to login as ${loginAsParam}`,
       }}
     >
       <form onSubmit={handleSubmit(login)}>
@@ -256,6 +296,7 @@ export default function LoginPage({
           <FormField
             inputType="password"
             label="Password"
+            placeholder="•••••••••••"
             required
             error={errors.password}
             {...register("password")}
@@ -263,23 +304,48 @@ export default function LoginPage({
           {/* <ForgotPasswordModal /> */}
           <div className="flex flex-col gap-3">
             <ActionButton type="submit" className="w-full" loading={loading}>
-              Login
+              Login as{" "}
+              {`${loginAsParam?.[0].toUpperCase() + loginAsParam?.slice(1)}`}
             </ActionButton>
             <ActionButton
               type="button"
               className="w-full hidden"
-              onClick={() => {
-                navigate(
-                  "/login?as=" +
-                    (loginAsParam === "admin" ? "enterprise" : "admin"),
-                );
-              }}
+              // onClick={() => {
+              //   navigate(
+              //     "/login?as=" +
+              //       (loginAsParam),
+              //   );
+              // }}
               // onError={(err)=>{
               //   console.error()
               // }}
             >
-              Login as {loginAsParam === "admin" ? "Enterprise" : "Admin"}
+              Login as
             </ActionButton>
+            <SelectPicker
+              // key={`picker-at-${loginAsParam}`}
+              labelProps={{ children: "Select account type" }}
+              items={validLoginTypes.map((type) => ({
+                label: type[0].toUpperCase() + type.slice(1),
+                value: type,
+              }))}
+              valueProps={{
+                placeholder: "Select account type",
+                title: "Login As",
+              }}
+              contentProps={{ defaultValue: loginAsParam }}
+              className={cn("")}
+              wrapperProps={{
+                defaultValue: loginAsParam,
+
+                onValueChange: (val) => {
+                  setSearchParams((prev) => {
+                    prev.set("as", val);
+                    return prev;
+                  });
+                },
+              }}
+            />
           </div>
         </div>
       </form>

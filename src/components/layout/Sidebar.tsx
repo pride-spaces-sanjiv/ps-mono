@@ -25,6 +25,7 @@ import {
   LogOutIcon,
   UserIcon,
   UsersIcon,
+  CircleUser,
   type LucideIcon,
 } from "lucide-react";
 import { tokenStore, userStore } from "@/services/store/user";
@@ -36,6 +37,7 @@ import { queryKeys } from "@/utils/query-keys";
 import ActionButton from "../buttons/action-btn";
 
 type SidebarItem = {
+  id: string;
   title: string;
   url: string;
   icon: LucideIcon;
@@ -44,30 +46,65 @@ type SidebarItem = {
 };
 
 type SidebarSubItem = {
+
   title: string;
   url: string;
   activeUrls?: string[];
 };
+const ADMIN_PERMISSIONS = [
+  "settings",
+  "dashboard",
+  "operators",
+  "conventional",
+  "amenities",
+  "team",
+  "users",
+  "notifications",
+];
 
+const sidebarPermissions: Record<string, string[]> = {
+  "super-admin": ADMIN_PERMISSIONS,
+  admin: ADMIN_PERMISSIONS,
+  support: ADMIN_PERMISSIONS,
+
+  operator: [
+    "settings",
+    "dashboard",
+    "operators",
+    "notifications",
+  ],
+
+  builder: [],
+};
 // Menu items with icons and routes
 const items: SidebarItem[] = [
   {
+    id: "settings",
+    title: "Profile",
+    url: "/settings",
+    icon: CircleUser,
+  },
+  {
+    id: "dashboard",
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
   },
   {
+    id: "operators",
     title: "Space Operators",
     url: "/operators",
     icon: GlobeIcon,
     // activeUrls: ["/operators", "/spaces"],
     tabs: [
       {
+
         title: "Operator",
         url: "/operators",
         activeUrls: ["/operators"],
       },
       {
+
         title: "Centre",
         url: "/spaces",
         activeUrls: ["/operators", "/spaces"],
@@ -75,16 +112,19 @@ const items: SidebarItem[] = [
     ],
   },
   {
+    id: "conventional",
     title: "Conventional Spaces",
     url: "/conventional",
     icon: Building2Icon,
     tabs: [
       {
+
         title: "Grade A",
         url: "/conventional?grade=A",
         activeUrls: ["/conventional?grade=A"],
       },
       {
+
         title: "Others",
         url: "/conventional?grade=other",
         activeUrls: ["/conventional?grade=other"],
@@ -92,29 +132,28 @@ const items: SidebarItem[] = [
     ],
   },
   {
+    id: "amenities",
     title: "Amenities",
     url: "/amenities",
     icon: LogOutIcon,
   },
   {
-    title: "Notifications",
-    url: "/notifications",
-    icon: BellIcon,
-  },
-  {
+    id: "team",
     title: "Team",
     url: "/team",
     icon: UsersIcon,
   },
   {
+    id: "users",
     title: "Users",
     url: "/users",
     icon: UserIcon,
   },
   {
-    title: "Profile",
-    url: "/settings",
-    icon: UserIcon,
+    id: "notifications",
+    title: "Notifications",
+    url: "/notifications",
+    icon: BellIcon,
   },
 ];
 
@@ -124,11 +163,14 @@ export function AppSidebar() {
   const tokenState = tokenStore();
   const userState = userStore();
   const { userLevel } = useUser();
-  const validItems = useMemo(
-    () => (userLevel ? items : items.filter((d) => d.url !== "")),
-    [userLevel],
-  );
+  const validItems = useMemo(() => {
+    if (!userLevel) return items;
 
+    const allowed = sidebarPermissions[userLevel] ?? ADMIN_PERMISSIONS;
+
+    return items.filter((item) => allowed.includes(item.id));
+  }, [userLevel]);
+  
   const expired =
     validateNumber(tokenState?.value?.expiry, { invalidValue: 0 }) <=
     Date.now();
@@ -199,10 +241,9 @@ export function AppSidebar() {
                         }
                       }}
                       className={({ isActive }) =>
-                        `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-white hover:bg-primary ${
-                          isActive || isItemActive(item)
-                            ? "text-accent-foreground font-medium"
-                            : ""
+                        `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-white hover:bg-primary ${isActive || isItemActive(item)
+                          ? "text-accent-foreground font-medium"
+                          : ""
                         }`
                       }
                     >
@@ -227,8 +268,7 @@ export function AppSidebar() {
                           <NavLink
                             to={tab.url}
                             className={() =>
-                              `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm text-accent-foreground transition-all hover:text-white hover:bg-primary ${
-                                isItemActive(tab) ? "font-medium" : ""
+                              `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm text-accent-foreground transition-all hover:text-white hover:bg-primary ${isItemActive(tab) ? "font-medium" : ""
                               }`
                             }
                           >

@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import TopBarProgress from "react-topbar-progress-indicator";
 import { toast } from "sonner";
 // Hooks
@@ -55,9 +55,17 @@ interface SuspensedViewProps {
 
 const PrivateRoutes = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const { data: res, isFetching, tokenStoreState } = useUser();
-  const {} = useStatesCities();
+  const {
+    data: res,
+    isFetching,
+    tokenStoreState,
+    userLevel,
+    fetchCount,
+    tokeInfoFetches,
+  } = useUser();
+  const { } = useStatesCities();
 
   const AutoNavigateRender = useCallback(
     ({ El }: { El?: ReactNode }) => El,
@@ -74,12 +82,43 @@ const PrivateRoutes = () => {
   );
 
   useEffect(() => {
-    if (!res?.data?.data?.id && !isFetching) {
+    if (!res?.data?.data?.id && !isFetching && userLevel) {
       toast.error("Something wrong ! Please relogin");
     }
   }, [isFetching, res?.data?.data?.id]);
+  // const ADMIN_PERMISSIONS = [
+  //   "settings",
+  //   "dashboard",
+  //   "operators",
+  //   "conventional",
+  //   "amenities",
+  //   "team",
+  //   "users",
+  //   "notifications",
+  // ];
 
-  if (isFetching) {
+  // const sidebarPermissions: Record<string, string[]> = {
+  //   "super-admin": ADMIN_PERMISSIONS,
+  //   admin: ADMIN_PERMISSIONS,
+  //   support: ADMIN_PERMISSIONS,
+
+  //   operator: [
+  //     "settings",
+  //     "dashboard",
+  //     "operators",
+  //     "notifications",
+  //   ],
+
+  //   builder: [],
+  // };
+
+  // const allowedRoutes =
+  //   sidebarPermissions[userLevel as keyof typeof sidebarPermissions] ?? [];
+
+  // const hasAccess = allowedRoutes.some((route) =>
+  //   location.pathname.startsWith(route)
+  // );
+  if (!tokeInfoFetches || isFetching) {
     return (
       <div className="w-full h-full min-h-dvh flex flex-col gap-3 justify-center items-center px-2 py-4">
         <RotatingLoader className="size-[50px] text-accent-foreground" />
@@ -107,6 +146,10 @@ const PrivateRoutes = () => {
     );
   }
 
+
+  // if (!hasAccess) {
+  //   return <Navigate to="/dashboard" replace />;
+  // }
   return (
     <Routes>
       <Route element={<Layout />}>

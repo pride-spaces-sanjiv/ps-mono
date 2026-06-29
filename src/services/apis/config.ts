@@ -22,13 +22,18 @@ const jsonContentHeadersAuth = {
   Authorization: `Bearer ${token}`,
 };
 
-// Admin configs
-
 export const BASE = axios.create({
   baseURL: baseUrl,
   headers: jsonContentHeaders,
   withCredentials: true,
 });
+export const BASE_WITH_BEARER = axios.create({
+  baseURL: baseUrl,
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+
+// Admin configs
 export const ADMIN = axios.create({
   baseURL: baseUrl + "/admin",
   headers: jsonContentHeadersAuth,
@@ -90,7 +95,34 @@ export const ADMIN_DUMP = ADMIN.create({
   withCredentials: true,
 });
 
-// Enterprise
+// OPERATOR
+export const OPERATOR = axios.create({
+  baseURL: baseUrl + "/operator",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const OPERATOR_AUTH = axios.create({
+  baseURL: baseUrl + "/operator/auth",
+  headers: jsonContentHeaders,
+  withCredentials: true,
+});
+export const OPERATOR_DATA = axios.create({
+  baseURL: baseUrl + "/operator/data",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const OPERATOR_SPACE = OPERATOR.create({
+  baseURL: baseUrl + "/operator/spaces",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const OPERATOR_AMENITY = OPERATOR.create({
+  baseURL: baseUrl + "/operator/amenities",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+
+// ENTERPRISE
 
 export const ENTERPRISE = axios.create({
   baseURL: baseUrl + "/enterprise",

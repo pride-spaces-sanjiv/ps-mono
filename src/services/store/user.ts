@@ -5,6 +5,7 @@ import type { ZustandStore } from "@/types/zustand/store";
 import { datifyObjectValues } from "@/utils/object/datify";
 import type { DatifiedOperator } from "@/types/data/operators";
 import { type AdminLevel } from "@/utils/data/admin";
+import type { UserType } from "@/utils/data/userTypes";
 
 export type TokenData = { token: string; expiry: Date; refreshToken: string };
 export const tokenStore = create<ZustandStore<TokenData | null>>((set) => ({
@@ -24,8 +25,10 @@ export const tokenStore = create<ZustandStore<TokenData | null>>((set) => ({
 type UserStoreExtras = {
   fetchCount: number;
   increaseFetchCount: (count?: number) => void;
-  level: AdminLevel | "enterprise" | null;
-  setLevel: (level: AdminLevel | "enterprise" | null) => void;
+  tokeInfoFetches: number;
+  increaseTokeInfoFetches: (count?: number) => void;
+  level: UserType | null;
+  setLevel: (level: UserType | null) => void;
 };
 export const userStore = create<
   ZustandStore<
@@ -47,4 +50,7 @@ export const userStore = create<
   fetchCount: 0,
   increaseFetchCount: (count = 1) =>
     set((prev) => ({ fetchCount: prev.fetchCount + count })),
+  tokeInfoFetches: 0,
+  increaseTokeInfoFetches: (count = 1) =>
+    set((prev) => ({ tokeInfoFetches: prev.tokeInfoFetches + count })),
 }));

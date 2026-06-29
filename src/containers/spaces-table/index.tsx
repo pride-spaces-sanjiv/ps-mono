@@ -33,7 +33,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown } from "lucide-react";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { getSpaces, updateSpace } from "@/services/apis/admin/spaces";
+import {
+  getSpaces as getAdminSpaces,
+  updateSpace,
+} from "@/services/apis/admin/spaces";
+
+import { getSpaces as getOperatorSpaces } from "@/services/apis/operator/spaces";
+
+import { useUser } from "@/services/hooks/use-user";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { formatOpenDays } from "@/utils/data/days";
 import { queryKeys } from "@/utils/query-keys";
@@ -44,7 +51,6 @@ import { SelectPicker } from "@/components/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import TablePaginationFooter from "@/components/table/pagination";
-
 type Props = {
   id: string | null;
   operatorId: string | null;
@@ -149,10 +155,12 @@ const SpacesTabledResults = ({
   ...props
 }: Partial<Props>) => {
   const navigate = useNavigate();
+  const { userLevel } = useUser();
 
   const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
-
+  const getSpacesApi =
+    userLevel === "operator" ? getOperatorSpaces : getAdminSpaces;
   const {
     data: res,
     isFetching,
@@ -170,7 +178,7 @@ const SpacesTabledResults = ({
       operatorId,
     ],
     queryFn: (page, limit) =>
-      getSpaces({
+      getSpacesApi({
         query: {
           page: page + 1,
           limit: limit,
@@ -196,8 +204,6 @@ const SpacesTabledResults = ({
           datifyObjectValues(dt, [
             "createdAt",
             "updatedAt",
-            "openTime",
-            "closeTime",
           ]),
         )
         .filter(Boolean),
@@ -260,13 +266,6 @@ const SpacesTabledResults = ({
         ),
       },
       {
-        accessorKey: "slug",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Slug</SortableHeader>
-        ),
-        cell: ({ row }) => <TextCell>{row.original?.slug}</TextCell>,
-      },
-      {
         accessorKey: "name",
         header: ({ column }) => (
           <SortableHeader column={column}>Name</SortableHeader>
@@ -276,56 +275,99 @@ const SpacesTabledResults = ({
         ),
       },
       {
-        accessorKey: "email",
+        accessorKey: "slug",
         header: ({ column }) => (
-          <SortableHeader column={column}>Centre Email</SortableHeader>
+          <SortableHeader column={column}>Slug</SortableHeader>
         ),
-        cell: ({ row }) => <TextCell>{row.original?.email}</TextCell>,
+        cell: ({ row }) => <TextCell>{row.original?.slug}</TextCell>,
       },
+      // {
+      //   accessorKey: "email",
+      //   header: ({ column }) => (
+      //     <SortableHeader column={column}>Centre Email</SortableHeader>
+      //   ),
+      //   cell: ({ row }) => <TextCell>{row.original?.email}</TextCell>,
+      // },
       {
-        accessorKey: "category",
+        accessorKey: "specs.category",
         header: ({ column }) => (
           <SortableHeader column={column}>Category</SortableHeader>
         ),
-        cell: ({ row }) => <TextCell>{row.original?.category}</TextCell>,
+        cell: ({ row }) => (
+          <TextCell>{row.original?.specs?.category}</TextCell>
+        ),
       },
       {
-        accessorKey: "spaceType",
+        accessorKey: "specs.spaceType",
         header: ({ column }) => (
           <SortableHeader column={column}>Space Type</SortableHeader>
         ),
         cell: ({ row }) => (
           <TextCell>
-            {row.original?.spaceType === "Both"
+            {row.original?.specs?.spaceType === "Both"
               ? "Flex & MOS"
-              : row.original?.spaceType || "-"}
+              : row.original?.specs?.spaceType || "-"}
           </TextCell>
         ),
       },
       {
-        accessorKey: "grade",
+        accessorKey: "specs.grade",
         header: ({ column }) => (
           <SortableHeader column={column}>Grade</SortableHeader>
         ),
-        cell: ({ row }) => <TextCell>{row.original?.grade}</TextCell>,
+        cell: ({ row }) => (
+          <TextCell>{row.original?.specs?.grade}</TextCell>
+        ),
       },
       {
-        accessorKey: "isActive",
+        accessorKey: "flags.isOc",
+        header: ({ column }) => (
+          <SortableHeader column={column}>OC</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <BooleanBadge value={row.original?.flags?.isOc} />
+        ),
+      },
+      {
+        accessorKey: "flags.isSez",
+        header: ({ column }) => (
+          <SortableHeader column={column}>SEZ</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <BooleanBadge value={row.original?.flags?.isSez} />
+        ),
+      },
+      {
+        accessorKey: "flags.isVerified",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Verified</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <BooleanBadge value={row.original?.flags?.isVerified} />
+        ),
+      },
+      {
+        accessorKey: "flags.isActive",
         header: ({ column }) => (
           <SortableHeader column={column}>Active Status</SortableHeader>
         ),
         cell: ({ row }) => (
           <div className="flex justify-center">
             <Switch
-              key={row.original?.isActive ? "active" : "inactive"}
+              key={row.original?.flags?.isActive ? "active" : "inactive"}
               className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
-              defaultChecked={!!row.original?.isActive}
+              defaultChecked={!!row.original?.flags?.isActive}
               disabled={isUpdating}
               onCheckedChange={async (checked) => {
                 try {
                   const res = await updateMutater({
                     url: row.original.id,
-                    body: { isActive: checked },
+                    body: {
+                      flags: {
+                        ...row.original.flags,
+                        isActive: checked,
+                      },
+                    }
                   });
                   if (res.status === 200) {
                     toast.success("Space state changed");
@@ -342,18 +384,22 @@ const SpacesTabledResults = ({
         ),
       },
       {
-        accessorKey: "totalSeats",
+        accessorKey: "seats.total",
         header: ({ column }) => (
           <SortableHeader column={column}>Total Seats</SortableHeader>
         ),
-        cell: ({ row }) => <div>{row.original?.totalSeats ?? "-"}</div>,
+        cell: ({ row }) => (
+          <div>{row.original?.seats?.total ?? "-"}</div>
+        ),
       },
       {
-        accessorKey: "bookedSeats",
+        accessorKey: "seats.booked",
         header: ({ column }) => (
           <SortableHeader column={column}>Booked Seats</SortableHeader>
         ),
-        cell: ({ row }) => <div>{row.original?.bookedSeats ?? "-"}</div>,
+        cell: ({ row }) => (
+          <div>{row.original?.seats?.booked ?? "-"}</div>
+        ),
       },
       {
         accessorKey: "price",
@@ -362,34 +408,101 @@ const SpacesTabledResults = ({
         ),
         cell: ({ row }) => <div>{row.original?.price ?? "-"}</div>,
       },
+      // {
+      //   accessorKey: "rating",
+      //   header: ({ column }) => (
+      //     <SortableHeader column={column}>Rating</SortableHeader>
+      //   ),
+      //   cell: ({ row }) => <div>{row.original?.rating ?? "-"}</div>,
+      // },
+      // {
+      //   accessorKey: "reviews",
+      //   header: ({ column }) => (
+      //     <SortableHeader column={column}>Reviews</SortableHeader>
+      //   ),
+      //   cell: ({ row }) => <div>{row.original?.reviews ?? "-"}</div>,
+      // },
       {
-        accessorKey: "rating",
+        accessorKey: "pricing.dayPass",
         header: ({ column }) => (
-          <SortableHeader column={column}>Rating</SortableHeader>
+          <SortableHeader column={column}>Day Pass</SortableHeader>
         ),
-        cell: ({ row }) => <div>{row.original?.rating ?? "-"}</div>,
+        cell: ({ row }) => (
+          <div>{row.original?.pricing?.dayPass ?? "-"}</div>
+        ),
       },
       {
-        accessorKey: "reviews",
+        accessorKey: "pricing.perSeat",
         header: ({ column }) => (
-          <SortableHeader column={column}>Reviews</SortableHeader>
+          <SortableHeader column={column}>Per Seat</SortableHeader>
         ),
-        cell: ({ row }) => <div>{row.original?.reviews ?? "-"}</div>,
+        cell: ({ row }) => (
+          <div>{row.original?.pricing?.perSeat ?? "-"}</div>
+        ),
       },
       {
-        accessorKey: "operationalHrs",
+        accessorKey: "pricing.dedicatedDesk",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Dedicated Desk</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <div>{row.original?.pricing?.dedicatedDesk ?? "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "pricing.flexiDesk",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Flexi Desk</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <div>{row.original?.pricing?.flexiDesk ?? "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "pricing.privateCabin",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Private Cabin</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <div>{row.original?.pricing?.privateCabin ?? "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "pricing.vo",
+        header: ({ column }) => (
+          <SortableHeader column={column}>VO</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <div>{row.original?.pricing?.vo ?? "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "timing.operationalHrs",
         header: ({ column }) => (
           <SortableHeader column={column}>Operational Hrs</SortableHeader>
         ),
-        cell: ({ row }) => <div>{row.original?.operationalHrs ?? "-"}</div>,
+        cell: ({ row }) => (
+          <div>{row.original?.timing?.operationalHrs ?? "-"}</div>
+        ),
       },
       {
-        accessorKey: "workingSizes",
+        accessorKey: "specs.area",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Area (sq.ft.)</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <div>{row.original?.specs?.area ?? "-"}</div>
+        ),
+      },
+      {
+        accessorKey: "specs.workingSizes",
         header: ({ column }) => (
           <SortableHeader column={column}>Working Sizes</SortableHeader>
         ),
         cell: ({ row }) => (
-          <TextCell>{formatList(row.original?.workingSizes)}</TextCell>
+          <TextCell>
+            {formatList(row.original?.specs?.workingSizes)}
+          </TextCell>
         ),
       },
       {
@@ -404,28 +517,31 @@ const SpacesTabledResults = ({
         ),
       },
       {
-        accessorKey: "openTime",
+        accessorKey: "timing.openTime",
         header: ({ column }) => (
           <SortableHeader column={column}>Open Time</SortableHeader>
         ),
-        cell: ({ row }) => <div>{formatTime(row.original.openTime)}</div>,
+        cell: ({ row }) => (
+          <div>{formatTime(row.original?.timing?.openTime)}</div>
+        ),
       },
       {
-        accessorKey: "closeTime",
+        accessorKey: "timing.closeTime",
         header: ({ column }) => (
           <SortableHeader column={column}>Close Time</SortableHeader>
         ),
-        cell: ({ row }) => <div>{formatTime(row.original.closeTime)}</div>,
+        cell: ({ row }) => (
+          <div>{formatTime(row.original?.timing?.closeTime)}</div>
+        ),
       },
       {
-        accessorKey: "openDays",
+        accessorKey: "timing.openDays",
         header: ({ column }) => (
           <SortableHeader column={column}>Open Days</SortableHeader>
         ),
-        cell: ({ row }) => {
-          const openDays = row.original.openDays;
-          return <div>{formatOpenDays(openDays)}</div>;
-        },
+        cell: ({ row }) => (
+          <div>{formatOpenDays(row.original?.timing?.openDays)}</div>
+        ),
       },
       {
         accessorKey: "location.address",
@@ -521,31 +637,31 @@ const SpacesTabledResults = ({
         ),
         cell: ({ row }) => <TextCell>{row.original?.person?.role}</TextCell>,
       },
-      {
-        accessorKey: "description",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Description</SortableHeader>
-        ),
-        cell: ({ row }) => (
-          <TextCell className="min-w-[260px]">
-            {row.original?.description}
-          </TextCell>
-        ),
-      },
-      {
-        accessorKey: "createdAt",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Created At</SortableHeader>
-        ),
-        cell: ({ row }) => <div>{formatDateTime(row.original?.createdAt)}</div>,
-      },
-      {
-        accessorKey: "updatedAt",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Updated At</SortableHeader>
-        ),
-        cell: ({ row }) => <div>{formatDateTime(row.original?.updatedAt)}</div>,
-      },
+      // {
+      //   accessorKey: "description",
+      //   header: ({ column }) => (
+      //     <SortableHeader column={column}>Description</SortableHeader>
+      //   ),
+      //   cell: ({ row }) => (
+      //     <TextCell className="min-w-[260px]">
+      //       {row.original?.description}
+      //     </TextCell>
+      //   ),
+      // },
+      // {
+      //   accessorKey: "createdAt",
+      //   header: ({ column }) => (
+      //     <SortableHeader column={column}>Created At</SortableHeader>
+      //   ),
+      //   cell: ({ row }) => <div>{formatDateTime(row.original?.createdAt)}</div>,
+      // },
+      // {
+      //   accessorKey: "updatedAt",
+      //   header: ({ column }) => (
+      //     <SortableHeader column={column}>Updated At</SortableHeader>
+      //   ),
+      //   cell: ({ row }) => <div>{formatDateTime(row.original?.updatedAt)}</div>,
+      // },
     ],
     [
       isUpdating,
@@ -581,9 +697,9 @@ const SpacesTabledResults = ({
       const newState =
         typeof updater === "function"
           ? updater({
-              pageIndex: page,
-              pageSize: res?.data?.data?.metrics?.count || 10,
-            })
+            pageIndex: page,
+            pageSize: res?.data?.data?.metrics?.count || 10,
+          })
           : updater;
       setPage(newState.pageIndex);
     },
@@ -672,9 +788,9 @@ const SpacesTabledResults = ({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
                   </TableHead>
                 ))}
               </TableRow>

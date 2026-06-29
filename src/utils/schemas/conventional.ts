@@ -92,7 +92,11 @@ export const conventionalPropertySchema = z.object({
   slug: getSlugSchema({ keyName: "Slug" }),
   developer: getIdSchema({ keyName: "Developer Id" }),
   type: z.string().min(1, "Type is required"),
-  completionYear: z.number().optional(),
+  completionYear: z
+    .number()
+    .min(1900, "Invalid completion year")
+    .max(new Date().getFullYear(), "Completion year cannot be in the future")
+    .optional(),
   grade: z.enum(spaceGrades, "Invalid property grade").default("B"),
   totalMetrics: totalMetricsSchema.optional(),
   location: locationSchema.optional(),
