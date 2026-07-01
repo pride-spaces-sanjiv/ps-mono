@@ -22,44 +22,11 @@ import { SpaceSchema } from "@/database/schemas/space.js";
 import moment from "moment";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 import { SpaceGrade, SpaceType } from "@/utils/data/spaceTypes.js";
-
-const CSVHeaders = {
-  OPERATORSLUG: "operatorslug",
-  OPERATORBRANDNAME: "operatorbrandname",
-  CENTRENAME: "centrename",
-  ADDRESS: "address",
-  AREAMICROMARKET: "areamicromarket",
-  CITY: "city",
-  BUILDINGGRADE: "buildinggrade",
-  OCNONOC: "ocnonoc",
-  SEZNONSEZ: "seznonsez",
-  OPERATIONALSINCE: "operationalsince",
-  TOTALSEATS: "totalseats",
-  CENTREAREAINSQFTAPPROX: "centreareainsqftapprox",
-  TYPE: "type",
-  STATE: "state",
-  CENTERPOCNAME: "centerpocname",
-  CENTERPOCEMAIL: "centerpocemail",
-  CENTERPOCCONTACTNO: "centerpoccontactno",
-  LOCKIN: "lockin",
-  NOTICEPERIOD: "noticeperiod",
-  SECURITYDEPOSIT: "securitydeposit",
-  OPENINGDAY: "openingday",
-  CLOSINGDAY: "closingday",
-  OPENINGTIME: "openingtime",
-  CLOSINGTIME: "closingtime",
-  CATEGORY: "category",
-  DAYPASS: "daypass",
-  MEETINGROOM: "meetingroom",
-  DEDICATEDDESK: "dedicateddesk",
-  FLEXIHOTDESK: "flexihotdesk",
-  PERSEAT: "perseat",
-  VOSERVICE: "voservice",
-  VOPRICE: "voprice",
-  WORKSTATIONSIZE: "workstationsize",
-} as const;
-type CSVHeadersValues = (typeof CSVHeaders)[keyof typeof CSVHeaders];
-type RowData = Record<CSVHeadersValues, string | null | undefined>;
+import {
+  CSVHeaders,
+  CSVHeadersValues,
+  RowData,
+} from "../data/space-headers.js";
 
 // Objects
 const spaceCounts = {} as Record<string, number>;
@@ -182,7 +149,7 @@ const generateCategory = (cat?: string | null) => {
       ? "Apex"
       : str.includes(`classic`)
         ? "Classic"
-        : "Standard";
+        : "Starter";
   return val;
 };
 
@@ -230,7 +197,7 @@ const generateWorkSizes = (str?: string | null) => {
         return "";
       })
       .filter((s) => s) || [];
-  return sizes as SpaceSchema["workingSizes"];
+  return sizes as SpaceSchema["specs"]["workingSizes"];
 };
 
 const generateTimedDate = (str?: string | null) => {
@@ -263,8 +230,8 @@ const generateOperationalSince = (str?: string | null) => {
 const generateSpecsData = (row: RowData) => {
   const specs: SpaceSchema["specs"] = {
     category: generateCategory(row.category),
-    spaceType: generateSpaceType(row.type),
-    grade: generateGrade(row.buildinggrade),
+    spaceType: generateSpaceType(row.spacetype),
+    grade: generateGrade(row.buildingtype),
     area:
       Number(
         validifyStringValues(row.centreareainsqftapprox)
@@ -285,23 +252,27 @@ const generateTimingData = (row: RowData) => {
       .map((_, i) => i + 1),
     openTime: generateTimedDate(row.openingtime),
     closeTime: generateTimedDate(row.closingtime),
-    operationalSince: generateOperationalSince(row.operationalsince),
+    operationalSince: generateOperationalSince(row.operationalsinceyear),
     operationalHrs: 12,
   };
   return data;
 };
 
 const generateSeatsData = (row: RowData) => {
+  const totalSeats =
+    Number(validifyStringValues(row.totalseats).replace(/[^0-9]/g, "")) || 0;
+  const availableSeats = Number(
+    validifyStringValues(row.availableseats).replace(/[^0-9]/g, ""),
+  );
   const data: SpaceSchema["seats"] = {
-    total:
-      Number(validifyStringValues(row.totalseats).replace(/[^0-9]/g, "")) || 0,
-    booked: 0,
+    total: totalSeats,
+    booked: Math.max(0, totalSeats - availableSeats),
   };
   return data;
 };
 
 const generateFlagsData = (row: RowData) => {
-  const grade = generateGrade(row.buildinggrade);
+  const grade = generateGrade(row.buildingtype);
   const data: SpaceSchema["flags"] = {
     isOc:
       grade === "B"
@@ -393,7 +364,18 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
   }
 };
 
-export const parseBulkSpacesData = async (fileName: string) => {
+export const parseBulkSpacesData = async (
+  fileName: string,
+  options: Partial<{
+    postModification: Parameters<
+      (ReturnType<typeof prepareData> & { slug: string })[]["map"]
+    >[0];
+    postFilter: Parameters<
+      (ReturnType<typeof prepareData> & { slug: string })[]["filter"]
+    >[0];
+    preFilter: Parameters<RowData[]["filter"]>[0];
+  }> = {},
+) => {
   try {
     const rows = await extractCSV(fileName);
     const statesData = await getStatesData();
@@ -403,6 +385,7 @@ export const parseBulkSpacesData = async (fileName: string) => {
     await updateSpaceCounts(operatorsData);
 
     const sluggedRows = rows
+      .filter(options?.preFilter || ((row) => true))
       .map((row) => {
         const op = operatorsData.find(
           (op) =>
@@ -426,7 +409,9 @@ export const parseBulkSpacesData = async (fileName: string) => {
       .map((dt, i) => ({
         ...dt.prepared,
         slug: generateSlug(dt.row, i, dt.operator),
-      }));
+      }))
+      .filter(options?.postFilter || ((x) => true))
+      .map(options?.postModification || ((x) => x));
 
     return sluggedRows;
   } catch (err) {

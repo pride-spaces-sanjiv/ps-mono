@@ -14,7 +14,7 @@ export const labelledSpaceTypes = spaceTypes.map((v, i) => ({
 export const spaceGrades = ["A+", "A", "B"] as const;
 export const labelledSpaceGrades = [
   { label: "Grade A+ - Multi Tower Tech Park", value: "A+" },
-  { label: "Grade A - Standalone Tower", value: "A" },
+  { label: "Grade A - Standalone", value: "A" },
   { label: "Grade B", value: "B" },
 ] as { label: string; value: SpaceGrade }[];
 

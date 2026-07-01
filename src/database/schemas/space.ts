@@ -33,7 +33,7 @@ export const locationSchema = z.object({
 
 // Specs
 const specsSchema = z.object({
-  category: z.enum(spaceCategories).default("Standard"),
+  category: z.enum(spaceCategories).default("Starter"),
   spaceType: z.enum(spaceTypes).default("Flex"),
   grade: z.enum(spaceGrades).default("B"),
   area: z.number().min(0, "Area must be a positive number").optional(),

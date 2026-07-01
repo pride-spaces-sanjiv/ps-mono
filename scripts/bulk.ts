@@ -131,10 +131,13 @@ const convertData = (data: (typeof parsedData)[number]) => {
 // console.timeEnd("Push Time :");
 
 // Spaces
-const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centes New.csv";
+const csvFile =
+  "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centres 01-JUL-2026.csv";
 console.time("Scripting Time :");
-let bulkedSpaces = await parseBulkSpacesData(csvFile);
-bulkedSpaces = bulkedSpaces?.filter((_, i) => i < 3) || null;
+let bulkedSpaces = await parseBulkSpacesData(csvFile, {
+  preFilter: (row) => row.operatorslug?.toLowerCase().includes("enzyme"),
+});
+// bulkedSpaces = bulkedSpaces?.filter((_, i) => i < 3) || null;
 fs.writeFileSync(
   "./data/bulked-spaces.json",
   JSON.stringify(bulkedSpaces, null, 2),
