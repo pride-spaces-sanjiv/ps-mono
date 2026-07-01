@@ -16,7 +16,7 @@ import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
 import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
-import { labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
+import { labelledSpaceGrades, labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
 import { GroupedSearchSelect } from "@/components/search-select";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import { DialogModal } from "@/components/dialog";
@@ -277,20 +277,6 @@ const SpaceEditPage = () => {
     }
   }, [selectedGrade, setValue, res, POCSameAsOperator, operatorData, allUpdatedData]);
 
-  const gradeItems = [
-    {
-      label: "A+ - Multi Tower",
-      value: "A+",
-    },
-    {
-      label: "A - Single Tower",
-      value: "A",
-    },
-    {
-      label: "B",
-      value: "B",
-    },
-  ];
   // Update Mutater
   const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationFn: updateSpace,
@@ -524,10 +510,10 @@ const SpaceEditPage = () => {
 
           <FormField
             key={`space-grade-${defaultValues?.specs?.grade}`}
-            label="Grade"
+            label="Building Type"
             labelPosition="embedded"
             inputType="select"
-            items={gradeItems}
+            items={labelledSpaceGrades}
             error={errors.specs?.grade}
             pickerProps={{
               wrapperProps: {
@@ -827,17 +813,37 @@ const SpaceEditPage = () => {
             {...changedFieldProps(pricingChanges.allData, "dedicatedDesk")}
           />
           <FormField
-            label="Meeting Room"
+            label="Flexi Desk"
             labelPosition="embedded"
-            placeholder="1500"
+            placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.meetingRoom")}
-            error={errors.pricing?.meetingRoom}
-            {...changedFieldProps(pricingChanges.allData, "meetingRoom")}
+            {...register("pricing.flexiDesk")}
+            error={errors.pricing?.flexiDesk}
           />
 
+          <FormField
+            label="Private Cabin"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.privateCabin")}
+            error={errors.pricing?.privateCabin}
+          />
+
+          <FormField
+            label="VO"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.vo")}
+            error={errors.pricing?.vo}
+          />
           {/* Location */}
           <FormSectionTitle>Location Details</FormSectionTitle>
 
@@ -869,7 +875,7 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            label="Area"
+            label="Area - Micro Market"
             labelPosition="embedded"
             placeholder="Panvel"
             {...register("location.area")}

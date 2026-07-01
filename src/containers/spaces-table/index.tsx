@@ -37,7 +37,10 @@ import {
   getSpaces as getAdminSpaces,
   updateSpace,
 } from "@/services/apis/admin/spaces";
-
+import {
+  labelledSpaceGrades,
+  labelledSpaceTypes,
+} from "@/utils/data/spaceTypes";
 import { getSpaces as getOperatorSpaces } from "@/services/apis/operator/spaces";
 
 import { useUser } from "@/services/hooks/use-user";
@@ -297,26 +300,34 @@ const SpacesTabledResults = ({
           <TextCell>{row.original?.specs?.category}</TextCell>
         ),
       },
+{
+  accessorKey: "specs.spaceType",
+  header: ({ column }) => (
+    <SortableHeader column={column}>Space Type</SortableHeader>
+  ),
+  cell: ({ row }) => (
+    <TextCell>
       {
-        accessorKey: "specs.spaceType",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Space Type</SortableHeader>
-        ),
-        cell: ({ row }) => (
-          <TextCell>
-            {row.original?.specs?.spaceType === "Both"
-              ? "Flex & MOS"
-              : row.original?.specs?.spaceType || "-"}
-          </TextCell>
-        ),
-      },
+        labelledSpaceTypes.find(
+          (t) => t.value === row.original?.specs?.spaceType,
+        )?.label ?? "-"
+      }
+    </TextCell>
+  ),
+},
       {
         accessorKey: "specs.grade",
         header: ({ column }) => (
-          <SortableHeader column={column}>Grade</SortableHeader>
+          <SortableHeader column={column}>Building Type</SortableHeader>
         ),
         cell: ({ row }) => (
-          <TextCell>{row.original?.specs?.grade}</TextCell>
+          <TextCell>
+            {
+              labelledSpaceGrades.find(
+                (g) => g.value === row.original?.specs?.grade,
+              )?.label ?? "-"
+            }
+          </TextCell>
         ),
       },
       {
@@ -557,7 +568,7 @@ const SpacesTabledResults = ({
       {
         accessorKey: "location.area",
         header: ({ column }) => (
-          <SortableHeader column={column}>Area</SortableHeader>
+          <SortableHeader column={column}>Area - Micro Market</SortableHeader>
         ),
         cell: ({ row }) => <TextCell>{row.original?.location?.area}</TextCell>,
       },
