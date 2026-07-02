@@ -13,25 +13,9 @@ import { personSchema } from "./person.js";
 import { spaceGrades, spaceTypes } from "@/utils/data/spaceTypes.js";
 import { workingSizes } from "@/utils/data/workingSizes.js";
 import { filesSchema } from "./files.js";
+import { locationSchema } from "./location.js";
 
 // --- Location Schema ---
-export const locationSchema = z.object({
-  address: z.string().trim().min(1, "Address is required"),
-  city: z.string().trim().min(1, "City is required"),
-  state: z.string().trim().min(1, "State is required"),
-  country: z.string().trim().min(1, "Country is required"),
-  area: z.string().trim().min(1, "Area is required"),
-  postalCode: z
-    .string("Postal Code is required")
-    .trim()
-    .min(3, "Postal Code must be min 3 chars")
-    .transform((arg) => arg.replace(/[^A-Za-z0-9]/g, ""))
-    .refine((val) => /^[A-Za-z0-9]+$/.test(val), "Postal Code is invalid"),
-  lat: z.number(),
-  lng: z.number(),
-  url: z.url("Invalid URL").optional(),
-});
-
 // Specs
 const specsSchema = z.object({
   category: z.enum(spaceCategories).default("Starter"),
