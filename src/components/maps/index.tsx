@@ -62,6 +62,7 @@ export default function MapsField({
   const [coords, setCoords] = useState<{ lat: number; lng: number }>(
     defaultCoords,
   );
+  const [url, setUrl] = useState("");
 
   const updateToCurrentLocation = (defaultLocation = false) => {
     navigator.geolocation.getCurrentPosition(
@@ -183,7 +184,7 @@ export default function MapsField({
           </div>
 
           {/* Inputs */}
-          <div className={`map-inputs-wrap flex gap-4`}>
+          <div className={`map-inputs-wrap flex flex-wrap gap-4`}>
             <Autocomplete
               className={`search-map-wrap w-full`}
               onLoad={(e) => {
@@ -215,16 +216,34 @@ export default function MapsField({
                 }}
               />
             </Autocomplete>
-            <div className="font-bold text-lg my-auto"> OR </div>
-            <FormField
-              labelProps={{ className: "absolute hidden" }}
-              className="w-full"
-              placeholder="Enter maps url"
-              type="url"
-              onChange={(e) => {
-                const val = e.currentTarget.value.trim();
-              }}
-            />
+            <div className="font-bold text-lg text-center w-full"> OR </div>
+
+            {/* Maps url */}
+            <div className="w-full flex gap-4">
+              <FormField
+                labelProps={{ className: "absolute hidden" }}
+                wrapperProps={{ className: "w-full" }}
+                className="w-full"
+                placeholder="Enter maps url"
+                type="url"
+                onChange={(e) => {
+                  const val = e.currentTarget.value.trim();
+                  setUrl(val);
+                }}
+              />
+              <ActionButton
+                type="button"
+                onClick={async () => {
+                  onMapsShareURL?.(url);
+                  handleMapsURLGeocode(url);
+                }}
+              >
+                <div className="flex gap-2 items-center">
+                  <NotebookPenIcon />
+                  Check URL
+                </div>
+              </ActionButton>
+            </div>
           </div>
         </>
       )}
