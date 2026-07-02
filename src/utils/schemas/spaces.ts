@@ -28,11 +28,12 @@ export const locationSchema = z.object({
     .refine((val) => /^[A-Za-z0-9]+$/.test(val), "Postal Code is invalid"),
   lat: z.number(),
   lng: z.number(),
+  url: z.url("Invalid URL").optional(),
 });
 
 // Specs
 const specsSchema = z.object({
-  category: z.enum(spaceCategories).default("Standard"),
+  category: z.enum(spaceCategories).default("Starter"),
   spaceType: z.enum(spaceTypes).default("Flex"),
   grade: z.enum(spaceGrades).default("B"),
   area: z.number().min(0, "Area must be a positive number").optional(),
@@ -58,9 +59,13 @@ const timingSchema = z.object({
     .max(24, "Operational hours must be at most 24")
     .default(0),
   operationalSince: z
-    .date("Operational Since must be a valid date")
-    .min(new Date(1800, 0, 1), "Operational Since must be a after 01/01/1800")
-    .max(new Date(), `Operational Since must be before current date`)
+    .number("Operational Since must be a valid year")
+    .int("Operational Since must be a valid year")
+    .min(1800, "Operational Since must be a year after 1800")
+    .max(
+      new Date().getFullYear(),
+      `Operational Since must be before or equal to the current year`,
+    )
     .optional(),
 });
 
