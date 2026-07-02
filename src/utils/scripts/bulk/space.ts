@@ -216,12 +216,21 @@ const generateTimedDate = (str?: string | null) => {
 };
 
 const generateOperationalSince = (str?: string | null) => {
-  const parsedMoments = ["MM-YYYY", "YYYY-MM", "MM/YYYY", "YYYY/MM"].map(
-    (format) => moment(str, format, true).date(15),
-  );
-  const date = parsedMoments.find((d) => d.isValid());
-  if (date) {
-    return date.toDate();
+  // const parsedMoments = ["MM-YYYY", "YYYY-MM", "MM/YYYY", "YYYY/MM"].map(
+  //   (format) => moment(str, format, true).date(15),
+  // );
+  // const date = parsedMoments.find((d) => d.isValid());
+  // if (date) {
+  //   return date.toDate();
+  // }
+  const yr = Number(validifyStringValues(str).replace(/[^0-9]/g, ""));
+  if (
+    !Number.isNaN(yr) &&
+    Number.isInteger(yr) &&
+    yr >= 1800 &&
+    yr <= new Date().getFullYear()
+  ) {
+    return yr;
   }
   return undefined;
 };

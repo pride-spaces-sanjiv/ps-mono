@@ -8,6 +8,7 @@ import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 import { spaceTypes, spaceGrades } from "@/utils/data/spaceTypes.js";
 import { workingSizes } from "@/utils/data/workingSizes.js";
 import { FilesSchema } from "./schemas/files.js";
+import { LocationSchema } from "./schemas/location.js";
 
 const PersonSchema = new Conn.Schema(
   {
@@ -15,20 +16,6 @@ const PersonSchema = new Conn.Schema(
     email: { type: String },
     contactNo: { type: String },
     role: { type: String },
-  },
-  { _id: false },
-);
-
-const LocationSchema = new Conn.Schema(
-  {
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    country: { type: String, required: true },
-    area: { type: String, required: true },
-    postalCode: { type: String },
-    lat: { type: Number, required: true },
-    lng: { type: Number, required: true },
   },
   { _id: false },
 );
@@ -62,7 +49,7 @@ const TimingSchema = new Conn.Schema(
     closeTime: { type: Date },
     openDays: { type: [Number] },
     operationalHrs: { type: Number },
-    operationalSince: { type: Date },
+    operationalSince: { type: Number },
   },
   { _id: false },
 );
@@ -91,7 +78,7 @@ const SpaceSchema = new Conn.Schema(
     operator: { type: String, required: true },
     name: { type: String, required: true },
     email: { type: String },
-    location: { type: LocationSchema, required: true },
+    location: { type: LocationSchema },
     person: { type: PersonSchema, required: true },
     slug: { type: String, required: true, unique: true },
     specs: { type: SpecsSchema },
