@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
 import { cn } from "@/utils/className";
-import { geocodeLatLng } from "@/utils/data/geocode";
+import { geocodeLatLng, getLatLngFromMapsURL } from "@/utils/data/geocode";
 import ActionButton from "../buttons/action-btn";
+import FormField from "../form/field";
 
 const libs: Libraries = ["maps", "places", "marker"];
 
@@ -29,6 +30,8 @@ type Props = {
     result: Awaited<ReturnType<typeof geocodeLatLng>>,
     coords: { lat: number; lng: number },
   ) => any;
+  onLatLngFromURL: (value: { lat: number; lng: number; url: string }) => any;
+  onMapsShareURL: (value: string) => any;
 };
 
 export default function MapsField({
@@ -42,6 +45,8 @@ export default function MapsField({
   searchInputProps,
   geocodeDebounceDelay = 500,
   onGeocodeLatLng,
+  onLatLngFromURL,
+  onMapsShareURL,
 }: Partial<Props>) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -81,6 +86,11 @@ export default function MapsField({
       },
       { enableHighAccuracy: true },
     );
+  };
+
+  const handleMapsURLGeocode = async (url: string) => {
+    const coords = await getLatLngFromMapsURL(url);
+    coords && onLatLngFromURL?.({ ...coords, url });
   };
 
   useEffect(() => {
@@ -173,9 +183,9 @@ export default function MapsField({
           </div>
 
           {/* Inputs */}
-          <div className={`map-inputs-wrap`}>
+          <div className={`map-inputs-wrap flex gap-4`}>
             <Autocomplete
-              className={`search-map-wrap`}
+              className={`search-map-wrap w-full`}
               onLoad={(e) => {
                 inputRef.current = e;
               }}
@@ -196,7 +206,7 @@ export default function MapsField({
                 type="text"
                 placeholder={"Search any Location"}
                 {...searchInputProps}
-                className={cn("", searchInputProps?.className)}
+                className={cn("w-full", searchInputProps?.className)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -205,6 +215,16 @@ export default function MapsField({
                 }}
               />
             </Autocomplete>
+            <div className="font-bold text-lg my-auto"> OR </div>
+            <FormField
+              labelProps={{ className: "absolute hidden" }}
+              className="w-full"
+              placeholder="Enter maps url"
+              type="url"
+              onChange={(e) => {
+                const val = e.currentTarget.value.trim();
+              }}
+            />
           </div>
         </>
       )}
