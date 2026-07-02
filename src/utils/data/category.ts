@@ -1,5 +1,5 @@
 export const spaceCategories = [
-  "Standard",
+  "Starter",
   "Classic",
   "Elite",
   "Apex",

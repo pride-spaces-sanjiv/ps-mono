@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -13,11 +13,7 @@ import { generateSlug } from "@/utils/string/slug";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
-import {
-  spaceTypes,
-  spaceGrades,
-  labelledSpaceTypes,
-} from "@/utils/data/spaceTypes";
+import { labelledSpaceGrades, labelledSpaceTypes } from "@/utils/data/spaceTypes";
 import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
 import MapsField from "@/components/maps";
 import FormField from "@/components/form/field";
@@ -39,16 +35,19 @@ type LocState = {
 const SpaceCreatePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
   const { operatorData: locationOperatorData } = useMemo(() => {
     const state = location.state as Partial<LocState> | null | undefined;
-
     return state || {};
   }, [location.state]);
+
   const [selectedOperatorData, setSelectedOperatorData] =
     useState<Operator | null>(locationOperatorData || null);
+
   const operatorData = selectedOperatorData || locationOperatorData || null;
 
   const { amenitiesData } = useAmenities();
+
   const { data: operatorsRes } = useQuery({
     queryKey: [queryKeys.OPERATORS, "space-create"],
     queryFn: () =>
@@ -69,7 +68,6 @@ const SpaceCreatePage = () => {
     [operatorsRes?.data?.data?.results],
   );
 
-  // form builder
   const {
     register,
     handleSubmit,
@@ -80,22 +78,46 @@ const SpaceCreatePage = () => {
   } = useForm({
     resolver: zodResolver(spaceSchema),
     defaultValues: {
-      openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
-      category: "Classic",
-      spaceType: "Flex",
-      grade: "B",
-      openTime: defaultTime,
-      closeTime: defaultTime,
-      operationalHrs: 0,
-      isActive: true,
+      timing: {
+        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
+        openTime: defaultTime,
+        closeTime: defaultTime,
+        operationalHrs: 0,
+      },
+
+      specs: {
+        category: "Classic",
+        spaceType: "Flex",
+        grade: "B",
+        area: 0,
+        workingSizes: [],
+      },
+
+      seats: {
+        total: 0,
+        booked: 0,
+      },
+
+      flags: {
+        isActive: true,
+        isVerified: false,
+        isOc: false,
+        isSez: false,
+      },
+
       pricing: {
         dayPass: 0,
-        dedicatedDesk: 0,
         perSeat: 0,
-        meetingRoom:0,
+        dedicatedDesk: 0,
+        flexiDesk: 0,
+        privateCabin: 0,
+        vo: 0,
       },
     },
   });
+
+  const selectedGrade = watch("specs.grade");
+
   const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
 
   useEffect(() => {
@@ -105,40 +127,61 @@ const SpaceCreatePage = () => {
 
     reset({
       ...defaultValues,
+
       operator: operatorData?.id || defaultValues?.operator,
+
       branch: primaryBranch?.id || defaultValues?.branch,
+
       slug: operatorData?.slug
         ? generateSlug(
-          operatorData?.slug,
-          validateNumber(operatorData?.totalSpaces, { invalidValue: -1 }) + 1,
+          operatorData.slug,
+          validateNumber(operatorData.totalSpaces, {
+            invalidValue: -1,
+          }) + 1,
         )
         : defaultValues?.slug,
+
       person: {
-        ...(POCSameAsOperator ? operatorData?.person : defaultValues?.person),
+        ...(POCSameAsOperator
+          ? operatorData?.person
+          : defaultValues?.person),
       },
     });
   }, [POCSameAsOperator, operatorData]);
 
-  // Update Mutater
+  useEffect(() => {
+    if (!selectedGrade) return;
+
+    if (selectedGrade === "A+" || selectedGrade === "A") {
+      setValue("flags.isOc", true);
+    }
+
+    if (selectedGrade === "B") {
+      setValue("flags.isSez", false);
+    }
+  }, [selectedGrade, setValue]);
+
   const { mutateAsync, isPending: createLoading } = useMutation({
     mutationFn: createSpace,
   });
 
   const onSubmit = async (body: SpaceSchema) => {
     try {
-      console.log("Space body", body);
+      console.log("Centre body", body);
 
       const res = await mutateAsync({
         body,
       });
+
       if (res.status === 201) {
-        toast.success("Space created successfully");
+        toast.success("Centre created successfully");
         navigate("/spaces");
         return;
       }
+
       throw new Error("Invalid response");
-    } catch (err) {
-      toast.error("Failed to create space");
+    } catch {
+      toast.error("Failed to create centre");
     }
   };
 
@@ -167,7 +210,6 @@ const SpaceCreatePage = () => {
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
           </div>
-
           <FormField
             label="Name"
             labelPosition="embedded"
@@ -182,15 +224,6 @@ const SpaceCreatePage = () => {
             placeholder="my-centre-slug"
             {...register("slug")}
             error={errors.slug}
-          />
-
-          <FormField
-            label="Email"
-            labelPosition="embedded"
-            type="email"
-            placeholder="centre@example.com"
-            {...register("email")}
-            error={errors.email}
           />
 
           <FormField
@@ -220,17 +253,19 @@ const SpaceCreatePage = () => {
                 }}
                 onSelect={(item) => {
                   const selectedOperator =
-                    operators.find((operator) => operator.id === item.value) ||
-                    null;
+                    operators.find((operator) => operator.id === item.value) || null;
+
                   const primaryBranch =
                     selectedOperator?.branches?.find(
                       (branch) => branch.isPrimary,
                     ) || selectedOperator?.branches?.[0];
 
                   setSelectedOperatorData(selectedOperator);
+
                   setValue("operator", selectedOperator?.id || "", {
                     shouldValidate: true,
                   });
+
                   setValue("branch", primaryBranch?.id || "", {
                     shouldValidate: true,
                   });
@@ -240,134 +275,157 @@ const SpaceCreatePage = () => {
           </FormField>
 
           <FormField
-            key={`space-cat-${defaultValues?.category}`}
+            key={`space-cat-${defaultValues?.specs?.category}`}
             label="Category"
             labelPosition="embedded"
             inputType="select"
-            items={spaceCategories.map((cat) => ({ label: cat, value: cat }))}
-            error={errors.category}
+            items={spaceCategories.map((cat) => ({
+              label: cat,
+              value: cat,
+            }))}
+            error={errors.specs?.category}
             pickerProps={{
               wrapperProps: {
-                defaultValue: defaultValues?.category,
+                defaultValue: defaultValues?.specs?.category,
                 onValueChange: (val) =>
-                  setValue("category", val as SpaceSchema["category"], {
-                    shouldValidate: true,
-                  }),
+                  setValue(
+                    "specs.category",
+                    val as SpaceSchema["specs"]["category"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
           />
 
           <FormField
-            key={`space-type-${defaultValues?.spaceType}`}
+            key={`space-type-${defaultValues?.specs?.spaceType}`}
             label="Space Type"
             labelPosition="embedded"
             inputType="select"
             items={labelledSpaceTypes}
             pickerProps={{
               wrapperProps: {
-                defaultValue: defaultValues?.spaceType,
-                onValueChange: (val) => {
-                  setValue("spaceType", val as SpaceSchema["spaceType"], {
-                    shouldValidate: true,
-                  });
-                },
+                defaultValue: defaultValues?.specs?.spaceType,
+                onValueChange: (val) =>
+                  setValue(
+                    "specs.spaceType",
+                    val as SpaceSchema["specs"]["spaceType"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
-            error={errors.spaceType}
+            error={errors.specs?.spaceType}
           />
 
           <FormField
-            key={`space-grade-${defaultValues?.grade}`}
-            label="Grade"
+            key={`space-grade-${defaultValues?.specs?.grade}`}
+            label="Building Type"
             labelPosition="embedded"
             inputType="select"
-            items={spaceGrades.map((grade) => ({ label: grade, value: grade }))}
-            error={errors.grade}
+            items={labelledSpaceGrades}
+            error={errors.specs?.grade}
             pickerProps={{
               wrapperProps: {
-                defaultValue: defaultValues?.grade,
-                onValueChange: (val) => {
-                  setValue("grade", val as SpaceSchema["grade"], {
-                    shouldValidate: true,
-                  });
-                },
+                defaultValue: defaultValues?.specs?.grade,
+                onValueChange: (val) =>
+                  setValue(
+                    "specs.grade",
+                    val as SpaceSchema["specs"]["grade"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
           />
 
-          {/* Open Time */}
           <FormField
             label="Open Time"
             labelPosition="embedded"
             type="time"
-            key={defaultValues?.openTime?.toISOString()}
+            key={String(defaultValues?.timing?.openTime)}
             defaultValue={
-              defaultValues?.openTime
-                ? moment(defaultValues?.openTime).format("HH:mm")
+              defaultValues?.timing?.openTime
+                ? moment(defaultValues.timing.openTime).format("HH:mm")
                 : undefined
             }
             onChange={(e) => {
               const val = e.currentTarget.value;
-              setValue("openTime", moment(val, "HH:mm", true).toDate(), {
-                shouldValidate: true,
-              });
-            }}
-            error={errors.openTime}
-          />
 
-          {/* Close Time */}
+              setValue(
+                "timing.openTime",
+                moment(val, "HH:mm", true).toDate(),
+                {
+                  shouldValidate: true,
+                },
+              );
+            }}
+            error={errors.timing?.openTime}
+          />
 
           <FormField
             label="Close Time"
             labelPosition="embedded"
             type="time"
-            key={defaultValues?.closeTime?.toISOString()}
+            key={String(defaultValues?.timing?.closeTime)}
             defaultValue={
-              defaultValues?.closeTime
-                ? moment(defaultValues?.closeTime).format("HH:mm")
+              defaultValues?.timing?.closeTime
+                ? moment(defaultValues.timing.closeTime).format("HH:mm")
                 : undefined
             }
             onChange={(e) => {
               const val = e.currentTarget.value;
-              setValue("closeTime", moment(val, "HH:mm", true).toDate(), {
-                shouldValidate: true,
-              });
+
+              setValue(
+                "timing.closeTime",
+                moment(val, "HH:mm", true).toDate(),
+                {
+                  shouldValidate: true,
+                },
+              );
             }}
-            error={errors.closeTime}
+            error={errors.timing?.closeTime}
           />
 
           <FormField
             label="Total Seats"
             labelPosition="embedded"
             type="number"
-            {...register("totalSeats", { valueAsNumber: true })}
-            error={errors.totalSeats}
+            {...register("seats.total", {
+              valueAsNumber: true,
+            })}
+            error={errors.seats?.total}
           />
 
           <FormField
             label="Booked Seats"
             labelPosition="embedded"
             type="number"
-            {...register("bookedSeats", { valueAsNumber: true })}
-            error={errors.bookedSeats}
+            {...register("seats.booked", {
+              valueAsNumber: true,
+            })}
+            error={errors.seats?.booked}
           />
-
           {/* Open Days */}
-          {watch("spaceType", "Flex") !== "MOS" && (
+          {watch("specs.spaceType", "Flex") !== "MOS" && (
             <FormField
               label="Operational Days"
               labelPosition="embedded"
               error={{
-                message: errors.openDays?.message,
-                type: errors.openDays?.type || "validate",
+                message: errors.timing?.openDays?.message,
+                type: errors.timing?.openDays?.type || "validate",
               }}
             >
               <GroupedSearchSelect
-                key={`days-${defaultValues?.openDays?.length}`}
+                key={`days-${defaultValues?.timing?.openDays?.length}`}
                 type="multiple"
                 showSearch={false}
                 defaultSelected={
-                  defaultValues?.openDays ||
+                  defaultValues?.timing?.openDays ||
                   days.map((_, i) => i + 1).filter((_, i) => i < 7)
                 }
                 items={days.map((dt, i) => ({
@@ -378,17 +436,15 @@ const SpaceCreatePage = () => {
                   children: (
                     <ActionButton
                       type="button"
-                      variant={"outline"}
-                      className={
-                        "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
-                      }
+                      variant="outline"
+                      className="min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
                     >
-                      {watch("openDays", []).length > 0 ? (
+                      {watch("timing.openDays", []).length > 0 ? (
                         <ChippedElements
-                          elements={watch("openDays", [])
+                          elements={watch("timing.openDays", [])
                             .sort((a, b) => a - b)
                             .map((s) => shortDays[s - 1])
-                            .filter((v) => !!v)}
+                            .filter(Boolean)}
                         />
                       ) : (
                         "Select Days"
@@ -399,8 +455,13 @@ const SpaceCreatePage = () => {
                 contentProps={{ className: "max-h-[300px]" }}
                 onSelect={(items) => {
                   setValue(
-                    "openDays",
-                    items.filter((val) => typeof val === "number"),
+                    "timing.openDays",
+                    items.filter(
+                      (val): val is number => typeof val === "number",
+                    ),
+                    {
+                      shouldValidate: true,
+                    },
                   );
                 }}
               />
@@ -408,7 +469,7 @@ const SpaceCreatePage = () => {
           )}
 
           {/* Operational Hours */}
-          {watch("spaceType", "Flex") !== "Flex" && (
+          {watch("specs.spaceType", "Flex") !== "Flex" && (
             <FormField
               type="number"
               inputMode="numeric"
@@ -416,8 +477,8 @@ const SpaceCreatePage = () => {
               max={24}
               label="Operational Hours"
               labelPosition="embedded"
-              error={errors.operationalHrs}
-              {...register("operationalHrs")}
+              error={errors.timing?.operationalHrs}
+              {...register("timing.operationalHrs")}
             />
           )}
 
@@ -426,30 +487,32 @@ const SpaceCreatePage = () => {
             label="Amenities"
             labelPosition="embedded"
             error={{
-              message: errors.facilities?.message,
-              type: errors.facilities?.type || "validate",
+              message:
+                errors.facilities?.[0]?.message || errors.facilities?.message,
+              type:
+                errors.facilities?.[0]?.type ||
+                errors.facilities?.type ||
+                "validate",
             }}
           >
             <SelectAmenities
               className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
-              defaultAmenities={
-                defaultValues?.facilities as string[] | undefined
-              }
+              defaultAmenities={defaultValues?.facilities as string[] | undefined}
               onSelect={(amenities) => {
-                console.log(amenities);
                 setValue(
                   "facilities",
                   // @ts-ignore
                   amenities.map((a) => a.id),
-                  { shouldValidate: true },
+                  {
+                    shouldValidate: true,
+                  },
                 );
               }}
             >
               {(watch("facilities", [])?.length || 0) > 0 ? (
                 <ChippedElements
-                  className=""
                   elements={amenitiesData
-                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
+                    .filter((dt) => watch("facilities", []).includes(dt.id))
                     .map((dt) => dt.name)}
                 />
               ) : (
@@ -464,36 +527,34 @@ const SpaceCreatePage = () => {
             labelPosition="embedded"
             error={{
               message:
-                errors.workingSizes?.[0]?.message ||
-                errors?.workingSizes?.message,
+                errors.specs?.workingSizes?.[0]?.message ||
+                errors.specs?.workingSizes?.message,
               type:
-                errors.workingSizes?.[0]?.type ||
-                errors?.workingSizes?.type ||
+                errors.specs?.workingSizes?.[0]?.type ||
+                errors.specs?.workingSizes?.type ||
                 "validate",
             }}
           >
             <GroupedSearchSelect
-              key={`working-sizes-${defaultValues?.workingSizes?.length}`}
+              key={`working-sizes-${defaultValues?.specs?.workingSizes?.length}`}
               type="multiple"
               showSearch={false}
-              defaultSelected={defaultValues?.workingSizes}
-              items={workingSizes.map((dt, i) => ({
-                label: dt + " mm",
+              defaultSelected={defaultValues?.specs?.workingSizes}
+              items={workingSizes.map((dt) => ({
+                label: `${dt} mm`,
                 value: dt,
               }))}
               triggerProps={{
                 children: (
                   <ActionButton
                     type="button"
-                    variant={"outline"}
-                    className={
-                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
-                    }
+                    variant="outline"
+                    className="min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
                   >
-                    {(watch("workingSizes", [])?.length || 0) > 0 ? (
+                    {(watch("specs.workingSizes", [])?.length || 0) > 0 ? (
                       <ChippedElements
-                        elements={watch("workingSizes", [])?.map(
-                          (s) => s + " mm",
+                        elements={watch("specs.workingSizes", []).map(
+                          (s) => `${s} mm`,
                         )}
                       />
                     ) : (
@@ -505,16 +566,19 @@ const SpaceCreatePage = () => {
               contentProps={{ className: "max-h-[300px]" }}
               onSelect={(items) => {
                 setValue(
-                  "workingSizes",
+                  "specs.workingSizes",
                   items.filter(
-                    (val) => typeof val === "string",
-                  ) as WorkingSize[],
+                    (val): val is WorkingSize => typeof val === "string",
+                  ),
+                  {
+                    shouldValidate: true,
+                  },
                 );
               }}
             />
           </FormField>
 
-          {/* Area in sq.ft */}
+          {/* Area */}
           <FormField
             label="Centre Area (in sq.ft)"
             labelPosition="embedded"
@@ -522,47 +586,15 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("area")}
-            error={errors.area}
-          />
-          <FormField
-            label="Training Room"
-            labelPosition="embedded"
-            placeholder="20 (pax)"
-            type="number"
-            min={0}
-          {...register("trainingRoom")}
-          error={errors.trainingRoom}
-          />
-          <FormField
-            label="Meeting Room"
-            labelPosition="embedded"
-            placeholder="4 (pax)"
-            type="number"
-            min={0}
-          {...register("meetingRoom")}
-          error={errors.meetingRoom}
-          />
-          <FormField
-            label="Conference Room"
-            labelPosition="embedded"
-            placeholder="10 (pax)"
-            type="number"
-            min={0}
-          {...register("conferenceRoom")}
-          error={errors.conferenceRoom}
-          />
-          <FormField
-            label="Description"
-            labelPosition="embedded"
-            placeholder="Enter description"
-            {...register("description")}
-            error={errors.description}
-            inputType="textarea"
+            {...register("specs.area", {
+              valueAsNumber: true,
+            })}
+            error={errors.specs?.area}
           />
 
           {/* Pricing Details */}
           <FormSectionTitle>Pricing Details</FormSectionTitle>
+
           <FormField
             label="Day Pass"
             labelPosition="embedded"
@@ -573,6 +605,7 @@ const SpaceCreatePage = () => {
             {...register("pricing.dayPass")}
             error={errors.pricing?.dayPass}
           />
+
           <FormField
             label="Per Seat"
             labelPosition="embedded"
@@ -583,6 +616,7 @@ const SpaceCreatePage = () => {
             {...register("pricing.perSeat")}
             error={errors.pricing?.perSeat}
           />
+
           <FormField
             label="Dedicated Desk"
             labelPosition="embedded"
@@ -593,19 +627,42 @@ const SpaceCreatePage = () => {
             {...register("pricing.dedicatedDesk")}
             error={errors.pricing?.dedicatedDesk}
           />
+
           <FormField
-            label="Meeting Room"
+            label="Flexi Desk"
             labelPosition="embedded"
-            placeholder="1500"
+            placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.meetingRoom")}
-            error={errors.pricing?.meetingRoom}
+            {...register("pricing.flexiDesk")}
+            error={errors.pricing?.flexiDesk}
           />
 
+          <FormField
+            label="Private Cabin"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.privateCabin")}
+            error={errors.pricing?.privateCabin}
+          />
+
+          <FormField
+            label="VO"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.vo")}
+            error={errors.pricing?.vo}
+          />
           {/* Location */}
           <FormSectionTitle>Location Details</FormSectionTitle>
+
           <FormField
             label="City"
             labelPosition="embedded"
@@ -631,7 +688,7 @@ const SpaceCreatePage = () => {
           />
 
           <FormField
-            label="Area"
+            label="Area - Micro Market"
             labelPosition="embedded"
             placeholder="Panvel"
             {...register("location.area")}
@@ -651,7 +708,7 @@ const SpaceCreatePage = () => {
             labelPosition="embedded"
             type="number"
             step="any"
-            {...register("location.lat")}
+            {...register("location.lat", { valueAsNumber: true })}
             error={errors.location?.lat}
           />
 
@@ -660,7 +717,7 @@ const SpaceCreatePage = () => {
             labelPosition="embedded"
             type="number"
             step="any"
-            {...register("location.lng")}
+            {...register("location.lng", { valueAsNumber: true })}
             error={errors.location?.lng}
           />
 
@@ -670,8 +727,8 @@ const SpaceCreatePage = () => {
             mapProps={{ mapContainerClassName: "min-h-[300px] w-full" }}
             buttonProps={{ className: "w-fit" }}
             onGeocodeLatLng={(res, coords) => {
-              console.log(res);
               const oldData = watch("location");
+
               const data: SpaceSchema["location"] = {
                 address: res.address || oldData.address,
                 city: res.city || oldData.city,
@@ -682,7 +739,10 @@ const SpaceCreatePage = () => {
                 lat: coords.lat || oldData.lat,
                 lng: coords.lng || oldData.lng,
               };
-              setValue("location", data, { shouldValidate: true });
+
+              setValue("location", data, {
+                shouldValidate: true,
+              });
             }}
           />
 
@@ -696,16 +756,14 @@ const SpaceCreatePage = () => {
 
           {/* SECTION: Centre Point of Contact */}
 
-          <div className="col-span-full  mt-8 mb-6 ">
+          <div className="col-span-full mt-8 mb-6">
             <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
+              <h1 className="text-base font-semibold italic text-white/90 tracking-wide">
                 Point of Contact Details
               </h1>
               <div className="flex-1 border-t border-muted-foreground/20"></div>
             </div>
           </div>
-
-
 
           <FormField
             label="Name"
@@ -714,18 +772,18 @@ const SpaceCreatePage = () => {
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
             {...register("person.name")}
-            error={errors?.person?.name}
+            error={errors.person?.name}
           />
 
           <FormField
             label="Email"
             labelPosition="embedded"
             type="email"
+            placeholder="john.doe@example.com"
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
-            placeholder="john.doe@example.com"
             {...register("person.email")}
-            error={errors?.person?.email}
+            error={errors.person?.email}
           />
 
           <FormField
@@ -740,13 +798,12 @@ const SpaceCreatePage = () => {
             defaultValue={defaultValues?.person?.contactNo}
             value={watch("person.contactNo")}
             placeholder="+1-123-456-7890"
-            onChange={(val) => {
-              console.log(val);
+            onChange={(val) =>
               setValue("person.contactNo", val?.toString() || "", {
                 shouldValidate: true,
-              });
-            }}
-            error={errors?.person?.contactNo}
+              })
+            }
+            error={errors.person?.contactNo}
           />
 
           <FormField
@@ -756,42 +813,68 @@ const SpaceCreatePage = () => {
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
             {...register("person.role")}
-            error={errors?.person?.role}
+            error={errors.person?.role}
           />
 
           {/* Status */}
-          <div className="col-span-full flex gap-8">
+
+          <div className="col-span-full flex gap-8 flex-wrap">
+
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">Active</label>
               <Switch
-                key={defaultValues?.isActive ? "active" : "inactive"}
+                key={defaultValues?.flags?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-                defaultChecked={!!defaultValues?.isActive}
-                {...register("isActive")}
+                defaultChecked={!!defaultValues?.flags?.isActive}
+                {...register("flags.isActive")}
               />
             </div>
 
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">Verified</label>
               <Switch
-                key={defaultValues?.isVerified ? "verified" : "unverified"}
-                defaultChecked={!!defaultValues?.isVerified}
-                {...register("isVerified")}
+                key={defaultValues?.flags?.isVerified ? "verified" : "unverified"}
+                defaultChecked={!!defaultValues?.flags?.isVerified}
+                {...register("flags.isVerified")}
               />
             </div>
-          <div className="flex items-center gap-4">
-            <label className="text-white text-sm">Same As Operator</label>
-            <Switch
-              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-              onCheckedChange={(checked) => {
-                setPOCSameAsOperator(checked);
-              }}
-            />
-          </div>
-                      
+
+            {selectedGrade === "B" && (
+              <div className="flex items-center gap-4">
+                <label className="text-white text-sm">OC</label>
+                <Switch
+                  key={defaultValues?.flags?.isOc ? "oc" : "non-oc"}
+                  defaultChecked={!!defaultValues?.flags?.isOc}
+                  {...register("flags.isOc")}
+                />
+              </div>
+            )}
+
+            {(selectedGrade === "A" || selectedGrade === "A+") && (
+              <div className="flex items-center gap-4">
+                <label className="text-white text-sm">SEZ</label>
+                <Switch
+                  key={defaultValues?.flags?.isSez ? "sez" : "non-sez"}
+                  defaultChecked={!!defaultValues?.flags?.isSez}
+                  {...register("flags.isSez")}
+                />
+              </div>
+            )}
+
+            <div className="flex items-center gap-4">
+              <label className="text-white text-sm">Same As Operator</label>
+              <Switch
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+                onCheckedChange={(checked) => {
+                  setPOCSameAsOperator(checked);
+                }}
+              />
+            </div>
+
           </div>
 
           {/* Submit */}
+
           <div className="col-span-full flex justify-end">
             <ActionButton
               type="submit"
