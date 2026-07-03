@@ -13,6 +13,12 @@ import { cn } from "@/utils/className";
 import { geocodeLatLng, getLatLngFromMapsURL } from "@/utils/data/geocode";
 import ActionButton from "../buttons/action-btn";
 import FormField from "../form/field";
+import { useMutation } from "@tanstack/react-query";
+import {
+  getMapsURLPos,
+  type MapsURLPosRes,
+} from "@/services/apis/general/location";
+import { handleAxiosErrorCases } from "@/utils/axios/error";
 
 const libs: Libraries = ["maps", "places", "marker"];
 
@@ -32,6 +38,7 @@ type Props = {
   ) => any;
   onLatLngFromURL: (value: { lat: number; lng: number; url: string }) => any;
   onMapsShareURL: (value: string) => any;
+  autoCoordsOnMapsShareURL: boolean;
 };
 
 export default function MapsField({
@@ -47,6 +54,7 @@ export default function MapsField({
   onGeocodeLatLng,
   onLatLngFromURL,
   onMapsShareURL,
+  autoCoordsOnMapsShareURL = true,
 }: Partial<Props>) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -63,6 +71,12 @@ export default function MapsField({
     defaultCoords,
   );
   const [url, setUrl] = useState("");
+
+  const { mutateAsync: mapsURLPosMutater, isPending: isMapsURLPosLoading } =
+    useMutation({
+      mutationKey: ["maps-details", "maps-url", "position"],
+      mutationFn: (url: string) => getMapsURLPos({ body: { url } }),
+    });
 
   const updateToCurrentLocation = (defaultLocation = false) => {
     navigator.geolocation.getCurrentPosition(
@@ -90,8 +104,59 @@ export default function MapsField({
   };
 
   const handleMapsURLGeocode = async (url: string) => {
-    const coords = await getLatLngFromMapsURL(url);
-    coords && onLatLngFromURL?.({ ...coords, url });
+    try {
+      const res = await mapsURLPosMutater(url);
+      const data = res?.data?.data;
+      if (res.status === 200 && data?.lat && data?.lng) {
+        onLatLngFromURL?.({ lat: data.lat, lng: data.lng, url });
+        if (autoCoordsOnMapsShareURL) {
+          setCoords({ lat: data.lat, lng: data.lng });
+          setCenter({ lat: data.lat, lng: data.lng });
+        }
+        toast.success("Location found from map URL");
+        return;
+      }
+      throw new Error("Invalid response");
+      // console.log("Got Maps stats")
+      // onLatLngFromURL?.({ lat: lat, lng: lng, url: url });
+    } catch (err: any) {
+      console.error("Error occurred while geocoding maps URL:", err);
+      const handled = handleAxiosErrorCases<MapsURLPosRes>(err, [
+        {
+          status: 400,
+          handler(res) {
+            const errorType = res?.data?.errorType;
+            if (errorType?.includes("invalid-url")) {
+              return toast.error("Invalid map URL provided");
+            }
+            if (errorType?.includes("no-redirect")) {
+              return toast.error("Maps Parser failed to step next");
+            }
+            toast.error(
+              `Failed to receive location from maps URL [code: ${errorType || "unknown"}]`,
+            );
+          },
+        },
+      ]);
+      if (handled) {
+        return;
+      }
+      // if (
+      //   err instanceof Error &&
+      //   (err.cause as string)?.includes("maps-url-lat-lng_")
+      // ) {
+      //   const cause = (err.cause as string).split("_")[1];
+      //   toast.error(
+      //     cause.includes("invalid-url")
+      //       ? "Invalid map URL provided"
+      //       : cause.includes("no-redirect")
+      //         ? "Maps Parser failed to step next"
+      //         : "Failed to receive location from maps URL",
+      //   );
+      //   return;
+      // }
+      toast.error("Failed to receive location from maps URL");
+    }
   };
 
   useEffect(() => {
@@ -233,6 +298,7 @@ export default function MapsField({
               />
               <ActionButton
                 type="button"
+                loading={isMapsURLPosLoading}
                 onClick={async () => {
                   onMapsShareURL?.(url);
                   handleMapsURLGeocode(url);
@@ -240,7 +306,7 @@ export default function MapsField({
               >
                 <div className="flex gap-2 items-center">
                   <NotebookPenIcon />
-                  Check URL
+                  Fill From URL
                 </div>
               </ActionButton>
             </div>

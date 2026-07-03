@@ -1014,6 +1014,12 @@ const SpaceEditPage = () => {
               };
               setValue("location", data, { shouldValidate: true });
             }}
+            onLatLngFromURL={(stats) => {
+              // console.log("Stats from maps url to pos :", stats);
+              setValue("location.lat", stats.lat);
+              setValue("location.lng", stats.lng);
+              setValue("location.url", stats.url);
+            }}
           />
 
           <FormField
