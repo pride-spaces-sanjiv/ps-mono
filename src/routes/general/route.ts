@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { Admin } from "@/database/models/user.js";
+import { LocationRouter } from "./location/route.js";
 // Routers
 // import { AuthRouter } from "./auth.js";
 // import { AdminRouter } from "./admin.js";
@@ -13,6 +14,7 @@ import { Admin } from "@/database/models/user.js";
 // import { DumpRouter } from "./dump.js";
 
 const router = Router();
+router.use("/location", LocationRouter);
 
 // router.use("/auth", AuthRouter);
 // // Authorized routes

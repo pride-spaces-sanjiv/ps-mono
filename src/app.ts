@@ -42,6 +42,7 @@ import {
   ManagedResponseWithLocalUrl,
   ManagedResponseWithLocalUrlIP,
 } from "@/types/request.js";
+import { GeneralRouter } from "./routes/general/route.js";
 // import { handleMailQueue } from "./utils/services/rabbitmq/email.js";
 
 // Pre handlers
@@ -316,6 +317,7 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
 }, RequestMiddleware.sendCachedData);
 app.use("/admin", AdminRouter);
 app.use("/operator", OperatorRouter);
+app.use("/general", GeneralRouter);
 // app.use("/users", RequestMiddleware.authenticateUser(1), usersRouter);
 // app.use("/group", RequestMiddleware.authenticateUser(1), groupRouter);
 // app.use("/account", RequestMiddleware.authenticateUser(0), accountRouter);
