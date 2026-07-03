@@ -6,7 +6,10 @@ export const getLatLngFromMapsURL = async (url: string) => {
     if (!locationSchema.shape.url.parse(url)) {
       throw new Error("Invalid url", { cause: "maps-url-lat-lng_invalid-url" });
     }
-    const res = await axios.get(url, { maxRedirects: 0 });
+    const res = await axios.get(url, {
+      maxRedirects: 0,
+      validateStatus: (status) => status >= 200 && status < 400,
+    });
     const location = res.headers.location;
     if (!location) {
       throw new Error("No redirect location found", {
