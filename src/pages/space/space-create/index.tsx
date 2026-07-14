@@ -15,8 +15,15 @@ import { generateSlug } from "@/utils/string/slug";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
-import { labelledSpaceGrades, labelledSpaceTypes } from "@/utils/data/spaceTypes";
-import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
+import {
+  labelledSpaceGrades,
+  labelledSpaceTypes,
+} from "@/utils/data/spaceTypes";
+import {
+  labelledWorkingSizes,
+  workingSizes,
+  type WorkingSize,
+} from "@/utils/data/workingSizes";
 import MapsField from "@/components/maps";
 import FormField from "@/components/form/field";
 import FormSectionTitle from "@/components/form/section/title";
@@ -51,9 +58,7 @@ const SpaceCreatePage = () => {
   }, [location.state]);
 
   const [selectedOperatorData, setSelectedOperatorData] =
-    useState<Operator | null>(
-      loggedInOperator || locationOperatorData || null,
-    );
+    useState<Operator | null>(loggedInOperator || locationOperatorData || null);
 
   const operatorData =
     loggedInOperator || selectedOperatorData || locationOperatorData || null;
@@ -146,17 +151,15 @@ const SpaceCreatePage = () => {
 
       slug: operatorData?.slug
         ? generateSlug(
-          operatorData.slug,
-          validateNumber(operatorData.totalSpaces, {
-            invalidValue: -1,
-          }) + 1,
-        )
+            operatorData.slug,
+            validateNumber(operatorData.totalSpaces, {
+              invalidValue: -1,
+            }) + 1,
+          )
         : defaultValues?.slug,
 
       person: {
-        ...(POCSameAsOperator
-          ? operatorData?.person
-          : defaultValues?.person),
+        ...(POCSameAsOperator ? operatorData?.person : defaultValues?.person),
       },
     });
   }, [POCSameAsOperator, operatorData]);
@@ -173,7 +176,9 @@ const SpaceCreatePage = () => {
     }
   }, [selectedGrade, setValue]);
 
-  const createSpaceApi = isOperatorPortal ? createOperatorSpace : createAdminSpace;
+  const createSpaceApi = isOperatorPortal
+    ? createOperatorSpace
+    : createAdminSpace;
   const homeRoute = isOperatorPortal ? "/partner" : "/spaces";
 
   const { mutateAsync, isPending: createLoading } = useMutation({
@@ -279,7 +284,8 @@ const SpaceCreatePage = () => {
                 }}
                 onSelect={(item) => {
                   const selectedOperator =
-                    operators.find((operator) => operator.id === item.value) || null;
+                    operators.find((operator) => operator.id === item.value) ||
+                    null;
 
                   const primaryBranch =
                     selectedOperator?.branches?.find(
@@ -382,13 +388,9 @@ const SpaceCreatePage = () => {
             onChange={(e) => {
               const val = e.currentTarget.value;
 
-              setValue(
-                "timing.openTime",
-                moment(val, "HH:mm", true).toDate(),
-                {
-                  shouldValidate: true,
-                },
-              );
+              setValue("timing.openTime", moment(val, "HH:mm", true).toDate(), {
+                shouldValidate: true,
+              });
             }}
             error={errors.timing?.openTime}
           />
@@ -523,7 +525,9 @@ const SpaceCreatePage = () => {
           >
             <SelectAmenities
               className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
-              defaultAmenities={defaultValues?.facilities as string[] | undefined}
+              defaultAmenities={
+                defaultValues?.facilities as string[] | undefined
+              }
               onSelect={(amenities) => {
                 setValue(
                   "facilities",
@@ -538,7 +542,7 @@ const SpaceCreatePage = () => {
               {(watch("facilities", [])?.length || 0) > 0 ? (
                 <ChippedElements
                   elements={amenitiesData
-                    .filter((dt) => watch("facilities", []).includes(dt.id))
+                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
                     .map((dt) => dt.name)}
                 />
               ) : (
@@ -549,7 +553,7 @@ const SpaceCreatePage = () => {
 
           {/* Working Sizes */}
           <FormField
-            label="Working Sizes"
+            label="Work Station Sizes"
             labelPosition="embedded"
             error={{
               message:
@@ -566,10 +570,7 @@ const SpaceCreatePage = () => {
               type="multiple"
               showSearch={false}
               defaultSelected={defaultValues?.specs?.workingSizes}
-              items={workingSizes.map((dt) => ({
-                label: `${dt} mm`,
-                value: dt,
-              }))}
+              items={labelledWorkingSizes}
               triggerProps={{
                 children: (
                   <ActionButton
@@ -579,7 +580,7 @@ const SpaceCreatePage = () => {
                   >
                     {(watch("specs.workingSizes", [])?.length || 0) > 0 ? (
                       <ChippedElements
-                        elements={watch("specs.workingSizes", []).map(
+                        elements={watch("specs.workingSizes", [])?.map(
                           (s) => `${s} mm`,
                         )}
                       />
@@ -845,7 +846,6 @@ const SpaceCreatePage = () => {
           {/* Status */}
 
           <div className="col-span-full flex gap-8 flex-wrap">
-
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">Active</label>
               <Switch
@@ -859,7 +859,9 @@ const SpaceCreatePage = () => {
             <div className="flex items-center gap-4">
               <label className="text-white text-sm">Verified</label>
               <Switch
-                key={defaultValues?.flags?.isVerified ? "verified" : "unverified"}
+                key={
+                  defaultValues?.flags?.isVerified ? "verified" : "unverified"
+                }
                 defaultChecked={!!defaultValues?.flags?.isVerified}
                 {...register("flags.isVerified")}
               />
@@ -896,7 +898,6 @@ const SpaceCreatePage = () => {
                 }}
               />
             </div>
-
           </div>
 
           {/* Submit */}

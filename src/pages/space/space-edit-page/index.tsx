@@ -5,11 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import {
-  ArrowLeft,
-  ImagePlus,
-  MessageSquareWarning,
-} from "lucide-react";
+import { ArrowLeft, ImagePlus, MessageSquareWarning } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
 import { useUser } from "@/services/hooks/use-user";
@@ -26,7 +22,11 @@ import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
-import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
+import {
+  labelledWorkingSizes,
+  workingSizes,
+  type WorkingSize,
+} from "@/utils/data/workingSizes";
 import {
   labelledSpaceGrades,
   labelledSpaceTypes,
@@ -822,7 +822,7 @@ const SpaceEditPage = () => {
 
           {/* Working Sizes */}
           <FormField
-            label="Working Sizes"
+            label="Work Station Sizes"
             labelPosition="embedded"
             error={{
               message:
@@ -840,10 +840,7 @@ const SpaceEditPage = () => {
               type="multiple"
               showSearch={false}
               defaultSelected={defaultValues?.specs?.workingSizes}
-              items={workingSizes.map((dt, i) => ({
-                label: dt + " mm",
-                value: dt,
-              }))}
+              items={labelledWorkingSizes}
               triggerProps={{
                 children: (
                   <ActionButton
