@@ -62,6 +62,7 @@ export default function FormField<
   embeddedWrapperProps,
   error = null,
   showRequired = true,
+  children,
   ...props
 }: Props<T, V>) {
   return (
@@ -93,7 +94,7 @@ export default function FormField<
           )}
         </Label>
 
-        {props?.children ||
+        {children ||
           (inputType === "select" ? (
             // @ts-ignore
             <SelectPicker

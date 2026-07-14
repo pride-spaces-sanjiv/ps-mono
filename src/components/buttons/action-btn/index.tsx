@@ -48,7 +48,12 @@ export default function ActionButton({
           <span className="sr-only">Loading...</span>
         </div>
       )}
-      <div className={cn("max-w-full", loading ? "opacity-0" : "")}>
+      <div
+        className={cn(
+          "inline-flex items-center justify-center gap-2",
+          loading && "opacity-0"
+        )}
+      >
         {children}
       </div>
     </Button>

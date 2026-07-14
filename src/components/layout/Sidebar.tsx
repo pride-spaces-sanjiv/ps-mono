@@ -241,8 +241,8 @@ export function AppSidebar() {
                         }
                       }}
                       className={({ isActive }) =>
-                        `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-white hover:bg-primary ${isActive || isItemActive(item)
-                          ? "text-accent-foreground font-medium"
+                        `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary ${isActive || isItemActive(item)
+                          ? "text-accent-foreground font-medium bg-muted/65"
                           : ""
                         }`
                       }
@@ -259,6 +259,10 @@ export function AppSidebar() {
                           )}
                         />
                       ) : null}
+                      {/* Active indicator dot at the end if selected/active */}
+                      {isItemActive(item) && !item.tabs?.length && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                   {item.tabs?.length && openSubtabs[item.title] ? (
@@ -268,14 +272,14 @@ export function AppSidebar() {
                           <NavLink
                             to={tab.url}
                             className={() =>
-                              `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm text-accent-foreground transition-all hover:text-white hover:bg-primary ${isItemActive(tab) ? "font-medium" : ""
+                              `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary ${isItemActive(tab) ? "font-medium" : ""
                               }`
                             }
                           >
                             <span
                               className={cn(
-                                "h-1.5 w-1.5 shrink-0 rounded-full bg-accent-foreground/50 transition-colors group-hover:bg-white",
-                                isItemActive(tab) ? "bg-white" : "",
+                                "h-1.5 w-1.5 shrink-0 rounded-full bg-accent-foreground/50 transition-colors group-hover:bg-primary",
+                                isItemActive(tab) ? "bg-primary" : "",
                               )}
                             />
                             <span>{tab.title}</span>
