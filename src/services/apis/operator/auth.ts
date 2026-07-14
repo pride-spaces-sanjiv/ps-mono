@@ -4,6 +4,7 @@ import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import type { GeneralResponseWithError } from "@/types/axios/response";
 import type { Operator } from "@/types/data/operators";
 import type { TokenRes } from "@/types/data/response";
+import { operatorSchema } from "@/utils/schemas/operators";
 
 type GetRes = GeneralResponseWithError<Omit<Operator, "password"> | null>;
 
@@ -28,7 +29,7 @@ export const getSelfData = APIBodyValidationWrapper({
   },
 });
 export const updateSelfData = APIBodyValidationWrapper({
-  schema: adminSchema.omit({ password: true }),
+  schema: operatorSchema.omit({ password: true , slug: true }),
   handle: async (param, config) => {
     const res = await OPERATOR.put<GetRes>("/", param?.body, config);
     return res;

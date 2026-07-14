@@ -5,11 +5,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { ImagePlus, MessageSquareWarning } from "lucide-react";
+import {
+  ArrowLeft,
+  ImagePlus,
+  MessageSquareWarning,
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
 import { useUser } from "@/services/hooks/use-user";
-import { getSpaceById, updateSpace } from "@/services/apis/admin/spaces";
+import {
+  getSpaceById as getAdminSpaceById,
+  updateSpace as updateAdminSpace,
+} from "@/services/apis/admin/spaces";
+import {
+  getSpaceData as getOperatorSpaceById,
+  updateSpace as updateOperatorSpace,
+} from "@/services/apis/operator/spaces";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
@@ -59,6 +70,14 @@ const SpaceEditPage = () => {
     () => fromRoute === "notifications" && !!locData,
     [fromRoute, locData],
   );
+
+  const { userLevel } = useUser();
+  const isOperatorPortal = userLevel === "operator";
+  const getSpaceById = isOperatorPortal
+    ? getOperatorSpaceById
+    : getAdminSpaceById;
+  const updateSpace = isOperatorPortal ? updateOperatorSpace : updateAdminSpace;
+  const homeRoute = isOperatorPortal ? "/partner" : "/spaces";
 
   const { amenitiesData } = useAmenities();
 
@@ -323,7 +342,7 @@ const SpaceEditPage = () => {
 
       if (res.status === 200) {
         toast.success(`Centre ${isDump ? "approved" : "updated"} successfully`);
-        navigate(isDump ? "/notifications" : "/spaces");
+        navigate(isDump ? "/notifications" : homeRoute);
         return;
       }
       throw new Error("Invalid response");
@@ -404,6 +423,17 @@ const SpaceEditPage = () => {
 
   return (
     <div className="container mx-auto p-6">
+      {isOperatorPortal && (
+        <ActionButton
+          type="button"
+          variant="ghost"
+          className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate(homeRoute)}
+        >
+          <ArrowLeft className="size-4" />
+          Back to Portal
+        </ActionButton>
+      )}
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold  w-full">
           Edit Centre: {watch("name", "")}
@@ -441,7 +471,7 @@ const SpaceEditPage = () => {
           </div>
 
           <FormField
-            label="Name"
+            label="Centre Name"
             labelPosition="embedded"
             placeholder="My Centre"
             {...register("name")}
@@ -532,7 +562,7 @@ const SpaceEditPage = () => {
             label="Open Time"
             labelPosition="embedded"
             type="time"
-            key={String(defaultValues?.timing?.openTime)}
+            key={`open-time-${String(defaultValues?.timing?.openTime)}`}
             defaultValue={
               defaultValues?.timing?.openTime
                 ? moment(defaultValues?.timing?.openTime).format("HH:mm")
@@ -554,7 +584,7 @@ const SpaceEditPage = () => {
             label="Close Time"
             labelPosition="embedded"
             type="time"
-            key={String(defaultValues?.timing?.closeTime)}
+            key={`close-time-${String(defaultValues?.timing?.closeTime)}`}
             defaultValue={
               defaultValues?.timing?.closeTime
                 ? moment(defaultValues?.timing?.closeTime).format("HH:mm")
@@ -582,7 +612,7 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            label="Booked Seats"
+            label="Available Seats"
             labelPosition="embedded"
             type="number"
             {...register("seats.booked", {
@@ -824,7 +854,7 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            label="Private Cabin"
+            label="Meeting Room"
             labelPosition="embedded"
             placeholder="3000"
             type="number"

@@ -38,6 +38,9 @@ import type { Dump } from "@/types/data/dump";
 import type { Operator } from "@/types/data/operators";
 import { adminLevels } from "@/utils/data/admin";
 import { dumpStatuses } from "@/utils/data/dump";
+import {
+  updateSelfData, getSelfData as getOperatorData,
+} from "@/services/apis/operator/auth";
 
 const OperatorEditPage = () => {
   const { id } = useParams();
@@ -49,11 +52,13 @@ const OperatorEditPage = () => {
       | undefined
       | null
       | { from?: string; data?: Dump<Operator> };
-    return state || {};
+    return { from: state?.from, data: state?.data };
   }, [location.state]);
+
 
   const { userLevel } = useUser();
 
+  const isPartnerFlow = userLevel === "operator";
   const isDump = useMemo(
     () => fromRoute === "notifications" && !!locData,
     [fromRoute, locData],
@@ -75,9 +80,12 @@ const OperatorEditPage = () => {
   const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = useState(false);
 
   const { data: res } = useQuery({
-    queryKey: [queryKeys.OPERATORS, id],
-    queryFn: () => getOperatorById({ url: `/${id}` }),
-    enabled: !!id,
+    queryKey: [queryKeys.OPERATORS, isPartnerFlow ? "self" : id],
+    queryFn: () =>
+      isPartnerFlow
+        ? getOperatorData()
+        : getOperatorById({ url: `/${id}` }),
+    enabled: isPartnerFlow || !!id,
   });
 
   console.log("operator data", res?.data);
@@ -148,7 +156,15 @@ const OperatorEditPage = () => {
 
   const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationKey: [queryKeys.OPERATORS, id],
-    mutationFn: updateOperator,
+    mutationFn: (params: any) => {
+      if (isPartnerFlow) {
+        return updateSelfData({
+          body: params.body,
+        });
+      }
+
+      return updateOperator(params);
+    },
   });
 
   // const { mutateAsync: dumpMutator, isPending: approvalPending } =
@@ -165,11 +181,18 @@ const OperatorEditPage = () => {
   const { mutateAsync: branchesMutater, isPending: branchesLoading } =
     useMutation({
       mutationKey: [queryKeys.OPERATORS, id, "branches"],
-      mutationFn: (branches: BranchSchema[]) =>
-        updateOperator({
-          body: { branches: branches },
+      mutationFn: (branches: BranchSchema[]) => {
+        if (isPartnerFlow) {
+          return updateSelfData({
+            body: { branches },
+          });
+        }
+
+        return updateOperator({
           url: id,
-        }),
+          body: { branches },
+        });
+      },
     });
 
   const onSubmit = async (body: Omit<OperatorSchema, "password">) => {
@@ -194,17 +217,20 @@ const OperatorEditPage = () => {
         }
 
         toast.success(
-          `Operator ${
-            isSupportCorrectionFlow
-              ? "updated"
-              : isDump
-                ? "approved"
-                : "updated"
+          `Operator ${isSupportCorrectionFlow
+            ? "updated"
+            : isDump
+              ? "approved"
+              : "updated"
           } successfully`,
         );
 
         navigate(
-          isDump || isSupportCorrectionFlow ? "/notifications" : "/operators",
+          isDump || isSupportCorrectionFlow
+            ? "/notifications"
+            : isPartnerFlow
+              ? "/partner"
+              : "/operators",
         );
         return;
       }
@@ -585,8 +611,8 @@ const OperatorEditPage = () => {
               changedBranches={
                 allUpdatedData?.branches
                   ? Object.fromEntries(
-                      allUpdatedData.branches.map((br) => [br.code, br]),
-                    )
+                    allUpdatedData.branches.map((br) => [br.code, br]),
+                  )
                   : {}
               }
               errors={errors.branches}
@@ -734,8 +760,8 @@ const OperatorEditPage = () => {
                   className="px-5 py-5"
                 >
                   {isDump &&
-                  locData?.status === dumpStatuses.RECORRECT &&
-                  userLevel === "support"
+                    locData?.status === dumpStatuses.RECORRECT &&
+                    userLevel === "support"
                     ? "Resend Request"
                     : isDump && userLevel !== "support"
                       ? "Approve"
@@ -747,7 +773,7 @@ const OperatorEditPage = () => {
         </form>
       </div>
 
-      {!isDump && (
+      {!isDump && !isPartnerFlow && (
         <div className="w-full max-w-6xl mx-auto">
           <div className="flex justify-between items-center my-2">
             <h2 className="text-xl font-semibold">

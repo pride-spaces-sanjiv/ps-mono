@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import moment from "moment";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
-import { createSpace } from "@/services/apis/admin/spaces";
+import { createSpace as createAdminSpace } from "@/services/apis/admin/spaces";
+import { createSpace as createOperatorSpace } from "@/services/apis/operator/spaces";
+import { useUser } from "@/services/hooks/use-user";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
 import { generateSlug } from "@/utils/string/slug";
 import { queryKeys } from "@/utils/query-keys";
@@ -21,6 +23,7 @@ import FormSectionTitle from "@/components/form/section/title";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
+import { ArrowLeft } from "lucide-react";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import type { Operator } from "@/types/data/operators";
 import { validateNumber } from "@/utils/number";
@@ -35,6 +38,12 @@ type LocState = {
 const SpaceCreatePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { userLevel, userData } = useUser();
+
+  const isOperatorPortal = userLevel === "operator";
+  const loggedInOperator = isOperatorPortal
+    ? (userData as Operator | null)
+    : null;
 
   const { operatorData: locationOperatorData } = useMemo(() => {
     const state = location.state as Partial<LocState> | null | undefined;
@@ -42,9 +51,12 @@ const SpaceCreatePage = () => {
   }, [location.state]);
 
   const [selectedOperatorData, setSelectedOperatorData] =
-    useState<Operator | null>(locationOperatorData || null);
+    useState<Operator | null>(
+      loggedInOperator || locationOperatorData || null,
+    );
 
-  const operatorData = selectedOperatorData || locationOperatorData || null;
+  const operatorData =
+    loggedInOperator || selectedOperatorData || locationOperatorData || null;
 
   const { amenitiesData } = useAmenities();
 
@@ -59,7 +71,7 @@ const SpaceCreatePage = () => {
           sortOrder: "asc",
         },
       }),
-    enabled: !locationOperatorData,
+    enabled: !locationOperatorData && !isOperatorPortal,
   });
 
   const operators = useMemo(
@@ -161,8 +173,11 @@ const SpaceCreatePage = () => {
     }
   }, [selectedGrade, setValue]);
 
+  const createSpaceApi = isOperatorPortal ? createOperatorSpace : createAdminSpace;
+  const homeRoute = isOperatorPortal ? "/partner" : "/spaces";
+
   const { mutateAsync, isPending: createLoading } = useMutation({
-    mutationFn: createSpace,
+    mutationFn: createSpaceApi,
   });
 
   const onSubmit = async (body: SpaceSchema) => {
@@ -175,7 +190,7 @@ const SpaceCreatePage = () => {
 
       if (res.status === 201) {
         toast.success("Centre created successfully");
-        navigate("/spaces");
+        navigate(homeRoute);
         return;
       }
 
@@ -187,6 +202,17 @@ const SpaceCreatePage = () => {
 
   return (
     <div className="container mx-auto p-6">
+      {isOperatorPortal && (
+        <ActionButton
+          type="button"
+          variant="ghost"
+          className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate(homeRoute)}
+        >
+          <ArrowLeft className="size-4" />
+          Back to Portal
+        </ActionButton>
+      )}
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold  w-full">
           Add Centre: {watch("name", "")}
@@ -211,7 +237,7 @@ const SpaceCreatePage = () => {
             </div>
           </div>
           <FormField
-            label="Name"
+            label="Centre Name"
             labelPosition="embedded"
             placeholder="My Centre"
             {...register("name")}
@@ -229,12 +255,12 @@ const SpaceCreatePage = () => {
           <FormField
             label="Operator"
             labelPosition="embedded"
-            value={locationOperatorData ? operatorData?.name || "None" : undefined}
-            readOnly={!!locationOperatorData}
-            disabled={!!locationOperatorData}
+            value={operatorData ? operatorData?.name || "None" : undefined}
+            readOnly={!!operatorData}
+            disabled={!!operatorData}
             error={errors.operator || errors.branch}
           >
-            {!locationOperatorData && (
+            {!operatorData && (
               <GroupedSearchSelect
                 type="single"
                 items={operators.map((operator) => ({
@@ -347,7 +373,7 @@ const SpaceCreatePage = () => {
             label="Open Time"
             labelPosition="embedded"
             type="time"
-            key={String(defaultValues?.timing?.openTime)}
+            key={`open-time-${String(defaultValues?.timing?.openTime)}`}
             defaultValue={
               defaultValues?.timing?.openTime
                 ? moment(defaultValues.timing.openTime).format("HH:mm")
@@ -371,7 +397,7 @@ const SpaceCreatePage = () => {
             label="Close Time"
             labelPosition="embedded"
             type="time"
-            key={String(defaultValues?.timing?.closeTime)}
+            key={`close-time-${String(defaultValues?.timing?.closeTime)}`}
             defaultValue={
               defaultValues?.timing?.closeTime
                 ? moment(defaultValues.timing.closeTime).format("HH:mm")

@@ -5,8 +5,13 @@ import type { TokenData } from "../store/user";
 const baseUrl = import.meta.env.VITE_BASE_API;
 const baseUrl2 = "https://ps-backend.sanjiv.ip-ddns.com";
 const mode = import.meta.env.VITE_ENV_MODE === "dev" ? "dev" : "prod";
-const token =
-  secureStorage.localStorage.getItem<TokenData | null>("__aT__")?.token || "";
+const token = (() => {
+  try {
+    return secureStorage.localStorage.getItem<TokenData | null>("__aT__")?.token || "";
+  } catch {
+    return "";
+  }
+})();
 
 const preHeaders = {
   "X-GAuth-Mode": mode,

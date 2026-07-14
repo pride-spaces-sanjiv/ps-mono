@@ -31,17 +31,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, Loader2 } from "lucide-react";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
 import {
   getSpaces as getAdminSpaces,
-  updateSpace,
+  updateSpace as updateAdminSpace,
 } from "@/services/apis/admin/spaces";
 import {
   labelledSpaceGrades,
   labelledSpaceTypes,
 } from "@/utils/data/spaceTypes";
-import { getSpaces as getOperatorSpaces } from "@/services/apis/operator/spaces";
+import {
+  getSpaces as getOperatorSpaces,
+  updateSpace as updateOperatorSpace,
+} from "@/services/apis/operator/spaces";
 
 import { useUser } from "@/services/hooks/use-user";
 import { datifyObjectValues } from "@/utils/object/datify";
@@ -151,6 +154,70 @@ const formatTime = (value?: Date | string | null) => {
 const formatList = (value?: string[] | readonly string[]) =>
   value?.length ? value.join(", ") : "-";
 
+interface InlineCellInputProps {
+  value: string | number;
+  type?: "text" | "number";
+  onSave: (val: string | number) => Promise<void>;
+  className?: string;
+}
+
+const InlineCellInput = ({
+  value: initialValue,
+  type = "text",
+  onSave,
+  className,
+}: InlineCellInputProps) => {
+  const [val, setVal] = useState(initialValue);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setVal(initialValue);
+  }, [initialValue]);
+
+  const handleBlurOrEnter = async () => {
+    if (val === initialValue) return;
+    setLoading(true);
+    try {
+      await onSave(type === "number" ? Number(val) : String(val));
+    } catch {
+      // Revert to initial value on failure
+      setVal(initialValue);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="relative flex items-center w-full"
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+    >
+      <Input
+        type={type}
+        value={val}
+        disabled={loading}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={handleBlurOrEnter}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleBlurOrEnter();
+            e.currentTarget.blur();
+          }
+        }}
+        className={cn(
+          "h-8 py-1 px-2 text-center text-sm border-border/50 bg-background/30 hover:bg-background/80 focus:bg-background shadow-none",
+          loading && "pr-8",
+          className
+        )}
+      />
+      {loading && (
+        <Loader2 className="absolute right-2 h-4 w-4 animate-spin text-muted-foreground" />
+      )}
+    </div>
+  );
+};
+
 const SpacesTabledResults = ({
   operatorId,
   className,
@@ -164,6 +231,8 @@ const SpacesTabledResults = ({
   const debouncedSearch = useDebouncer(search, 500);
   const getSpacesApi =
     userLevel === "operator" ? getOperatorSpaces : getAdminSpaces;
+  const updateSpaceApi =
+    userLevel === "operator" ? updateOperatorSpace : updateAdminSpace;
   const {
     data: res,
     isFetching,
@@ -197,8 +266,26 @@ const SpacesTabledResults = ({
 
   // Update Active status mutater
   const { mutateAsync: updateMutater, isPending: isUpdating } = useMutation({
-    mutationFn: updateSpace,
+    mutationFn: updateSpaceApi,
   });
+
+  const handleUpdateField = async (spaceId: string, updatedFields: Partial<Space>) => {
+    try {
+      const res = await updateMutater({
+        url: spaceId,
+        body: updatedFields,
+      });
+      if (res.status === 200) {
+        toast.success("Centre updated successfully");
+        refetch();
+      } else {
+        throw new Error();
+      }
+    } catch {
+      toast.error("Failed to update centre");
+      throw new Error();
+    }
+  };
 
   const spaces = useMemo(
     () =>
@@ -245,7 +332,8 @@ const SpacesTabledResults = ({
   //  const spaceId = spaces
   // Columns definition
   const columns: ColumnDef<Space>[] = useMemo(
-    () => [
+    () =>
+      [
       {
         accessorKey: "serialNo",
         header: ({ column }) => (
@@ -408,16 +496,51 @@ const SpacesTabledResults = ({
         header: ({ column }) => (
           <SortableHeader column={column}>Booked Seats</SortableHeader>
         ),
-        cell: ({ row }) => (
-          <div>{row.original?.seats?.booked ?? "-"}</div>
-        ),
+        cell: ({ row }) => {
+          if (userLevel === "operator") {
+            return (
+              <InlineCellInput
+                value={row.original?.seats?.booked ?? 0}
+                type="number"
+                onSave={async (val) => {
+                  const numVal = Math.max(0, Math.floor(Number(val)));
+                  await handleUpdateField(row.original.id, {
+                    seats: {
+                      ...row.original.seats,
+                      booked: numVal,
+                    },
+                  });
+                }}
+                className="w-20 mx-auto"
+              />
+            );
+          }
+          return <div>{row.original?.seats?.booked ?? "-"}</div>;
+        },
       },
       {
         accessorKey: "price",
         header: ({ column }) => (
           <SortableHeader column={column}>Price</SortableHeader>
         ),
-        cell: ({ row }) => <div>{row.original?.price ?? "-"}</div>,
+        cell: ({ row }) => {
+          if (userLevel === "operator") {
+            return (
+              <InlineCellInput
+                value={row.original?.price ?? 0}
+                type="number"
+                onSave={async (val) => {
+                  const numVal = Math.max(0, Math.floor(Number(val)));
+                  await handleUpdateField(row.original.id, {
+                    price: numVal,
+                  });
+                }}
+                className="w-24 mx-auto"
+              />
+            );
+          }
+          return <div>{row.original?.price ?? "-"}</div>;
+        },
       },
       // {
       //   accessorKey: "rating",
@@ -438,54 +561,162 @@ const SpacesTabledResults = ({
         header: ({ column }) => (
           <SortableHeader column={column}>Day Pass</SortableHeader>
         ),
-        cell: ({ row }) => (
-          <div>{row.original?.pricing?.dayPass ?? "-"}</div>
-        ),
+        cell: ({ row }) => {
+          if (userLevel === "operator") {
+            return (
+              <InlineCellInput
+                value={row.original?.pricing?.dayPass ?? 0}
+                type="number"
+                onSave={async (val) => {
+                  const numVal = Math.max(0, Number(val));
+                  await handleUpdateField(row.original.id, {
+                    pricing: {
+                      ...row.original?.pricing,
+                      dayPass: numVal,
+                    },
+                  });
+                }}
+                className="w-24 mx-auto"
+              />
+            );
+          }
+          return <div>{row.original?.pricing?.dayPass ?? "-"}</div>;
+        },
       },
       {
         accessorKey: "pricing.perSeat",
         header: ({ column }) => (
           <SortableHeader column={column}>Per Seat</SortableHeader>
         ),
-        cell: ({ row }) => (
-          <div>{row.original?.pricing?.perSeat ?? "-"}</div>
-        ),
+        cell: ({ row }) => {
+          if (userLevel === "operator") {
+            return (
+              <InlineCellInput
+                value={row.original?.pricing?.perSeat ?? 0}
+                type="number"
+                onSave={async (val) => {
+                  const numVal = Math.max(0, Number(val));
+                  await handleUpdateField(row.original.id, {
+                    pricing: {
+                      ...row.original?.pricing,
+                      perSeat: numVal,
+                    },
+                  });
+                }}
+                className="w-24 mx-auto"
+              />
+            );
+          }
+          return <div>{row.original?.pricing?.perSeat ?? "-"}</div>;
+        },
       },
       {
         accessorKey: "pricing.dedicatedDesk",
         header: ({ column }) => (
           <SortableHeader column={column}>Dedicated Desk</SortableHeader>
         ),
-        cell: ({ row }) => (
-          <div>{row.original?.pricing?.dedicatedDesk ?? "-"}</div>
-        ),
+        cell: ({ row }) => {
+          if (userLevel === "operator") {
+            return (
+              <InlineCellInput
+                value={row.original?.pricing?.dedicatedDesk ?? 0}
+                type="number"
+                onSave={async (val) => {
+                  const numVal = Math.max(0, Number(val));
+                  await handleUpdateField(row.original.id, {
+                    pricing: {
+                      ...row.original?.pricing,
+                      dedicatedDesk: numVal,
+                    },
+                  });
+                }}
+                className="w-24 mx-auto"
+              />
+            );
+          }
+          return <div>{row.original?.pricing?.dedicatedDesk ?? "-"}</div>;
+        },
       },
       {
         accessorKey: "pricing.flexiDesk",
         header: ({ column }) => (
           <SortableHeader column={column}>Flexi Desk</SortableHeader>
         ),
-        cell: ({ row }) => (
-          <div>{row.original?.pricing?.flexiDesk ?? "-"}</div>
-        ),
+        cell: ({ row }) => {
+          if (userLevel === "operator") {
+            return (
+              <InlineCellInput
+                value={row.original?.pricing?.flexiDesk ?? 0}
+                type="number"
+                onSave={async (val) => {
+                  const numVal = Math.max(0, Number(val));
+                  await handleUpdateField(row.original.id, {
+                    pricing: {
+                      ...row.original?.pricing,
+                      flexiDesk: numVal,
+                    },
+                  });
+                }}
+                className="w-24 mx-auto"
+              />
+            );
+          }
+          return <div>{row.original?.pricing?.flexiDesk ?? "-"}</div>;
+        },
       },
       {
         accessorKey: "pricing.privateCabin",
         header: ({ column }) => (
           <SortableHeader column={column}>Private Cabin</SortableHeader>
         ),
-        cell: ({ row }) => (
-          <div>{row.original?.pricing?.privateCabin ?? "-"}</div>
-        ),
+        cell: ({ row }) => {
+          if (userLevel === "operator") {
+            return (
+              <InlineCellInput
+                value={row.original?.pricing?.privateCabin ?? 0}
+                type="number"
+                onSave={async (val) => {
+                  const numVal = Math.max(0, Number(val));
+                  await handleUpdateField(row.original.id, {
+                    pricing: {
+                      ...row.original?.pricing,
+                      privateCabin: numVal,
+                    },
+                  });
+                }}
+                className="w-24 mx-auto"
+              />
+            );
+          }
+          return <div>{row.original?.pricing?.privateCabin ?? "-"}</div>;
+        },
       },
       {
         accessorKey: "pricing.vo",
         header: ({ column }) => (
           <SortableHeader column={column}>VO</SortableHeader>
         ),
-        cell: ({ row }) => (
-          <div>{row.original?.pricing?.vo ?? "-"}</div>
-        ),
+        cell: ({ row }) => {
+          if (userLevel === "operator") {
+            return (
+              <InlineCellInput
+                value={row.original?.pricing?.vo ?? 0}
+                type="number"
+                onSave={async (val) => {
+                  const numVal = Math.max(0, Number(val));
+                  await handleUpdateField(row.original.id, {
+                    pricing: {
+                      ...row.original?.pricing,
+                      vo: numVal,
+                    },
+                  });
+                }}
+                className="w-24 mx-auto"
+              />
+            );
+          }
+          return <div>{row.original?.pricing?.vo ?? "-"}</div>;
+        },
       },
       {
         accessorKey: "timing.operationalHrs",
@@ -673,7 +904,30 @@ const SpacesTabledResults = ({
       //   ),
       //   cell: ({ row }) => <div>{formatDateTime(row.original?.updatedAt)}</div>,
       // },
-    ],
+    ].filter((col) => {
+      if (userLevel === "operator") {
+        const allowedOperatorColumns = [
+          "serialNo",
+          "name",
+          "seats.booked",
+          "price",
+          "pricing.dayPass",
+          "pricing.perSeat",
+          "pricing.dedicatedDesk",
+          "pricing.flexiDesk",
+          "pricing.privateCabin",
+          "pricing.vo",
+        ];
+        return (
+          "accessorKey" in col &&
+          allowedOperatorColumns.includes(col.accessorKey as string)
+        );
+      }
+      return (
+        userLevel !== "operator" ||
+        !("accessorKey" in col && col.accessorKey === "operator")
+      );
+    }),
     [
       isUpdating,
       limit,
@@ -681,6 +935,7 @@ const SpacesTabledResults = ({
       refetch,
       res?.data?.data?.references?.operators?.results,
       updateMutater,
+      userLevel,
     ],
   );
 
