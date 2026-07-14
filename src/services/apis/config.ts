@@ -5,8 +5,13 @@ import type { TokenData } from "../store/user";
 const baseUrl = import.meta.env.VITE_BASE_API;
 const baseUrl2 = "https://ps-backend.sanjiv.ip-ddns.com";
 const mode = import.meta.env.VITE_ENV_MODE === "dev" ? "dev" : "prod";
-const token =
-  secureStorage.localStorage.getItem<TokenData | null>("__aT__")?.token || "";
+const token = (() => {
+  try {
+    return secureStorage.localStorage.getItem<TokenData | null>("__aT__")?.token || "";
+  } catch {
+    return "";
+  }
+})();
 
 const preHeaders = {
   "X-GAuth-Mode": mode,
@@ -156,6 +161,16 @@ export const ENTERPRISE_SPACE = ENTERPRISE.create({
 });
 
 // General
+export const GENERAL = axios.create({
+  baseURL: baseUrl + "/general",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const GENERAL_LOCATION = axios.create({
+  baseURL: baseUrl + "/general/location",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
 export const STATES = ENTERPRISE.create({
   baseURL: baseUrl + "/states",
   headers: jsonContentHeadersAuth,

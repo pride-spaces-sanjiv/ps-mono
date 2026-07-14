@@ -12,27 +12,13 @@ import { personSchema } from "./person.js";
 import { spaceGrades, spaceTypes } from "@/utils/data/spaceTypes.js";
 import { workingSizes } from "@/utils/data/workingSizes.js";
 import { filesSchema } from "./files.js";
+import { locationSchema } from "./location.js";
 
 // --- Location Schema ---
-export const locationSchema = z.object({
-  address: z.string().trim().min(1, "Address is required"),
-  city: z.string().trim().min(1, "City is required"),
-  state: z.string().trim().min(1, "State is required"),
-  country: z.string().trim().min(1, "Country is required"),
-  area: z.string().trim().min(1, "Area is required"),
-  postalCode: z
-    .string("Postal Code is required")
-    .trim()
-    .min(3, "Postal Code must be min 3 chars")
-    .transform((arg) => arg.replace(/[^A-Za-z0-9]/g, ""))
-    .refine((val) => /^[A-Za-z0-9]+$/.test(val), "Postal Code is invalid"),
-  lat: z.number(),
-  lng: z.number(),
-});
 
 // Specs
 const specsSchema = z.object({
-  category: z.enum(spaceCategories).default("Standard"),
+  category: z.enum(spaceCategories).default("Starter"),
   spaceType: z.enum(spaceTypes).default("Flex"),
   grade: z.enum(spaceGrades).default("B"),
   area: z.number().min(0, "Area must be a positive number").optional(),
@@ -58,9 +44,13 @@ const timingSchema = z.object({
     .max(24, "Operational hours must be at most 24")
     .default(0),
   operationalSince: z
-    .date("Operational Since must be a valid date")
-    .min(new Date(1800, 0, 1), "Operational Since must be a after 01/01/1800")
-    .max(new Date(), `Operational Since must be before current date`)
+    .number("Operational Since must be a valid year")
+    .int("Operational Since must be a valid year")
+    .min(1800, "Operational Since must be a year after 1800")
+    .max(
+      new Date().getFullYear(),
+      `Operational Since must be before or equal to the current year`,
+    )
     .optional(),
 });
 

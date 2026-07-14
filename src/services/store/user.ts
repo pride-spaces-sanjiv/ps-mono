@@ -8,14 +8,26 @@ import { type AdminLevel } from "@/utils/data/admin";
 import type { UserType } from "@/utils/data/userTypes";
 
 export type TokenData = { token: string; expiry: Date; refreshToken: string };
+
+const getSavedTokenData = (): TokenData | null => {
+  try {
+    return (
+      datifyObjectValues(
+        secureStorage.localStorage.getItem<TokenData | null>(
+          "__aT__",
+        ) as TokenData,
+        ["expiry"],
+      ) || null
+    );
+  } catch {
+    // Corrupted / unreadable data — wipe and start fresh
+    try { secureStorage.localStorage.removeItem?.("__aT__"); } catch {}
+    return null;
+  }
+};
+
 export const tokenStore = create<ZustandStore<TokenData | null>>((set) => ({
-  value:
-    datifyObjectValues(
-      secureStorage.localStorage.getItem<TokenData | null>(
-        "__aT__",
-      ) as TokenData,
-      ["expiry"],
-    ) || null,
+  value: getSavedTokenData(),
   setter: (val) =>
     set((state) => ({
       value: typeof val === "function" ? val(state.value) : val,

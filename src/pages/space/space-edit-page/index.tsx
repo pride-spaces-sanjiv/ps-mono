@@ -5,18 +5,33 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { ImagePlus, MessageSquareWarning } from "lucide-react";
+import { ArrowLeft, ImagePlus, MessageSquareWarning } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
 import { useUser } from "@/services/hooks/use-user";
-import { getSpaceById, updateSpace } from "@/services/apis/admin/spaces";
+import {
+  getSpaceById as getAdminSpaceById,
+  updateSpace as updateAdminSpace,
+} from "@/services/apis/admin/spaces";
+import {
+  getSpaceData as getOperatorSpaceById,
+  updateSpace as updateOperatorSpace,
+} from "@/services/apis/operator/spaces";
 import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
-import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
-import { labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
+import {
+  labelledWorkingSizes,
+  workingSizes,
+  type WorkingSize,
+} from "@/utils/data/workingSizes";
+import {
+  labelledSpaceGrades,
+  labelledSpaceTypes,
+  spaceGrades,
+} from "@/utils/data/spaceTypes";
 import { GroupedSearchSelect } from "@/components/search-select";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import { DialogModal } from "@/components/dialog";
@@ -59,6 +74,14 @@ const SpaceEditPage = () => {
     () => fromRoute === "notifications" && !!locData,
     [fromRoute, locData],
   );
+
+  const { userLevel } = useUser();
+  const isOperatorPortal = userLevel === "operator";
+  const getSpaceById = isOperatorPortal
+    ? getOperatorSpaceById
+    : getAdminSpaceById;
+  const updateSpace = isOperatorPortal ? updateOperatorSpace : updateAdminSpace;
+  const homeRoute = isOperatorPortal ? "/partner" : "/spaces";
 
   const { amenitiesData } = useAmenities();
 
@@ -110,27 +133,27 @@ const SpaceEditPage = () => {
       ...mainChanges.allData,
       ...(locationChanges.allFields.length
         ? {
-          location: {
-            ...res?.data?.data?.location,
-            ...locationChanges.allData,
-          },
-        }
+            location: {
+              ...res?.data?.data?.location,
+              ...locationChanges.allData,
+            },
+          }
         : {}),
       ...(personChanges.allFields.length
         ? {
-          person: {
-            ...res?.data?.data?.person,
-            ...personChanges.allData,
-          },
-        }
+            person: {
+              ...res?.data?.data?.person,
+              ...personChanges.allData,
+            },
+          }
         : {}),
       ...(pricingChanges.allFields.length
         ? {
-          pricing: {
-            ...res?.data?.data?.pricing,
-            ...pricingChanges.allData,
-          },
-        }
+            pricing: {
+              ...res?.data?.data?.pricing,
+              ...pricingChanges.allData,
+            },
+          }
         : {}),
     };
   }, [
@@ -209,7 +232,7 @@ const SpaceEditPage = () => {
         privateCabin: 0,
         vo: 0,
       },
-    }
+    },
   });
   const selectedGrade = watch("specs.grade");
   const operatorData = useMemo(
@@ -252,10 +275,7 @@ const SpaceEditPage = () => {
     if (res?.data?.data) {
       const modified = datifyObjectValues(
         { ...res?.data?.data, ...allUpdatedData },
-        [
-          "createdAt",
-          "updatedAt",
-        ]
+        ["createdAt", "updatedAt"],
       );
       reset({
         ...modified,
@@ -275,22 +295,15 @@ const SpaceEditPage = () => {
         },
       } as NonNullable<typeof modified>);
     }
-  }, [selectedGrade, setValue, res, POCSameAsOperator, operatorData, allUpdatedData]);
+  }, [
+    selectedGrade,
+    setValue,
+    res,
+    POCSameAsOperator,
+    operatorData,
+    allUpdatedData,
+  ]);
 
-  const gradeItems = [
-    {
-      label: "A+ - Multi Tower",
-      value: "A+",
-    },
-    {
-      label: "A - Single Tower",
-      value: "A",
-    },
-    {
-      label: "B",
-      value: "B",
-    },
-  ];
   // Update Mutater
   const { mutateAsync, isPending: updateLoading } = useMutation({
     mutationFn: updateSpace,
@@ -337,7 +350,7 @@ const SpaceEditPage = () => {
 
       if (res.status === 200) {
         toast.success(`Centre ${isDump ? "approved" : "updated"} successfully`);
-        navigate(isDump ? "/notifications" : "/spaces");
+        navigate(isDump ? "/notifications" : homeRoute);
         return;
       }
       throw new Error("Invalid response");
@@ -418,6 +431,17 @@ const SpaceEditPage = () => {
 
   return (
     <div className="container mx-auto p-6">
+      {isOperatorPortal && (
+        <ActionButton
+          type="button"
+          variant="ghost"
+          className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate(homeRoute)}
+        >
+          <ArrowLeft className="size-4" />
+          Back to Portal
+        </ActionButton>
+      )}
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold  w-full">
           Edit Centre: {watch("name", "")}
@@ -455,7 +479,7 @@ const SpaceEditPage = () => {
           </div>
 
           <FormField
-            label="Name"
+            label="Centre Name"
             labelPosition="embedded"
             placeholder="My Centre"
             {...register("name")}
@@ -495,9 +519,13 @@ const SpaceEditPage = () => {
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.category,
                 onValueChange: (val) =>
-                  setValue("specs.category", val as SpaceSchema["specs"]["category"], {
-                    shouldValidate: true,
-                  })
+                  setValue(
+                    "specs.category",
+                    val as SpaceSchema["specs"]["category"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
             {...changedFieldProps(mainChanges.allData, "category")}
@@ -513,9 +541,13 @@ const SpaceEditPage = () => {
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.spaceType,
                 onValueChange: (val) =>
-                  setValue("specs.spaceType", val as SpaceSchema["specs"]["spaceType"], {
-                    shouldValidate: true,
-                  }),
+                  setValue(
+                    "specs.spaceType",
+                    val as SpaceSchema["specs"]["spaceType"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
             error={errors.specs?.spaceType}
@@ -524,29 +556,91 @@ const SpaceEditPage = () => {
 
           <FormField
             key={`space-grade-${defaultValues?.specs?.grade}`}
-            label="Grade"
+            label="Building Type"
             labelPosition="embedded"
             inputType="select"
-            items={gradeItems}
+            items={labelledSpaceGrades}
             error={errors.specs?.grade}
             pickerProps={{
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.grade,
                 onValueChange: (val) =>
-                  setValue("specs.grade", val as SpaceSchema["specs"]["grade"], {
-                    shouldValidate: true,
-                  }),
+                  setValue(
+                    "specs.grade",
+                    val as SpaceSchema["specs"]["grade"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
             {...changedFieldProps(mainChanges.allData, "grade")}
           />
+
+          {/* Sez or Oc based on grade */}
+          {watch("specs.grade", "B") === "B" ? (
+            <FormField
+              key={`oc-status-${defaultValues?.flags?.isOc}`}
+              label="OC / Non-OC"
+              labelPosition="embedded"
+              inputType="select"
+              items={[true, false].map((v) => ({
+                label: v ? "OC" : "Non-OC",
+                value: v,
+              }))}
+              error={errors?.flags?.isOc}
+              pickerProps={{
+                wrapperProps: {
+                  // @ts-ignore
+                  defaultValue: defaultValues?.flags?.isOc || false,
+                  onValueChange: (val) => {
+                    setValue("flags.isOc", String(val) === "true", {
+                      shouldValidate: true,
+                    });
+                    setValue("flags.isSez", false, {
+                      shouldValidate: true,
+                    });
+                  },
+                },
+              }}
+              {...changedFieldProps(mainChanges.allData, "grade")}
+            />
+          ) : (
+            <FormField
+              key={`sez-status-${defaultValues?.flags?.isSez}`}
+              label="Sez / Non-Sez"
+              labelPosition="embedded"
+              inputType="select"
+              items={[true, false].map((v) => ({
+                label: v ? "Sez" : "Non-Sez",
+                value: v,
+              }))}
+              error={errors?.flags?.isOc}
+              pickerProps={{
+                wrapperProps: {
+                  // @ts-ignore
+                  defaultValue: defaultValues?.flags?.isSez || false,
+                  onValueChange: (val) => {
+                    setValue("flags.isSez", String(val) === "true", {
+                      shouldValidate: true,
+                    });
+                    setValue("flags.isOc", true, {
+                      shouldValidate: true,
+                    });
+                  },
+                },
+              }}
+              {...changedFieldProps(mainChanges.allData, "grade")}
+            />
+          )}
+
           {/* Open Time */}
 
           <FormField
             label="Open Time"
             labelPosition="embedded"
             type="time"
-            key={String(defaultValues?.timing?.openTime)}
+            key={`open-time-${String(defaultValues?.timing?.openTime)}`}
             defaultValue={
               defaultValues?.timing?.openTime
                 ? moment(defaultValues?.timing?.openTime).format("HH:mm")
@@ -568,7 +662,7 @@ const SpaceEditPage = () => {
             label="Close Time"
             labelPosition="embedded"
             type="time"
-            key={String(defaultValues?.timing?.closeTime)}
+            key={`close-time-${String(defaultValues?.timing?.closeTime)}`}
             defaultValue={
               defaultValues?.timing?.closeTime
                 ? moment(defaultValues?.timing?.closeTime).format("HH:mm")
@@ -576,9 +670,13 @@ const SpaceEditPage = () => {
             }
             onChange={(e) => {
               const val = e.currentTarget.value;
-              setValue("timing.closeTime", moment(val, "HH:mm", true).toDate(), {
-                shouldValidate: true,
-              });
+              setValue(
+                "timing.closeTime",
+                moment(val, "HH:mm", true).toDate(),
+                {
+                  shouldValidate: true,
+                },
+              );
             }}
             error={errors.timing?.closeTime}
             {...changedFieldProps(mainChanges.allData, "closeTime")}
@@ -596,7 +694,7 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            label="Booked Seats"
+            label="Available Seats"
             labelPosition="embedded"
             type="number"
             {...register("seats.booked", {
@@ -659,7 +757,7 @@ const SpaceEditPage = () => {
                   setValue(
                     "timing.openDays",
                     items.filter((val) => typeof val === "number"),
-                  )
+                  );
                 }}
               />
             </FormField>
@@ -724,7 +822,7 @@ const SpaceEditPage = () => {
 
           {/* Working Sizes */}
           <FormField
-            label="Working Sizes"
+            label="Work Station Sizes"
             labelPosition="embedded"
             error={{
               message:
@@ -742,10 +840,7 @@ const SpaceEditPage = () => {
               type="multiple"
               showSearch={false}
               defaultSelected={defaultValues?.specs?.workingSizes}
-              items={workingSizes.map((dt, i) => ({
-                label: dt + " mm",
-                value: dt,
-              }))}
+              items={labelledWorkingSizes}
               triggerProps={{
                 children: (
                   <ActionButton
@@ -827,17 +922,37 @@ const SpaceEditPage = () => {
             {...changedFieldProps(pricingChanges.allData, "dedicatedDesk")}
           />
           <FormField
-            label="Meeting Room"
+            label="Flexi Desk"
             labelPosition="embedded"
-            placeholder="1500"
+            placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.meetingRoom")}
-            error={errors.pricing?.meetingRoom}
-            {...changedFieldProps(pricingChanges.allData, "meetingRoom")}
+            {...register("pricing.flexiDesk")}
+            error={errors.pricing?.flexiDesk}
           />
 
+          <FormField
+            label="Meeting Room"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.privateCabin")}
+            error={errors.pricing?.privateCabin}
+          />
+
+          <FormField
+            label="VO"
+            labelPosition="embedded"
+            placeholder="3000"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            {...register("pricing.vo")}
+            error={errors.pricing?.vo}
+          />
           {/* Location */}
           <FormSectionTitle>Location Details</FormSectionTitle>
 
@@ -869,7 +984,7 @@ const SpaceEditPage = () => {
           />
 
           <FormField
-            label="Area"
+            label="Area - Micro Market"
             labelPosition="embedded"
             placeholder="Panvel"
             {...register("location.area")}
@@ -925,6 +1040,12 @@ const SpaceEditPage = () => {
                 lng: coords.lng || oldData.lng,
               };
               setValue("location", data, { shouldValidate: true });
+            }}
+            onLatLngFromURL={(stats) => {
+              // console.log("Stats from maps url to pos :", stats);
+              setValue("location.lat", stats.lat);
+              setValue("location.lng", stats.lng);
+              setValue("location.url", stats.url);
             }}
           />
 
@@ -1054,9 +1175,7 @@ const SpaceEditPage = () => {
               <label className="text-white text-sm">Verified</label>
               <Switch
                 key={
-                  defaultValues?.flags?.isVerified
-                    ? "verified"
-                    : "unverified"
+                  defaultValues?.flags?.isVerified ? "verified" : "unverified"
                 }
                 defaultChecked={!!defaultValues?.flags?.isVerified}
                 {...register("flags.isVerified")}

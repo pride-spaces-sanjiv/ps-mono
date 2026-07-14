@@ -18,6 +18,7 @@ import { validateNumber } from "@/utils/number";
 import { getCssVariableValue } from "@/utils/css-variable";
 // Custom components
 import Layout from "@/components/layout/Layout";
+import OperatorLayout from "@/components/layout/OperatorLayout";
 import RotatingLoader from "@/components/loaders/rotating";
 import ActionButton from "@/components/buttons/action-btn";
 
@@ -31,7 +32,8 @@ const BuilderEditPage = lazy(() => import("@/pages/conventional/builder-edit"));
 const LandlordEditPage = lazy(
   () => import("@/pages/conventional/landlord-edit"),
 );
-// Operator
+// Operator portal
+const OperatorHome = lazy(() => import("@/pages/operator-portal/home"));
 const OperatorCreate = lazy(() => import("@/pages/operators/operator-create"));
 const OperatorEditPage = lazy(
   () => import("@/pages/operators/operator-edit-page"),
@@ -118,7 +120,14 @@ const PrivateRoutes = () => {
   // const hasAccess = allowedRoutes.some((route) =>
   //   location.pathname.startsWith(route)
   // );
-  if (!tokeInfoFetches || isFetching) {
+  // Show spinner while:
+  // 1. tokeInfoFetches is 0 (token info not yet resolved)
+  // 2. isFetching (user data query in flight)
+  // 3. Token exists and valid but fetchCount is still 0 (right after login, waiting for first user data response)
+  const hasToken = !!tokenStoreState.value?.token && !isExpired;
+  const stillWaiting = !tokeInfoFetches || isFetching || (hasToken && fetchCount === 0);
+
+  if (stillWaiting) {
     return (
       <div className="w-full h-full min-h-dvh flex flex-col gap-3 justify-center items-center px-2 py-4">
         <RotatingLoader className="size-[50px] text-accent-foreground" />
@@ -150,6 +159,59 @@ const PrivateRoutes = () => {
   // if (!hasAccess) {
   //   return <Navigate to="/dashboard" replace />;
   // }
+
+  const isOperator = userLevel === "operator";
+
+  if (isOperator) {
+    return (
+      <Routes>
+        <Route element={<OperatorLayout />}>
+          <Route
+            path="/partner"
+            element={
+              <SuspensedView>
+                <AutoNavigateRender El={<OperatorHome />} />
+              </SuspensedView>
+            }
+          />
+          <Route
+            path="/partner/:id"
+            element={
+              <SuspensedView>
+                <AutoNavigateRender El={<OperatorEditPage />} />
+              </SuspensedView>
+            }
+          />
+          <Route
+            path="/spaces/:id"
+            element={
+              <SuspensedView>
+                <AutoNavigateRender El={<SpaceEditPage />} />
+              </SuspensedView>
+            }
+          />
+          <Route
+            path="/spaces/new"
+            element={
+              <SuspensedView>
+                <AutoNavigateRender El={<SpaceCreatePage />} />
+              </SuspensedView>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <SuspensedView>
+                <AutoNavigateRender El={<NotificationsPage />} />
+              </SuspensedView>
+            }
+          />
+          <Route path="/*" element={<Navigate to="/partner" replace />} />
+        </Route>
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
       <Route element={<Layout />}>
