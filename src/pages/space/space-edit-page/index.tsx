@@ -197,7 +197,6 @@ const SpaceEditPage = () => {
         openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
         openTime: defaultTime,
         closeTime: defaultTime,
-        operationalHrs: 0,
       },
 
       specs: {
@@ -681,21 +680,6 @@ const SpaceEditPage = () => {
             </FormField>
           )}
 
-          {/* Operational Hours */}
-          {watch("specs.spaceType", "Flex") !== "Flex" && (
-            <FormField
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={24}
-              label="Operational Hours"
-              labelPosition="embedded"
-              error={errors.timing?.operationalHrs}
-              {...register("timing.operationalHrs")}
-              {...changedFieldProps(mainChanges.allData, "operationalHrs")}
-            />
-          )}
-
           {/* Amenities */}
           <FormField
             label="Amenities"
@@ -740,7 +724,7 @@ const SpaceEditPage = () => {
 
           {/* Working Sizes */}
           <FormField
-            label="Working Sizes"
+            label="Work Station Sizes"
             labelPosition="embedded"
             error={{
               message:

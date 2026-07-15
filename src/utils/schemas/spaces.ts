@@ -51,12 +51,6 @@ const timingSchema = z.object({
       .min(1, "Day must be atleast 1")
       .max(7, "Day must be atmost 7"),
   ),
-  operationalHrs: z
-    .number()
-    .int("Operational hours must be an integer")
-    .min(0, "Operational hours must be a positive number")
-    .max(24, "Operational hours must be at most 24")
-    .default(0),
   operationalSince: z
     .date("Operational Since must be a valid date")
     .min(new Date(1800, 0, 1), "Operational Since must be a after 01/01/1800")

@@ -476,6 +476,11 @@ const OperatorEditPage = () => {
             type="tel"
             inputMode="tel"
             inputType="phone"
+            value={
+              watch("headquarter.contactNo") ||
+              defaultValues?.headquarter?.contactNo ||
+              ""
+            }
             defaultValue={defaultValues?.headquarter?.contactNo}
             placeholder="+1-123-456-7890"
             embeddedWrapperProps={{

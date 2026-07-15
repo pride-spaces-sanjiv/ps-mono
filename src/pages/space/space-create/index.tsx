@@ -94,7 +94,6 @@ const SpaceCreatePage = () => {
         openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
         openTime: defaultTime,
         closeTime: defaultTime,
-        operationalHrs: 0,
       },
 
       specs: {
@@ -492,20 +491,6 @@ const SpaceCreatePage = () => {
                 }}
               />
             </FormField>
-          )}
-
-          {/* Operational Hours */}
-          {watch("specs.spaceType", "Flex") !== "Flex" && (
-            <FormField
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={24}
-              label="Operational Hours"
-              labelPosition="embedded"
-              error={errors.timing?.operationalHrs}
-              {...register("timing.operationalHrs")}
-            />
           )}
 
           {/* Amenities */}
