@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { MessageSquareWarning, Plus } from "lucide-react";
+import { MessageSquareWarning, Plus, ArrowLeft } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useStatesCities } from "@/services/hooks/use-states-cities";
 import { useUser } from "@/services/hooks/use-user";
@@ -367,8 +367,19 @@ const OperatorEditPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+      <div className="max-w-4xl mx-auto">
+        <ActionButton
+          type="button"
+          variant="ghost"
+          className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate(isPartnerFlow ? "/partner" : "/operators")}
+        >
+          <ArrowLeft className="size-4" />
+          {isPartnerFlow ? "Back to Portal" : "Back to Operators"}
+        </ActionButton>
+        <div className="flex justify-between items-center my-4">
+          <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+        </div>
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
         {isDump && locData?.comment && !isDumpDisabled && (
@@ -655,7 +666,7 @@ const OperatorEditPage = () => {
           {/* Status */}
           <div className="col-span-full flex gap-8 justify-end">
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">{"Active Operator"}</label>
+              <label className="text-muted-foreground text-sm">{"Active Operator"}</label>
               <Switch
                 key={defaultValues?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"

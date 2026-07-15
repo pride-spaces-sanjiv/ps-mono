@@ -125,7 +125,7 @@ export default function MultiState({
         children: (
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">{"Set as Primary"}</label>
+              <label className="text-muted-foreground text-sm">{"Set as Primary"}</label>
               <Switch
                 key={defaultValues?.isPrimary ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"

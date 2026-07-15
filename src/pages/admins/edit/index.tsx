@@ -99,10 +99,11 @@ export default function EditAdmin() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center my-4">
+          <h1 className="text-2xl font-bold">{watch("name", "") || "Edit Admin Member"}</h1>
+        </div>
       </div>
-
       <div className="w-full max-w-4xl mx-auto py-8">
         <form
           onSubmit={handleSubmit(onSubmit, (errors) => {
@@ -189,7 +190,7 @@ export default function EditAdmin() {
 
           <div className="col-span-full flex gap-8">
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">Active</label>
+              <label className="text-muted-foreground text-sm">Active</label>
               <Switch
                 key={defaultValues?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"

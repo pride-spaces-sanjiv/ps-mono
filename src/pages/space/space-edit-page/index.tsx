@@ -422,21 +422,23 @@ const SpaceEditPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      {isOperatorPortal && (
-        <ActionButton
-          type="button"
-          variant="ghost"
-          className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
-          onClick={() => navigate(homeRoute)}
-        >
-          <ArrowLeft className="size-4" />
-          Back to Portal
-        </ActionButton>
-      )}
-      <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold  w-full">
-          Edit Centre: {watch("name", "")}
-        </h1>
+      <div className="max-w-4xl mx-auto">
+        {isOperatorPortal && (
+          <ActionButton
+            type="button"
+            variant="ghost"
+            className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate(homeRoute)}
+          >
+            <ArrowLeft className="size-4" />
+            Back to Portal
+          </ActionButton>
+        )}
+        <div className="flex justify-between items-center my-4">
+          <h1 className="text-2xl font-bold  w-full">
+            Edit Centre: {watch("name", "")}
+          </h1>
+        </div>
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
@@ -460,14 +462,7 @@ const SpaceEditPage = () => {
         >
           {/* SECTION: Centre Details */}
 
-          <div className="col-span-full  mb-6 ">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Centre Details
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Centre Details</FormSectionTitle>
 
           <FormField
             label="Centre Name"
@@ -993,14 +988,7 @@ const SpaceEditPage = () => {
 
           {/* SECTION: Centre Point of Contact */}
 
-          <div className="col-span-full  mt-8 mb-6 ">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Point of Contact Details
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Point of Contact Details</FormSectionTitle>
 
           <FormField
             label="Name"
@@ -1061,7 +1049,7 @@ const SpaceEditPage = () => {
           {/* Status */}
           <div className="col-span-full flex gap-8">
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">Active</label>
+              <label className="text-muted-foreground text-sm">Active</label>
               <Switch
                 key={defaultValues?.flags?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
@@ -1071,7 +1059,7 @@ const SpaceEditPage = () => {
             </div>
 
             <div className="flex items-center  gap-4">
-              <label className="text-white text-sm">Verified</label>
+              <label className="text-muted-foreground text-sm">Verified</label>
               <Switch
                 key={
                   defaultValues?.flags?.isVerified
@@ -1084,7 +1072,7 @@ const SpaceEditPage = () => {
             </div>
             {selectedGrade === "B" && (
               <div className="flex items-center gap-4">
-                <label>OC</label>
+                <label className="text-muted-foreground text-sm">OC</label>
                 <Switch
                   key={watch("flags.isOc") ? "oc" : "non-oc"}
                   {...register("flags.isOc")}
@@ -1094,7 +1082,7 @@ const SpaceEditPage = () => {
 
             {(selectedGrade === "A" || selectedGrade === "A+") && (
               <div className="flex items-center gap-4">
-                <label>SEZ</label>
+                <label className="text-muted-foreground text-sm">SEZ</label>
                 <Switch
                   key={watch("flags.isSez") ? "sez" : "non-sez"}
                   {...register("flags.isSez")}
@@ -1102,7 +1090,7 @@ const SpaceEditPage = () => {
               </div>
             )}
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">Same As Operator</label>
+              <label className="text-muted-foreground text-sm">Same As Operator</label>
               <Switch
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
                 onCheckedChange={(checked) => {
