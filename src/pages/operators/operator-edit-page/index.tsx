@@ -39,7 +39,8 @@ import type { Operator } from "@/types/data/operators";
 import { adminLevels } from "@/utils/data/admin";
 import { dumpStatuses } from "@/utils/data/dump";
 import {
-  updateSelfData, getSelfData as getOperatorData,
+  updateSelfData,
+  getSelfData as getOperatorData,
 } from "@/services/apis/operator/auth";
 
 const OperatorEditPage = () => {
@@ -54,7 +55,6 @@ const OperatorEditPage = () => {
       | { from?: string; data?: Dump<Operator> };
     return { from: state?.from, data: state?.data };
   }, [location.state]);
-
 
   const { userLevel } = useUser();
 
@@ -82,9 +82,7 @@ const OperatorEditPage = () => {
   const { data: res } = useQuery({
     queryKey: [queryKeys.OPERATORS, isPartnerFlow ? "self" : id],
     queryFn: () =>
-      isPartnerFlow
-        ? getOperatorData()
-        : getOperatorById({ url: `/${id}` }),
+      isPartnerFlow ? getOperatorData() : getOperatorById({ url: `/${id}` }),
     enabled: isPartnerFlow || !!id,
   });
 
@@ -217,11 +215,12 @@ const OperatorEditPage = () => {
         }
 
         toast.success(
-          `Operator ${isSupportCorrectionFlow
-            ? "updated"
-            : isDump
-              ? "approved"
-              : "updated"
+          `Operator ${
+            isSupportCorrectionFlow
+              ? "updated"
+              : isDump
+                ? "approved"
+                : "updated"
           } successfully`,
         );
 
@@ -627,8 +626,8 @@ const OperatorEditPage = () => {
               changedBranches={
                 allUpdatedData?.branches
                   ? Object.fromEntries(
-                    allUpdatedData.branches.map((br) => [br.code, br]),
-                  )
+                      allUpdatedData.branches.map((br) => [br.code, br]),
+                    )
                   : {}
               }
               errors={errors.branches}
@@ -776,8 +775,8 @@ const OperatorEditPage = () => {
                   className="px-5 py-5"
                 >
                   {isDump &&
-                    locData?.status === dumpStatuses.RECORRECT &&
-                    userLevel === "support"
+                  locData?.status === dumpStatuses.RECORRECT &&
+                  userLevel === "support"
                     ? "Resend Request"
                     : isDump && userLevel !== "support"
                       ? "Approve"

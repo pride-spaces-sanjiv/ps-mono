@@ -31,7 +31,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, Loader2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
 import {
   getSpaces as getAdminSpaces,
@@ -208,7 +214,7 @@ const InlineCellInput = ({
         className={cn(
           "h-8 py-1 px-2 text-center text-sm border-border/50 bg-background/30 hover:bg-background/80 focus:bg-background shadow-none",
           loading && "pr-8",
-          className
+          className,
         )}
       />
       {loading && (
@@ -269,7 +275,10 @@ const SpacesTabledResults = ({
     mutationFn: updateSpaceApi,
   });
 
-  const handleUpdateField = async (spaceId: string, updatedFields: Partial<Space>) => {
+  const handleUpdateField = async (
+    spaceId: string,
+    updatedFields: Partial<Space>,
+  ) => {
     try {
       const res = await updateMutater({
         url: spaceId,
@@ -290,12 +299,7 @@ const SpacesTabledResults = ({
   const spaces = useMemo(
     () =>
       ((res?.data?.data?.results ?? []) as Space[])
-        .map((dt) =>
-          datifyObjectValues(dt, [
-            "createdAt",
-            "updatedAt",
-          ]),
-        )
+        .map((dt) => datifyObjectValues(dt, ["createdAt", "updatedAt"]))
         .filter(Boolean),
     [res?.data?.data],
   );
@@ -395,11 +399,9 @@ const SpacesTabledResults = ({
           ),
           cell: ({ row }) => (
             <TextCell>
-              {
-                labelledSpaceTypes.find(
-                  (t) => t.value === row.original?.specs?.spaceType,
-                )?.label ?? "-"
-              }
+              {labelledSpaceTypes.find(
+                (t) => t.value === row.original?.specs?.spaceType,
+              )?.label ?? "-"}
             </TextCell>
           ),
         },
@@ -410,11 +412,9 @@ const SpacesTabledResults = ({
           ),
           cell: ({ row }) => (
             <TextCell>
-              {
-                labelledSpaceGrades.find(
-                  (g) => g.value === row.original?.specs?.grade,
-                )?.label ?? "-"
-              }
+              {labelledSpaceGrades.find(
+                (g) => g.value === row.original?.specs?.grade,
+              )?.label ?? "-"}
             </TextCell>
           ),
         },
@@ -423,9 +423,7 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>OC</SortableHeader>
           ),
-          cell: ({ row }) => (
-            <BooleanBadge value={row.original?.flags?.isOc} />
-          ),
+          cell: ({ row }) => <BooleanBadge value={row.original?.flags?.isOc} />,
         },
         {
           accessorKey: "flags.isSez",
@@ -466,7 +464,7 @@ const SpacesTabledResults = ({
                           ...row.original.flags,
                           isActive: checked,
                         },
-                      }
+                      },
                     });
                     if (res.status === 200) {
                       toast.success("Space state changed");
@@ -487,12 +485,10 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Total Seats</SortableHeader>
           ),
-          cell: ({ row }) => (
-            <div>{row.original?.seats?.total ?? "-"}</div>
-          ),
+          cell: ({ row }) => <div>{row.original?.seats?.total ?? "-"}</div>,
         },
         {
-          accessorKey: "seats.booked",
+          accessorKey: "seats.available",
           header: ({ column }) => (
             <SortableHeader column={column}>Available Seats</SortableHeader>
           ),
@@ -500,14 +496,17 @@ const SpacesTabledResults = ({
             if (userLevel === "operator") {
               return (
                 <InlineCellInput
-                  value={row.original?.seats?.booked ?? 0}
+                  value={
+                    row.original?.seats?.total -
+                    (row.original?.seats?.booked ?? 0)
+                  }
                   type="number"
                   onSave={async (val) => {
                     const numVal = Math.max(0, Math.floor(Number(val)));
                     await handleUpdateField(row.original.id, {
                       seats: {
                         ...row.original.seats,
-                        booked: numVal,
+                        booked: row.original?.seats?.total - numVal,
                       },
                     });
                   }}
@@ -519,47 +518,27 @@ const SpacesTabledResults = ({
           },
         },
         {
+          accessorKey: "seats.occupancy",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Occupancy</SortableHeader>
+          ),
+          cell: ({ row }) => (
+            <div>
+              {row.original?.seats?.total === 0
+                ? 0
+                : (
+                    ((row.original?.seats?.booked ?? 0) /
+                      (row.original?.seats?.total ?? 0)) *
+                    100
+                  ).toFixed(2)}{" "}
+              %
+            </div>
+          ),
+        },
+        {
           accessorKey: "price",
           header: ({ column }) => (
             <SortableHeader column={column}>Price</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={row.original?.price ?? 0}
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Math.floor(Number(val)));
-                    await handleUpdateField(row.original.id, {
-                      price: numVal,
-                    });
-                  }}
-                  className="w-24 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.price ?? "-"}</div>;
-          },
-        },
-        // {
-        //   accessorKey: "rating",
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column}>Rating</SortableHeader>
-        //   ),
-        //   cell: ({ row }) => <div>{row.original?.rating ?? "-"}</div>,
-        // },
-        // {
-        //   accessorKey: "reviews",
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column}>Reviews</SortableHeader>
-        //   ),
-        //   cell: ({ row }) => <div>{row.original?.reviews ?? "-"}</div>,
-        // },
-        {
-          accessorKey: "pricing.dayPass",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Day Pass</SortableHeader>
           ),
           cell: ({ row }) => {
             if (userLevel === "operator") {
@@ -718,7 +697,6 @@ const SpacesTabledResults = ({
             return <div>{row.original?.pricing?.vo ?? "-"}</div>;
           },
         },
-
         {
           accessorKey: "specs.area",
           header: ({ column }) => (
@@ -955,9 +933,9 @@ const SpacesTabledResults = ({
       const newState =
         typeof updater === "function"
           ? updater({
-            pageIndex: page,
-            pageSize: res?.data?.data?.metrics?.count || 10,
-          })
+              pageIndex: page,
+              pageSize: res?.data?.data?.metrics?.count || 10,
+            })
           : updater;
       setPage(newState.pageIndex);
     },
@@ -1046,9 +1024,9 @@ const SpacesTabledResults = ({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>

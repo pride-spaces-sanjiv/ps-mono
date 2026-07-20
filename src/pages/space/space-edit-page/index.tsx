@@ -5,11 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import {
-  ArrowLeft,
-  ImagePlus,
-  MessageSquareWarning,
-} from "lucide-react";
+import { ArrowLeft, ImagePlus, MessageSquareWarning } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
 import { useUser } from "@/services/hooks/use-user";
@@ -26,8 +22,16 @@ import { datifyObjectValues } from "@/utils/object/datify";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
-import { workingSizes, type WorkingSize } from "@/utils/data/workingSizes";
-import { labelledSpaceGrades, labelledSpaceTypes, spaceGrades } from "@/utils/data/spaceTypes";
+import {
+  labelledWorkingSizes,
+  workingSizes,
+  type WorkingSize,
+} from "@/utils/data/workingSizes";
+import {
+  labelledSpaceGrades,
+  labelledSpaceTypes,
+  spaceGrades,
+} from "@/utils/data/spaceTypes";
 import { GroupedSearchSelect } from "@/components/search-select";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import { DialogModal } from "@/components/dialog";
@@ -129,27 +133,27 @@ const SpaceEditPage = () => {
       ...mainChanges.allData,
       ...(locationChanges.allFields.length
         ? {
-          location: {
-            ...res?.data?.data?.location,
-            ...locationChanges.allData,
-          },
-        }
+            location: {
+              ...res?.data?.data?.location,
+              ...locationChanges.allData,
+            },
+          }
         : {}),
       ...(personChanges.allFields.length
         ? {
-          person: {
-            ...res?.data?.data?.person,
-            ...personChanges.allData,
-          },
-        }
+            person: {
+              ...res?.data?.data?.person,
+              ...personChanges.allData,
+            },
+          }
         : {}),
       ...(pricingChanges.allFields.length
         ? {
-          pricing: {
-            ...res?.data?.data?.pricing,
-            ...pricingChanges.allData,
-          },
-        }
+            pricing: {
+              ...res?.data?.data?.pricing,
+              ...pricingChanges.allData,
+            },
+          }
         : {}),
     };
   }, [
@@ -227,7 +231,7 @@ const SpaceEditPage = () => {
         privateCabin: 0,
         vo: 0,
       },
-    }
+    },
   });
   const selectedGrade = watch("specs.grade");
   const operatorData = useMemo(
@@ -270,10 +274,7 @@ const SpaceEditPage = () => {
     if (res?.data?.data) {
       const modified = datifyObjectValues(
         { ...res?.data?.data, ...allUpdatedData },
-        [
-          "createdAt",
-          "updatedAt",
-        ]
+        ["createdAt", "updatedAt"],
       );
       reset({
         ...modified,
@@ -293,7 +294,14 @@ const SpaceEditPage = () => {
         },
       } as NonNullable<typeof modified>);
     }
-  }, [selectedGrade, setValue, res, POCSameAsOperator, operatorData, allUpdatedData]);
+  }, [
+    selectedGrade,
+    setValue,
+    res,
+    POCSameAsOperator,
+    operatorData,
+    allUpdatedData,
+  ]);
 
   // Update Mutater
   const { mutateAsync, isPending: updateLoading } = useMutation({
@@ -505,9 +513,13 @@ const SpaceEditPage = () => {
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.category,
                 onValueChange: (val) =>
-                  setValue("specs.category", val as SpaceSchema["specs"]["category"], {
-                    shouldValidate: true,
-                  })
+                  setValue(
+                    "specs.category",
+                    val as SpaceSchema["specs"]["category"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
             {...changedFieldProps(mainChanges.allData, "category")}
@@ -523,9 +535,13 @@ const SpaceEditPage = () => {
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.spaceType,
                 onValueChange: (val) =>
-                  setValue("specs.spaceType", val as SpaceSchema["specs"]["spaceType"], {
-                    shouldValidate: true,
-                  }),
+                  setValue(
+                    "specs.spaceType",
+                    val as SpaceSchema["specs"]["spaceType"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
             error={errors.specs?.spaceType}
@@ -543,13 +559,75 @@ const SpaceEditPage = () => {
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.grade,
                 onValueChange: (val) =>
-                  setValue("specs.grade", val as SpaceSchema["specs"]["grade"], {
-                    shouldValidate: true,
-                  }),
+                  setValue(
+                    "specs.grade",
+                    val as SpaceSchema["specs"]["grade"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
               },
             }}
             {...changedFieldProps(mainChanges.allData, "grade")}
           />
+
+          {/* Sez or Oc based on grade */}
+          {watch("specs.grade", "B") === "B" ? (
+            <FormField
+              key={`oc-status-${defaultValues?.flags?.isOc}`}
+              label="OC / Non-OC"
+              labelPosition="embedded"
+              inputType="select"
+              items={[true, false].map((v) => ({
+                label: v ? "OC" : "Non-OC",
+                value: v,
+              }))}
+              error={errors?.flags?.isOc}
+              pickerProps={{
+                wrapperProps: {
+                  // @ts-ignore
+                  defaultValue: defaultValues?.flags?.isOc || false,
+                  onValueChange: (val) => {
+                    setValue("flags.isOc", String(val) === "true", {
+                      shouldValidate: true,
+                    });
+                    setValue("flags.isSez", false, {
+                      shouldValidate: true,
+                    });
+                  },
+                },
+              }}
+              {...changedFieldProps(mainChanges.allData, "grade")}
+            />
+          ) : (
+            <FormField
+              key={`sez-status-${defaultValues?.flags?.isSez}`}
+              label="Sez / Non-Sez"
+              labelPosition="embedded"
+              inputType="select"
+              items={[true, false].map((v) => ({
+                label: v ? "Sez" : "Non-Sez",
+                value: v,
+              }))}
+              error={errors?.flags?.isOc}
+              pickerProps={{
+                wrapperProps: {
+                  // @ts-ignore
+                  defaultValue: defaultValues?.flags?.isSez || false,
+                  onValueChange: (val) => {
+                    setValue("flags.isSez", String(val) === "true", {
+                      shouldValidate: true,
+                    });
+                    setValue("flags.isOc", true, {
+                      shouldValidate: true,
+                    });
+                  },
+                },
+              }}
+              {...changedFieldProps(mainChanges.allData, "grade")}
+            />
+          )}
+
           {/* Open Time */}
 
           <FormField
@@ -586,9 +664,13 @@ const SpaceEditPage = () => {
             }
             onChange={(e) => {
               const val = e.currentTarget.value;
-              setValue("timing.closeTime", moment(val, "HH:mm", true).toDate(), {
-                shouldValidate: true,
-              });
+              setValue(
+                "timing.closeTime",
+                moment(val, "HH:mm", true).toDate(),
+                {
+                  shouldValidate: true,
+                },
+              );
             }}
             error={errors.timing?.closeTime}
             {...changedFieldProps(mainChanges.allData, "closeTime")}
@@ -669,7 +751,7 @@ const SpaceEditPage = () => {
                   setValue(
                     "timing.openDays",
                     items.filter((val) => typeof val === "number"),
-                  )
+                  );
                 }}
               />
             </FormField>
@@ -737,10 +819,7 @@ const SpaceEditPage = () => {
               type="multiple"
               showSearch={false}
               defaultSelected={defaultValues?.specs?.workingSizes}
-              items={workingSizes.map((dt, i) => ({
-                label: dt + " mm",
-                value: dt,
-              }))}
+              items={labelledWorkingSizes}
               triggerProps={{
                 children: (
                   <ActionButton
@@ -941,6 +1020,12 @@ const SpaceEditPage = () => {
               };
               setValue("location", data, { shouldValidate: true });
             }}
+            onLatLngFromURL={(stats) => {
+              // console.log("Stats from maps url to pos :", stats);
+              setValue("location.lat", stats.lat);
+              setValue("location.lng", stats.lng);
+              setValue("location.url", stats.url);
+            }}
           />
 
           <FormField
@@ -1062,9 +1147,7 @@ const SpaceEditPage = () => {
               <label className="text-muted-foreground text-sm">Verified</label>
               <Switch
                 key={
-                  defaultValues?.flags?.isVerified
-                    ? "verified"
-                    : "unverified"
+                  defaultValues?.flags?.isVerified ? "verified" : "unverified"
                 }
                 defaultChecked={!!defaultValues?.flags?.isVerified}
                 {...register("flags.isVerified")}

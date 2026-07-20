@@ -161,6 +161,16 @@ export const ENTERPRISE_SPACE = ENTERPRISE.create({
 });
 
 // General
+export const GENERAL = axios.create({
+  baseURL: baseUrl + "/general",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const GENERAL_LOCATION = axios.create({
+  baseURL: baseUrl + "/general/location",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
 export const STATES = ENTERPRISE.create({
   baseURL: baseUrl + "/states",
   headers: jsonContentHeadersAuth,
