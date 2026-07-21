@@ -96,7 +96,9 @@ const SpaceCreatePage = () => {
     resolver: zodResolver(spaceSchema),
     defaultValues: {
       timing: {
-        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
+        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 6),
+        openingDay: "Monday",
+        closingDay: "Saturday",
         openTime: defaultTime,
         closeTime: defaultTime,
         operationalSince: undefined,
@@ -465,6 +467,72 @@ const SpaceCreatePage = () => {
             readOnly
             disabled
           />
+          {/* Opening Day */}
+          <FormField
+            key={`opening-day-${watch("timing.openingDay")}`}
+            label="Opening Day"
+            labelPosition="embedded"
+            inputType="select"
+            items={days.map((d) => ({ label: d, value: d }))}
+            error={errors.timing?.openingDay}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: watch("timing.openingDay") || "Monday",
+                onValueChange: (val) => {
+                  setValue("timing.openingDay", val, {
+                    shouldValidate: true,
+                  });
+                  const closeVal = watch("timing.closingDay") || "Saturday";
+                  const startIdx = days.indexOf(val as (typeof days)[number]);
+                  const endIdx = days.indexOf(closeVal as (typeof days)[number]);
+                  if (startIdx !== -1 && endIdx !== -1) {
+                    const range: number[] = [];
+                    if (startIdx <= endIdx) {
+                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                    } else {
+                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
+                    }
+                    setValue("timing.openDays", range, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
+          />
+
+          {/* Closing Day */}
+          <FormField
+            key={`closing-day-${watch("timing.closingDay")}`}
+            label="Closing Day"
+            labelPosition="embedded"
+            inputType="select"
+            items={days.map((d) => ({ label: d, value: d }))}
+            error={errors.timing?.closingDay}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: watch("timing.closingDay") || "Saturday",
+                onValueChange: (val) => {
+                  setValue("timing.closingDay", val, {
+                    shouldValidate: true,
+                  });
+                  const openVal = watch("timing.openingDay") || "Monday";
+                  const startIdx = days.indexOf(openVal as (typeof days)[number]);
+                  const endIdx = days.indexOf(val as (typeof days)[number]);
+                  if (startIdx !== -1 && endIdx !== -1) {
+                    const range: number[] = [];
+                    if (startIdx <= endIdx) {
+                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                    } else {
+                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
+                    }
+                    setValue("timing.openDays", range, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
+          />
+
           {/* Open Days */}
           {watch("specs.spaceType", "Flex") !== "MOS" && (
             <FormField

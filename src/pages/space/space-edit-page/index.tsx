@@ -198,7 +198,9 @@ const SpaceEditPage = () => {
     resolver: zodResolver(spaceSchema),
     defaultValues: {
       timing: {
-        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
+        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 6),
+        openingDay: "Monday",
+        closingDay: "Saturday",
         openTime: defaultTime,
         closeTime: defaultTime,
         operationalSince: undefined,
@@ -293,6 +295,16 @@ const SpaceEditPage = () => {
           ...modified?.timing,
           openTime: modified?.timing?.openTime ?? defaultTime,
           closeTime: modified?.timing?.closeTime ?? defaultTime,
+          openingDay:
+            modified?.timing?.openingDay ||
+            (modified?.timing?.openDays?.length
+              ? days[modified.timing.openDays[0] - 1]
+              : "Monday"),
+          closingDay:
+            modified?.timing?.closingDay ||
+            (modified?.timing?.openDays?.length
+              ? days[modified.timing.openDays[modified.timing.openDays.length - 1] - 1]
+              : "Saturday"),
         },
 
         flags: {
@@ -643,6 +655,74 @@ const SpaceEditPage = () => {
               {...changedFieldProps(mainChanges.allData, "grade")}
             />
           )}
+
+          {/* Opening Day */}
+          <FormField
+            key={`opening-day-${watch("timing.openingDay")}`}
+            label="Opening Day"
+            labelPosition="embedded"
+            inputType="select"
+            items={days.map((d) => ({ label: d, value: d }))}
+            error={errors.timing?.openingDay}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: watch("timing.openingDay") || "Monday",
+                onValueChange: (val) => {
+                  setValue("timing.openingDay", val, {
+                    shouldValidate: true,
+                  });
+                  const closeVal = watch("timing.closingDay") || "Saturday";
+                  const startIdx = days.indexOf(val as (typeof days)[number]);
+                  const endIdx = days.indexOf(closeVal as (typeof days)[number]);
+                  if (startIdx !== -1 && endIdx !== -1) {
+                    const range: number[] = [];
+                    if (startIdx <= endIdx) {
+                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                    } else {
+                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
+                    }
+                    setValue("timing.openDays", range, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
+            {...changedFieldProps(mainChanges.allData, "openingDay")}
+          />
+
+          {/* Closing Day */}
+          <FormField
+            key={`closing-day-${watch("timing.closingDay")}`}
+            label="Closing Day"
+            labelPosition="embedded"
+            inputType="select"
+            items={days.map((d) => ({ label: d, value: d }))}
+            error={errors.timing?.closingDay}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: watch("timing.closingDay") || "Saturday",
+                onValueChange: (val) => {
+                  setValue("timing.closingDay", val, {
+                    shouldValidate: true,
+                  });
+                  const openVal = watch("timing.openingDay") || "Monday";
+                  const startIdx = days.indexOf(openVal as (typeof days)[number]);
+                  const endIdx = days.indexOf(val as (typeof days)[number]);
+                  if (startIdx !== -1 && endIdx !== -1) {
+                    const range: number[] = [];
+                    if (startIdx <= endIdx) {
+                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                    } else {
+                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
+                    }
+                    setValue("timing.openDays", range, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
+            {...changedFieldProps(mainChanges.allData, "closingDay")}
+          />
 
           {/* Open Time */}
 
