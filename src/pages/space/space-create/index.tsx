@@ -436,9 +436,17 @@ const SpaceCreatePage = () => {
             label="Available Seats"
             labelPosition="embedded"
             type="number"
-            {...register("seats.booked", {
-              valueAsNumber: true,
-            })}
+            max={watch("seats.total", 0) ?? 0}
+            min={0}
+            key={`total-${watch("seats.total", 0) ?? 0}`}
+            defaultValue={
+              (watch("seats.total", 0) ?? 0) - (watch("seats.booked", 0) ?? 0)
+            }
+            onChange={(e) => {
+              const val = Number(e.currentTarget.value);
+              const booked = (watch("seats.total", 0) ?? 0) - val;
+              setValue("seats.booked", booked, { shouldValidate: true });
+            }}
             error={errors.seats?.booked}
           />
 
@@ -448,8 +456,7 @@ const SpaceCreatePage = () => {
             value={`${
               (watch("seats.total") || 0) > 0
                 ? (
-                    (((watch("seats.total") || 0) -
-                      (watch("seats.booked") || 0)) /
+                    ((watch("seats.booked") || 0) /
                       (watch("seats.total") || 1)) *
                     100
                   ).toFixed(2)

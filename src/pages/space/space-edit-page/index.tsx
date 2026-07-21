@@ -728,8 +728,7 @@ const SpaceEditPage = () => {
             value={`${
               (watch("seats.total") || 0) > 0
                 ? (
-                    (((watch("seats.total") || 0) -
-                      (watch("seats.booked") || 0)) /
+                    ((watch("seats.booked") || 0) /
                       (watch("seats.total") || 1)) *
                     100
                   ).toFixed(2)
