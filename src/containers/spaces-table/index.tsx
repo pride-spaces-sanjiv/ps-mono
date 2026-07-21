@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import {
@@ -172,7 +172,9 @@ const InlineCellInput = ({
   type = "text",
   onSave,
   className,
-}: InlineCellInputProps) => {
+  ...props
+}: InlineCellInputProps &
+  Omit<React.ComponentProps<typeof Input>, keyof InlineCellInputProps>) => {
   const [val, setVal] = useState(initialValue);
   const [loading, setLoading] = useState(false);
 
@@ -200,6 +202,7 @@ const InlineCellInput = ({
       onDoubleClick={(e) => e.stopPropagation()}
     >
       <Input
+        {...props}
         type={type}
         value={val}
         disabled={loading}
