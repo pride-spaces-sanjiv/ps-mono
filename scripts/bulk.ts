@@ -131,8 +131,7 @@ const convertData = (data: (typeof parsedData)[number]) => {
 // console.timeEnd("Push Time :");
 
 // Spaces
-const csvFile =
-  "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centres 01-JUL-2026.csv";
+const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centres 2.csv";
 console.time("Scripting Time :");
 let bulkedSpaces = await parseBulkSpacesData(csvFile, {
   preFilter: (row) => row.operatorslug?.toLowerCase().includes("enzyme"),
@@ -143,6 +142,7 @@ fs.writeFileSync(
   JSON.stringify(bulkedSpaces, null, 2),
 );
 console.timeEnd("Scripting Time :");
+
 console.time("Push Time :");
 bulkedSpaces && (await pushBulkSpacesData(bulkedSpaces, true));
 console.timeEnd("Push Time :");

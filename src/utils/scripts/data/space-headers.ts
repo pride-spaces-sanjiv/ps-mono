@@ -34,6 +34,7 @@ export const CSVHeaders = {
   VOSERVICE: "voservice",
   VOPRICEPERMONTH: "vopricepermonth",
   WORKSTATIONSIZE: "workstationsize",
+  // LOCATIONURL: "locationurl",
 } as const;
 export type CSVHeadersValues = (typeof CSVHeaders)[keyof typeof CSVHeaders];
 export type RowData = Record<CSVHeadersValues, string | null | undefined>;

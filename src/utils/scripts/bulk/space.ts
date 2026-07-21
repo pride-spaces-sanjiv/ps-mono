@@ -18,7 +18,7 @@ import { ModelToRaw } from "@/types/mongoose/document.js";
 import { Document, RootFilterQuery, Types } from "mongoose";
 import { Amenity } from "@/database/models/amenities.js";
 import { Space } from "@/database/models/space.js";
-import { SpaceSchema } from "@/database/schemas/space.js";
+import { spaceSchema, SpaceSchema } from "@/database/schemas/space.js";
 import moment from "moment";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 import { SpaceGrade, SpaceType } from "@/utils/data/spaceTypes.js";
@@ -190,7 +190,7 @@ const generateWorkSizes = (str?: string | null) => {
           const width = Number(matches?.[3]);
           const sym = matches?.[2];
           if (sym.trim()) {
-            return `${height * 300}x${width * 300}`;
+            // return `${height * 300}x${width * 300}`;
           }
           return `${height}x${width}`;
         }
@@ -360,6 +360,9 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
         country: "India",
         lat: 0,
         lng: 0,
+        url:
+          spaceSchema.shape.location.shape.url.safeParse(row.locationurl)
+            .data?.trim() || undefined,
       },
       specs: generateSpecsData(row),
       timing: generateTimingData(row),
