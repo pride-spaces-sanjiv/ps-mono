@@ -606,9 +606,7 @@ const SpaceCreatePage = () => {
           >
             <SelectAmenities
               className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
-              defaultAmenities={
-                defaultValues?.facilities as string[] | undefined
-              }
+              defaultAmenities={watch("facilities", [])}
               onSelect={(amenities) => {
                 setValue(
                   "facilities",
