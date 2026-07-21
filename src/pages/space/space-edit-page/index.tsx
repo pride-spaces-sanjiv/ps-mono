@@ -59,8 +59,10 @@ const defaultTime = moment().hour(0).minute(0).toDate();
 
 const SpaceEditPage = () => {
   const { id } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<SpaceSchema | null>(
+    null,
+  );
 
   const { from: fromRoute, data: locData } = useMemo(() => {
     const state = location.state as
@@ -80,7 +82,7 @@ const SpaceEditPage = () => {
   const getSpaceById = isOperatorPortal
     ? getOperatorSpaceById
     : getAdminSpaceById;
-  const updateSpace = isOperatorPortal ? updateOperatorSpace : updateAdminSpace;
+  const updateSpace = updateAdminSpace;
   const homeRoute = isOperatorPortal ? "/partner" : "/spaces";
 
   const { amenitiesData } = useAmenities();
@@ -491,9 +493,15 @@ const SpaceEditPage = () => {
         )}
 
         <form
-          onSubmit={handleSubmit(onSubmit, (errors) => {
-            console.log("Space edit form error", errors, watch());
-          })}
+          onSubmit={handleSubmit(
+            (data) => {
+              setPendingFormData(data);
+              setIsConfirmDialogOpen(true);
+            },
+            (errors) => {
+              console.log("Space edit form error", errors, watch());
+            },
+          )}
           className="auto-form-grid"
         >
           {/* SECTION: Centre Details */}
@@ -1004,6 +1012,7 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.dayPass", { valueAsNumber: true })}
             error={errors.pricing?.dayPass}
             {...changedFieldProps(pricingChanges.allData, "dayPass")}
@@ -1015,6 +1024,7 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.meetingRoom", { valueAsNumber: true })}
             error={errors.pricing?.meetingRoom}
           />
@@ -1025,6 +1035,7 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
             error={errors.pricing?.dedicatedDesk}
             {...changedFieldProps(pricingChanges.allData, "dedicatedDesk")}
@@ -1036,6 +1047,7 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.flexiDesk", { valueAsNumber: true })}
             error={errors.pricing?.flexiDesk}
           />
@@ -1046,6 +1058,7 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.perSeat", { valueAsNumber: true })}
             error={errors.pricing?.perSeat}
             {...changedFieldProps(pricingChanges.allData, "perSeat")}
@@ -1083,6 +1096,7 @@ const SpaceEditPage = () => {
               type="number"
               inputMode="decimal"
               min={0}
+              max={99999}
               {...register("pricing.vo", { valueAsNumber: true })}
               error={errors.pricing?.vo}
             />
@@ -1464,6 +1478,46 @@ const SpaceEditPage = () => {
               <ActionButton variant={"destructive"}>Move to bin</ActionButton>
             </DialogModal>
           </div>
+
+          <DialogModal
+            open={isConfirmDialogOpen}
+            onOpenChange={setIsConfirmDialogOpen}
+            showClose={false}
+            contentProps={{
+              onPointerDownOutside: (e) => e.preventDefault(),
+              onInteractOutside: (e) => e.preventDefault(),
+            }}
+            titleProps={{ children: "Confirm Changes" }}
+            descriptionProps={{
+              children:
+                "Are you sure you want to confirm the changes you made?",
+            }}
+            footerProps={{
+              children: (
+                <div className="flex justify-end gap-2 mt-4">
+                  <ActionButton
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsConfirmDialogOpen(false)}
+                  >
+                    Cancel
+                  </ActionButton>
+                  <ActionButton
+                    type="button"
+                    loading={updateLoading || approvalPending}
+                    onClick={async () => {
+                      if (pendingFormData) {
+                        await onSubmit(pendingFormData);
+                        setIsConfirmDialogOpen(false);
+                      }
+                    }}
+                  >
+                    Confirm
+                  </ActionButton>
+                </div>
+              ),
+            }}
+          />
         </form>
       </div>
     </div>

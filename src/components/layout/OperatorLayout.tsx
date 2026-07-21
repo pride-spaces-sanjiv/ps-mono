@@ -14,15 +14,9 @@ export default function OperatorLayout() {
   const tokenState = tokenStore();
   const userState = userStore();
 
-  const { mutateAsync: logoutMutater } = useMutation({
-    mutationKey: [queryKeys.USERDATA, "logout"],
-    mutationFn: () => logoutAPI(),
-    retry: 3,
-  });
-
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      await logoutMutater().catch(() => null);
+      logoutAPI().catch(() => null);
       tokenState.setter({
         expiry: new Date(),
         token: "",

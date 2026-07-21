@@ -718,6 +718,7 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.dayPass", { valueAsNumber: true })}
             error={errors.pricing?.dayPass}
           />
@@ -729,6 +730,7 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.meetingRoom", { valueAsNumber: true })}
             error={errors.pricing?.meetingRoom}
           />
@@ -740,6 +742,7 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
             error={errors.pricing?.dedicatedDesk}
           />
@@ -751,6 +754,7 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.flexiDesk", { valueAsNumber: true })}
             error={errors.pricing?.flexiDesk}
           />
@@ -762,6 +766,7 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
+            max={99999}
             {...register("pricing.perSeat", { valueAsNumber: true })}
             error={errors.pricing?.perSeat}
           />
@@ -800,6 +805,7 @@ const SpaceCreatePage = () => {
               type="number"
               inputMode="decimal"
               min={0}
+              max={99999}
               {...register("pricing.vo", { valueAsNumber: true })}
               error={errors.pricing?.vo}
             />
