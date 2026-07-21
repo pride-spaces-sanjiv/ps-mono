@@ -18,7 +18,7 @@ export default function FormSectionTitle({
         wrapperProps?.className,
       )}
     >
-      <h2 className="flex items-center text-lg font-semibold  italic text-white/90 tracking-wide ">
+      <h2 className="flex items-center text-lg font-semibold  italic text-foreground/90 tracking-wide ">
         {props?.children || "Title"}
       </h2>
       <div

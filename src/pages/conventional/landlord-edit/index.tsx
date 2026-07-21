@@ -92,8 +92,10 @@ export default function LandlordEditPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="my-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+      <div className="max-w-5xl mx-auto">
+        <div className="my-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+        </div>
       </div>
       <div className="mx-auto w-full max-w-5xl py-8">
         <form
@@ -474,7 +476,7 @@ export default function LandlordEditPage() {
 
           <div className="col-span-full flex flex-wrap justify-end gap-8">
             <div className="flex items-center gap-4">
-              <label className="text-sm text-white">Immediate Available</label>
+              <label className="text-sm text-muted-foreground">Immediate Available</label>
               <Switch
                 key={
                   defaultValues?.canImmediateAvail
@@ -491,7 +493,7 @@ export default function LandlordEditPage() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <label className="text-sm text-white">SEZ</label>
+              <label className="text-sm text-muted-foreground">SEZ</label>
               <Switch
                 key={defaultValues?.isSez ? "sez" : "not-sez"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
@@ -502,7 +504,7 @@ export default function LandlordEditPage() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <label className="text-sm text-white">Active</label>
+              <label className="text-sm text-muted-foreground">Active</label>
               <Switch
                 key={defaultValues?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"

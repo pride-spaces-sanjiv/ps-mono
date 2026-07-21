@@ -23,6 +23,7 @@ import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
 import {
+  getDenotedWorkingSize,
   labelledWorkingSizes,
   workingSizes,
   type WorkingSize,
@@ -198,10 +199,12 @@ const SpaceEditPage = () => {
     resolver: zodResolver(spaceSchema),
     defaultValues: {
       timing: {
-        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
+        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 6),
+        openingDay: "Monday",
+        closingDay: "Saturday",
         openTime: defaultTime,
         closeTime: defaultTime,
-        operationalHrs: 0,
+        operationalSince: undefined,
       },
 
       specs: {
@@ -222,6 +225,13 @@ const SpaceEditPage = () => {
         isVerified: false,
         isOc: false,
         isSez: false,
+        isVoService: false,
+      },
+
+      terms: {
+        lockIn: "",
+        noticePeriod: "",
+        securityDeposit: "",
       },
 
       pricing: {
@@ -230,6 +240,7 @@ const SpaceEditPage = () => {
         dedicatedDesk: 0,
         flexiDesk: 0,
         privateCabin: 0,
+        meetingRoom: 0,
         vo: 0,
       },
     },
@@ -275,7 +286,7 @@ const SpaceEditPage = () => {
     if (res?.data?.data) {
       const modified = datifyObjectValues(
         { ...res?.data?.data, ...allUpdatedData },
-        ["createdAt", "updatedAt"],
+        ["createdAt", "updatedAt", "timing.closeTime", "timing.openTime"],
       );
       reset({
         ...modified,
@@ -285,6 +296,27 @@ const SpaceEditPage = () => {
           ...modified?.timing,
           openTime: modified?.timing?.openTime ?? defaultTime,
           closeTime: modified?.timing?.closeTime ?? defaultTime,
+          openingDay:
+            modified?.timing?.openingDay ||
+            (modified?.timing?.openDays?.length
+              ? days[modified.timing.openDays[0] - 1]
+              : "Monday"),
+          closingDay:
+            modified?.timing?.closingDay ||
+            (modified?.timing?.openDays?.length
+              ? days[
+                  modified.timing.openDays[
+                    modified.timing.openDays.length - 1
+                  ] - 1
+                ]
+              : "Saturday"),
+        },
+
+        flags: {
+          ...modified?.flags,
+          isVoService:
+            modified?.flags?.isVoService ??
+            Boolean(modified?.pricing?.vo && modified?.pricing?.vo > 0),
         },
 
         person: {
@@ -431,21 +463,23 @@ const SpaceEditPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      {isOperatorPortal && (
-        <ActionButton
-          type="button"
-          variant="ghost"
-          className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
-          onClick={() => navigate(homeRoute)}
-        >
-          <ArrowLeft className="size-4" />
-          Back to Portal
-        </ActionButton>
-      )}
-      <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold  w-full">
-          Edit Centre: {watch("name", "")}
-        </h1>
+      <div className="max-w-4xl mx-auto">
+        {isOperatorPortal && (
+          <ActionButton
+            type="button"
+            variant="ghost"
+            className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate(homeRoute)}
+          >
+            <ArrowLeft className="size-4" />
+            Back to Portal
+          </ActionButton>
+        )}
+        <div className="flex justify-between items-center my-4">
+          <h1 className="text-2xl font-bold  w-full">
+            Edit Centre: {watch("name", "")}
+          </h1>
+        </div>
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
@@ -463,20 +497,13 @@ const SpaceEditPage = () => {
 
         <form
           onSubmit={handleSubmit(onSubmit, (errors) => {
-            console.log("Space edit form error", errors);
+            console.log("Space edit form error", errors, watch());
           })}
           className="auto-form-grid"
         >
           {/* SECTION: Centre Details */}
 
-          <div className="col-span-full  mb-6 ">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Centre Details
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Centre Details</FormSectionTitle>
 
           <FormField
             label="Centre Name"
@@ -634,6 +661,86 @@ const SpaceEditPage = () => {
             />
           )}
 
+          {/* Opening Day */}
+          <FormField
+            key={`opening-day-${watch("timing.openingDay")}`}
+            label="Opening Day"
+            labelPosition="embedded"
+            inputType="select"
+            items={days.map((d) => ({ label: d, value: d }))}
+            error={errors.timing?.openingDay}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: watch("timing.openingDay") || "Monday",
+                onValueChange: (val) => {
+                  setValue("timing.openingDay", val, {
+                    shouldValidate: true,
+                  });
+                  const closeVal = watch("timing.closingDay") || "Saturday";
+                  const startIdx = days.indexOf(val as (typeof days)[number]);
+                  const endIdx = days.indexOf(
+                    closeVal as (typeof days)[number],
+                  );
+                  if (startIdx !== -1 && endIdx !== -1) {
+                    const range: number[] = [];
+                    if (startIdx <= endIdx) {
+                      for (let i = startIdx; i <= endIdx; i++)
+                        range.push(i + 1);
+                    } else {
+                      for (let i = startIdx; i < days.length; i++)
+                        range.push(i + 1);
+                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
+                    }
+                    setValue("timing.openDays", range, {
+                      shouldValidate: true,
+                    });
+                  }
+                },
+              },
+            }}
+            {...changedFieldProps(mainChanges.allData, "openingDay")}
+          />
+
+          {/* Closing Day */}
+          <FormField
+            key={`closing-day-${watch("timing.closingDay")}`}
+            label="Closing Day"
+            labelPosition="embedded"
+            inputType="select"
+            items={days.map((d) => ({ label: d, value: d }))}
+            error={errors.timing?.closingDay}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: watch("timing.closingDay") || "Saturday",
+                onValueChange: (val) => {
+                  setValue("timing.closingDay", val, {
+                    shouldValidate: true,
+                  });
+                  const openVal = watch("timing.openingDay") || "Monday";
+                  const startIdx = days.indexOf(
+                    openVal as (typeof days)[number],
+                  );
+                  const endIdx = days.indexOf(val as (typeof days)[number]);
+                  if (startIdx !== -1 && endIdx !== -1) {
+                    const range: number[] = [];
+                    if (startIdx <= endIdx) {
+                      for (let i = startIdx; i <= endIdx; i++)
+                        range.push(i + 1);
+                    } else {
+                      for (let i = startIdx; i < days.length; i++)
+                        range.push(i + 1);
+                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
+                    }
+                    setValue("timing.openDays", range, {
+                      shouldValidate: true,
+                    });
+                  }
+                },
+              },
+            }}
+            {...changedFieldProps(mainChanges.allData, "closingDay")}
+          />
+
           {/* Open Time */}
 
           <FormField
@@ -697,11 +804,35 @@ const SpaceEditPage = () => {
             label="Available Seats"
             labelPosition="embedded"
             type="number"
-            {...register("seats.booked", {
-              valueAsNumber: true,
-            })}
+            max={watch("seats.total", 0) ?? 0}
+            min={0}
+            key={`total-${watch("seats.total", 0) ?? 0}`}
+            defaultValue={
+              (watch("seats.total", 0) ?? 0) - (watch("seats.booked", 0) ?? 0)
+            }
+            onChange={(e) => {
+              const val = Number(e.currentTarget.value);
+              const booked = (watch("seats.total", 0) ?? 0) - val;
+              setValue("seats.booked", booked, { shouldValidate: true });
+            }}
             error={errors.seats?.booked}
-            {...changedFieldProps(mainChanges.allData, "bookedSeats")}
+            {...changedFieldProps(mainChanges.allData, "seats")}
+          />
+
+          <FormField
+            label="Occupancy (%)"
+            labelPosition="embedded"
+            value={`${
+              (watch("seats.total") || 0) > 0
+                ? (
+                    ((watch("seats.booked") || 0) /
+                      (watch("seats.total") || 1)) *
+                    100
+                  ).toFixed(2)
+                : "0.00"
+            }%`}
+            readOnly
+            disabled
           />
 
           {/* Open Days */}
@@ -761,21 +892,6 @@ const SpaceEditPage = () => {
                 }}
               />
             </FormField>
-          )}
-
-          {/* Operational Hours */}
-          {watch("specs.spaceType", "Flex") !== "Flex" && (
-            <FormField
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={24}
-              label="Operational Hours"
-              labelPosition="embedded"
-              error={errors.timing?.operationalHrs}
-              {...register("timing.operationalHrs")}
-              {...changedFieldProps(mainChanges.allData, "operationalHrs")}
-            />
           )}
 
           {/* Amenities */}
@@ -853,7 +969,8 @@ const SpaceEditPage = () => {
                     {(watch("specs.workingSizes", [])?.length || 0) > 0 ? (
                       <ChippedElements
                         elements={watch("specs.workingSizes", [])?.map(
-                          (s) => s + " mm",
+                          // (s) => s + " mm",
+                          (s) => getDenotedWorkingSize(s),
                         )}
                       />
                     ) : (
@@ -874,18 +991,30 @@ const SpaceEditPage = () => {
             />
           </FormField>
 
+          {/* Operational Since (year) */}
+          <FormField
+            label="Operational Since (year)"
+            labelPosition="embedded"
+            placeholder="2024"
+            type="number"
+            {...register("timing.operationalSince", { valueAsNumber: true })}
+            error={errors.timing?.operationalSince}
+            {...changedFieldProps(mainChanges.allData, "operationalSince")}
+          />
+
           {/* Area in sq.ft */}
           <FormField
-            label="Centre Area (in sq.ft)"
+            label="Centre Area In Sq. Ft. (approx)"
             labelPosition="embedded"
             placeholder="500"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("specs.area")}
+            {...register("specs.area", { valueAsNumber: true })}
             error={errors.specs?.area}
             {...changedFieldProps(mainChanges.allData, "area")}
           />
+
           {/* Pricing Details */}
           <FormSectionTitle>Pricing Details</FormSectionTitle>
           <FormField
@@ -895,20 +1024,19 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.dayPass")}
+            {...register("pricing.dayPass", { valueAsNumber: true })}
             error={errors.pricing?.dayPass}
             {...changedFieldProps(pricingChanges.allData, "dayPass")}
           />
           <FormField
-            label="Per Seat"
+            label="Meeting Room"
             labelPosition="embedded"
-            placeholder="300"
+            placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.perSeat")}
-            error={errors.pricing?.perSeat}
-            {...changedFieldProps(pricingChanges.allData, "perSeat")}
+            {...register("pricing.meetingRoom", { valueAsNumber: true })}
+            error={errors.pricing?.meetingRoom}
           />
           <FormField
             label="Dedicated Desk"
@@ -917,44 +1045,104 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.dedicatedDesk")}
+            {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
             error={errors.pricing?.dedicatedDesk}
             {...changedFieldProps(pricingChanges.allData, "dedicatedDesk")}
           />
           <FormField
-            label="Flexi Desk"
+            label="Flexi/Hot Desk"
             labelPosition="embedded"
             placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.flexiDesk")}
+            {...register("pricing.flexiDesk", { valueAsNumber: true })}
             error={errors.pricing?.flexiDesk}
           />
-
           <FormField
-            label="Meeting Room"
+            label="Per Seat"
             labelPosition="embedded"
-            placeholder="3000"
+            placeholder="300"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.privateCabin")}
-            error={errors.pricing?.privateCabin}
+            {...register("pricing.perSeat", { valueAsNumber: true })}
+            error={errors.pricing?.perSeat}
+            {...changedFieldProps(pricingChanges.allData, "perSeat")}
+          />
+          <FormField
+            key={`vo-service-${watch("flags.isVoService")}`}
+            label="VO Service"
+            labelPosition="embedded"
+            inputType="select"
+            items={[
+              { label: "YES", value: "true" },
+              { label: "NO", value: "false" },
+            ]}
+            error={errors?.flags?.isVoService}
+            pickerProps={{
+              wrapperProps: {
+                value: watch("flags.isVoService") ? "true" : "false",
+                onValueChange: (val) => {
+                  const isYes = val === "true";
+                  setValue("flags.isVoService", isYes, {
+                    shouldValidate: true,
+                  });
+                  if (!isYes) {
+                    setValue("pricing.vo", 0, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
+          />
+          {watch("flags.isVoService") && (
+            <FormField
+              label="VO Price Per month"
+              labelPosition="embedded"
+              placeholder="3000"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              {...register("pricing.vo", { valueAsNumber: true })}
+              error={errors.pricing?.vo}
+            />
+          )}
+
+          {/* Terms & Conditions */}
+          <FormSectionTitle>Terms & Conditions</FormSectionTitle>
+          <FormField
+            label="Lock In"
+            labelPosition="embedded"
+            placeholder="e.g. 1 Year / 6 Months"
+            {...register("terms.lockIn")}
+            error={errors.terms?.lockIn}
+          />
+          <FormField
+            label="Notice Period"
+            labelPosition="embedded"
+            placeholder="e.g. 3 Months"
+            {...register("terms.noticePeriod")}
+            error={errors.terms?.noticePeriod}
+          />
+          <FormField
+            label="Security Deposit"
+            labelPosition="embedded"
+            placeholder="e.g. 3 Months Rent"
+            {...register("terms.securityDeposit")}
+            error={errors.terms?.securityDeposit}
           />
 
-          <FormField
-            label="VO"
-            labelPosition="embedded"
-            placeholder="3000"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            {...register("pricing.vo")}
-            error={errors.pricing?.vo}
-          />
           {/* Location */}
           <FormSectionTitle>Location Details</FormSectionTitle>
+
+          <FormField
+            label="Location URL"
+            labelPosition="embedded"
+            placeholder="https://maps.app.goo.gl/..."
+            {...register("location.url")}
+            error={errors.location?.url}
+            {...changedFieldProps(locationChanges.allData, "url")}
+          />
 
           <FormField
             label="City"
@@ -1094,14 +1282,7 @@ const SpaceEditPage = () => {
 
           {/* SECTION: Centre Point of Contact */}
 
-          <div className="col-span-full  mt-8 mb-6 ">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Point of Contact Details
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Point of Contact Details</FormSectionTitle>
 
           <FormField
             label="Name"
@@ -1162,7 +1343,7 @@ const SpaceEditPage = () => {
           {/* Status */}
           <div className="col-span-full flex gap-8">
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">Active</label>
+              <label className="text-muted-foreground text-sm">Active</label>
               <Switch
                 key={defaultValues?.flags?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
@@ -1172,7 +1353,7 @@ const SpaceEditPage = () => {
             </div>
 
             <div className="flex items-center  gap-4">
-              <label className="text-white text-sm">Verified</label>
+              <label className="text-muted-foreground text-sm">Verified</label>
               <Switch
                 key={
                   defaultValues?.flags?.isVerified ? "verified" : "unverified"
@@ -1183,7 +1364,7 @@ const SpaceEditPage = () => {
             </div>
             {selectedGrade === "B" && (
               <div className="flex items-center gap-4">
-                <label>OC</label>
+                <label className="text-muted-foreground text-sm">OC</label>
                 <Switch
                   key={watch("flags.isOc") ? "oc" : "non-oc"}
                   {...register("flags.isOc")}
@@ -1193,7 +1374,7 @@ const SpaceEditPage = () => {
 
             {(selectedGrade === "A" || selectedGrade === "A+") && (
               <div className="flex items-center gap-4">
-                <label>SEZ</label>
+                <label className="text-muted-foreground text-sm">SEZ</label>
                 <Switch
                   key={watch("flags.isSez") ? "sez" : "non-sez"}
                   {...register("flags.isSez")}
@@ -1201,7 +1382,9 @@ const SpaceEditPage = () => {
               </div>
             )}
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">Same As Operator</label>
+              <label className="text-muted-foreground text-sm">
+                Same As Operator
+              </label>
               <Switch
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
                 onCheckedChange={(checked) => {

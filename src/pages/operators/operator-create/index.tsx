@@ -17,6 +17,7 @@ import {
 } from "@/utils/data/branches";
 import { generatePassword } from "@/utils/string/password";
 import FormField from "@/components/form/field";
+import FormSectionTitle from "@/components/form/section/title";
 import ActionButton from "@/components/buttons/action-btn";
 import MultiStateDialog from "@/containers/operator/multi-state-dialog";
 import { MultiStateCard } from "@/containers/multi-state/multi-state-card";
@@ -86,8 +87,10 @@ const OperatorCreatePage = () => {
 
   return (
     <div className="container px-auto w-full p-6">
-      <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center my-4">
+          <h1 className="text-2xl font-bold">{watch("name", "") || "Create Operator"}</h1>
+        </div>
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
         <form
@@ -98,14 +101,7 @@ const OperatorCreatePage = () => {
         >
           {/* SECTION: Operator Details */}
 
-          <div className="col-span-full  mb-8 ">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Operator Details
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Operator Details</FormSectionTitle>
 
           <FormField
             label="Register Name"

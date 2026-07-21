@@ -96,10 +96,12 @@ const SpaceCreatePage = () => {
     resolver: zodResolver(spaceSchema),
     defaultValues: {
       timing: {
-        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
+        openDays: days.map((_, i) => i + 1).filter((_, i) => i < 6),
+        openingDay: "Monday",
+        closingDay: "Saturday",
         openTime: defaultTime,
         closeTime: defaultTime,
-        operationalHrs: 0,
+        operationalSince: undefined,
       },
 
       specs: {
@@ -120,6 +122,13 @@ const SpaceCreatePage = () => {
         isVerified: false,
         isOc: false,
         isSez: false,
+        isVoService: false,
+      },
+
+      terms: {
+        lockIn: "",
+        noticePeriod: "",
+        securityDeposit: "",
       },
 
       pricing: {
@@ -128,6 +137,7 @@ const SpaceCreatePage = () => {
         dedicatedDesk: 0,
         flexiDesk: 0,
         privateCabin: 0,
+        meetingRoom: 0,
         vo: 0,
       },
     },
@@ -207,21 +217,23 @@ const SpaceCreatePage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      {isOperatorPortal && (
-        <ActionButton
-          type="button"
-          variant="ghost"
-          className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
-          onClick={() => navigate(homeRoute)}
-        >
-          <ArrowLeft className="size-4" />
-          Back to Portal
-        </ActionButton>
-      )}
-      <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold  w-full">
-          Add Centre: {watch("name", "")}
-        </h1>
+      <div className="max-w-4xl mx-auto">
+        {isOperatorPortal && (
+          <ActionButton
+            type="button"
+            variant="ghost"
+            className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate(homeRoute)}
+          >
+            <ArrowLeft className="size-4" />
+            Back to Portal
+          </ActionButton>
+        )}
+        <div className="flex justify-between items-center my-4">
+          <h1 className="text-2xl font-bold  w-full">
+            Add Centre: {watch("name", "")}
+          </h1>
+        </div>
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
@@ -233,14 +245,7 @@ const SpaceCreatePage = () => {
         >
           {/* SECTION: Centre Details */}
 
-          <div className="col-span-full  mb-6 ">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Centre Details
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Centre Details</FormSectionTitle>
           <FormField
             label="Centre Name"
             labelPosition="embedded"
@@ -430,14 +435,104 @@ const SpaceCreatePage = () => {
           />
 
           <FormField
-            label="Booked Seats"
+            label="Available Seats"
             labelPosition="embedded"
             type="number"
-            {...register("seats.booked", {
-              valueAsNumber: true,
-            })}
+            max={watch("seats.total", 0) ?? 0}
+            min={0}
+            key={`total-${watch("seats.total", 0) ?? 0}`}
+            defaultValue={
+              (watch("seats.total", 0) ?? 0) - (watch("seats.booked", 0) ?? 0)
+            }
+            onChange={(e) => {
+              const val = Number(e.currentTarget.value);
+              const booked = (watch("seats.total", 0) ?? 0) - val;
+              setValue("seats.booked", booked, { shouldValidate: true });
+            }}
             error={errors.seats?.booked}
           />
+
+          <FormField
+            label="Occupancy (%)"
+            labelPosition="embedded"
+            value={`${
+              (watch("seats.total") || 0) > 0
+                ? (
+                    ((watch("seats.booked") || 0) /
+                      (watch("seats.total") || 1)) *
+                    100
+                  ).toFixed(2)
+                : "0.00"
+            }%`}
+            readOnly
+            disabled
+          />
+          {/* Opening Day */}
+          <FormField
+            key={`opening-day-${watch("timing.openingDay")}`}
+            label="Opening Day"
+            labelPosition="embedded"
+            inputType="select"
+            items={days.map((d) => ({ label: d, value: d }))}
+            error={errors.timing?.openingDay}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: watch("timing.openingDay") || "Monday",
+                onValueChange: (val) => {
+                  setValue("timing.openingDay", val, {
+                    shouldValidate: true,
+                  });
+                  const closeVal = watch("timing.closingDay") || "Saturday";
+                  const startIdx = days.indexOf(val as (typeof days)[number]);
+                  const endIdx = days.indexOf(closeVal as (typeof days)[number]);
+                  if (startIdx !== -1 && endIdx !== -1) {
+                    const range: number[] = [];
+                    if (startIdx <= endIdx) {
+                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                    } else {
+                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
+                    }
+                    setValue("timing.openDays", range, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
+          />
+
+          {/* Closing Day */}
+          <FormField
+            key={`closing-day-${watch("timing.closingDay")}`}
+            label="Closing Day"
+            labelPosition="embedded"
+            inputType="select"
+            items={days.map((d) => ({ label: d, value: d }))}
+            error={errors.timing?.closingDay}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: watch("timing.closingDay") || "Saturday",
+                onValueChange: (val) => {
+                  setValue("timing.closingDay", val, {
+                    shouldValidate: true,
+                  });
+                  const openVal = watch("timing.openingDay") || "Monday";
+                  const startIdx = days.indexOf(openVal as (typeof days)[number]);
+                  const endIdx = days.indexOf(val as (typeof days)[number]);
+                  if (startIdx !== -1 && endIdx !== -1) {
+                    const range: number[] = [];
+                    if (startIdx <= endIdx) {
+                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                    } else {
+                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
+                    }
+                    setValue("timing.openDays", range, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
+          />
+
           {/* Open Days */}
           {watch("specs.spaceType", "Flex") !== "MOS" && (
             <FormField
@@ -494,20 +589,6 @@ const SpaceCreatePage = () => {
                 }}
               />
             </FormField>
-          )}
-
-          {/* Operational Hours */}
-          {watch("specs.spaceType", "Flex") !== "Flex" && (
-            <FormField
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={24}
-              label="Operational Hours"
-              labelPosition="embedded"
-              error={errors.timing?.operationalHrs}
-              {...register("timing.operationalHrs")}
-            />
           )}
 
           {/* Amenities */}
@@ -605,9 +686,19 @@ const SpaceCreatePage = () => {
             />
           </FormField>
 
+          {/* Operational Since (year) */}
+          <FormField
+            label="Operational Since (year)"
+            labelPosition="embedded"
+            placeholder="2024"
+            type="number"
+            {...register("timing.operationalSince", { valueAsNumber: true })}
+            error={errors.timing?.operationalSince}
+          />
+
           {/* Area */}
           <FormField
-            label="Centre Area (in sq.ft)"
+            label="Centre Area In Sq. Ft. (approx)"
             labelPosition="embedded"
             placeholder="500"
             type="number"
@@ -629,19 +720,19 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.dayPass")}
+            {...register("pricing.dayPass", { valueAsNumber: true })}
             error={errors.pricing?.dayPass}
           />
 
           <FormField
-            label="Per Seat"
+            label="Meeting Room"
             labelPosition="embedded"
-            placeholder="300"
+            placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.perSeat")}
-            error={errors.pricing?.perSeat}
+            {...register("pricing.meetingRoom", { valueAsNumber: true })}
+            error={errors.pricing?.meetingRoom}
           />
 
           <FormField
@@ -651,44 +742,105 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.dedicatedDesk")}
+            {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
             error={errors.pricing?.dedicatedDesk}
           />
 
           <FormField
-            label="Flexi Desk"
+            label="Flexi/Hot Desk"
             labelPosition="embedded"
             placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.flexiDesk")}
+            {...register("pricing.flexiDesk", { valueAsNumber: true })}
             error={errors.pricing?.flexiDesk}
           />
 
           <FormField
-            label="Private Cabin"
+            label="Per Seat"
             labelPosition="embedded"
-            placeholder="3000"
+            placeholder="300"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.privateCabin")}
-            error={errors.pricing?.privateCabin}
+            {...register("pricing.perSeat", { valueAsNumber: true })}
+            error={errors.pricing?.perSeat}
           />
 
           <FormField
-            label="VO"
+            key={`vo-service-${watch("flags.isVoService")}`}
+            label="VO Service"
             labelPosition="embedded"
-            placeholder="3000"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            {...register("pricing.vo")}
-            error={errors.pricing?.vo}
+            inputType="select"
+            items={[
+              { label: "YES", value: "true" },
+              { label: "NO", value: "false" },
+            ]}
+            error={errors?.flags?.isVoService}
+            pickerProps={{
+              wrapperProps: {
+                value: watch("flags.isVoService") ? "true" : "false",
+                onValueChange: (val) => {
+                  const isYes = val === "true";
+                  setValue("flags.isVoService", isYes, {
+                    shouldValidate: true,
+                  });
+                  if (!isYes) {
+                    setValue("pricing.vo", 0, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
           />
+
+          {watch("flags.isVoService") && (
+            <FormField
+              label="VO Price Per month"
+              labelPosition="embedded"
+              placeholder="3000"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              {...register("pricing.vo", { valueAsNumber: true })}
+              error={errors.pricing?.vo}
+            />
+          )}
+
+          {/* Terms & Conditions */}
+          <FormSectionTitle>Terms & Conditions</FormSectionTitle>
+          <FormField
+            label="Lock In"
+            labelPosition="embedded"
+            placeholder="e.g. 1 Year / 6 Months"
+            {...register("terms.lockIn")}
+            error={errors.terms?.lockIn}
+          />
+          <FormField
+            label="Notice Period"
+            labelPosition="embedded"
+            placeholder="e.g. 3 Months"
+            {...register("terms.noticePeriod")}
+            error={errors.terms?.noticePeriod}
+          />
+          <FormField
+            label="Security Deposit"
+            labelPosition="embedded"
+            placeholder="e.g. 3 Months Rent"
+            {...register("terms.securityDeposit")}
+            error={errors.terms?.securityDeposit}
+          />
+
           {/* Location */}
           <FormSectionTitle>Location Details</FormSectionTitle>
+
+          <FormField
+            label="Location URL"
+            labelPosition="embedded"
+            placeholder="https://maps.app.goo.gl/..."
+            {...register("location.url")}
+            error={errors.location?.url}
+          />
 
           <FormField
             label="City"
@@ -783,14 +935,7 @@ const SpaceCreatePage = () => {
 
           {/* SECTION: Centre Point of Contact */}
 
-          <div className="col-span-full mt-8 mb-6">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold italic text-white/90 tracking-wide">
-                Point of Contact Details
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Point of Contact Details</FormSectionTitle>
 
           <FormField
             label="Name"
@@ -847,7 +992,7 @@ const SpaceCreatePage = () => {
 
           <div className="col-span-full flex gap-8 flex-wrap">
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">Active</label>
+              <label className="text-muted-foreground text-sm">Active</label>
               <Switch
                 key={defaultValues?.flags?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
@@ -857,7 +1002,7 @@ const SpaceCreatePage = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">Verified</label>
+              <label className="text-muted-foreground text-sm">Verified</label>
               <Switch
                 key={
                   defaultValues?.flags?.isVerified ? "verified" : "unverified"
@@ -869,7 +1014,7 @@ const SpaceCreatePage = () => {
 
             {selectedGrade === "B" && (
               <div className="flex items-center gap-4">
-                <label className="text-white text-sm">OC</label>
+                <label className="text-muted-foreground text-sm">OC</label>
                 <Switch
                   key={defaultValues?.flags?.isOc ? "oc" : "non-oc"}
                   defaultChecked={!!defaultValues?.flags?.isOc}
@@ -880,7 +1025,7 @@ const SpaceCreatePage = () => {
 
             {(selectedGrade === "A" || selectedGrade === "A+") && (
               <div className="flex items-center gap-4">
-                <label className="text-white text-sm">SEZ</label>
+                <label className="text-muted-foreground text-sm">SEZ</label>
                 <Switch
                   key={defaultValues?.flags?.isSez ? "sez" : "non-sez"}
                   defaultChecked={!!defaultValues?.flags?.isSez}
@@ -890,7 +1035,9 @@ const SpaceCreatePage = () => {
             )}
 
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">Same As Operator</label>
+              <label className="text-muted-foreground text-sm">
+                Same As Operator
+              </label>
               <Switch
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
                 onCheckedChange={(checked) => {

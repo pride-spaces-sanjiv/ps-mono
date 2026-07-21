@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import {
@@ -54,7 +54,7 @@ import {
 
 import { useUser } from "@/services/hooks/use-user";
 import { datifyObjectValues } from "@/utils/object/datify";
-import { formatOpenDays } from "@/utils/data/days";
+import { days, formatOpenDays } from "@/utils/data/days";
 import { queryKeys } from "@/utils/query-keys";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
 import type { Space } from "@/types/data/spaces";
@@ -172,7 +172,9 @@ const InlineCellInput = ({
   type = "text",
   onSave,
   className,
-}: InlineCellInputProps) => {
+  ...props
+}: InlineCellInputProps &
+  Omit<React.ComponentProps<typeof Input>, keyof InlineCellInputProps>) => {
   const [val, setVal] = useState(initialValue);
   const [loading, setLoading] = useState(false);
 
@@ -200,6 +202,7 @@ const InlineCellInput = ({
       onDoubleClick={(e) => e.stopPropagation()}
     >
       <Input
+        {...props}
         type={type}
         value={val}
         disabled={loading}
@@ -345,66 +348,93 @@ const SpacesTabledResults = ({
           ),
           cell: ({ row }) => <div>{page * limit + (row.index + 1) || "-"}</div>,
         },
+        // 1. Operator Slug
         {
-          accessorKey: "operator",
+          accessorKey: "operatorSlug",
           header: ({ column }) => (
-            <SortableHeader column={column}>Operator</SortableHeader>
+            <SortableHeader column={column}>Operator Slug</SortableHeader>
           ),
-          cell: ({ row }) => (
-            <TextCell>
-              {(row.original?.operator &&
-                res?.data?.data?.references?.operators?.results?.find(
-                  (op) => op.id === row.original?.operator,
-                )?.name) ||
-                "-"}
-            </TextCell>
-          ),
+          cell: ({ row }) => {
+            const op = res?.data?.data?.references?.operators?.results?.find(
+              (o) => o.id === row.original?.operator,
+            );
+            return (
+              <TextCell>
+                {op?.slug || row.original?.operatorSlug || row.original?.slug || "-"}
+              </TextCell>
+            );
+          },
         },
+        // 2. Operator Brand Name
+        {
+          accessorKey: "operatorBrandName",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Operator Brand Name</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            const op = res?.data?.data?.references?.operators?.results?.find(
+              (o) => o.id === row.original?.operator,
+            );
+            return (
+              <TextCell>
+                {op?.brandName || op?.name || row.original?.operatorBrandName || "-"}
+              </TextCell>
+            );
+          },
+        },
+        // 3. Centre Name
         {
           accessorKey: "name",
           header: ({ column }) => (
-            <SortableHeader column={column}>Name</SortableHeader>
+            <SortableHeader column={column}>Centre Name</SortableHeader>
           ),
           cell: ({ row }) => (
-            <TextCell className="min-w-[220px]">{row.original?.name}</TextCell>
+            <TextCell className="min-w-[220px]">{row.original?.name || "-"}</TextCell>
           ),
         },
+        // 4. Address
         {
-          accessorKey: "slug",
+          accessorKey: "location.address",
           header: ({ column }) => (
-            <SortableHeader column={column}>Slug</SortableHeader>
-          ),
-          cell: ({ row }) => <TextCell>{row.original?.slug}</TextCell>,
-        },
-        // {
-        //   accessorKey: "email",
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column}>Centre Email</SortableHeader>
-        //   ),
-        //   cell: ({ row }) => <TextCell>{row.original?.email}</TextCell>,
-        // },
-        {
-          accessorKey: "specs.category",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Category</SortableHeader>
+            <SortableHeader column={column}>Address</SortableHeader>
           ),
           cell: ({ row }) => (
-            <TextCell>{row.original?.specs?.category}</TextCell>
-          ),
-        },
-        {
-          accessorKey: "specs.spaceType",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Space Type</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell>
-              {labelledSpaceTypes.find(
-                (t) => t.value === row.original?.specs?.spaceType,
-              )?.label ?? "-"}
+            <TextCell className="min-w-[280px]">
+              {row.original?.location?.address || "-"}
             </TextCell>
           ),
         },
+        // 5. Location URL
+        {
+          accessorKey: "location.url",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Location URL</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            const url = row.original?.location?.url;
+            return url ? (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline max-w-[220px] truncate block"
+              >
+                {url}
+              </a>
+            ) : (
+              <EmptyValue />
+            );
+          },
+        },
+        // 6. Area - Micro Market
+        {
+          accessorKey: "location.area",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Area - Micro Market</SortableHeader>
+          ),
+          cell: ({ row }) => <TextCell>{row.original?.location?.area || "-"}</TextCell>,
+        },
+        // 7. Building Type
         {
           accessorKey: "specs.grade",
           header: ({ column }) => (
@@ -414,33 +444,428 @@ const SpacesTabledResults = ({
             <TextCell>
               {labelledSpaceGrades.find(
                 (g) => g.value === row.original?.specs?.grade,
-              )?.label ?? "-"}
+              )?.label ?? row.original?.specs?.grade ?? "-"}
             </TextCell>
           ),
         },
+        // 8. OC/NON-OC
         {
           accessorKey: "flags.isOc",
           header: ({ column }) => (
-            <SortableHeader column={column}>OC</SortableHeader>
+            <SortableHeader column={column}>OC/NON-OC</SortableHeader>
           ),
-          cell: ({ row }) => <BooleanBadge value={row.original?.flags?.isOc} />,
+          cell: ({ row }) => (
+            <TextCell>
+              {row.original?.flags?.isOc === true
+                ? "OC"
+                : row.original?.flags?.isOc === false
+                ? "Non-OC"
+                : "-"}
+            </TextCell>
+          ),
         },
+        // 9. SEZ/Non-SEZ
         {
           accessorKey: "flags.isSez",
           header: ({ column }) => (
-            <SortableHeader column={column}>SEZ</SortableHeader>
+            <SortableHeader column={column}>SEZ/Non-SEZ</SortableHeader>
           ),
           cell: ({ row }) => (
-            <BooleanBadge value={row.original?.flags?.isSez} />
+            <TextCell>
+              {row.original?.flags?.isSez === true
+                ? "SEZ"
+                : row.original?.flags?.isSez === false
+                ? "Non-SEZ"
+                : "-"}
+            </TextCell>
           ),
         },
+        // 10. Operational Since (year)
         {
-          accessorKey: "flags.isVerified",
+          accessorKey: "timing.operationalSince",
           header: ({ column }) => (
-            <SortableHeader column={column}>Verified</SortableHeader>
+            <SortableHeader column={column}>Operational Since (year)</SortableHeader>
           ),
           cell: ({ row }) => (
-            <BooleanBadge value={row.original?.flags?.isVerified} />
+            <div>{row.original?.timing?.operationalSince ?? "-"}</div>
+          ),
+        },
+        // 11. Centre Area In Sq. Ft. (approx)
+        {
+          accessorKey: "specs.area",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Centre Area In Sq. Ft. (approx)</SortableHeader>
+          ),
+          cell: ({ row }) => <div>{row.original?.specs?.area ?? "-"}</div>,
+        },
+        // 12. Total Seats
+        {
+          accessorKey: "seats.total",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Total Seats</SortableHeader>
+          ),
+          cell: ({ row }) => <div>{row.original?.seats?.total ?? "-"}</div>,
+        },
+        // 13. Available Seats
+        {
+          accessorKey: "seats.available",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Available Seats</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            const available =
+              (row.original?.seats?.total ?? 0) -
+              (row.original?.seats?.booked ?? 0);
+            if (userLevel === "operator") {
+              return (
+                <InlineCellInput
+                  value={available}
+                  type="number"
+                  onSave={async (val) => {
+                    const numVal = Math.max(0, Math.floor(Number(val)));
+                    await handleUpdateField(row.original.id, {
+                      seats: {
+                        ...row.original.seats,
+                        booked: (row.original?.seats?.total ?? 0) - numVal,
+                      },
+                    });
+                  }}
+                  className="w-20 mx-auto"
+                />
+              );
+            }
+            return <div>{available}</div>;
+          },
+        },
+        // Occupancy (%)
+        {
+          accessorKey: "seats.occupancy",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Occupancy (%)</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            const total = row.original?.seats?.total ?? 0;
+            const booked = row.original?.seats?.booked ?? 0;
+            const occupancy =
+              total === 0 ? "0.00" : ((booked / total) * 100).toFixed(2);
+            return <div>{occupancy}%</div>;
+          },
+        },
+        // 14. Space Type
+        {
+          accessorKey: "specs.spaceType",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Space Type</SortableHeader>
+          ),
+          cell: ({ row }) => (
+            <TextCell>
+              {labelledSpaceTypes.find(
+                (t) => t.value === row.original?.specs?.spaceType,
+              )?.label ?? row.original?.specs?.spaceType ?? "-"}
+            </TextCell>
+          ),
+        },
+        // 15. State
+        {
+          accessorKey: "location.state",
+          header: ({ column }) => (
+            <SortableHeader column={column}>State</SortableHeader>
+          ),
+          cell: ({ row }) => <TextCell>{row.original?.location?.state || "-"}</TextCell>,
+        },
+        // 16. City
+        {
+          accessorKey: "location.city",
+          header: ({ column }) => (
+            <SortableHeader column={column}>City</SortableHeader>
+          ),
+          cell: ({ row }) => <TextCell>{row.original?.location?.city || "-"}</TextCell>,
+        },
+        // 17. Center POC Name
+        {
+          accessorKey: "person.name",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Center POC Name</SortableHeader>
+          ),
+          cell: ({ row }) => <TextCell>{row.original?.person?.name || "-"}</TextCell>,
+        },
+        // 18. Center POC Email
+        {
+          accessorKey: "person.email",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Center POC Email</SortableHeader>
+          ),
+          cell: ({ row }) => <TextCell>{row.original?.person?.email || "-"}</TextCell>,
+        },
+        // 19. Center POC Contact No.
+        {
+          accessorKey: "person.contactNo",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Center POC Contact No.</SortableHeader>
+          ),
+          cell: ({ row }) => (
+            <TextCell>{row.original?.person?.contactNo || "-"}</TextCell>
+          ),
+        },
+        // 20. Lock In
+        // {
+        //   accessorKey: "terms.lockIn",
+        //   header: ({ column }) => (
+        //     <SortableHeader column={column}>Lock In</SortableHeader>
+        //   ),
+        //   cell: ({ row }) => <TextCell>{row.original?.terms?.lockIn || "-"}</TextCell>,
+        // },
+        // // 21. Notice Period
+        // {
+        //   accessorKey: "terms.noticePeriod",
+        //   header: ({ column }) => (
+        //     <SortableHeader column={column}>Notice Period</SortableHeader>
+        //   ),
+        //   cell: ({ row }) => <TextCell>{row.original?.terms?.noticePeriod || "-"}</TextCell>,
+        // },
+        // // 22. Security Deposit
+        // {
+        //   accessorKey: "terms.securityDeposit",
+        //   header: ({ column }) => (
+        //     <SortableHeader column={column}>Security Deposit</SortableHeader>
+        //   ),
+        //   cell: ({ row }) => (
+        //     <TextCell>{row.original?.terms?.securityDeposit || "-"}</TextCell>
+        //   ),
+        // },
+        // 23. Opening Day
+        {
+          accessorKey: "timing.openingDay",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Opening Day</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            if (row.original?.timing?.openingDay) {
+              return <TextCell>{row.original.timing.openingDay}</TextCell>;
+            }
+            const openDays = row.original?.timing?.openDays;
+            if (openDays && openDays.length > 0) {
+              const sorted = [...openDays].sort((a, b) => a - b);
+              return <TextCell>{days[sorted[0] - 1] || "-"}</TextCell>;
+            }
+            return <TextCell>-</TextCell>;
+          },
+        },
+        // 24. Closing Day
+        {
+          accessorKey: "timing.closingDay",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Closing Day</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            if (row.original?.timing?.closingDay) {
+              return <TextCell>{row.original.timing.closingDay}</TextCell>;
+            }
+            const openDays = row.original?.timing?.openDays;
+            if (openDays && openDays.length > 0) {
+              const sorted = [...openDays].sort((a, b) => a - b);
+              return <TextCell>{days[sorted[sorted.length - 1] - 1] || "-"}</TextCell>;
+            }
+            return <TextCell>-</TextCell>;
+          },
+        },
+        // 25. Opening Time
+        {
+          accessorKey: "timing.openTime",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Opening Time</SortableHeader>
+          ),
+          cell: ({ row }) => <div>{formatTime(row.original?.timing?.openTime)}</div>,
+        },
+        // 26. Closing Time
+        {
+          accessorKey: "timing.closeTime",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Closing Time</SortableHeader>
+          ),
+          cell: ({ row }) => <div>{formatTime(row.original?.timing?.closeTime)}</div>,
+        },
+        // 27. Category
+        {
+          accessorKey: "specs.category",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Category</SortableHeader>
+          ),
+          cell: ({ row }) => <TextCell>{row.original?.specs?.category || "-"}</TextCell>,
+        },
+        // 28. Day Pass
+        {
+          accessorKey: "pricing.dayPass",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Day Pass</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            if (userLevel === "operator") {
+              return (
+                <InlineCellInput
+                  value={row.original?.pricing?.dayPass ?? 0}
+                  type="number"
+                  onSave={async (val) => {
+                    const numVal = Math.max(0, Number(val));
+                    await handleUpdateField(row.original.id, {
+                      pricing: {
+                        ...row.original?.pricing,
+                        dayPass: numVal,
+                      },
+                    });
+                  }}
+                  className="w-24 mx-auto"
+                />
+              );
+            }
+            return <div>{row.original?.pricing?.dayPass ?? "-"}</div>;
+          },
+        },
+        // 29. Meeting Room
+        {
+          accessorKey: "pricing.meetingRoom",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Meeting Room</SortableHeader>
+          ),
+          cell: ({ row }) => <div>{row.original?.pricing?.meetingRoom ?? "-"}</div>,
+        },
+        // 30. Dedicated Desk
+        {
+          accessorKey: "pricing.dedicatedDesk",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Dedicated Desk</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            if (userLevel === "operator") {
+              return (
+                <InlineCellInput
+                  value={row.original?.pricing?.dedicatedDesk ?? 0}
+                  type="number"
+                  onSave={async (val) => {
+                    const numVal = Math.max(0, Number(val));
+                    await handleUpdateField(row.original.id, {
+                      pricing: {
+                        ...row.original?.pricing,
+                        dedicatedDesk: numVal,
+                      },
+                    });
+                  }}
+                  className="w-24 mx-auto"
+                />
+              );
+            }
+            return <div>{row.original?.pricing?.dedicatedDesk ?? "-"}</div>;
+          },
+        },
+        // 31. Flexi/Hot Desk
+        {
+          accessorKey: "pricing.flexiDesk",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Flexi/Hot Desk</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            if (userLevel === "operator") {
+              return (
+                <InlineCellInput
+                  value={row.original?.pricing?.flexiDesk ?? 0}
+                  type="number"
+                  onSave={async (val) => {
+                    const numVal = Math.max(0, Number(val));
+                    await handleUpdateField(row.original.id, {
+                      pricing: {
+                        ...row.original?.pricing,
+                        flexiDesk: numVal,
+                      },
+                    });
+                  }}
+                  className="w-24 mx-auto"
+                />
+              );
+            }
+            return <div>{row.original?.pricing?.flexiDesk ?? "-"}</div>;
+          },
+        },
+        // 32. Per Seat
+        {
+          accessorKey: "pricing.perSeat",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Per Seat</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            if (userLevel === "operator") {
+              return (
+                <InlineCellInput
+                  value={row.original?.pricing?.perSeat ?? 0}
+                  type="number"
+                  onSave={async (val) => {
+                    const numVal = Math.max(0, Number(val));
+                    await handleUpdateField(row.original.id, {
+                      pricing: {
+                        ...row.original?.pricing,
+                        perSeat: numVal,
+                      },
+                    });
+                  }}
+                  className="w-24 mx-auto"
+                />
+              );
+            }
+            return <div>{row.original?.pricing?.perSeat ?? "-"}</div>;
+          },
+        },
+        // 33. VO Service
+        {
+          accessorKey: "pricing.voService",
+          header: ({ column }) => (
+            <SortableHeader column={column}>VO Service</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            const val =
+              row.original?.pricing?.voService ||
+              (row.original?.flags?.isVoService !== undefined
+                ? row.original?.flags?.isVoService
+                  ? "YES"
+                  : "NO"
+                : "-");
+            return <TextCell>{val}</TextCell>;
+          },
+        },
+        // 34. VO Price Per month
+        {
+          accessorKey: "pricing.vo",
+          header: ({ column }) => (
+            <SortableHeader column={column}>VO Price Per month</SortableHeader>
+          ),
+          cell: ({ row }) => {
+            if (userLevel === "operator") {
+              return (
+                <InlineCellInput
+                  value={row.original?.pricing?.vo ?? 0}
+                  type="number"
+                  onSave={async (val) => {
+                    const numVal = Math.max(0, Number(val));
+                    await handleUpdateField(row.original.id, {
+                      pricing: {
+                        ...row.original?.pricing,
+                        vo: numVal,
+                      },
+                    });
+                  }}
+                  className="w-24 mx-auto"
+                />
+              );
+            }
+            return <div>{row.original?.pricing?.vo ?? "-"}</div>;
+          },
+        },
+        // 35. Workstation size
+        {
+          accessorKey: "specs.workingSizes",
+          header: ({ column }) => (
+            <SortableHeader column={column}>Workstation size</SortableHeader>
+          ),
+          cell: ({ row }) => (
+            <TextCell>{formatList(row.original?.specs?.workingSizes)}</TextCell>
           ),
         },
         {
@@ -480,473 +905,7 @@ const SpacesTabledResults = ({
             </div>
           ),
         },
-        {
-          accessorKey: "seats.total",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Total Seats</SortableHeader>
-          ),
-          cell: ({ row }) => <div>{row.original?.seats?.total ?? "-"}</div>,
-        },
-        {
-          accessorKey: "seats.available",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Available Seats</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={
-                    row.original?.seats?.total -
-                    (row.original?.seats?.booked ?? 0)
-                  }
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Math.floor(Number(val)));
-                    await handleUpdateField(row.original.id, {
-                      seats: {
-                        ...row.original.seats,
-                        booked: row.original?.seats?.total - numVal,
-                      },
-                    });
-                  }}
-                  className="w-20 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.seats?.booked ?? "-"}</div>;
-          },
-        },
-        {
-          accessorKey: "seats.occupancy",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Occupancy</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <div>
-              {row.original?.seats?.total === 0
-                ? 0
-                : (
-                    ((row.original?.seats?.booked ?? 0) /
-                      (row.original?.seats?.total ?? 0)) *
-                    100
-                  ).toFixed(2)}{" "}
-              %
-            </div>
-          ),
-        },
-        {
-          accessorKey: "price",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Price</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={row.original?.price ?? 0}
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Math.floor(Number(val)));
-                    await handleUpdateField(row.original.id, {
-                      price: numVal,
-                    });
-                  }}
-                  className="w-24 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.price ?? "-"}</div>;
-          },
-        },
-        // {
-        //   accessorKey: "rating",
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column}>Rating</SortableHeader>
-        //   ),
-        //   cell: ({ row }) => <div>{row.original?.rating ?? "-"}</div>,
-        // },
-        // {
-        //   accessorKey: "reviews",
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column}>Reviews</SortableHeader>
-        //   ),
-        //   cell: ({ row }) => <div>{row.original?.reviews ?? "-"}</div>,
-        // },
-        {
-          accessorKey: "pricing.dayPass",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Day Pass</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={row.original?.pricing?.dayPass ?? 0}
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        dayPass: numVal,
-                      },
-                    });
-                  }}
-                  className="w-24 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.pricing?.dayPass ?? "-"}</div>;
-          },
-        },
-        {
-          accessorKey: "pricing.perSeat",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Per Seat</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={row.original?.pricing?.perSeat ?? 0}
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        perSeat: numVal,
-                      },
-                    });
-                  }}
-                  className="w-24 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.pricing?.perSeat ?? "-"}</div>;
-          },
-        },
-        {
-          accessorKey: "pricing.dedicatedDesk",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Dedicated Desk</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={row.original?.pricing?.dedicatedDesk ?? 0}
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        dedicatedDesk: numVal,
-                      },
-                    });
-                  }}
-                  className="w-24 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.pricing?.dedicatedDesk ?? "-"}</div>;
-          },
-        },
-        {
-          accessorKey: "pricing.flexiDesk",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Flexi Desk</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={row.original?.pricing?.flexiDesk ?? 0}
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        flexiDesk: numVal,
-                      },
-                    });
-                  }}
-                  className="w-24 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.pricing?.flexiDesk ?? "-"}</div>;
-          },
-        },
-        {
-          accessorKey: "pricing.privateCabin",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Private Cabin</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={row.original?.pricing?.privateCabin ?? 0}
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        privateCabin: numVal,
-                      },
-                    });
-                  }}
-                  className="w-24 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.pricing?.privateCabin ?? "-"}</div>;
-          },
-        },
-        {
-          accessorKey: "pricing.vo",
-          header: ({ column }) => (
-            <SortableHeader column={column}>VO</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            if (userLevel === "operator") {
-              return (
-                <InlineCellInput
-                  value={row.original?.pricing?.vo ?? 0}
-                  type="number"
-                  onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        vo: numVal,
-                      },
-                    });
-                  }}
-                  className="w-24 mx-auto"
-                />
-              );
-            }
-            return <div>{row.original?.pricing?.vo ?? "-"}</div>;
-          },
-        },
-        {
-          accessorKey: "timing.operationalHrs",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Operational Hrs</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <div>{row.original?.timing?.operationalHrs ?? "-"}</div>
-          ),
-        },
-        {
-          accessorKey: "specs.area",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Area (sq.ft.)</SortableHeader>
-          ),
-          cell: ({ row }) => <div>{row.original?.specs?.area ?? "-"}</div>,
-        },
-        {
-          accessorKey: "specs.workingSizes",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Working Sizes</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell>{formatList(row.original?.specs?.workingSizes)}</TextCell>
-          ),
-        },
-        {
-          accessorKey: "facilities",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Facilities</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell className="min-w-[240px]">
-              {formatList(row.original?.facilities)}
-            </TextCell>
-          ),
-        },
-        {
-          accessorKey: "timing.openTime",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Open Time</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <div>{formatTime(row.original?.timing?.openTime)}</div>
-          ),
-        },
-        {
-          accessorKey: "timing.closeTime",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Close Time</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <div>{formatTime(row.original?.timing?.closeTime)}</div>
-          ),
-        },
-        {
-          accessorKey: "timing.openDays",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Open Days</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <div>{formatOpenDays(row.original?.timing?.openDays)}</div>
-          ),
-        },
-        {
-          accessorKey: "location.address",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Address</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell className="min-w-[280px]">
-              {row.original?.location?.address}
-            </TextCell>
-          ),
-        },
-        {
-          accessorKey: "location.area",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Area - Micro Market</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell>{row.original?.location?.area}</TextCell>
-          ),
-        },
-        {
-          accessorKey: "location.city",
-          header: ({ column }) => (
-            <SortableHeader column={column}>City</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell>{row.original?.location?.city}</TextCell>
-          ),
-        },
-        {
-          accessorKey: "location.state",
-          header: ({ column }) => (
-            <SortableHeader column={column}>State</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell>{row.original?.location?.state}</TextCell>
-          ),
-        },
-        {
-          accessorKey: "location.country",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Country</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell>{row.original?.location?.country}</TextCell>
-          ),
-        },
-        {
-          accessorKey: "location.postalCode",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Postal Code</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell>{row.original?.location?.postalCode}</TextCell>
-          ),
-        },
-        {
-          accessorKey: "location.lat",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Latitude</SortableHeader>
-          ),
-          cell: ({ row }) => <div>{row.original?.location?.lat ?? "-"}</div>,
-        },
-        {
-          accessorKey: "location.lng",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Longitude</SortableHeader>
-          ),
-          cell: ({ row }) => <div>{row.original?.location?.lng ?? "-"}</div>,
-        },
-        {
-          accessorKey: "person.name",
-          header: ({ column }) => (
-            <SortableHeader column={column}>POC Name</SortableHeader>
-          ),
-          cell: ({ row }) => <TextCell>{row.original?.person?.name}</TextCell>,
-        },
-        {
-          accessorKey: "person.email",
-          header: ({ column }) => (
-            <SortableHeader column={column}>POC Email</SortableHeader>
-          ),
-          cell: ({ row }) => <TextCell>{row.original?.person?.email}</TextCell>,
-        },
-        {
-          accessorKey: "person.contactNo",
-          header: ({ column }) => (
-            <SortableHeader column={column}>POC Contact</SortableHeader>
-          ),
-          cell: ({ row }) => (
-            <TextCell>{row.original?.person?.contactNo}</TextCell>
-          ),
-        },
-        {
-          accessorKey: "person.role",
-          header: ({ column }) => (
-            <SortableHeader column={column}>POC Role</SortableHeader>
-          ),
-          cell: ({ row }) => <TextCell>{row.original?.person?.role}</TextCell>,
-        },
-        // {
-        //   accessorKey: "description",
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column}>Description</SortableHeader>
-        //   ),
-        //   cell: ({ row }) => (
-        //     <TextCell className="min-w-[260px]">
-        //       {row.original?.description}
-        //     </TextCell>
-        //   ),
-        // },
-        // {
-        //   accessorKey: "createdAt",
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column}>Created At</SortableHeader>
-        //   ),
-        //   cell: ({ row }) => <div>{formatDateTime(row.original?.createdAt)}</div>,
-        // },
-        // {
-        //   accessorKey: "updatedAt",
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column}>Updated At</SortableHeader>
-        //   ),
-        //   cell: ({ row }) => <div>{formatDateTime(row.original?.updatedAt)}</div>,
-        // },
-      ].filter((col) => {
-        if (userLevel === "operator") {
-          const allowedOperatorColumns = [
-            "serialNo",
-            "name",
-            "seats.booked",
-            "price",
-            "pricing.dayPass",
-            "pricing.perSeat",
-            "pricing.dedicatedDesk",
-            "pricing.flexiDesk",
-            "pricing.privateCabin",
-            "pricing.vo",
-          ];
-          return (
-            "accessorKey" in col &&
-            allowedOperatorColumns.includes(col.accessorKey as string)
-          );
-        }
-        return (
-          userLevel !== "operator" ||
-          !("accessorKey" in col && col.accessorKey === "operator")
-        );
-      }),
+      ],
     [
       isUpdating,
       limit,

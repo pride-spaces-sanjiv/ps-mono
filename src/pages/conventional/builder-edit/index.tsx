@@ -69,8 +69,10 @@ export default function BuilderEditPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="my-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+      <div className="max-w-4xl mx-auto">
+        <div className="my-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+        </div>
       </div>
       <div className="mx-auto w-full max-w-4xl py-8">
         <form
@@ -152,7 +154,7 @@ export default function BuilderEditPage() {
 
           <div className="col-span-full flex justify-end">
             <div className="flex items-center gap-4">
-              <label className="text-sm text-white">Active Builder</label>
+              <label className="text-sm text-muted-foreground">Active Builder</label>
               <Switch
                 key={defaultValues?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"

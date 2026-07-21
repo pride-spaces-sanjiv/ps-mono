@@ -10,6 +10,7 @@ import { amenitySchema, type AmenitySchema } from "@/utils/schemas/amenity";
 import { queryKeys } from "@/utils/query-keys";
 import AmenityIconSelector from "@/components/amenity/selector";
 import FormField from "@/components/form/field";
+import FormSectionTitle from "@/components/form/section/title";
 import ActionButton from "@/components/buttons/action-btn";
 import { datifyObjectValues } from "@/utils/object/datify";
 
@@ -70,8 +71,10 @@ export default function EditAmenity() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center my-4">
-        <h1 className="text-2xl font-bold">{watch("name", "")}</h1>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center my-4">
+          <h1 className="text-2xl font-bold">{watch("name", "") || "Edit Amenity"}</h1>
+        </div>
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
         <form
@@ -82,14 +85,7 @@ export default function EditAmenity() {
         >
           {/* SECTION: Amenity Details */}
 
-          <div className="col-span-full  mb-8 ">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-semibold  italic text-white/90 tracking-wide ">
-                Edit Amenity
-              </h1>
-              <div className="flex-1 border-t border-muted-foreground/20"></div>
-            </div>
-          </div>
+          <FormSectionTitle>Edit Amenity</FormSectionTitle>
 
           <FormField
             label="Name"
@@ -111,7 +107,7 @@ export default function EditAmenity() {
           {/* Status */}
           <div className="col-span-full flex gap-8">
             <div className="flex items-center gap-4">
-              <label className="text-white text-sm">{"Active Status"}</label>
+              <label className="text-muted-foreground text-sm">{"Active Status"}</label>
               <Switch
                 key={defaultValues?.isActive ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"

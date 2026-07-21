@@ -1,6 +1,8 @@
+import type { ObjectDepthKeys } from "@/types/object";
+
 export type Datified<
   T extends { [k: string]: any },
-  K extends (keyof T)[]
+  K extends (keyof T)[],
 > = Omit<T, K[number]> & { [P in K[number]]: Date };
 
 /**
@@ -10,15 +12,18 @@ export type Datified<
  */
 export const datifyObjectValues = <
   T extends { [k: string]: any },
-  K extends (keyof T)[]
+  K extends ObjectDepthKeys<T>[],
 >(
   data: T,
-  fields: [...K]
+  fields: [...K],
 ) => {
   try {
     const modified = { ...data };
     for (let i = 0; i < fields.length; i++) {
       const field = fields[i];
+      if (!Object.hasOwn(data, field)) {
+        continue;
+      }
       const value = data[field];
       if (typeof value === "string") {
         // @ts-ignore
