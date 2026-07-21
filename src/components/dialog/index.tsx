@@ -40,15 +40,17 @@ export function DialogModal({
 }: Partial<Props>) {
   return (
     <Dialog {...props}>
-      <DialogTrigger
-        {...triggerProps}
-        className={cn("", triggerProps?.className)}
-        asChild
-      >
-        {triggerProps?.children || (
-          <ActionButton variant="outline">Open Dialog</ActionButton>
-        )}
-      </DialogTrigger>
+      {(props.open === undefined || triggerProps?.children) && (
+        <DialogTrigger
+          {...triggerProps}
+          className={cn("", triggerProps?.className)}
+          asChild
+        >
+          {triggerProps?.children || (
+            <ActionButton variant="outline">Open Dialog</ActionButton>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent
         {...contentProps}
         className={cn(

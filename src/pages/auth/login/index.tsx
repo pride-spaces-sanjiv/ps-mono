@@ -462,40 +462,146 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* Custom Modern Tile Tabs (Selector) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-muted/40 p-1.5 rounded-2xl border border-border/20">
-              {validLoginTypes.map((type) => {
-                const Icon = type.icon;
-                const isSelected = loginAsParam === type.value;
-                return (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setSearchParams({ as: type.value })}
+            {/* Custom Modern Category Tabs */}
+            <div className="flex flex-col gap-3">
+              {/* Parent Category Tabs (Box Tiles) */}
+              <div className="grid grid-cols-3 gap-3 bg-muted/40 p-1.5 rounded-2xl border border-border/20">
+                {/* Pride Team */}
+                <button
+                  type="button"
+                  onClick={() => setSearchParams({ as: "admin" })}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center gap-2 rounded-xl p-3 text-center transition-all cursor-pointer",
+                    loginAsParam === "admin"
+                      ? "bg-card text-card-foreground shadow-md border border-border/30 font-semibold"
+                      : "hover:bg-muted text-muted-foreground hover:text-foreground font-medium"
+                  )}
+                >
+                  <ShieldCheck
                     className={cn(
-                      "relative flex flex-col items-center justify-center gap-2 rounded-xl p-3 text-center transition-all cursor-pointer",
-                      isSelected
-                        ? "bg-card text-card-foreground shadow-md border border-border/30"
-                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <Icon className={cn(
                       "size-5 transition-transform duration-300",
-                      isSelected ? "text-primary scale-110" : ""
-                    )} />
-                    <span className="text-xs font-semibold tracking-wide whitespace-nowrap">
-                      {type.label}
-                    </span>
-                    {isSelected && (
-                      <motion.div
-                        layoutId="activeTabGlow"
-                        className="absolute -bottom-1 left-1/4 right-1/4 h-[2px] rounded-full bg-primary"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      />
+                      loginAsParam === "admin" ? "text-primary scale-110" : ""
                     )}
-                  </button>
-                );
-              })}
+                  />
+                  <span className="text-xs font-semibold tracking-wide whitespace-nowrap">
+                    Pride Team
+                  </span>
+                  {loginAsParam === "admin" && (
+                    <motion.div
+                      layoutId="activeTopTabGlow"
+                      className="absolute -bottom-1 left-1/4 right-1/4 h-[2px] rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+
+                {/* Spaces (Parent Category) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (loginAsParam !== "operator" && loginAsParam !== "builder") {
+                      setSearchParams({ as: "operator" });
+                    }
+                  }}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center gap-2 rounded-xl p-3 text-center transition-all cursor-pointer",
+                    (loginAsParam === "operator" || loginAsParam === "builder")
+                      ? "bg-card text-card-foreground shadow-md border border-border/30 font-semibold"
+                      : "hover:bg-muted text-muted-foreground hover:text-foreground font-medium"
+                  )}
+                >
+                  <Building2
+                    className={cn(
+                      "size-5 transition-transform duration-300",
+                      (loginAsParam === "operator" || loginAsParam === "builder")
+                        ? "text-primary scale-110"
+                        : ""
+                    )}
+                  />
+                  <span className="text-xs font-semibold tracking-wide whitespace-nowrap">
+                    Spaces
+                  </span>
+                  {(loginAsParam === "operator" || loginAsParam === "builder") && (
+                    <motion.div
+                      layoutId="activeTopTabGlow"
+                      className="absolute -bottom-1 left-1/4 right-1/4 h-[2px] rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+
+                {/* Channel Partner */}
+                <button
+                  type="button"
+                  onClick={() => setSearchParams({ as: "channel" })}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center gap-2 rounded-xl p-3 text-center transition-all cursor-pointer",
+                    loginAsParam === "channel"
+                      ? "bg-card text-card-foreground shadow-md border border-border/30 font-semibold"
+                      : "hover:bg-muted text-muted-foreground hover:text-foreground font-medium"
+                  )}
+                >
+                  <Sparkles
+                    className={cn(
+                      "size-5 transition-transform duration-300",
+                      loginAsParam === "channel" ? "text-primary scale-110" : ""
+                    )}
+                  />
+                  <span className="text-xs font-semibold tracking-wide whitespace-nowrap">
+                    Channel Partner
+                  </span>
+                  {loginAsParam === "channel" && (
+                    <motion.div
+                      layoutId="activeTopTabGlow"
+                      className="absolute -bottom-1 left-1/4 right-1/4 h-[2px] rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+              </div>
+
+              {/* Sub-tab Toggler for Spaces (Covers full form width) */}
+              <AnimatePresence mode="wait">
+                {(loginAsParam === "operator" || loginAsParam === "builder") && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="w-full overflow-hidden"
+                  >
+                    <div className="w-full grid grid-cols-2 gap-1.5 p-1.5 rounded-xl bg-muted/60 border border-border/30">
+                      <button
+                        type="button"
+                        onClick={() => setSearchParams({ as: "operator" })}
+                        className={cn(
+                          "relative flex items-center justify-center gap-2 rounded-lg py-2 px-3 text-xs font-semibold transition-all cursor-pointer w-full text-center",
+                          loginAsParam === "operator"
+                            ? "bg-background text-foreground shadow-sm font-bold"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        <Globe className={cn("size-3.5", loginAsParam === "operator" && "text-primary")} />
+                        <span>Space Partner</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSearchParams({ as: "builder" })}
+                        className={cn(
+                          "relative flex items-center justify-center gap-2 rounded-lg py-2 px-3 text-xs font-semibold transition-all cursor-pointer w-full text-center",
+                          loginAsParam === "builder"
+                            ? "bg-background text-foreground shadow-sm font-bold"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        <Building2 className={cn("size-3.5", loginAsParam === "builder" && "text-primary")} />
+                        <span>Conventional Partner</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Login Form */}
