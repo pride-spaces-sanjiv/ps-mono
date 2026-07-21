@@ -25,18 +25,29 @@ const specsSchema = z.object({
   workingSizes: z.array(z.enum(workingSizes)).default([]),
 });
 
+// Terms
+export const termsSchema = z.object({
+  lockIn: z.string().optional(),
+  noticePeriod: z.string().optional(),
+  securityDeposit: z.string().optional(),
+});
+
 // Timing
 const timingSchema = z.object({
   openTime: z.date().optional(),
   closeTime: z.date().optional(),
-  openDays: z.array(
-    z
-      .number()
-      .int("Day must be an integer")
-      .positive("Day must be a positive integer")
-      .min(1, "Day must be atleast 1")
-      .max(7, "Day must be atmost 7"),
-  ),
+  openDays: z
+    .array(
+      z
+        .number()
+        .int("Day must be an integer")
+        .positive("Day must be a positive integer")
+        .min(1, "Day must be atleast 1")
+        .max(7, "Day must be atmost 7"),
+    )
+    .optional(),
+  openingDay: z.string().optional(),
+  closingDay: z.string().optional(),
   operationalSince: z
     .number("Operational Since must be a valid year")
     .int("Operational Since must be a valid year")
@@ -68,6 +79,7 @@ const flagsSchema = z.object({
   isSez: z.boolean().default(false).optional(),
   isVerified: z.boolean().default(false).optional(),
   isActive: z.boolean().default(false).optional(),
+  isVoService: z.boolean().default(false).optional(),
 });
 
 // --- Pricing
@@ -97,6 +109,7 @@ export const pricingSchema = z.object({
     .min(0, "Private cabin price must be a positive number")
     .default(0),
   vo: z.number().min(0, "VO price must be a positive number").default(0),
+  voService: z.string().optional(),
 });
 
 // --- Space Schema ---
@@ -116,13 +129,15 @@ export const spaceSchema = z.object({
   timing: timingSchema,
   seats: seatsSchema,
   flags: flagsSchema,
+  terms: termsSchema.optional(),
   description: z.string().optional(),
   rating: z.number().optional().default(0),
   reviews: z.number().optional().default(0),
   price: z
     .number()
     .min(0, "Price must be a positive integer")
-    .int("Price must be a positive integer"),
+    .int("Price must be a positive integer")
+    .optional(),
   pricing: pricingSchema,
   facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
   files: filesSchema.partial().optional(),
@@ -132,4 +147,6 @@ export const spaceSchema = z.object({
 // TypeScript Types (Optional but recommended)
 export type LocationSchema = z.infer<typeof locationSchema>;
 export type PricingSchema = z.infer<typeof pricingSchema>;
+export type TermsSchema = z.infer<typeof termsSchema>;
 export type SpaceSchema = z.infer<typeof spaceSchema>;
+

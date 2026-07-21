@@ -99,6 +99,7 @@ const SpaceCreatePage = () => {
         openDays: days.map((_, i) => i + 1).filter((_, i) => i < 7),
         openTime: defaultTime,
         closeTime: defaultTime,
+        operationalSince: undefined,
       },
 
       specs: {
@@ -119,6 +120,13 @@ const SpaceCreatePage = () => {
         isVerified: false,
         isOc: false,
         isSez: false,
+        isVoService: false,
+      },
+
+      terms: {
+        lockIn: "",
+        noticePeriod: "",
+        securityDeposit: "",
       },
 
       pricing: {
@@ -127,6 +135,7 @@ const SpaceCreatePage = () => {
         dedicatedDesk: 0,
         flexiDesk: 0,
         privateCabin: 0,
+        meetingRoom: 0,
         vo: 0,
       },
     },
@@ -424,13 +433,30 @@ const SpaceCreatePage = () => {
           />
 
           <FormField
-            label="Booked Seats"
+            label="Available Seats"
             labelPosition="embedded"
             type="number"
             {...register("seats.booked", {
               valueAsNumber: true,
             })}
             error={errors.seats?.booked}
+          />
+
+          <FormField
+            label="Occupancy (%)"
+            labelPosition="embedded"
+            value={`${
+              (watch("seats.total") || 0) > 0
+                ? (
+                    (((watch("seats.total") || 0) -
+                      (watch("seats.booked") || 0)) /
+                      (watch("seats.total") || 1)) *
+                    100
+                  ).toFixed(2)
+                : "0.00"
+            }%`}
+            readOnly
+            disabled
           />
           {/* Open Days */}
           {watch("specs.spaceType", "Flex") !== "MOS" && (
@@ -585,9 +611,19 @@ const SpaceCreatePage = () => {
             />
           </FormField>
 
+          {/* Operational Since (year) */}
+          <FormField
+            label="Operational Since (year)"
+            labelPosition="embedded"
+            placeholder="2024"
+            type="number"
+            {...register("timing.operationalSince", { valueAsNumber: true })}
+            error={errors.timing?.operationalSince}
+          />
+
           {/* Area */}
           <FormField
-            label="Centre Area (in sq.ft)"
+            label="Centre Area In Sq. Ft. (approx)"
             labelPosition="embedded"
             placeholder="500"
             type="number"
@@ -609,19 +645,19 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.dayPass")}
+            {...register("pricing.dayPass", { valueAsNumber: true })}
             error={errors.pricing?.dayPass}
           />
 
           <FormField
-            label="Per Seat"
+            label="Meeting Room"
             labelPosition="embedded"
-            placeholder="300"
+            placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.perSeat")}
-            error={errors.pricing?.perSeat}
+            {...register("pricing.meetingRoom", { valueAsNumber: true })}
+            error={errors.pricing?.meetingRoom}
           />
 
           <FormField
@@ -631,44 +667,105 @@ const SpaceCreatePage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.dedicatedDesk")}
+            {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
             error={errors.pricing?.dedicatedDesk}
           />
 
           <FormField
-            label="Flexi Desk"
+            label="Flexi/Hot Desk"
             labelPosition="embedded"
             placeholder="3000"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.flexiDesk")}
+            {...register("pricing.flexiDesk", { valueAsNumber: true })}
             error={errors.pricing?.flexiDesk}
           />
 
           <FormField
-            label="Private Cabin"
+            label="Per Seat"
             labelPosition="embedded"
-            placeholder="3000"
+            placeholder="300"
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("pricing.privateCabin")}
-            error={errors.pricing?.privateCabin}
+            {...register("pricing.perSeat", { valueAsNumber: true })}
+            error={errors.pricing?.perSeat}
           />
 
           <FormField
-            label="VO"
+            key={`vo-service-${watch("flags.isVoService")}`}
+            label="VO Service"
             labelPosition="embedded"
-            placeholder="3000"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            {...register("pricing.vo")}
-            error={errors.pricing?.vo}
+            inputType="select"
+            items={[
+              { label: "YES", value: "true" },
+              { label: "NO", value: "false" },
+            ]}
+            error={errors?.flags?.isVoService}
+            pickerProps={{
+              wrapperProps: {
+                value: watch("flags.isVoService") ? "true" : "false",
+                onValueChange: (val) => {
+                  const isYes = val === "true";
+                  setValue("flags.isVoService", isYes, {
+                    shouldValidate: true,
+                  });
+                  if (!isYes) {
+                    setValue("pricing.vo", 0, { shouldValidate: true });
+                  }
+                },
+              },
+            }}
           />
+
+          {watch("flags.isVoService") && (
+            <FormField
+              label="VO Price Per month"
+              labelPosition="embedded"
+              placeholder="3000"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              {...register("pricing.vo", { valueAsNumber: true })}
+              error={errors.pricing?.vo}
+            />
+          )}
+
+          {/* Terms & Conditions */}
+          <FormSectionTitle>Terms & Conditions</FormSectionTitle>
+          <FormField
+            label="Lock In"
+            labelPosition="embedded"
+            placeholder="e.g. 1 Year / 6 Months"
+            {...register("terms.lockIn")}
+            error={errors.terms?.lockIn}
+          />
+          <FormField
+            label="Notice Period"
+            labelPosition="embedded"
+            placeholder="e.g. 3 Months"
+            {...register("terms.noticePeriod")}
+            error={errors.terms?.noticePeriod}
+          />
+          <FormField
+            label="Security Deposit"
+            labelPosition="embedded"
+            placeholder="e.g. 3 Months Rent"
+            {...register("terms.securityDeposit")}
+            error={errors.terms?.securityDeposit}
+          />
+
           {/* Location */}
           <FormSectionTitle>Location Details</FormSectionTitle>
+
+          <FormField
+            label="Location URL"
+            labelPosition="embedded"
+            placeholder="https://maps.app.goo.gl/..."
+            {...register("location.url")}
+            error={errors.location?.url}
+          />
 
           <FormField
             label="City"
