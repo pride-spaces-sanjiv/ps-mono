@@ -762,7 +762,7 @@ const SpaceCreatePage = () => {
           />
 
           {/* SECTION: Centre Point of Contact */}
-          
+
           <FormSectionTitle>Point of Contact Details</FormSectionTitle>
 
           <FormField
@@ -863,7 +863,9 @@ const SpaceCreatePage = () => {
             )}
 
             <div className="flex items-center gap-4">
-              <label className="text-muted-foreground text-sm">Same As Operator</label>
+              <label className="text-muted-foreground text-sm">
+                Same As Operator
+              </label>
               <Switch
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
                 onCheckedChange={(checked) => {

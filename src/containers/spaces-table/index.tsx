@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import {
@@ -172,7 +172,9 @@ const InlineCellInput = ({
   type = "text",
   onSave,
   className,
-}: InlineCellInputProps) => {
+  ...props
+}: InlineCellInputProps &
+  Omit<React.ComponentProps<typeof Input>, keyof InlineCellInputProps>) => {
   const [val, setVal] = useState(initialValue);
   const [loading, setLoading] = useState(false);
 
@@ -200,6 +202,7 @@ const InlineCellInput = ({
       onDoubleClick={(e) => e.stopPropagation()}
     >
       <Input
+        {...props}
         type={type}
         value={val}
         disabled={loading}
@@ -493,16 +496,21 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>Available Seats</SortableHeader>
           ),
           cell: ({ row }) => {
+            const value =
+              row.original?.seats?.total - (row.original?.seats?.booked ?? 0);
             if (userLevel === "operator") {
               return (
                 <InlineCellInput
-                  value={
-                    row.original?.seats?.total -
-                    (row.original?.seats?.booked ?? 0)
-                  }
+                  max={row.original?.seats?.total ?? 0}
+                  min={0}
+                  value={value}
                   type="number"
                   onSave={async (val) => {
-                    const numVal = Math.max(0, Math.floor(Number(val)));
+                    const numVal = Math.max(
+                      0,
+                      Math.floor(Number(val)),
+                      row.original?.seats?.total ?? 0,
+                    );
                     await handleUpdateField(row.original.id, {
                       seats: {
                         ...row.original.seats,
@@ -514,7 +522,7 @@ const SpacesTabledResults = ({
                 />
               );
             }
-            return <div>{row.original?.seats?.booked ?? "-"}</div>;
+            return <div>{value ?? "-"}</div>;
           },
         },
         {
@@ -530,7 +538,7 @@ const SpacesTabledResults = ({
                     ((row.original?.seats?.booked ?? 0) /
                       (row.original?.seats?.total ?? 0)) *
                     100
-                  ).toFixed(2)}{" "}
+                  ).toFixed(0)}{" "}
               %
             </div>
           ),
@@ -702,9 +710,7 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Area (sq.ft.)</SortableHeader>
           ),
-          cell: ({ row }) => (
-            <div>{row.original?.specs?.area ?? "-"}</div>
-          ),
+          cell: ({ row }) => <div>{row.original?.specs?.area ?? "-"}</div>,
         },
         {
           accessorKey: "specs.workingSizes",
@@ -712,9 +718,7 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>Working Sizes</SortableHeader>
           ),
           cell: ({ row }) => (
-            <TextCell>
-              {formatList(row.original?.specs?.workingSizes)}
-            </TextCell>
+            <TextCell>{formatList(row.original?.specs?.workingSizes)}</TextCell>
           ),
         },
         {
@@ -771,21 +775,27 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Area - Micro Market</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.location?.area}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.location?.area}</TextCell>
+          ),
         },
         {
           accessorKey: "location.city",
           header: ({ column }) => (
             <SortableHeader column={column}>City</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.location?.city}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.location?.city}</TextCell>
+          ),
         },
         {
           accessorKey: "location.state",
           header: ({ column }) => (
             <SortableHeader column={column}>State</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.location?.state}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.location?.state}</TextCell>
+          ),
         },
         {
           accessorKey: "location.country",

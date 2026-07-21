@@ -274,7 +274,7 @@ const SpaceEditPage = () => {
     if (res?.data?.data) {
       const modified = datifyObjectValues(
         { ...res?.data?.data, ...allUpdatedData },
-        ["createdAt", "updatedAt"],
+        ["createdAt", "updatedAt", "timing.closeTime", "timing.openTime"],
       );
       reset({
         ...modified,
@@ -464,7 +464,7 @@ const SpaceEditPage = () => {
 
         <form
           onSubmit={handleSubmit(onSubmit, (errors) => {
-            console.log("Space edit form error", errors);
+            console.log("Space edit form error", errors, watch());
           })}
           className="auto-form-grid"
         >
@@ -691,11 +691,19 @@ const SpaceEditPage = () => {
             label="Available Seats"
             labelPosition="embedded"
             type="number"
-            {...register("seats.booked", {
-              valueAsNumber: true,
-            })}
+            max={watch("seats.total", 0) ?? 0}
+            min={0}
+            key={`total-${watch("seats.total", 0) ?? 0}`}
+            defaultValue={
+              (watch("seats.total", 0) ?? 0) - (watch("seats.booked", 0) ?? 0)
+            }
+            onChange={(e) => {
+              const val = Number(e.currentTarget.value);
+              const booked = (watch("seats.total", 0) ?? 0) - val;
+              setValue("seats.booked", booked, { shouldValidate: true });
+            }}
             error={errors.seats?.booked}
-            {...changedFieldProps(mainChanges.allData, "bookedSeats")}
+            {...changedFieldProps(mainChanges.allData, "seats")}
           />
 
           {/* Open Days */}
@@ -1173,7 +1181,9 @@ const SpaceEditPage = () => {
               </div>
             )}
             <div className="flex items-center gap-4">
-              <label className="text-muted-foreground text-sm">Same As Operator</label>
+              <label className="text-muted-foreground text-sm">
+                Same As Operator
+              </label>
               <Switch
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
                 onCheckedChange={(checked) => {
