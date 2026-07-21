@@ -63,6 +63,8 @@ import { SelectPicker } from "@/components/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import TablePaginationFooter from "@/components/table/pagination";
+import { DialogModal } from "@/components/dialog";
+import ActionButton from "@/components/buttons/action-btn";
 type Props = {
   id: string | null;
   operatorId: string | null;
@@ -186,7 +188,10 @@ const InlineCellInput = ({
     if (val === initialValue) return;
     setLoading(true);
     try {
-      await onSave(type === "number" ? Number(val) : String(val));
+      const res = await onSave(type === "number" ? Number(val) : String(val));
+      if (res === false) {
+        setVal(initialValue);
+      }
     } catch {
       // Revert to initial value on failure
       setVal(initialValue);
@@ -204,9 +209,24 @@ const InlineCellInput = ({
       <Input
         {...props}
         type={type}
+        min={type === "number" ? 0 : props.min}
+        max={type === "number" ? 99999 : props.max}
         value={val}
         disabled={loading}
-        onChange={(e) => setVal(e.target.value)}
+        onChange={(e) => {
+          if (type === "number") {
+            const raw = e.target.value;
+            if (raw === "") {
+              setVal("" as any);
+              return;
+            }
+            let numVal = Math.max(0, Number(raw) || 0);
+            if (numVal > 99999) numVal = 99999;
+            setVal(numVal);
+          } else {
+            setVal(e.target.value);
+          }
+        }}
         onBlur={handleBlurOrEnter}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -216,25 +236,36 @@ const InlineCellInput = ({
         }}
         className={cn(
           "h-8 py-1 px-2 text-center text-sm border-border/50 bg-background/30 hover:bg-background/80 focus:bg-background shadow-none",
-          loading && "pr-8",
           className,
         )}
       />
-      {loading && (
-        <Loader2 className="absolute right-2 h-4 w-4 animate-spin text-muted-foreground" />
-      )}
     </div>
   );
 };
 
 const SpacesTabledResults = ({
+  id,
   operatorId,
-  className,
+  tableWrapperProps,
+  tableProps,
+  tableHeaderProps,
+  tableBodyProps,
+  tableRowProps,
+  tableHeadProps,
+  tableCellProps,
+  skeletonProps,
+  pagination,
+  prevButtonProps,
+  nextButtonProps,
   inputProps,
+  className,
   ...props
-}: Partial<Props>) => {
+}: Props) => {
   const navigate = useNavigate();
   const { userLevel } = useUser();
+
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(10);
 
   const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
@@ -245,11 +276,7 @@ const SpacesTabledResults = ({
   const {
     data: res,
     isFetching,
-    page,
-    setPage,
     refetch,
-    limit,
-    setLimit,
   } = usePaginatedQuery({
     limit: 20,
     queryKey: [
@@ -278,24 +305,36 @@ const SpacesTabledResults = ({
     mutationFn: updateSpaceApi,
   });
 
+  const [pendingInlineUpdate, setPendingInlineUpdate] = useState<{
+    spaceId: string;
+    updatedFields: Partial<Space>;
+    fullSpaceObj?: Space;
+    resolve?: (confirmed: boolean) => void;
+  } | null>(null);
+
   const handleUpdateField = async (
     spaceId: string,
     updatedFields: Partial<Space>,
+    fullSpaceObj?: Space,
   ) => {
     try {
       const res = await updateMutater({
         url: spaceId,
         body: updatedFields,
       });
-      if (res.status === 200) {
+      if (res.status === 200 || res.status === 201) {
         toast.success("Centre updated successfully");
         refetch();
       } else {
-        throw new Error();
+        throw new Error("Failed to update centre");
       }
-    } catch {
-      toast.error("Failed to update centre");
-      throw new Error();
+    } catch (err: any) {
+      console.error("Update space error:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to update centre",
+      );
     }
   };
 
@@ -523,11 +562,18 @@ const SpacesTabledResults = ({
                   type="number"
                   onSave={async (val) => {
                     const numVal = Math.max(0, Math.floor(Number(val)));
-                    await handleUpdateField(row.original.id, {
-                      seats: {
-                        ...row.original.seats,
-                        booked: (row.original?.seats?.total ?? 0) - numVal,
-                      },
+                    return new Promise<boolean>((resolve) => {
+                      setPendingInlineUpdate({
+                        spaceId: row.original.id,
+                        updatedFields: {
+                          seats: {
+                            ...row.original.seats,
+                            booked: (row.original?.seats?.total ?? 0) - numVal,
+                          },
+                        },
+                        fullSpaceObj: row.original,
+                        resolve,
+                      });
                     });
                   }}
                   className="w-20 mx-auto"
@@ -706,12 +752,19 @@ const SpacesTabledResults = ({
                   value={row.original?.pricing?.dayPass ?? 0}
                   type="number"
                   onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        dayPass: numVal,
-                      },
+                    const numVal = Math.min(99999, Math.max(0, Number(val)));
+                    return new Promise<boolean>((resolve) => {
+                      setPendingInlineUpdate({
+                        spaceId: row.original.id,
+                        updatedFields: {
+                          pricing: {
+                            ...row.original?.pricing,
+                            dayPass: numVal,
+                          },
+                        },
+                        fullSpaceObj: row.original,
+                        resolve,
+                      });
                     });
                   }}
                   className="w-24 mx-auto"
@@ -727,7 +780,34 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Meeting Room</SortableHeader>
           ),
-          cell: ({ row }) => <div>{row.original?.pricing?.meetingRoom ?? "-"}</div>,
+          cell: ({ row }) => {
+            if (userLevel === "operator") {
+              return (
+                <InlineCellInput
+                  value={row.original?.pricing?.meetingRoom ?? 0}
+                  type="number"
+                  onSave={async (val) => {
+                    const numVal = Math.min(99999, Math.max(0, Number(val)));
+                    return new Promise<boolean>((resolve) => {
+                      setPendingInlineUpdate({
+                        spaceId: row.original.id,
+                        updatedFields: {
+                          pricing: {
+                            ...row.original?.pricing,
+                            meetingRoom: numVal,
+                          },
+                        },
+                        fullSpaceObj: row.original,
+                        resolve,
+                      });
+                    });
+                  }}
+                  className="w-24 mx-auto"
+                />
+              );
+            }
+            return <div>{row.original?.pricing?.meetingRoom ?? "-"}</div>;
+          },
         },
         // 30. Dedicated Desk
         {
@@ -742,12 +822,19 @@ const SpacesTabledResults = ({
                   value={row.original?.pricing?.dedicatedDesk ?? 0}
                   type="number"
                   onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        dedicatedDesk: numVal,
-                      },
+                    const numVal = Math.min(99999, Math.max(0, Number(val)));
+                    return new Promise<boolean>((resolve) => {
+                      setPendingInlineUpdate({
+                        spaceId: row.original.id,
+                        updatedFields: {
+                          pricing: {
+                            ...row.original?.pricing,
+                            dedicatedDesk: numVal,
+                          },
+                        },
+                        fullSpaceObj: row.original,
+                        resolve,
+                      });
                     });
                   }}
                   className="w-24 mx-auto"
@@ -770,12 +857,19 @@ const SpacesTabledResults = ({
                   value={row.original?.pricing?.flexiDesk ?? 0}
                   type="number"
                   onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        flexiDesk: numVal,
-                      },
+                    const numVal = Math.min(99999, Math.max(0, Number(val)));
+                    return new Promise<boolean>((resolve) => {
+                      setPendingInlineUpdate({
+                        spaceId: row.original.id,
+                        updatedFields: {
+                          pricing: {
+                            ...row.original?.pricing,
+                            flexiDesk: numVal,
+                          },
+                        },
+                        fullSpaceObj: row.original,
+                        resolve,
+                      });
                     });
                   }}
                   className="w-24 mx-auto"
@@ -798,12 +892,19 @@ const SpacesTabledResults = ({
                   value={row.original?.pricing?.perSeat ?? 0}
                   type="number"
                   onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        perSeat: numVal,
-                      },
+                    const numVal = Math.min(99999, Math.max(0, Number(val)));
+                    return new Promise<boolean>((resolve) => {
+                      setPendingInlineUpdate({
+                        spaceId: row.original.id,
+                        updatedFields: {
+                          pricing: {
+                            ...row.original?.pricing,
+                            perSeat: numVal,
+                          },
+                        },
+                        fullSpaceObj: row.original,
+                        resolve,
+                      });
                     });
                   }}
                   className="w-24 mx-auto"
@@ -843,12 +944,19 @@ const SpacesTabledResults = ({
                   value={row.original?.pricing?.vo ?? 0}
                   type="number"
                   onSave={async (val) => {
-                    const numVal = Math.max(0, Number(val));
-                    await handleUpdateField(row.original.id, {
-                      pricing: {
-                        ...row.original?.pricing,
-                        vo: numVal,
-                      },
+                    const numVal = Math.min(99999, Math.max(0, Number(val)));
+                    return new Promise<boolean>((resolve) => {
+                      setPendingInlineUpdate({
+                        spaceId: row.original.id,
+                        updatedFields: {
+                          pricing: {
+                            ...row.original?.pricing,
+                            vo: numVal,
+                          },
+                        },
+                        fullSpaceObj: row.original,
+                        resolve,
+                      });
                     });
                   }}
                   className="w-24 mx-auto"
@@ -905,7 +1013,27 @@ const SpacesTabledResults = ({
             </div>
           ),
         },
-      ],
+      ].filter((col) => {
+        if (userLevel === "operator") {
+          const allowedOperatorColumns = [
+            "serialNo",
+            "name",
+            "seats.available",
+            "price",
+            "pricing.dayPass",
+            "pricing.meetingRoom",
+            "pricing.dedicatedDesk",
+            "pricing.flexiDesk",
+            "pricing.perSeat",
+            "pricing.vo",
+          ];
+          return (
+            "accessorKey" in col &&
+            allowedOperatorColumns.includes(col.accessorKey as string)
+          );
+        }
+        return true;
+      }),
     [
       isUpdating,
       limit,
@@ -1091,6 +1219,58 @@ const SpacesTabledResults = ({
         limit={limit}
         setLimit={setLimit}
         loading={isFetching}
+      />
+
+      <DialogModal
+        open={!!pendingInlineUpdate}
+        onOpenChange={(open) => {
+          if (!open) {
+            pendingInlineUpdate?.resolve?.(false);
+            setPendingInlineUpdate(null);
+          }
+        }}
+        showClose={false}
+        contentProps={{
+          onPointerDownOutside: (e) => e.preventDefault(),
+          onInteractOutside: (e) => e.preventDefault(),
+        }}
+        titleProps={{ children: "Confirm Changes" }}
+        descriptionProps={{
+          children: "Are you sure you want to confirm the changes you made?",
+        }}
+        footerProps={{
+          children: (
+            <div className="flex justify-end gap-2 mt-4">
+              <ActionButton
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  pendingInlineUpdate?.resolve?.(false);
+                  setPendingInlineUpdate(null);
+                }}
+              >
+                Cancel
+              </ActionButton>
+              <ActionButton
+                type="button"
+                loading={isUpdating}
+                onClick={async () => {
+                  if (pendingInlineUpdate) {
+                    pendingInlineUpdate.resolve?.(true);
+                    await handleUpdateField(
+                      pendingInlineUpdate.spaceId,
+                      pendingInlineUpdate.updatedFields,
+                      pendingInlineUpdate.fullSpaceObj,
+                    );
+                    setPendingInlineUpdate(null);
+                  }
+                }}
+              >
+                Confirm
+              </ActionButton>
+            </div>
+          ),
+        }}
       />
     </div>
   );

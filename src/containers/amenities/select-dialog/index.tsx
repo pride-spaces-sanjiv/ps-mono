@@ -15,6 +15,7 @@ import {
   type LucideIconComponent,
 } from "@/components/amenity/selector";
 import { embedInputClassName } from "@/components/form/field";
+import { DialogClose } from "@/components/ui/dialog";
 import { DialogModal } from "@/components/dialog";
 import ActionButton from "@/components/buttons/action-btn";
 import type { DatifiedAmenity } from "@/types/data/amenity";
@@ -58,16 +59,18 @@ export default function SelectAmenities({
   }, [debouncedSearch, amenitiesData, itemsOffset]);
 
   useEffect(() => {
-    setChecked(defaultAmenities || amenitiesData.map((dt) => dt.id as string));
-  }, [amenitiesData, defaultAmenities]);
-
-  useEffect(() => {
-    checked.length &&
-      onSelect?.(amenitiesData.filter((dt) => checked.includes(dt.id)));
-  }, [checked, amenitiesData]);
+    if (defaultAmenities) {
+      const currentJoined = (checked || []).slice().sort().join(",");
+      const nextJoined = (defaultAmenities || []).slice().sort().join(",");
+      if (currentJoined !== nextJoined) {
+        setChecked(defaultAmenities);
+      }
+    }
+  }, [defaultAmenities]);
 
   return (
     <DialogModal
+      showClose={false}
       {...dialogProps}
       closeProps={{ ref: dialogClose, ...dialogProps?.closeProps }}
       triggerProps={{
@@ -84,7 +87,15 @@ export default function SelectAmenities({
           </ActionButton>
         ),
       }}
-      titleProps={{ children: "", ...dialogProps?.titleProps }}
+      titleProps={{ children: "Select Amenities", ...dialogProps?.titleProps }}
+      footerProps={{
+        children: (
+          <DialogClose asChild>
+            <ActionButton type="button">Done</ActionButton>
+          </DialogClose>
+        ),
+        ...dialogProps?.footerProps,
+      }}
       contentProps={{
         ...dialogProps?.contentProps,
         className: cn("max-h-[80dvh]", dialogProps?.contentProps?.className),
@@ -130,15 +141,17 @@ export default function SelectAmenities({
                     className="flex gap-2 items-center"
                   >
                     <Checkbox
-                      defaultChecked={checked.includes(dt.id as string)}
-                      onCheckedChange={(checked) => {
-                        setChecked((prev) => [
-                          ...new Set(
-                            checked
-                              ? prev.concat(dt.id as string)
-                              : prev.filter((id) => id !== dt.id),
+                      checked={checked.includes(dt.id as string)}
+                      onCheckedChange={(isCheck) => {
+                        const nextChecked = isCheck
+                          ? [...new Set([...checked, dt.id as string])]
+                          : checked.filter((id) => id !== dt.id);
+                        setChecked(nextChecked);
+                        onSelect?.(
+                          amenitiesData.filter((dt) =>
+                            nextChecked.includes(dt.id),
                           ),
-                        ]);
+                        );
                       }}
                     />
                     <Tooltip>

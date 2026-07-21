@@ -86,29 +86,39 @@ const flagsSchema = z.object({
 export const pricingSchema = z.object({
   dayPass: z
     .number()
-    .min(0, "Day pass price must be a positive number")
+    .min(0, "Price must be positive")
+    .max(99999, "Price cannot exceed 5 digits (max 99999)")
     .default(0),
   perSeat: z
     .number()
-    .min(0, "Per seat price must be a positive number")
+    .min(0, "Price must be positive")
+    .max(99999, "Price cannot exceed 5 digits (max 99999)")
     .default(0),
   dedicatedDesk: z
     .number()
-    .min(0, "Dedicated desk price must be a positive number")
+    .min(0, "Price must be positive")
+    .max(99999, "Price cannot exceed 5 digits (max 99999)")
     .default(0),
   meetingRoom: z
     .number()
-    .min(0, "Meeting Room price must be a positive number")
+    .min(0, "Price must be positive")
+    .max(99999, "Price cannot exceed 5 digits (max 99999)")
     .default(0),
   flexiDesk: z
     .number()
-    .min(0, "Flexi desk price must be a positive number")
+    .min(0, "Price must be positive")
+    .max(99999, "Price cannot exceed 5 digits (max 99999)")
     .default(0),
   privateCabin: z
     .number()
-    .min(0, "Private cabin price must be a positive number")
+    .min(0, "Price must be positive")
+    .max(99999, "Price cannot exceed 5 digits (max 99999)")
     .default(0),
-  vo: z.number().min(0, "VO price must be a positive number").default(0),
+  vo: z
+    .number()
+    .min(0, "Price must be positive")
+    .max(99999, "Price cannot exceed 5 digits (max 99999)")
+    .default(0),
   voService: z.string().optional(),
 });
 
