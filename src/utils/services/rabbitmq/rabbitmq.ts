@@ -3,6 +3,7 @@ import { EmailToken } from "@/database/models/email.js";
 import { sleep } from "@/utils/time.js";
 import { NullableValue, PartialNullableObject } from "@/types/partial.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
+import { DumpCollectionName } from "@/utils/data/dump.js";
 
 const defaults = {
   sendMessage: {
@@ -221,6 +222,10 @@ type PaymentMQ = {
   orderId: string;
   amount: number;
 };
+type WaitingMigrationMQ = {
+  collection: DumpCollectionName;
+  fileId: string;
+};
 
 export const emailsMQ = new RabbitMQ<EmailMQ>({
   queue: "emails",
@@ -228,5 +233,8 @@ export const emailsMQ = new RabbitMQ<EmailMQ>({
 export const paymentsMQ = new RabbitMQ<PaymentMQ>({
   queue: "payments",
 });
+export const waitingMigrationMQ = new RabbitMQ<WaitingMigrationMQ>({
+  queue: "waiting-migrations",
+});
 
-export { RabbitMQ, EmailMQ, PaymentMQ };
+export { RabbitMQ, EmailMQ, PaymentMQ, WaitingMigrationMQ };

@@ -27,14 +27,19 @@ import {
   CSVHeadersValues,
   RowData,
 } from "../data/space-headers.js";
+import { Readable } from "stream";
 
 // Objects
 const spaceCounts = {} as Record<string, number>;
 
-const extractCSV = (csvFile: string) => {
+export const extractCSV = (csvFile: string | Readable) => {
   const rows: RowData[] = [];
+  const stream =
+    typeof csvFile === "string"
+      ? fs.createReadStream(path.resolve(csvFile))
+      : csvFile;
   return new Promise<typeof rows>((res, rej) => {
-    fs.createReadStream(path.resolve(csvFile))
+    stream
       .pipe(
         csv.parse({
           headers: (hds) =>
@@ -361,7 +366,8 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
         lat: 0,
         lng: 0,
         url:
-          spaceSchema.shape.location.shape.url.safeParse(row.locationurl)
+          spaceSchema.shape.location.shape.url
+            .safeParse(row.locationurl)
             .data?.trim() || undefined,
       },
       specs: generateSpecsData(row),
@@ -377,7 +383,7 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
 };
 
 export const parseBulkSpacesData = async (
-  fileName: string,
+  rows: RowData[],
   options: Partial<{
     postModification: Parameters<
       (ReturnType<typeof prepareData> & { slug: string })[]["map"]
@@ -389,7 +395,6 @@ export const parseBulkSpacesData = async (
   }> = {},
 ) => {
   try {
-    const rows = await extractCSV(fileName);
     const statesData = await getStatesData();
     const amenitiesData = await getAmenitiesData();
     const operatorsData = await getOperatorsData();
@@ -501,6 +506,8 @@ export const pushBulkSpacesData = async (
       "/",
       spaces.length,
     );
+
+    let updatedCount = 0;
     // if (remSpaces.length > 0) {
     //   // Get old data
     //   const oldDocs = await Space.find({
@@ -512,10 +519,11 @@ export const pushBulkSpacesData = async (
     //     remSpaces.map((sp) => ({
     //       updateOne: {
     //         filter: { slug: sp.slug },
-    //         update: { branches: sp.branches },
+    //         update: { ...sp },
     //       },
     //     })),
     //   );
+    //   updatedCount = updateRes.modifiedCount;
     //   console.log(
     //     "Updated spaces :",
     //     updateRes.modifiedCount,
@@ -525,7 +533,17 @@ export const pushBulkSpacesData = async (
     //     spaces.length,
     //   );
     // }
+
+    const stats = {
+      total: spaces.length,
+      success: insertedDocs.length + updatedCount,
+      inserted: insertedDocs.length,
+      updated: updatedCount,
+      failed: remSpaces.length - updatedCount,
+    };
+    return stats;
   } catch (err: any) {
     console.error("Failed to push bulk spaces data:", err);
+    return null;
   }
 };

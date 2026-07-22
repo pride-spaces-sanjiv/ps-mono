@@ -19,6 +19,7 @@ import {
   pushBulkOperatorsData,
 } from "../src/utils/scripts/bulk/operator";
 import {
+  extractCSV,
   parseBulkSpacesData,
   pushBulkSpacesData,
 } from "../src/utils/scripts/bulk/space.js";
@@ -40,7 +41,7 @@ const { default: convertedParsed } = await import(
 //   "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - KA Operator HQ.csv";
 // npm run test scripts/bulk -- --env=dev
 
-const rows: any[] = [];
+// const rows: any[] = [];
 // fs.createReadStream(path.resolve(csvFile))
 //   .pipe(csv.parse({ headers: true }))
 //   .on("error", (error) => console.error(error))
@@ -133,7 +134,8 @@ const convertData = (data: (typeof parsedData)[number]) => {
 // Spaces
 const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centres 2.csv";
 console.time("Scripting Time :");
-let bulkedSpaces = await parseBulkSpacesData(csvFile, {
+const rows = await extractCSV(csvFile);
+let bulkedSpaces = await parseBulkSpacesData(rows, {
   preFilter: (row) => row.operatorslug?.toLowerCase().includes("enzyme"),
 });
 // bulkedSpaces = bulkedSpaces?.filter((_, i) => i < 3) || null;
