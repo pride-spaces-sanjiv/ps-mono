@@ -9,6 +9,10 @@ import { sleep } from "@/utils/time.js";
 import { rustfsClient } from "../s3/instance.js";
 import { getFullMigrationS3Key } from "@/utils/data/s3/keys.js";
 import { Readable } from "stream";
+import path from "path";
+import { getDestinationFolder } from "@/utils/data/file.js";
+import { mediaTypes } from "@/utils/data/media.js";
+import { pipelineDBs } from "../pipeline/db.js";
 
 const spacesHandler = async (data: WaitingMigrationMQ) => {
   try {
@@ -16,7 +20,10 @@ const spacesHandler = async (data: WaitingMigrationMQ) => {
     const { Body } = await rustfsClient.send(
       new GetObjectCommand({
         Bucket: "pridespaces",
-        Key: key,
+        Key: path.join(
+          getDestinationFolder(mediaTypes.MIGRATIONPART),
+          `${data.fileId}.json`,
+        ),
       }),
     );
     const bodyString = await Body?.transformToString();
@@ -27,7 +34,26 @@ const spacesHandler = async (data: WaitingMigrationMQ) => {
     const rows = JSON.parse(bodyString);
     // const rows = await extractCSV(Body as Readable);
     const parsed = await parseBulkSpacesData(rows);
+    if (!parsed || parsed.length === 0) {
+      throw new Error("No valid data to process");
+    }
+
     const stats = await pushBulkSpacesData(parsed as any[]);
+    console.log("Migration part process completion stats :", data, stats);
+
+    await pipelineDBs.MIGRATION.updateData({
+      filter: { fileId: data.fileId.replace(/\-.*$/, "") },
+      updateData: {
+        $inc: {
+          stats: {
+            processed: parsed.length,
+            success: stats?.success || 0,
+            failed: stats?.failed || 0,
+          },
+        },
+      },
+    });
+    return true;
   } catch (err) {
     console.error("Error handling space migration data :", err);
     return false;

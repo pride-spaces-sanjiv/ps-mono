@@ -3,7 +3,8 @@ import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { MediaType, mediaTypes } from "@/utils/data/media.js";
 import path from "path";
 import fs from "fs";
-import { allowedExtensions, tempDir } from "@/middlewares/file.js";
+import { allowedExtensions } from "@/utils/data/media.js";
+import { tempDir } from "@/middlewares/file.js";
 import { rustfsClient } from "@/utils/services/s3/instance.js";
 import {
   HeadObjectCommand,
@@ -11,9 +12,18 @@ import {
   ErrorDetails,
   ErrorDetails$,
   S3ServiceException,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { pickObjectFields } from "@/utils/object/clean.js";
 import { MediaQuerySchema } from "@/database/schemas/media.js";
+import { newQueue } from "@henrygd/queue/rl";
+import * as spaceMigrationUtils from "@/utils/scripts/bulk/space.js";
+import { Readable } from "stream";
+import { pipelineDBs } from "@/utils/services/pipeline/db.js";
+import { Upload } from "@aws-sdk/lib-storage";
+import { getDestinationFolder } from "@/utils/data/file.js";
+import { RowData } from "@/utils/scripts/data/space-headers.js";
+import { waitingMigrationMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
 
 const getFile = async (
   req: ManagedRequest<any, MediaQuerySchema>,
@@ -143,6 +153,7 @@ const getUploadedFiles = async (
       message: successOptions?.message || "Files uploaded successfully",
       data: { files, bucket: "pridespaces" },
     });
+    return files;
   } catch (err) {
     console.error("Error getting uploaded files : ", { fileType }, err);
     ResponseHandler.handleError(res, {
@@ -258,6 +269,156 @@ export const uploadLayoutFiles = async (
     ResponseHandler.handleError(res, {
       errorType: "upload-layouts-error-failure",
       message: "Failed to upload layout files",
+    });
+  }
+};
+
+// Migration
+const migrationPostProcessQueue = newQueue(3, 2, 2000);
+
+const postMigrationUpload = async (
+  file: Pick<
+    Express.Multer.File,
+    | "filename"
+    | "fieldname"
+    | "destination"
+    | "path"
+    | "mimetype"
+    | "originalname"
+    | "size"
+  >,
+) => {
+  try {
+    const fileId = file.filename.replace(/\..*$/, "");
+
+    // Get stream of s3 file
+    const { Body } = await rustfsClient.send(
+      new GetObjectCommand({
+        Bucket: "pridespaces",
+        Key: file.path,
+      }),
+    );
+
+    if (!Body) throw new Error("No file or Empty file");
+
+    const rows = await spaceMigrationUtils.extractCSV(Body as Readable);
+
+    // Save initate data to DB
+    await pipelineDBs.MIGRATION.createData({
+      data: {
+        collection: "spaces",
+        fileId: fileId,
+        stats: {
+          total: rows.length,
+          processed: 0,
+          success: 0,
+          failed: 0,
+          parts: 0,
+          uploadedParts: 0,
+        },
+      },
+    });
+
+    // Upload parts to s3
+    // Parts creation of each max 100 rows
+    const parts = rows.reduce((prev, curr, i) => {
+      if (i % 100 === 0) {
+        prev.push([]);
+      }
+      prev[prev.length - 1].push(curr);
+      return prev;
+    }, [] as RowData[][]);
+    await pipelineDBs.MIGRATION.updateData({
+      filter: { fileId: fileId },
+      updateData: {
+        $set: { "stats.parts": parts.length },
+      },
+    });
+
+    // Part upload
+    parts.forEach((rows, i) => {
+      migrationPostProcessQueue.add(async () => {
+        const str = JSON.stringify(rows);
+        const partFileId = `${fileId}-${i + 1}`;
+        const upload = new Upload({
+          client: rustfsClient,
+          params: {
+            Bucket: "pridespaces",
+            Key: path.join(
+              getDestinationFolder(mediaTypes.MIGRATIONPART),
+              `${partFileId}.json`,
+            ),
+            Body: str,
+            ContentType: "application/json",
+          },
+        });
+
+        // Upload each part, update stats and send message to MQ
+        upload
+          .done()
+          .then(async (data) => {
+            await pipelineDBs.MIGRATION.updateData({
+              filter: { fileId: fileId },
+              updateData: {
+                $inc: { "stats.uploadedParts": 1 },
+              },
+            });
+            waitingMigrationMQ.sendMessage({
+              collection: "spaces",
+              fileId: partFileId,
+            });
+          })
+          .catch((err) => {
+            console.error(
+              "Failed uploading part",
+              {
+                fileId,
+                partFileId,
+                part: i + 1,
+                totalParts: parts.length,
+              },
+              err,
+            );
+          });
+      });
+    });
+  } catch (err) {
+    console.error("Error caused during post migration process :", err);
+  }
+};
+
+export const uploadMigrationFile = async (
+  req: ManagedRequest<any>,
+  res: ManagedResponse,
+) => {
+  try {
+    const files = await getUploadedFiles(req, res, {
+      fileType: mediaTypes.MIGRATIONFILE,
+      error: {
+        errorType: "upload-migration-file-error-failure",
+        message: "Failed to upload migration file",
+      },
+      notFound: {
+        errorType: "migration-files-not-uploaded",
+        message: "No migration files were uploaded",
+      },
+      success: {
+        message: "Migration file uploaded successfully",
+      },
+    });
+
+    // Post migration process
+    if (files) {
+      const file = files[0];
+
+      migrationPostProcessQueue.add(async () => {
+        postMigrationUpload(file);
+      });
+    }
+  } catch (err: any) {
+    ResponseHandler.handleError(res, {
+      errorType: "upload-migration-file-error-failure",
+      message: "Failed to upload migration file",
     });
   }
 };

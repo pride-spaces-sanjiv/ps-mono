@@ -23,6 +23,7 @@ import {
   SortOrder,
   Query,
 } from "mongoose";
+import { Migration } from "@/database/models/migration.js";
 // import { projectiseDoc } from "@/utils/mongoose/filters.js";
 
 const invalidateSimilarCaches = async (
@@ -468,6 +469,10 @@ export const pipelineDBs = {
   STATE: new PipelineDB({ name: State.collection.name, model: State }),
   CITY: new PipelineDB({ name: City.collection.name, model: City }),
   DUMP: new PipelineDB({ name: Dump.collection.name, model: Dump }),
+  MIGRATION: new PipelineDB({
+    name: Migration.collection.name,
+    model: Migration,
+  }),
 };
 
 export const getPipelineDBFromModelName = (name: string) => {

@@ -9,11 +9,7 @@ import { NextFunction } from "express";
 import { MediaType, mediaTypes } from "@/utils/data/media.js";
 import { existsSync, mkdirSync } from "fs";
 import { S3StorageEngine } from "@/utils/services/s3/instance.js";
-
-export const allowedExtensions = {
-  image: ["jpg", "jpeg", "png", "gif"],
-  layout: ["pdf"],
-};
+import { allowedExtensions } from "@/utils/data/media.js";
 
 export const tempDir = path.resolve(process.cwd(), "./tmp");
 
@@ -86,8 +82,14 @@ export const validateFileUpload = <K extends string>(
         fileFilter: multerFileFilter(fileType),
         ...uploadOptions,
         limits: {
-          files: fileType === "image" ? 5 : 3,
-          fileSize: fileType === "image" ? 4 * 1024 * 1024 : 10 * 1024 * 1024,
+          files:
+            fileType === "image" ? 5 : fileType === "migrationfile" ? 1 : 3,
+          fileSize:
+            fileType === "image"
+              ? 4 * 1024 * 1024
+              : fileType === "migrationfile"
+                ? 50 * 1024 * 1024
+                : 10 * 1024 * 1024,
           ...uploadOptions?.limits,
         },
       } as multer.Options;
