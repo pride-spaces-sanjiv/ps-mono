@@ -24,7 +24,7 @@ import { ModelToRaw } from "@/types/mongoose/document.js";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 
 type RawOfModel = ModelToRaw<typeof Migration>;
-type MigrationSchema = Omit<
+export type MigrationSchema = Omit<
   RawOfModel,
   keyof DefaultTimestampProps | "id" | "_id"
 >;
@@ -50,10 +50,7 @@ type CreateOptions = Omit<GetOptions, "preFilters"> &
   }>;
 
 export const getMigrations = async (
-  req: ManagedRequest<
-    any,
-    { [k: string]: any } & Partial<{ operator: string; branch: string }>
-  >,
+  req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
   options: GetOptions = {},
 ) => {
@@ -122,10 +119,6 @@ export const getMigrations = async (
     });
   } catch (err) {
     throw err;
-    // ResponseHandler.handleError(res, {
-    //   errorType: "get-spaces-error-failure",
-    //   message: "Failed to get spaces list",
-    // });
   }
 };
 

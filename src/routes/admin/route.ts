@@ -14,6 +14,7 @@ import { AmenityRouter } from "./amenity.js";
 import { DataRouter } from "./data.js";
 import { DumpRouter } from "./dump.js";
 import { FileRouter } from "./file.js";
+import { MigrationRouter } from "./migration.js";
 
 const router = Router();
 
@@ -30,6 +31,7 @@ router.use("/conventionals", ConventionalRouter);
 router.use("/branches", BranchRouter);
 router.use("/amenities", AmenityRouter);
 router.use("/files", FileRouter);
+router.use("/migrations", MigrationRouter);
 router.use("/dumps", DumpRouter);
 router.use("/", DataRouter);
 
