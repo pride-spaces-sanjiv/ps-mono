@@ -3,7 +3,11 @@ import {
   parseBulkSpacesData,
   pushBulkSpacesData,
 } from "@/utils/scripts/bulk/space.js";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 import { WaitingMigrationMQ, waitingMigrationMQ } from "./rabbitmq.js";
 import { sleep } from "@/utils/time.js";
 import { rustfsClient } from "../s3/instance.js";
@@ -13,6 +17,7 @@ import path from "path";
 import { getDestinationFolder } from "@/utils/data/file.js";
 import { mediaTypes } from "@/utils/data/media.js";
 import { pipelineDBs } from "../pipeline/db.js";
+import { listS3Objects } from "../s3/list-objects.js";
 
 const spacesHandler = async (data: WaitingMigrationMQ) => {
   try {
@@ -41,18 +46,58 @@ const spacesHandler = async (data: WaitingMigrationMQ) => {
     const stats = await pushBulkSpacesData(parsed as any[]);
     console.log("Migration part process completion stats :", data, stats);
 
-    await pipelineDBs.MIGRATION.updateData({
+    const updatedDoc = await pipelineDBs.MIGRATION.updateData({
       filter: { fileId: data.fileId.replace(/\-.*$/, "") },
       updateData: {
         $inc: {
-          stats: {
-            processed: parsed.length,
-            success: stats?.success || 0,
-            failed: stats?.failed || 0,
-          },
+          "stats.processed": parsed.length,
+          "stats.success": stats?.success || 0,
+          "stats.failed": stats?.failed || 0,
         },
       },
+      options: {
+        new: true,
+      },
     });
+
+    // Try deleting files if all processed
+    if (updatedDoc && updatedDoc.stats.total === updatedDoc.stats.processed) {
+      const migrationFileId = data.fileId.replace(/\-.*$/, "");
+
+      // Delete main csv
+      rustfsClient
+        .send(
+          new HeadObjectCommand({
+            Bucket: "pridespaces",
+            Key: `${migrationFileId}.csv`,
+          }),
+        )
+        .then((res) => {
+          rustfsClient.send(
+            new DeleteObjectCommand({
+              Bucket: "pridespaces",
+              Key: `${migrationFileId}.csv`,
+            }),
+          );
+        });
+
+      // Delete record parts
+      listS3Objects({
+        Prefix: path.join(
+          getDestinationFolder(mediaTypes.MIGRATIONPART),
+          `${migrationFileId}-`,
+        ),
+      }).then((parts) => {
+        parts.forEach((part) => {
+          rustfsClient.send(
+            new DeleteObjectCommand({
+              Bucket: "pridespaces",
+              Key: part.Key,
+            }),
+          );
+        });
+      });
+    }
     return true;
   } catch (err) {
     console.error("Error handling space migration data :", err);
@@ -62,8 +107,13 @@ const spacesHandler = async (data: WaitingMigrationMQ) => {
 
 const handler = async (data: WaitingMigrationMQ) => {
   try {
+    const collection = data.collection;
+    if (collection === "spaces") {
+      return await spacesHandler(data);
+    }
+    throw new Error("Invalid collection");
   } catch (err) {
-    console.log("Mail data handler failed :", err);
+    console.log("Migrations Queue message handler error :", err);
     return false;
   }
 };

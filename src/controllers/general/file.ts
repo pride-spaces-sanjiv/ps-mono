@@ -410,10 +410,9 @@ export const uploadMigrationFile = async (
     // Post migration process
     if (files) {
       const file = files[0];
-
-      migrationPostProcessQueue.add(async () => {
+      setTimeout(() => {
         postMigrationUpload(file);
-      });
+      }, 500);
     }
   } catch (err: any) {
     ResponseHandler.handleError(res, {
