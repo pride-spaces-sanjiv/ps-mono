@@ -7,6 +7,7 @@ import {
   getLayoutFile,
   uploadImageFiles,
   uploadLayoutFiles,
+  uploadMigrationFile,
 } from "@/controllers/general/file.js";
 import { mediaTypes } from "@/utils/data/media.js";
 import { mediaQuerySchema } from "@/database/schemas/media.js";
@@ -46,6 +47,11 @@ router.post(
   "/layout",
   validateFileUpload({ fileType: mediaTypes.LAYOUT }),
   uploadLayoutFiles,
+);
+router.post(
+  "/migration",
+  validateFileUpload({ fileType: mediaTypes.MIGRATIONFILE }),
+  uploadMigrationFile,
 );
 
 export { router as FileRouter };
