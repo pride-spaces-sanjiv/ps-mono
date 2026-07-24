@@ -127,7 +127,12 @@ export const handleMigrationQueue = async () => {
       const data: WaitingMigrationMQ = JSON.parse(str);
       console.log("Migrations Queue consumed :", data);
       const handled = await handler(data);
-      handled && waitingMigrationMQ.acknowledgement("yes", msg);
+      waitingMigrationMQ.acknowledgement(
+        handled ? "yes" : "no",
+        msg,
+        false,
+        !handled,
+      );
       await sleep(3);
     }
   });
