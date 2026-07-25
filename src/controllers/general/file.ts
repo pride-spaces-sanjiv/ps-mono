@@ -308,6 +308,7 @@ const postMigrationUpload = async (
       data: {
         collection: "spaces",
         fileId: fileId,
+        uploadedFileName: file.originalname,
         stats: {
           total: rows.length,
           processed: 0,

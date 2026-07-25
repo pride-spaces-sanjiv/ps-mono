@@ -34,6 +34,9 @@ const MigrationSchema = new Conn.Schema(
       unique: true,
       trim: true,
     },
+    uploadedFileName: {
+      type: String,
+    },
     stats: {
       type: StatsSchema,
       required: true,
