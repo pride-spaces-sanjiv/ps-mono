@@ -3,8 +3,6 @@ import {
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
 import { Conn } from "../mongoose.js";
-import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
-import { mediaStatuses, mediaTypes } from "@/utils/data/media.js";
 import { dumpCollectionNames } from "@/utils/data/dump.js";
 
 // --- Schema ---

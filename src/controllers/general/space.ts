@@ -27,6 +27,7 @@ import { ModelToRaw } from "@/types/mongoose/document.js";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { dumpUserAction } from "@/utils/data/dumpAction.js";
 import { dumpActions, dumpStatuses } from "@/utils/data/dump.js";
+import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
 
 type RawOfModel = ModelToRaw<typeof Space>;
 type GetOptions = Partial<{
@@ -228,7 +229,11 @@ export const createSpace = async (
     } = options;
 
     // Body creation
-    let body = { ...preBody, ...req.body } as SpaceSchema;
+    let body = {
+      ...preBody,
+      ...req.body,
+      fullKeyword: generateSpaceKeyword(req.body?.name || "") || undefined,
+    } as SpaceSchema;
     if (bodyHandle) {
       body = await bodyHandle(body);
     }
@@ -336,7 +341,11 @@ export const updateSpace = async (
     } = options;
 
     // Body creation
-    let body = { ...preBody, ...req.body } as SpaceSchema;
+    let body = {
+      ...preBody,
+      ...req.body,
+      fullKeyword: generateSpaceKeyword(req.body?.name || "") || undefined,
+    } as SpaceSchema;
     if (bodyHandle) {
       body = await bodyHandle(body);
     }

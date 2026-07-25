@@ -22,6 +22,7 @@ import { dumpStatuses } from "@/utils/data/dump.js";
 import { dumpAdminAction } from "@/utils/data/dumpAction.js";
 import { Types } from "mongoose";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
+import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -170,6 +171,8 @@ export const createSpace = async (
   try {
     const sessionUser = req.session.user;
     const body = req.body;
+    // @ts-ignore
+    body.fullKeyword = generateSpaceKeyword(req.body?.name || "") || undefined;
     const id = new Types.ObjectId().toHexString();
 
     // Handle dumping actions
@@ -250,6 +253,9 @@ export const updateSpace = async (
 ) => {
   try {
     const body = req.body;
+    // @ts-ignore
+    body.fullKeyword = generateSpaceKeyword(req.body?.name || "") || undefined;
+
     const sessionUser = req.session.user;
     let doc: ModelToDocument<typeof Space> | null = null;
 

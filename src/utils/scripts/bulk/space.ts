@@ -28,6 +28,7 @@ import {
   RowData,
 } from "../data/space-headers.js";
 import { Readable } from "stream";
+import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
 
 // Objects
 const spaceCounts = {} as Record<string, number>;
@@ -343,9 +344,12 @@ const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
   try {
     const opPerson =
       operator?.branches.find((br) => br.isPrimary)?.person || operator?.person;
-    const prepared: Partial<SpaceSchema> = {
+    const prepared: Partial<SpaceSchema & { fullKeyword?: string }> = {
       operator: operator?._id.toHexString() || "",
       name: validifyStringValues(row.centrename),
+      // @ts-ignore
+      fullKeyword:
+        generateSpaceKeyword(validifyStringValues(row.centrename)) || undefined,
       // email: validifyStringValues(row.hqemailforloginid || row.hqpocemail),
       person: {
         name: validifyStringValues(row.centerpocname || opPerson?.name),
@@ -440,7 +444,7 @@ export const parseBulkSpacesData = async (
 };
 
 export const pushBulkSpacesData = async (
-  spaces: SpaceSchema[],
+  spaces: (SpaceSchema & { fullKeyword?: string })[],
   fresh = false,
 ) => {
   const stats = {
@@ -481,8 +485,22 @@ export const pushBulkSpacesData = async (
     const insertedDocs = [] as ModelToRaw<typeof Space>[];
     const insertedErrors = [] as Error[];
     try {
+      // Keyword founds
+      const existings = (
+        await Space.find({
+          fullKeyword: {
+            $in: spaces
+              .map((sp) => sp.fullKeyword)
+              .filter((v): v is string => !!v),
+          },
+        })
+      ).map((doc) => doc.fullKeyword);
+      const forInsertSpaces = spaces.filter(
+        (sp) => sp.fullKeyword && !existings.includes(sp.fullKeyword),
+      );
+
       const insertedRes = await Space.insertMany(
-        spaces.filter((sp) => sp.slug),
+        forInsertSpaces.filter((sp) => sp.slug),
         { ordered: false, rawResult: true },
       );
       insertedDocs.push(
@@ -518,31 +536,31 @@ export const pushBulkSpacesData = async (
     );
 
     let updatedCount = 0;
-    // if (remSpaces.length > 0) {
-    //   // Get old data
-    //   const oldDocs = await Space.find({
-    //     slug: { $in: remSpaces.map((sp) => sp.slug) },
-    //   }).lean();
+    if (remSpaces.length > 0) {
+      // // Get old data
+      // const oldDocs = await Space.find({
+      //   fullKeyword: { $in: remSpaces.map((sp) => sp.fullKeyword) },
+      // }).lean();
 
-    //   // Cleaning branches data
-    //   const updateRes = await Space.bulkWrite(
-    //     remSpaces.map((sp) => ({
-    //       updateOne: {
-    //         filter: { slug: sp.slug },
-    //         update: { ...sp },
-    //       },
-    //     })),
-    //   );
-    //   updatedCount = updateRes.modifiedCount;
-    //   console.log(
-    //     "Updated spaces :",
-    //     updateRes.modifiedCount,
-    //     "/",
-    //     remSpaces.length,
-    //     "/",
-    //     spaces.length,
-    //   );
-    // }
+      // Cleaning branches data
+      const updateRes = await Space.bulkWrite(
+        remSpaces.map((sp) => ({
+          updateOne: {
+            filter: { fullKeyword: sp.fullKeyword },
+            update: { ...sp, slug: undefined },
+          },
+        })),
+      );
+      updatedCount = updateRes.modifiedCount;
+      console.log(
+        "Updated spaces :",
+        updateRes.modifiedCount,
+        "/",
+        remSpaces.length,
+        "/",
+        spaces.length,
+      );
+    }
     stats.success = insertedDocs.length + updatedCount;
     stats.inserted = insertedDocs.length;
     stats.updated = updatedCount;
