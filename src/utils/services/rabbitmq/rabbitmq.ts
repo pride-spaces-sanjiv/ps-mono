@@ -25,10 +25,9 @@ type RabbitMQConstructorParams = {
   reconnectMaxRetries: number;
 };
 
-class RabbitMQ<M extends { [k: string]: any } = {}> {
+// Main Conn Class
+class RabbitMQConn {
   url = `amqp://${process.env.RABBIT_USER}:${process.env.RABBIT_PASS}@${process.env.RABBIT_HOST}:${process.env.RABBIT_PORT}`;
-  /** @description name of the queue */
-  queue = "";
   /** @description amqp connection */
   connection: NullableValue<amqp.ChannelModel> = null;
   /** @description the amqp connection's channel */
@@ -37,15 +36,14 @@ class RabbitMQ<M extends { [k: string]: any } = {}> {
   reconnectDelay = 5000;
   /** @description reconnection max retries @default 10 */
   reconnectMaxRetries = 10;
+  isReconnecting = false;
 
-  constructor(params?: PartialNullableObject<RabbitMQConstructorParams>) {
+  constructor(
+    params?: PartialNullableObject<Omit<RabbitMQConstructorParams, "queue">>,
+  ) {
     try {
       const allParams = { ...params };
       this.url = allParams?.url?.trim() || this.url;
-      if (!allParams.queue?.trim()) {
-        throw new Error("Queue must be present", { cause: "queue-name" });
-      }
-      this.queue = allParams.queue.trim();
       this.reconnectDelay =
         Number(String(allParams?.reconnectDelay)) || this.reconnectDelay;
       this.reconnectMaxRetries =
@@ -53,14 +51,14 @@ class RabbitMQ<M extends { [k: string]: any } = {}> {
         this.reconnectMaxRetries;
       this.connect();
     } catch (err: any) {
-      console.log("Error instanciating rabbit-mq :", err.message);
+      console.error("Error instanciating rabbit-mq :", err);
     }
   }
 
-  async connect() {
+  async createConnChannel() {
     try {
       this.connection = await connect(this.url);
-      console.log("Connected to MQ");
+      console.log(this.isReconnecting ? "Reconnected" : "Connected", "to MQ");
 
       // Connection events
       this.connection.on("close", () => {
@@ -68,24 +66,46 @@ class RabbitMQ<M extends { [k: string]: any } = {}> {
         this.reconnect();
       });
       this.connection.on("error", (err) => {
-        console.log("MQ connection error :", err.message);
+        console.error("MQ connection error :", err);
         this.reconnect();
       });
 
       this.channel = await this.connection.createChannel();
       console.log("Created channel MQ");
 
-      await this.channel.assertQueue(this.queue);
-      console.log("Queue asserted MQ");
+      process.on("beforeExit", async () => {
+        this.cleanup();
+      });
       return this.channel;
     } catch (err: any) {
-      console.error("Error connecting to rabbit-mq :", err.message);
+      console.error(
+        "Error",
+        this.isReconnecting ? "re-connecting" : "connecting",
+        "to rabbit-mq :",
+        err,
+      );
+      throw err;
+    }
+  }
+
+  async connect() {
+    try {
+      await this.createConnChannel();
+      return this.channel;
+    } catch (err: any) {
+      // logger.connectErr("Error connecting to rabbit-mq :", err);
       await this.reconnect();
       return null;
     }
   }
 
   async reconnect() {
+    if (this.isReconnecting) {
+      // 🔒 prevent parallel reconnects
+      return;
+    }
+    this.isReconnecting = true;
+
     try {
       if (this.channel) {
         try {
@@ -93,31 +113,125 @@ class RabbitMQ<M extends { [k: string]: any } = {}> {
           await this.channel.recover();
           return;
         } catch (err: any) {
-          console.error("Error MQ channel recovery", err.message);
+          console.error("Error MQ channel recovery", err);
         }
       }
+
+      console.log("Starting to re-connect mq");
       for (let i = 1; i <= this.reconnectMaxRetries; i++) {
-        console.log("Retrying MQ connection", i, "time");
-        const conn = await this.connect();
-        if (conn) {
-          return;
-        }
+        try {
+          console.log("Retrying MQ connection", i, "time");
+          await this.cleanup();
+          await this.createConnChannel();
+          if (this.channel) {
+            return;
+          }
+        } catch (err) {}
         await sleep(Math.round(this.reconnectDelay));
       }
       throw new Error("Max retries attempted to re-connect MQ", {
         cause: "max-retries-exceeded",
       });
     } catch (err: any) {
-      console.error("Error re-connecting to rabbit-mq :", err.message);
+      console.error("Error re-connecting to rabbit-mq :", err);
+    } finally {
+      this.isReconnecting = false;
     }
   }
 
-  validateChannel() {
-    if (!this.connection) {
-      throw new Error("Invalid MQ connection", { cause: "invalid-connection" });
+  async cleanup() {
+    try {
+      if (this.channel) await this.channel.close();
+    } catch {}
+    try {
+      if (this.connection) {
+        this.connection.removeAllListeners();
+        await this.connection.close();
+      }
+    } catch {}
+  }
+}
+
+const defaultMQConn = new RabbitMQConn();
+
+// MQ Instance class
+class RabbitMQ<M extends { [k: string]: any } = {}> {
+  /** @description name of the queue */
+  queue = "";
+  /** @description amqp connection */
+  connection: NullableValue<amqp.ChannelModel> = null;
+  /** @description the amqp connection's channel */
+  channel: NullableValue<amqp.Channel> = null;
+  conn: RabbitMQConn | null = null;
+  retryChanneliseDelay = 1;
+  queueAsserted = false;
+  sendWaitQueue: M[] = [];
+  consumeWaitQueue: M[] = [];
+
+  constructor(
+    params?: PartialNullableObject<
+      Pick<RabbitMQConstructorParams, "queue" | "connection"> & {
+        conn: RabbitMQConn;
+        retryChanneliseDelay: number;
+      }
+    >,
+  ) {
+    try {
+      const allParams = { ...params };
+      if (!allParams.queue?.trim()) {
+        throw new Error("Queue must be present", { cause: "queue-name" });
+      }
+      this.queue = allParams.queue.trim();
+      this.conn = defaultMQConn;
+      if (allParams.conn) {
+        this.conn = allParams.conn;
+      }
+      this.retryChanneliseDelay = allParams.retryChanneliseDelay || 1;
+      this.channelise();
+    } catch (err: any) {
+      console.error("Error instanciating rabbit-mq :", err);
     }
-    if (!this.channel) {
-      throw new Error("Invalid MQ channel", { cause: "invalid-channel" });
+  }
+
+  async channelise() {
+    try {
+      this.connection = this.conn?.connection;
+      this.channel = this.conn?.channel;
+      if (!this.channel) {
+        throw new Error("Invalid channel", { cause: "invalid-channel" });
+      }
+      !this.queueAsserted && (await this.channel?.assertQueue(this.queue));
+      this.queueAsserted = true;
+      console.log("Queue asserted MQ", this.queue);
+    } catch (err) {
+      console.error("Channelization failed :", err);
+    }
+  }
+
+  async validateChannel(retries = 1) {
+    try {
+      await this.channelise();
+      if (!this.connection) {
+        throw new Error("Invalid MQ connection", {
+          cause: "invalid-connection",
+        });
+      }
+      if (!this.channel) {
+        throw new Error("Invalid MQ channel", { cause: "invalid-channel" });
+      }
+      return;
+    } catch (err) {
+      console.error("Error validating MQ channel :", err);
+      this.queueAsserted = false;
+      // Reconnect if validation fails
+      await this.conn?.reconnect?.();
+      await sleep(this.retryChanneliseDelay);
+      if (retries >= 5) {
+        throw new Error("Max retries attempted to validate MQ channel", {
+          cause: "validation-retries-limit-reached",
+        });
+      }
+      await this.validateChannel(retries + 1);
     }
   }
 
@@ -126,7 +240,7 @@ class RabbitMQ<M extends { [k: string]: any } = {}> {
     publishOptions?: Partial<amqp.Options.Publish>,
   ) {
     try {
-      this.validateChannel();
+      await this.validateChannel();
       const name = this.queue;
       if (!name.trim()) {
         throw new Error("Queue name must be present");
@@ -158,7 +272,7 @@ class RabbitMQ<M extends { [k: string]: any } = {}> {
     consumeOptions?: Partial<amqp.Options.Consume>,
   ) {
     try {
-      this.validateChannel();
+      await this.validateChannel();
       const name = this.queue;
       if (!name.trim()) {
         throw new Error("Queue name must be present");
@@ -172,6 +286,7 @@ class RabbitMQ<M extends { [k: string]: any } = {}> {
           try {
             msg && onMessage?.(msg);
           } catch (err) {
+            console.error("Failed consuming rabbit-mq message :", msg, err);
             msg && this.channel?.nack(msg, false, true);
           }
         },
@@ -189,7 +304,7 @@ class RabbitMQ<M extends { [k: string]: any } = {}> {
     requeue: Parameters<amqp.Channel["nack"]>[2] = true,
   ) {
     try {
-      this.validateChannel();
+      await this.validateChannel();
       if (!["yes", "no"].includes(acknowledge)) {
         throw new Error(
           `Invalid acknowledge method, got [${acknowledge}], required ("yes" | "no")`,
