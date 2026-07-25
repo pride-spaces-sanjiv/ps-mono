@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,6 +61,8 @@ const defaultTime = moment().hour(0).minute(0).toDate();
 const SpaceEditPage = () => {
   const { id } = useParams();
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const isConfirmedRef = useRef(false);
+  const seatsHasPressedEnter = useRef(false);
   const [pendingFormData, setPendingFormData] = useState<SpaceSchema | null>(
     null,
   );
@@ -89,7 +91,7 @@ const SpaceEditPage = () => {
   const { amenitiesData } = useAmenities();
 
   // Fetch Data using Centre ID
-  const { data: res, isFetching } = useQuery({
+  const { data: res, isFetching, refetch } = useQuery({
     queryKey: [queryKeys.SPACES, id],
     queryFn: () =>
       getSpaceById({ query: { withOperator: true }, url: `/${id}` }),
@@ -366,7 +368,91 @@ const SpaceEditPage = () => {
       mutationFn: recorrectDump,
     });
 
-  const onSubmit = async (body: SpaceSchema) => {
+  const activeInputHasPressedEnter = useRef<Record<string, boolean>>({});
+
+  const revertAllFormFields = () => {
+    if (res?.data?.data) {
+      const modified = datifyObjectValues(
+        { ...res?.data?.data, ...allUpdatedData },
+        ["createdAt", "updatedAt", "timing.closeTime", "timing.openTime"],
+      );
+      reset({
+        ...modified,
+        slug: modified?.references?.operator?.slug,
+        timing: {
+          ...modified?.timing,
+          openTime: modified?.timing?.openTime ?? defaultTime,
+          closeTime: modified?.timing?.closeTime ?? defaultTime,
+          openingDay:
+            modified?.timing?.openingDay ||
+            (modified?.timing?.openDays?.length
+              ? days[modified.timing.openDays[0] - 1]
+              : "Monday"),
+          closingDay:
+            modified?.timing?.closingDay ||
+            (modified?.timing?.openDays?.length
+              ? days[
+                  modified.timing.openDays[
+                    modified.timing.openDays.length - 1
+                  ] - 1
+                ]
+              : "Saturday"),
+        },
+        flags: {
+          ...modified?.flags,
+          isVoService:
+            modified?.flags?.isVoService ??
+            Boolean(modified?.pricing?.vo && modified?.pricing?.vo > 0),
+        },
+        person: {
+          ...(POCSameAsOperator
+            ? operatorData?.person
+            : res?.data?.data?.person),
+          ...allUpdatedData?.person,
+        },
+      } as any);
+    }
+  };
+
+  const autoSave = async () => {
+    handleSubmit(async (data) => {
+      try {
+        console.log("Auto-saving space...", data);
+        const saveRes = await mutateAsync({
+          url: id,
+          body: data,
+        });
+        if (saveRes.status === 200) {
+          toast.success("Changes saved successfully");
+          refetch();
+        }
+      } catch (err) {
+        console.error("Auto-save failed:", err);
+        toast.error("Failed to auto-save changes");
+        revertAllFormFields();
+      }
+    })();
+  };
+
+  const registerWithAutoSave = (
+    name: Parameters<typeof register>[0],
+    options?: Parameters<typeof register>[1],
+  ) => {
+    return register(name, {
+      ...options,
+      onBlur: (e) => {
+        options?.onBlur?.(e);
+        if (activeInputHasPressedEnter.current[name]) {
+          autoSave();
+        } else {
+          revertAllFormFields();
+        }
+        activeInputHasPressedEnter.current[name] = false;
+      },
+    });
+  };
+
+  const onSubmit = async (body: SpaceSchema, navigateOnSuccess = false) => {
     try {
       console.log("Space edit body", body);
 
@@ -384,12 +470,17 @@ const SpaceEditPage = () => {
 
       if (res.status === 200) {
         toast.success(`Centre ${isDump ? "approved" : "updated"} successfully`);
-        navigate(isDump ? "/notifications" : homeRoute);
+        if (navigateOnSuccess) {
+          navigate(isDump ? "/notifications" : homeRoute);
+        } else {
+          refetch();
+        }
         return;
       }
       throw new Error("Invalid response");
     } catch (err) {
       toast.error("Failed to update space");
+      revertAllFormFields();
     }
   };
 
@@ -498,15 +589,35 @@ const SpaceEditPage = () => {
         )}
 
         <form
-          onSubmit={handleSubmit(
-            (data) => {
-              setPendingFormData(data);
-              setIsConfirmDialogOpen(true);
-            },
-            (errors) => {
-              console.log("Space edit form error", errors, watch());
-            },
-          )}
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              const target = e.target as HTMLElement;
+              if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+                const input = target as HTMLInputElement;
+                const fieldName = input.name;
+                if (input.id === "availableSeats") {
+                  return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                if (fieldName) {
+                  activeInputHasPressedEnter.current[fieldName] = true;
+                }
+                input.blur();
+              }
+            } else if (e.key === "Escape") {
+              const target = e.target as HTMLElement;
+              if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+                const input = target as HTMLInputElement;
+                e.preventDefault();
+                e.stopPropagation();
+                input.blur();
+              }
+            }
+          }}
           className="auto-form-grid"
         >
           {/* SECTION: Centre Details */}
@@ -517,7 +628,7 @@ const SpaceEditPage = () => {
             label="Centre Name"
             labelPosition="embedded"
             placeholder="My Centre"
-            {...register("name")}
+            {...registerWithAutoSave("name")}
             error={errors.name}
             {...changedFieldProps(mainChanges.allData, "name")}
           />
@@ -528,7 +639,7 @@ const SpaceEditPage = () => {
             placeholder="my-centre-slug"
             disabled
             readOnly
-            {...register("slug")}
+            {...registerWithAutoSave("slug")}
             error={errors.slug}
             {...changedFieldProps(mainChanges.allData, "slug")}
           />
@@ -553,14 +664,16 @@ const SpaceEditPage = () => {
             pickerProps={{
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.category,
-                onValueChange: (val) =>
+                onValueChange: (val) => {
                   setValue(
                     "specs.category",
                     val as SpaceSchema["specs"]["category"],
                     {
                       shouldValidate: true,
                     },
-                  ),
+                  );
+                  autoSave();
+                },
               },
             }}
             {...changedFieldProps(mainChanges.allData, "category")}
@@ -575,14 +688,16 @@ const SpaceEditPage = () => {
             pickerProps={{
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.spaceType,
-                onValueChange: (val) =>
+                onValueChange: (val) => {
                   setValue(
                     "specs.spaceType",
                     val as SpaceSchema["specs"]["spaceType"],
                     {
                       shouldValidate: true,
                     },
-                  ),
+                  );
+                  autoSave();
+                },
               },
             }}
             error={errors.specs?.spaceType}
@@ -599,14 +714,16 @@ const SpaceEditPage = () => {
             pickerProps={{
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.grade,
-                onValueChange: (val) =>
+                onValueChange: (val) => {
                   setValue(
                     "specs.grade",
                     val as SpaceSchema["specs"]["grade"],
                     {
                       shouldValidate: true,
                     },
-                  ),
+                  );
+                  autoSave();
+                },
               },
             }}
             {...changedFieldProps(mainChanges.allData, "grade")}
@@ -635,6 +752,7 @@ const SpaceEditPage = () => {
                     setValue("flags.isSez", false, {
                       shouldValidate: true,
                     });
+                    autoSave();
                   },
                 },
               }}
@@ -662,6 +780,7 @@ const SpaceEditPage = () => {
                     setValue("flags.isOc", true, {
                       shouldValidate: true,
                     });
+                    autoSave();
                   },
                 },
               }}
@@ -703,6 +822,7 @@ const SpaceEditPage = () => {
                       shouldValidate: true,
                     });
                   }
+                  autoSave();
                 },
               },
             }}
@@ -743,6 +863,7 @@ const SpaceEditPage = () => {
                       shouldValidate: true,
                     });
                   }
+                  autoSave();
                 },
               },
             }}
@@ -752,6 +873,7 @@ const SpaceEditPage = () => {
           {/* Open Time */}
 
           <FormField
+            name="timing.openTime"
             label="Open Time"
             labelPosition="embedded"
             type="time"
@@ -767,6 +889,14 @@ const SpaceEditPage = () => {
                 shouldValidate: true,
               });
             }}
+            onBlur={() => {
+              if (activeInputHasPressedEnter.current["timing.openTime"]) {
+                autoSave();
+              } else {
+                revertAllFormFields();
+              }
+              activeInputHasPressedEnter.current["timing.openTime"] = false;
+            }}
             error={errors.timing?.openTime}
             {...changedFieldProps(mainChanges.allData, "openTime")}
           />
@@ -774,6 +904,7 @@ const SpaceEditPage = () => {
           {/* Close Time */}
 
           <FormField
+            name="timing.closeTime"
             label="Close Time"
             labelPosition="embedded"
             type="time"
@@ -793,6 +924,14 @@ const SpaceEditPage = () => {
                 },
               );
             }}
+            onBlur={() => {
+              if (activeInputHasPressedEnter.current["timing.closeTime"]) {
+                autoSave();
+              } else {
+                revertAllFormFields();
+              }
+              activeInputHasPressedEnter.current["timing.closeTime"] = false;
+            }}
             error={errors.timing?.closeTime}
             {...changedFieldProps(mainChanges.allData, "closeTime")}
           />
@@ -801,7 +940,7 @@ const SpaceEditPage = () => {
             label="Total Seats"
             labelPosition="embedded"
             type="number"
-            {...register("seats.total", {
+            {...registerWithAutoSave("seats.total", {
               valueAsNumber: true,
             })}
             error={errors.seats?.total}
@@ -809,19 +948,54 @@ const SpaceEditPage = () => {
           />
 
           <FormField
+            id="availableSeats"
             label="Available Seats"
             labelPosition="embedded"
             type="number"
             max={watch("seats.total", 0) ?? 0}
             min={0}
-            key={`total-${watch("seats.total", 0) ?? 0}`}
-            defaultValue={
+            value={
               (watch("seats.total", 0) ?? 0) - (watch("seats.booked", 0) ?? 0)
             }
             onChange={(e) => {
               const val = Number(e.currentTarget.value);
               const booked = (watch("seats.total", 0) ?? 0) - val;
               setValue("seats.booked", booked, { shouldValidate: true });
+            }}
+            onFocus={() => {
+              seatsHasPressedEnter.current = false;
+            }}
+            onBlur={async (e) => {
+              if (!seatsHasPressedEnter.current) {
+                if (res?.data?.data) {
+                  const currentBooked = res.data.data.seats?.booked ?? 0;
+                  setValue("seats.booked", currentBooked, { shouldValidate: true });
+                }
+              }
+              seatsHasPressedEnter.current = false;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                seatsHasPressedEnter.current = true;
+                const val = Number(e.currentTarget.value);
+                const booked = (watch("seats.total", 0) ?? 0) - val;
+                const currentBooked = res?.data?.data?.seats?.booked;
+                if (booked !== currentBooked) {
+                  const latestData = watch();
+                  setPendingFormData({
+                    ...latestData,
+                    seats: {
+                      ...latestData.seats,
+                      booked,
+                    },
+                  });
+                  isConfirmedRef.current = false;
+                  setIsConfirmDialogOpen(true);
+                }
+                e.currentTarget.blur();
+              }
             }}
             error={errors.seats?.booked}
             {...changedFieldProps(mainChanges.allData, "seats")}
@@ -896,7 +1070,9 @@ const SpaceEditPage = () => {
                   setValue(
                     "timing.openDays",
                     items.filter((val) => typeof val === "number"),
+                    { shouldValidate: true }
                   );
+                  autoSave();
                 }}
               />
             </FormField>
@@ -927,6 +1103,7 @@ const SpaceEditPage = () => {
                   amenities.map((a) => a.id),
                   { shouldValidate: true },
                 );
+                autoSave();
               }}
             >
               {(watch("facilities", [])?.length || 0) > 0 ? (
@@ -992,7 +1169,9 @@ const SpaceEditPage = () => {
                   items.filter(
                     (val) => typeof val === "string",
                   ) as WorkingSize[],
+                  { shouldValidate: true }
                 );
+                autoSave();
               }}
             />
           </FormField>
@@ -1003,7 +1182,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             placeholder="2024"
             type="number"
-            {...register("timing.operationalSince", { valueAsNumber: true })}
+            {...registerWithAutoSave("timing.operationalSince", { valueAsNumber: true })}
             error={errors.timing?.operationalSince}
             {...changedFieldProps(mainChanges.allData, "operationalSince")}
           />
@@ -1016,7 +1195,7 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...register("specs.area", { valueAsNumber: true })}
+            {...registerWithAutoSave("specs.area", { valueAsNumber: true })}
             error={errors.specs?.area}
             {...changedFieldProps(mainChanges.allData, "area")}
           />
@@ -1031,7 +1210,7 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.dayPass", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.dayPass", { valueAsNumber: true })}
             error={errors.pricing?.dayPass}
             {...changedFieldProps(pricingChanges.allData, "dayPass")}
           />
@@ -1043,7 +1222,7 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.meetingRoom", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.meetingRoom", { valueAsNumber: true })}
             error={errors.pricing?.meetingRoom}
           />
           <FormField
@@ -1054,7 +1233,7 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.dedicatedDesk", { valueAsNumber: true })}
             error={errors.pricing?.dedicatedDesk}
             {...changedFieldProps(pricingChanges.allData, "dedicatedDesk")}
           />
@@ -1066,7 +1245,7 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.flexiDesk", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.flexiDesk", { valueAsNumber: true })}
             error={errors.pricing?.flexiDesk}
           />
           <FormField
@@ -1077,7 +1256,7 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.perSeat", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.perSeat", { valueAsNumber: true })}
             error={errors.pricing?.perSeat}
             {...changedFieldProps(pricingChanges.allData, "perSeat")}
           />
@@ -1102,6 +1281,7 @@ const SpaceEditPage = () => {
                   if (!isYes) {
                     setValue("pricing.vo", 0, { shouldValidate: true });
                   }
+                  autoSave();
                 },
               },
             }}
@@ -1115,7 +1295,7 @@ const SpaceEditPage = () => {
               inputMode="decimal"
               min={0}
               max={99999}
-              {...register("pricing.vo", { valueAsNumber: true })}
+              {...registerWithAutoSave("pricing.vo", { valueAsNumber: true })}
               error={errors.pricing?.vo}
             />
           )}
@@ -1126,21 +1306,21 @@ const SpaceEditPage = () => {
             label="Lock In"
             labelPosition="embedded"
             placeholder="e.g. 1 Year / 6 Months"
-            {...register("terms.lockIn")}
+            {...registerWithAutoSave("terms.lockIn")}
             error={errors.terms?.lockIn}
           />
           <FormField
             label="Notice Period"
             labelPosition="embedded"
             placeholder="e.g. 3 Months"
-            {...register("terms.noticePeriod")}
+            {...registerWithAutoSave("terms.noticePeriod")}
             error={errors.terms?.noticePeriod}
           />
           <FormField
             label="Security Deposit"
             labelPosition="embedded"
             placeholder="e.g. 3 Months Rent"
-            {...register("terms.securityDeposit")}
+            {...registerWithAutoSave("terms.securityDeposit")}
             error={errors.terms?.securityDeposit}
           />
 
@@ -1151,7 +1331,7 @@ const SpaceEditPage = () => {
             label="Location URL"
             labelPosition="embedded"
             placeholder="https://maps.app.goo.gl/..."
-            {...register("location.url")}
+            {...registerWithAutoSave("location.url")}
             error={errors.location?.url}
             {...changedFieldProps(locationChanges.allData, "url")}
           />
@@ -1160,7 +1340,7 @@ const SpaceEditPage = () => {
             label="City"
             labelPosition="embedded"
             placeholder="Mumbai"
-            {...register("location.city")}
+            {...registerWithAutoSave("location.city")}
             error={errors.location?.city}
             {...changedFieldProps(locationChanges.allData, "city")}
           />
@@ -1169,7 +1349,7 @@ const SpaceEditPage = () => {
             label="State"
             labelPosition="embedded"
             placeholder="Maharashtra"
-            {...register("location.state")}
+            {...registerWithAutoSave("location.state")}
             error={errors.location?.state}
             {...changedFieldProps(locationChanges.allData, "state")}
           />
@@ -1178,7 +1358,7 @@ const SpaceEditPage = () => {
             label="Country"
             labelPosition="embedded"
             placeholder="India"
-            {...register("location.country")}
+            {...registerWithAutoSave("location.country")}
             error={errors.location?.country}
             {...changedFieldProps(locationChanges.allData, "country")}
           />
@@ -1187,7 +1367,7 @@ const SpaceEditPage = () => {
             label="Area - Micro Market"
             labelPosition="embedded"
             placeholder="Panvel"
-            {...register("location.area")}
+            {...registerWithAutoSave("location.area")}
             error={errors.location?.area}
             {...changedFieldProps(locationChanges.allData, "area")}
           />
@@ -1196,7 +1376,7 @@ const SpaceEditPage = () => {
             label="Zip Code"
             labelPosition="embedded"
             placeholder="349203"
-            {...register("location.postalCode")}
+            {...registerWithAutoSave("location.postalCode")}
             error={errors.location?.postalCode}
             {...changedFieldProps(locationChanges.allData, "postalCode")}
           />
@@ -1206,7 +1386,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             type="number"
             step="any"
-            {...register("location.lat")}
+            {...registerWithAutoSave("location.lat")}
             error={errors.location?.lat}
             {...changedFieldProps(locationChanges.allData, "lat")}
           />
@@ -1216,7 +1396,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             type="number"
             step="any"
-            {...register("location.lng")}
+            {...registerWithAutoSave("location.lng")}
             error={errors.location?.lng}
             {...changedFieldProps(locationChanges.allData, "lng")}
           />
@@ -1240,12 +1420,14 @@ const SpaceEditPage = () => {
                 lng: coords.lng || oldData.lng,
               };
               setValue("location", data, { shouldValidate: true });
+              autoSave();
             }}
             onLatLngFromURL={(stats) => {
               // console.log("Stats from maps url to pos :", stats);
               setValue("location.lat", stats.lat);
               setValue("location.lng", stats.lng);
-              setValue("location.url", stats.url);
+              setValue("location.url", stats.url, { shouldValidate: true });
+              autoSave();
             }}
           />
 
@@ -1253,7 +1435,7 @@ const SpaceEditPage = () => {
             label="Address"
             labelPosition="embedded"
             inputType="textarea"
-            {...register("location.address")}
+            {...registerWithAutoSave("location.address")}
             error={errors.location?.address}
             {...changedFieldProps(locationChanges.allData, "address")}
           />
@@ -1266,6 +1448,7 @@ const SpaceEditPage = () => {
                 if (!done) {
                   throw new Error("Incomplete");
                 }
+                autoSave();
                 return {
                   status: "completed",
                 };
@@ -1283,6 +1466,7 @@ const SpaceEditPage = () => {
                 if (!done) {
                   throw new Error("Incomplete");
                 }
+                autoSave();
                 return {
                   status: "completed",
                 };
@@ -1302,7 +1486,7 @@ const SpaceEditPage = () => {
             placeholder="John Doe"
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
-            {...register("person.name")}
+            {...registerWithAutoSave("person.name")}
             error={errors?.person?.name}
             {...changedFieldProps(personChanges.allData, "name")}
           />
@@ -1314,12 +1498,13 @@ const SpaceEditPage = () => {
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
             placeholder="john.doe@example.com"
-            {...register("person.email")}
+            {...registerWithAutoSave("person.email")}
             error={errors?.person?.email}
             {...changedFieldProps(personChanges.allData, "email")}
           />
 
           <FormField
+            name="person.contactNo"
             key={`poc-same-${POCSameAsOperator}-${defaultValues?.person?.contactNo}`}
             label="Telephone"
             labelPosition="embedded"
@@ -1338,6 +1523,14 @@ const SpaceEditPage = () => {
                 shouldValidate: true,
               });
             }}
+            onBlur={() => {
+              if (activeInputHasPressedEnter.current["person.contactNo"]) {
+                autoSave();
+              } else {
+                revertAllFormFields();
+              }
+              activeInputHasPressedEnter.current["person.contactNo"] = false;
+            }}
             error={errors?.person?.contactNo}
           />
 
@@ -1347,7 +1540,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
-            {...register("person.role")}
+            {...registerWithAutoSave("person.role")}
             error={errors?.person?.role}
             {...changedFieldProps(personChanges.allData, "role")}
           />
@@ -1357,10 +1550,13 @@ const SpaceEditPage = () => {
             <div className="flex items-center gap-4">
               <label className="text-muted-foreground text-sm">Active</label>
               <Switch
-                key={defaultValues?.flags?.isActive ? "active" : "inactive"}
+                key={watch("flags.isActive") ? "active" : "inactive"}
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-                defaultChecked={!!defaultValues?.flags?.isActive}
-                {...register("flags.isActive")}
+                checked={!!watch("flags.isActive")}
+                onCheckedChange={(checked) => {
+                  setValue("flags.isActive", checked, { shouldValidate: true });
+                  autoSave();
+                }}
               />
             </div>
 
@@ -1368,10 +1564,13 @@ const SpaceEditPage = () => {
               <label className="text-muted-foreground text-sm">Verified</label>
               <Switch
                 key={
-                  defaultValues?.flags?.isVerified ? "verified" : "unverified"
+                  watch("flags.isVerified") ? "verified" : "unverified"
                 }
-                defaultChecked={!!defaultValues?.flags?.isVerified}
-                {...register("flags.isVerified")}
+                checked={!!watch("flags.isVerified")}
+                onCheckedChange={(checked) => {
+                  setValue("flags.isVerified", checked, { shouldValidate: true });
+                  autoSave();
+                }}
               />
             </div>
             {selectedGrade === "B" && (
@@ -1379,7 +1578,11 @@ const SpaceEditPage = () => {
                 <label className="text-muted-foreground text-sm">OC</label>
                 <Switch
                   key={watch("flags.isOc") ? "oc" : "non-oc"}
-                  {...register("flags.isOc")}
+                  checked={!!watch("flags.isOc")}
+                  onCheckedChange={(checked) => {
+                    setValue("flags.isOc", checked, { shouldValidate: true });
+                    autoSave();
+                  }}
                 />
               </div>
             )}
@@ -1389,7 +1592,11 @@ const SpaceEditPage = () => {
                 <label className="text-muted-foreground text-sm">SEZ</label>
                 <Switch
                   key={watch("flags.isSez") ? "sez" : "non-sez"}
-                  {...register("flags.isSez")}
+                  checked={!!watch("flags.isSez")}
+                  onCheckedChange={(checked) => {
+                    setValue("flags.isSez", checked, { shouldValidate: true });
+                    autoSave();
+                  }}
                 />
               </div>
             )}
@@ -1399,8 +1606,10 @@ const SpaceEditPage = () => {
               </label>
               <Switch
                 className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+                checked={POCSameAsOperator}
                 onCheckedChange={(checked) => {
                   setPOCSameAsOperator(checked);
+                  autoSave();
                 }}
               />
             </div>
@@ -1457,18 +1666,21 @@ const SpaceEditPage = () => {
                 </DialogModal>
               )}
 
-              <ActionButton
-                type="submit"
-                loading={
-                  updateLoading ||
-                  approvalPending ||
-                  layoutUploadPending ||
-                  imageUploadPending
-                }
-                className="max-w-fit"
-              >
-                {isDump ? "Approve" : "Update Centre"}
-              </ActionButton>
+              {isDump && (
+                <ActionButton
+                  type="button"
+                  loading={
+                    updateLoading ||
+                    approvalPending ||
+                    layoutUploadPending ||
+                    imageUploadPending
+                  }
+                  onClick={() => handleSubmit((data) => onSubmit(data, true))()}
+                  className="max-w-fit"
+                >
+                  Approve
+                </ActionButton>
+              )}
             </div>
           </div>
 
@@ -1499,7 +1711,15 @@ const SpaceEditPage = () => {
 
           <DialogModal
             open={isConfirmDialogOpen}
-            onOpenChange={setIsConfirmDialogOpen}
+            onOpenChange={(open) => {
+              setIsConfirmDialogOpen(open);
+              if (!open && !isConfirmedRef.current) {
+                if (res?.data?.data) {
+                  const currentBooked = res.data.data.seats?.booked ?? 0;
+                  setValue("seats.booked", currentBooked, { shouldValidate: true });
+                }
+              }
+            }}
             showClose={false}
             contentProps={{
               onPointerDownOutside: (e) => e.preventDefault(),
@@ -1516,7 +1736,9 @@ const SpaceEditPage = () => {
                   <ActionButton
                     type="button"
                     variant="outline"
-                    onClick={() => setIsConfirmDialogOpen(false)}
+                    onClick={() => {
+                      setIsConfirmDialogOpen(false);
+                    }}
                   >
                     Cancel
                   </ActionButton>
@@ -1525,7 +1747,8 @@ const SpaceEditPage = () => {
                     loading={updateLoading || approvalPending}
                     onClick={async () => {
                       if (pendingFormData) {
-                        await onSubmit(pendingFormData);
+                        isConfirmedRef.current = true;
+                        await onSubmit(pendingFormData, false);
                         setIsConfirmDialogOpen(false);
                       }
                     }}
