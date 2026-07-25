@@ -5,10 +5,12 @@ export const workingSizes = [...linearSizes, ...cubicleSizes] as const;
 
 export type WorkingSize = (typeof workingSizes)[number];
 
+export const getDenotedWorkingSize = (size: WorkingSize) => {
+  return size.replace(/[0-9]+[.]?[0-9]*/g, (match) => match.concat("'"));
+};
+
 const getWorkingSizeLabel = (size: WorkingSize, isLinear: boolean) => {
-  size = size.replace(/[0-9]+[.]?[0-9]*/g, (match) =>
-    match.concat("'"),
-  ) as WorkingSize;
+  size = getDenotedWorkingSize(size) as WorkingSize;
   if (isLinear) {
     return `${size} - Linear Workstation`;
   }

@@ -23,6 +23,7 @@ import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
 import {
+  getDenotedWorkingSize,
   labelledWorkingSizes,
   workingSizes,
   type WorkingSize,
@@ -305,7 +306,11 @@ const SpaceEditPage = () => {
           closingDay:
             modified?.timing?.closingDay ||
             (modified?.timing?.openDays?.length
-              ? days[modified.timing.openDays[modified.timing.openDays.length - 1] - 1]
+              ? days[
+                  modified.timing.openDays[
+                    modified.timing.openDays.length - 1
+                  ] - 1
+                ]
               : "Saturday"),
         },
 
@@ -681,16 +686,22 @@ const SpaceEditPage = () => {
                   });
                   const closeVal = watch("timing.closingDay") || "Saturday";
                   const startIdx = days.indexOf(val as (typeof days)[number]);
-                  const endIdx = days.indexOf(closeVal as (typeof days)[number]);
+                  const endIdx = days.indexOf(
+                    closeVal as (typeof days)[number],
+                  );
                   if (startIdx !== -1 && endIdx !== -1) {
                     const range: number[] = [];
                     if (startIdx <= endIdx) {
-                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                      for (let i = startIdx; i <= endIdx; i++)
+                        range.push(i + 1);
                     } else {
-                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = startIdx; i < days.length; i++)
+                        range.push(i + 1);
                       for (let i = 0; i <= endIdx; i++) range.push(i + 1);
                     }
-                    setValue("timing.openDays", range, { shouldValidate: true });
+                    setValue("timing.openDays", range, {
+                      shouldValidate: true,
+                    });
                   }
                 },
               },
@@ -714,17 +725,23 @@ const SpaceEditPage = () => {
                     shouldValidate: true,
                   });
                   const openVal = watch("timing.openingDay") || "Monday";
-                  const startIdx = days.indexOf(openVal as (typeof days)[number]);
+                  const startIdx = days.indexOf(
+                    openVal as (typeof days)[number],
+                  );
                   const endIdx = days.indexOf(val as (typeof days)[number]);
                   if (startIdx !== -1 && endIdx !== -1) {
                     const range: number[] = [];
                     if (startIdx <= endIdx) {
-                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                      for (let i = startIdx; i <= endIdx; i++)
+                        range.push(i + 1);
                     } else {
-                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = startIdx; i < days.length; i++)
+                        range.push(i + 1);
                       for (let i = 0; i <= endIdx; i++) range.push(i + 1);
                     }
-                    setValue("timing.openDays", range, { shouldValidate: true });
+                    setValue("timing.openDays", range, {
+                      shouldValidate: true,
+                    });
                   }
                 },
               },
@@ -958,7 +975,8 @@ const SpaceEditPage = () => {
                     {(watch("specs.workingSizes", [])?.length || 0) > 0 ? (
                       <ChippedElements
                         elements={watch("specs.workingSizes", [])?.map(
-                          (s) => s + " mm",
+                          // (s) => s + " mm",
+                          (s) => getDenotedWorkingSize(s),
                         )}
                       />
                     ) : (
