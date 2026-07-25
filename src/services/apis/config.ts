@@ -7,7 +7,10 @@ const baseUrl2 = "https://ps-backend.sanjiv.ip-ddns.com";
 const mode = import.meta.env.VITE_ENV_MODE === "dev" ? "dev" : "prod";
 const token = (() => {
   try {
-    return secureStorage.localStorage.getItem<TokenData | null>("__aT__")?.token || "";
+    return (
+      secureStorage.localStorage.getItem<TokenData | null>("__aT__")?.token ||
+      ""
+    );
   } catch {
     return "";
   }
@@ -96,6 +99,11 @@ export const ADMIN_AMENITY = ADMIN.create({
 });
 export const ADMIN_DUMP = ADMIN.create({
   baseURL: baseUrl + "/admin/dumps",
+  headers: jsonContentHeadersAuth,
+  withCredentials: true,
+});
+export const ADMIN_MIGRATION = ADMIN.create({
+  baseURL: baseUrl + "/admin/migrations",
   headers: jsonContentHeadersAuth,
   withCredentials: true,
 });

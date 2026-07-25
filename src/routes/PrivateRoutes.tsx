@@ -7,7 +7,13 @@ import {
   type ReactNode,
 } from "react";
 
-import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import TopBarProgress from "react-topbar-progress-indicator";
 import { toast } from "sonner";
 // Hooks
@@ -50,6 +56,8 @@ const EditAmenity = lazy(() => import("@/pages/amenities/edit"));
 const Admins = lazy(() => import("@/pages/admins"));
 const AdminCreatePage = lazy(() => import("@/pages/admins/create"));
 const AdminEditPage = lazy(() => import("@/pages/admins/edit"));
+// Migrations
+const MigrationsPage = lazy(() => import("@/pages/migrations"));
 
 interface SuspensedViewProps {
   children: ReactNode;
@@ -67,7 +75,7 @@ const PrivateRoutes = () => {
     fetchCount,
     tokeInfoFetches,
   } = useUser();
-  const { } = useStatesCities();
+  const {} = useStatesCities();
 
   const AutoNavigateRender = useCallback(
     ({ El }: { El?: ReactNode }) => El,
@@ -125,7 +133,8 @@ const PrivateRoutes = () => {
   // 2. isFetching (user data query in flight)
   // 3. Token exists and valid but fetchCount is still 0 (right after login, waiting for first user data response)
   const hasToken = !!tokenStoreState.value?.token && !isExpired;
-  const stillWaiting = !tokeInfoFetches || isFetching || (hasToken && fetchCount === 0);
+  const stillWaiting =
+    !tokeInfoFetches || isFetching || (hasToken && fetchCount === 0);
 
   if (stillWaiting) {
     return (
@@ -154,7 +163,6 @@ const PrivateRoutes = () => {
       </div>
     );
   }
-
 
   // if (!hasAccess) {
   //   return <Navigate to="/dashboard" replace />;
@@ -338,6 +346,14 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <AutoNavigateRender El={<AdminEditPage />} />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path="/migrations"
+          element={
+            <SuspensedView>
+              <AutoNavigateRender El={<MigrationsPage />} />
             </SuspensedView>
           }
         />
