@@ -56,6 +56,19 @@ const InfoItem = ({
   </div>
 );
 
+const formatCompactArea = (value: number) => {
+  if (value >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(2).replace(/\.?0+$/, "")}B`;
+  }
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+  }
+  if (value >= 1_000) {
+    return `${(value / 1_000).toFixed(1).replace(/\.?0+$/, "")}K`;
+  }
+  return value.toLocaleString("en-IN");
+};
+
 export default function OperatorHome() {
   const navigate = useNavigate();
   const { userData, isFetching } = useUser();
@@ -112,7 +125,9 @@ export default function OperatorHome() {
     () => [
       {
         label: "Total Centres",
-        value: operator?.totalSpaces ?? 0,
+        value: isSpacesLoading
+          ? "..."
+          : (spacesRes?.data?.data?.metrics?.total ?? operator?.totalSpaces ?? 0),
         icon: Building2,
         accent: "from-teal-500/15 to-emerald-500/10",
       },
@@ -130,7 +145,7 @@ export default function OperatorHome() {
       },
       {
         label: "Total Area (Sq. Ft.)",
-        value: isSpacesLoading ? "..." : totalArea.toLocaleString("en-IN"),
+        value: isSpacesLoading ? "..." : formatCompactArea(totalArea),
         icon: Ruler,
         accent: "from-indigo-500/15 to-blue-500/10",
       },
@@ -153,6 +168,7 @@ export default function OperatorHome() {
       operator,
       uniqueCitiesCount,
       isSpacesLoading,
+      spacesRes,
       totalSeats,
       occupancyPercent,
       totalArea,

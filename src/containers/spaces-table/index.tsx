@@ -921,13 +921,12 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>VO Service</SortableHeader>
           ),
           cell: ({ row }) => {
-            const val =
-              row.original?.pricing?.voService ||
-              (row.original?.flags?.isVoService !== undefined
-                ? row.original?.flags?.isVoService
-                  ? "YES"
-                  : "NO"
-                : "-");
+            const isVo =
+              row.original?.flags?.isVoService ??
+              (row.original?.pricing?.voService
+                ? row.original.pricing.voService.toUpperCase() === "YES"
+                : false);
+            const val = isVo ? "Yes" : "No";
             return <TextCell>{val}</TextCell>;
           },
         },
@@ -938,6 +937,16 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>VO Price Per month</SortableHeader>
           ),
           cell: ({ row }) => {
+            const isVo =
+              row.original?.flags?.isVoService ??
+              (row.original?.pricing?.voService
+                ? row.original.pricing.voService.toUpperCase() === "YES"
+                : false);
+
+            if (!isVo) {
+              return <div>-</div>;
+            }
+
             if (userLevel === "operator") {
               return (
                 <InlineCellInput
@@ -963,7 +972,8 @@ const SpacesTabledResults = ({
                 />
               );
             }
-            return <div>{row.original?.pricing?.vo ?? "-"}</div>;
+            const price = row.original?.pricing?.vo;
+            return <div>{price ? price : "-"}</div>;
           },
         },
         // 35. Workstation size
@@ -1025,7 +1035,9 @@ const SpacesTabledResults = ({
             "pricing.dedicatedDesk",
             "pricing.flexiDesk",
             "pricing.perSeat",
+            "pricing.voService",
             "pricing.vo",
+            "flags.isActive",
           ];
           return (
             "accessorKey" in col &&
