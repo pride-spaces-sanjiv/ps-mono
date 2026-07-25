@@ -2,15 +2,9 @@ import { ResponseHandler } from "@/middlewares/request.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { MediaType, mediaTypes } from "@/utils/data/media.js";
 import path from "path";
-import fs from "fs";
-import { allowedExtensions } from "@/utils/data/media.js";
-import { tempDir } from "@/middlewares/file.js";
 import { rustfsClient } from "@/utils/services/s3/instance.js";
 import {
   HeadObjectCommand,
-  ListObjectsV2Command,
-  ErrorDetails,
-  ErrorDetails$,
   S3ServiceException,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
