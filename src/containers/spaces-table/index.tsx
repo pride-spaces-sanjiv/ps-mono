@@ -1,4 +1,4 @@
-import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import {
@@ -165,7 +165,7 @@ const formatList = (value?: string[] | readonly string[]) =>
 interface InlineCellInputProps {
   value: string | number;
   type?: "text" | "number";
-  onSave: (val: string | number) => Promise<void>;
+  onSave: (val: string | number) => Promise<boolean | void>;
   className?: string;
 }
 
@@ -179,12 +179,14 @@ const InlineCellInput = ({
   Omit<React.ComponentProps<typeof Input>, keyof InlineCellInputProps>) => {
   const [val, setVal] = useState(initialValue);
   const [loading, setLoading] = useState(false);
+  const hasPressedEnter = useRef(false);
 
   useEffect(() => {
     setVal(initialValue);
+    hasPressedEnter.current = false;
   }, [initialValue]);
 
-  const handleBlurOrEnter = async () => {
+  const handleSave = async () => {
     if (val === initialValue) return;
     setLoading(true);
     try {
@@ -197,6 +199,13 @@ const InlineCellInput = ({
       setVal(initialValue);
     } finally {
       setLoading(false);
+      hasPressedEnter.current = false;
+    }
+  };
+
+  const handleBlur = () => {
+    if (!hasPressedEnter.current) {
+      setVal(initialValue);
     }
   };
 
@@ -227,10 +236,18 @@ const InlineCellInput = ({
             setVal(e.target.value);
           }
         }}
-        onBlur={handleBlurOrEnter}
+        onBlur={handleBlur}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            handleBlurOrEnter();
+            e.preventDefault();
+            e.stopPropagation();
+            hasPressedEnter.current = true;
+            handleSave();
+            e.currentTarget.blur();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            setVal(initialValue);
             e.currentTarget.blur();
           }
         }}
