@@ -27,6 +27,7 @@ import {
   UsersIcon,
   CircleUser,
   type LucideIcon,
+  HardDriveUpload,
 } from "lucide-react";
 import { tokenStore, userStore } from "@/services/store/user";
 import { useUser } from "@/services/hooks/use-user";
@@ -46,7 +47,6 @@ type SidebarItem = {
 };
 
 type SidebarSubItem = {
-
   title: string;
   url: string;
   activeUrls?: string[];
@@ -60,6 +60,7 @@ const ADMIN_PERMISSIONS = [
   "team",
   "users",
   "notifications",
+  "migrations",
 ];
 
 const sidebarPermissions: Record<string, string[]> = {
@@ -67,12 +68,7 @@ const sidebarPermissions: Record<string, string[]> = {
   admin: ADMIN_PERMISSIONS,
   support: ADMIN_PERMISSIONS,
 
-  operator: [
-    "settings",
-    "dashboard",
-    "operators",
-    "notifications",
-  ],
+  operator: ["settings", "dashboard", "operators", "notifications"],
 
   builder: [],
 };
@@ -98,13 +94,11 @@ const items: SidebarItem[] = [
     // activeUrls: ["/operators", "/spaces"],
     tabs: [
       {
-
         title: "Operator",
         url: "/operators",
         activeUrls: ["/operators"],
       },
       {
-
         title: "Centre",
         url: "/spaces",
         activeUrls: ["/operators", "/spaces"],
@@ -118,19 +112,18 @@ const items: SidebarItem[] = [
     icon: Building2Icon,
     tabs: [
       {
-
         title: "Grade A",
         url: "/conventional?grade=A",
         activeUrls: ["/conventional?grade=A"],
       },
       {
-
         title: "Others",
         url: "/conventional?grade=other",
         activeUrls: ["/conventional?grade=other"],
       },
     ],
   },
+
   {
     id: "amenities",
     title: "Amenities",
@@ -155,6 +148,12 @@ const items: SidebarItem[] = [
     url: "/notifications",
     icon: BellIcon,
   },
+  {
+    id: "migrations",
+    title: "Migrations",
+    url: "/migrations",
+    icon: HardDriveUpload,
+  },
 ];
 
 export function AppSidebar() {
@@ -170,7 +169,7 @@ export function AppSidebar() {
 
     return items.filter((item) => allowed.includes(item.id));
   }, [userLevel]);
-  
+
   const expired =
     validateNumber(tokenState?.value?.expiry, { invalidValue: 0 }) <=
     Date.now();
@@ -241,9 +240,10 @@ export function AppSidebar() {
                         }
                       }}
                       className={({ isActive }) =>
-                        `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary ${isActive || isItemActive(item)
-                          ? "text-accent-foreground font-medium bg-muted/65"
-                          : ""
+                        `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary ${
+                          isActive || isItemActive(item)
+                            ? "text-accent-foreground font-medium bg-muted/65"
+                            : ""
                         }`
                       }
                     >
@@ -272,7 +272,8 @@ export function AppSidebar() {
                           <NavLink
                             to={tab.url}
                             className={() =>
-                              `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary ${isItemActive(tab) ? "font-medium" : ""
+                              `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary ${
+                                isItemActive(tab) ? "font-medium" : ""
                               }`
                             }
                           >
