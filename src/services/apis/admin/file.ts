@@ -52,3 +52,23 @@ export const uploadLayoutFile = APIBodyValidationWrapper<
     return res;
   },
 });
+
+// 🔹 Upload Migration
+export const uploadMigrationFile = APIBodyValidationWrapper<
+  FileUploadRes,
+  FormData
+>({
+  handle: async (param, config) => {
+    const url = (
+      `/migration` +
+      (param?.url || "") +
+      queryToString(param?.query)
+    ).replace(/\/+/g, "/");
+    const res = await ADMIN_FILE.postForm<FileUploadRes>(
+      url,
+      param?.body,
+      config,
+    );
+    return res;
+  },
+});

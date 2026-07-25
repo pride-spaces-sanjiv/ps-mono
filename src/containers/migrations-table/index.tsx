@@ -92,6 +92,7 @@ const MigrationsTabledResults = ({
     setPage,
     setLimit,
     limit,
+    fetchCount,
   } = usePaginatedQuery({
     limit: 20,
     queryKey: [
@@ -109,6 +110,7 @@ const MigrationsTabledResults = ({
           sortOrder: "asc",
         },
       }),
+    refetchInterval: 5000,
     placeholderData: keepPreviousData,
   });
 

@@ -49,6 +49,7 @@ export function usePaginatedQuery<
 
   const [page, setPage] = useState(allParams.page ?? 0);
   const [limit, setLimit] = useState(allParams.limit ?? 10);
+  const [fetchCount, setFetchCount] = useState(0);
 
   const query = useQuery<TQueryFnData, TError, TData, TQueryKey>(
     {
@@ -60,7 +61,10 @@ export function usePaginatedQuery<
         page,
         limit,
       ],
-      queryFn: (context) => onlyQueryOptions?.queryFn?.(page, limit, context),
+      queryFn: (context) => {
+        setFetchCount((prev) => prev + 1);
+        return onlyQueryOptions?.queryFn?.(page, limit, context);
+      },
     },
     queryClient,
   );
@@ -78,6 +82,7 @@ export function usePaginatedQuery<
     setPage,
     limit,
     setLimit,
+    fetchCount,
     ...query,
   };
 }
