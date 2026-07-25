@@ -326,6 +326,7 @@ const updateSpaceCounts = async (
   //   "from operators ->",
   //   operatorsData.length,
   // );
+  const spaceCounts = {} as Record<string, number>;
   for (const key in spaceCountsRes) {
     const val = reset ? 0 : spaceCountsRes[key];
     spaceCounts[key] = val;
@@ -335,6 +336,7 @@ const updateSpaceCounts = async (
     //   updatedVal: spaceCounts[key],
     // });
   }
+  return spaceCounts;
 };
 
 const prepareData = (row: RowData, operator?: OperatorsData[number]) => {
@@ -441,16 +443,24 @@ export const pushBulkSpacesData = async (
   spaces: SpaceSchema[],
   fresh = false,
 ) => {
+  const stats = {
+    total: 0,
+    success: 0,
+    inserted: 0,
+    updated: 0,
+    failed: 0,
+  };
   try {
     if (fresh) {
       const delRes = await Space.deleteMany({});
       console.log("Deleted spaces :", delRes.deletedCount);
     }
+    stats.total = spaces.length;
 
     // Space counts realtime update
     const operatorsData = await getOperatorsData();
     console.log("Fresh data :", fresh);
-    await updateSpaceCounts(operatorsData, fresh);
+    const spaceCounts = await updateSpaceCounts(operatorsData, fresh);
     console.log("Space counts :", spaceCounts);
 
     // Rewrite slugs
@@ -533,17 +543,14 @@ export const pushBulkSpacesData = async (
     //     spaces.length,
     //   );
     // }
-
-    const stats = {
-      total: spaces.length,
-      success: insertedDocs.length + updatedCount,
-      inserted: insertedDocs.length,
-      updated: updatedCount,
-      failed: remSpaces.length - updatedCount,
-    };
-    return stats;
+    stats.success = insertedDocs.length + updatedCount;
+    stats.inserted = insertedDocs.length;
+    stats.updated = updatedCount;
+    stats.failed = remSpaces.length - updatedCount;
+    // return stats;
   } catch (err: any) {
     console.error("Failed to push bulk spaces data:", err);
-    return null;
+    // return null;
   }
+  return stats;
 };

@@ -339,7 +339,7 @@ const postMigrationUpload = async (
     parts.forEach((rows, i) => {
       migrationPostProcessQueue.add(async () => {
         const str = JSON.stringify(rows);
-        const partFileId = `${fileId}-${i + 1}`;
+        const partFileId = `${fileId}_${i + 1}`;
         const upload = new Upload({
           client: rustfsClient,
           params: {

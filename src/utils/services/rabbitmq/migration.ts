@@ -47,7 +47,7 @@ const spacesHandler = async (data: WaitingMigrationMQ) => {
     console.log("Migration part process completion stats :", data, stats);
 
     const updatedDoc = await pipelineDBs.MIGRATION.updateData({
-      filter: { fileId: data.fileId.replace(/\-.*$/, "") },
+      filter: { fileId: data.fileId.replace(/\_.*$/, "") },
       updateData: {
         $inc: {
           "stats.processed": parsed.length,
@@ -62,7 +62,7 @@ const spacesHandler = async (data: WaitingMigrationMQ) => {
 
     // Try deleting files if all processed
     if (updatedDoc && updatedDoc.stats.total === updatedDoc.stats.processed) {
-      const migrationFileId = data.fileId.replace(/\-.*$/, "");
+      const migrationFileId = data.fileId.replace(/\_.*$/, "");
 
       // Delete main csv
       rustfsClient
