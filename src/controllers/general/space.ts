@@ -100,6 +100,7 @@ export const getSpaces = async (
         Grade: "specs.grade",
         Oc: "flags.isOc",
         Sez: "flags.isSez",
+        Operator: "operator",
       },
     });
 

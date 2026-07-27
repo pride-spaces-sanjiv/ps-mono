@@ -1,21 +1,9 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Space, spaceFields } from "@/database/models/space.js";
-import { getSpaceOperatorsData } from "@/utils/mongoose/relations/space-operator.js";
-import {
-  cleanPaginatedData,
-  paginatedResults,
-} from "@/utils/mongoose/pagination.js";
-import {
-  getFieldsandProjectors,
-  getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { SpaceSchema } from "@/database/schemas/space.js";
 import * as generalControllers from "../general/space.js";
 import { dumpStatuses } from "@/utils/data/dump.js";
+import { handleMongooseError } from "@/utils/mongoose/error.js";
 
 export const getSpaces = async (
   req: ManagedRequest<
