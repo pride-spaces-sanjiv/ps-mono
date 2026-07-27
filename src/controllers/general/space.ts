@@ -171,6 +171,7 @@ export const getSpaces = async (
   }
 };
 
+// GET SINGLE
 export const getSpace = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
@@ -229,6 +230,7 @@ export const getSpace = async (
   }
 };
 
+// CREATE
 export const createSpace = async (
   req: ManagedRequest<Partial<SpaceSchema>>,
   res: ManagedResponse,
@@ -338,6 +340,7 @@ export const createSpace = async (
   }
 };
 
+// UPDATE
 export const updateSpace = async (
   req: ManagedRequest<Omit<Partial<SpaceSchema>, "branch" | "operator">>,
   res: ManagedResponse,
@@ -474,6 +477,7 @@ export const updateSpace = async (
   }
 };
 
+// DELETE
 export const deleteSpace = async (
   req: ManagedRequest,
   res: ManagedResponse,
