@@ -7,6 +7,7 @@ import {
 } from "@/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
+  getMultiFilters,
   getSearchFilters,
 } from "@/utils/mongoose/filters.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
@@ -85,6 +86,20 @@ export const getSpaces = async (
         Email: "email",
         City: "location.city",
         State: "location.state",
+        Area: "location.area",
+        SpaceType: "specs.spaceType",
+        Category: "specs.category",
+      },
+    });
+    const multiFilters = getMultiFilters<typeof Space>(req, {
+      fieldMaps: {
+        City: "location.city",
+        State: "location.state",
+        Area: "location.area",
+        SpaceType: "specs.spaceType",
+        Grade: "specs.grade",
+        Oc: "flags.isOc",
+        Sez: "flags.isSez",
       },
     });
 
@@ -96,7 +111,7 @@ export const getSpaces = async (
       {
         projection: { ...preProjections, ...projectors },
         filter: cleanObject(
-          { ...preFilters, ...searchFilters },
+          { ...preFilters, ...searchFilters, ...multiFilters },
           { excludeByValues: [""] },
         ),
         options: preOptions,

@@ -242,3 +242,35 @@ export const getSearchFilters = <M extends Model<any>>(
     return null;
   }
 };
+
+export const getMultiFilters = <M extends Model<any>>(
+  req: ManagedRequest<
+    any,
+    {
+      [k: string]: any;
+    }
+  >,
+  options: Partial<{
+    fieldMaps: Record<string, ObjectDepthKeys<ModelToRaw<M>>>;
+  }> = {},
+) => {
+  try {
+    const { fieldMaps = {} } = options;
+    const filter = {} as Partial<Record<keyof ModelToRaw<M>, { $in: any[] }>>;
+    for (const queryField in fieldMaps) {
+      if (
+        !Object.hasOwn(req.query, `f${queryField}`) ||
+        !req.query[`f${queryField}`]
+      ) {
+        continue;
+      }
+      const field = fieldMaps[queryField];
+      filter[field] = {
+        $in: req.query[`f${queryField}`],
+      };
+    }
+    return filter;
+  } catch (err) {
+    return null;
+  }
+};

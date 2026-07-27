@@ -43,6 +43,7 @@ import {
   ManagedResponseWithLocalUrlIP,
 } from "@/types/request.js";
 import { GeneralRouter } from "./routes/general/route.js";
+import { parseFiltersQuery } from "./middlewares/filters.js";
 // import { handleMailQueue } from "./utils/services/rabbitmq/email.js";
 
 // Pre handlers
@@ -112,6 +113,7 @@ app.use(
   express.urlencoded({ extended: false, limit: "30mb", parameterLimit: 100 }),
 );
 app.use(express.json({ limit: "1mb" }));
+app.use(parseFiltersQuery);
 app.use((req, res, next) => {
   console.log("Query", req.query);
   if (!req.query || !Object.keys(req.query).length) {
