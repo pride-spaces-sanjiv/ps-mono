@@ -30,13 +30,13 @@ Get a paginated list of all builders.
    Searches exact values existence
    _Format_ - `f<field-name>`
 
-| Field Name  | Type     | Required | Description                         |
-| :---------- | :------- | :------- | :---------------------------------- |
-| `City`      | `string` | No       | Matches for `location.city` field   |
-| `State`     | `string` | No       | Matches for `location.state` field  |
-| `Area`      | `string` | No       | Matches for `location.area` field   |
-| `SpaceType` | `string` | No       | Matches for `specs.spaceType` field |
-| `Grade`     | `string` | No       | Matches for `specs.grade` field     |
-| `Oc`        | `string` | No       | Matches for `flags.isOc` field      |
-| `Sez`       | `string` | No       | Matches for `flags.isSez` field     |
-| `Operator`  | `string` | No       | Matches for `operator` field        |
+| Field Name  | Type      | Required | Description                         |
+| :---------- | :-------- | :------- | :---------------------------------- |
+| `City`      | `string`  | No       | Matches for `location.city` field   |
+| `State`     | `string`  | No       | Matches for `location.state` field  |
+| `Area`      | `string`  | No       | Matches for `location.area` field   |
+| `SpaceType` | `string`  | No       | Matches for `specs.spaceType` field |
+| `Grade`     | `string`  | No       | Matches for `specs.grade` field     |
+| `Oc`        | `boolean` | No       | Matches for `flags.isOc` field      |
+| `Sez`       | `boolean` | No       | Matches for `flags.isSez` field     |
+| `Operator`  | `string`  | No       | Matches for `operator` field        |
