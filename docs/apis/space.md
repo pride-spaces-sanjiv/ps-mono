@@ -8,7 +8,7 @@ Base path: `/<domain>/spaces`
 
 ## GET `/`
 
-Get a paginated list of all builders.
+Get a paginated list of all spaces.
 
 ### Query Parameters
 
