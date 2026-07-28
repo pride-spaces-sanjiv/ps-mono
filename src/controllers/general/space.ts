@@ -29,6 +29,7 @@ import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { dumpUserAction } from "@/utils/data/dumpAction.js";
 import { dumpActions, dumpStatuses } from "@/utils/data/dump.js";
 import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
+import { areasUpdateMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
 
 type RawOfModel = ModelToRaw<typeof Space>;
 type GetOptions = Partial<{
@@ -256,6 +257,18 @@ export const createSpace = async (
       body = await bodyHandle(body);
     }
 
+    // Handle city-area on upload
+    if (body.location?.city && body.location?.area) {
+      areasUpdateMQ.sendMessage({
+        pairs: [
+          {
+            city: body?.location?.city?.trim(),
+            area: body?.location?.area?.trim(),
+          },
+        ],
+      });
+    }
+
     const id = new Types.ObjectId().toHexString();
 
     // Dump handle
@@ -384,6 +397,23 @@ export const updateSpace = async (
         message: responseOpts?.notFound?.message || "Space not found",
       });
       return;
+    }
+
+    // Handle city-area on upload
+    if (
+      body.location?.city &&
+      body.location?.area &&
+      doc.isSelected("location.city") &&
+      doc.location?.city !== body.location.city
+    ) {
+      areasUpdateMQ.sendMessage({
+        pairs: [
+          {
+            city: body?.location?.city?.trim(),
+            area: body?.location?.area?.trim(),
+          },
+        ],
+      });
     }
 
     // Dump handle

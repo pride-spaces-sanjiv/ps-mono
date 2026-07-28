@@ -29,6 +29,7 @@ import {
 } from "../data/space-headers.js";
 import { Readable } from "stream";
 import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
+import { areasUpdateMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
 
 // Objects
 const spaceCounts = {} as Record<string, number>;
@@ -460,6 +461,18 @@ export const pushBulkSpacesData = async (
       console.log("Deleted spaces :", delRes.deletedCount);
     }
     stats.total = spaces.length;
+
+    // Cities-Areas data
+    try {
+      areasUpdateMQ.sendMessage({
+        pairs: spaces
+          .map((sp) => ({
+            city: sp?.location?.city?.trim(),
+            area: sp?.location?.area?.trim(),
+          }))
+          .filter((p) => p.city.trim() && p.area.trim()),
+      });
+    } catch (err) {}
 
     // Space counts realtime update
     const operatorsData = await getOperatorsData();

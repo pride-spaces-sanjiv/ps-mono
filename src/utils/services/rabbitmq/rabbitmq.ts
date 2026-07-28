@@ -352,4 +352,11 @@ export const waitingMigrationMQ = new RabbitMQ<WaitingMigrationMQ>({
   queue: "waiting-migrations",
 });
 
+export type AreasUpdateMQ = {
+  pairs: { city: string; area: string }[];
+};
+export const areasUpdateMQ = new RabbitMQ<AreasUpdateMQ>({
+  queue: "areas-updates",
+});
+
 export { RabbitMQ, EmailMQ, PaymentMQ, WaitingMigrationMQ };

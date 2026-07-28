@@ -20,6 +20,7 @@ const CitySchema = new Conn.Schema(
   {
     rId: { type: Number, required: true, unique: true },
     name: { type: String, required: true },
+    areas: { type: [String], required: true, default: [] },
     lat: { type: Number },
     lng: { type: Number },
     state: { type: String },
@@ -27,7 +28,7 @@ const CitySchema = new Conn.Schema(
   { _id: false },
 );
 indexFieldsFromSchema(CitySchema, {
-  singleFields: ["name", "state"],
+  singleFields: ["name", "state", "areas"],
 });
 
 // Cache Plugin
