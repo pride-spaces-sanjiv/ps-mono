@@ -1,5 +1,9 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Operator, operatorFields } from "@/database/models/operator.js";
+import {
+  Operator,
+  operatorFields,
+  operatorNonPassFields,
+} from "@/database/models/operator.js";
 import {
   cleanPaginatedData,
   paginatedResults,
@@ -15,7 +19,6 @@ import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { OperatorSchema } from "@/database/schemas/operator.js";
 import {
-  ProjectionType,
   RootFilterQuery,
   QueryOptions,
   AnyObject,
@@ -26,9 +29,7 @@ import {
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { dumpUserAction } from "@/utils/data/dumpAction.js";
-import { dumpActions, dumpStatuses } from "@/utils/data/dump.js";
-import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
-import { areasUpdateMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
+import { dumpActions } from "@/utils/data/dump.js";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 import { encodeCrypto } from "@/utils/crypto.js";
 
@@ -41,16 +42,19 @@ type GetOptions = Partial<{
     | AnyObject;
   preOptions: QueryOptions<RawOfModel>;
   response: Partial<{
-    error: typeof ResponseHandler.options.handleErrorOptions;
-    notFound: typeof ResponseHandler.options.handleNotFound;
-    unAuthorized: typeof ResponseHandler.options.handleUnauthorizedOptions;
-    success: typeof ResponseHandler.options.handleSuccess;
+    error: Partial<typeof ResponseHandler.options.handleErrorOptions>;
+    notFound: Partial<typeof ResponseHandler.options.handleNotFound>;
+    unAuthorized: Partial<
+      typeof ResponseHandler.options.handleUnauthorizedOptions
+    >;
+    success: Partial<typeof ResponseHandler.options.handleSuccess>;
   }>;
 }>;
 type CreateOptions = Omit<GetOptions, "preFilters"> &
   Partial<{
     preBody: Partial<OperatorSchema>;
     bodyHandle: <T = Partial<OperatorSchema>>(body: T) => T | Promise<T>;
+    dumpDataHandle: <T = Partial<OperatorSchema>>(body: T) => T | Promise<T>;
     onlyDump: boolean;
     skipDump: boolean;
     dumpArgs: Partial<
@@ -97,7 +101,7 @@ export const getOperators = async (
     const { page, metrics, results, errored, err } = await paginatedResults(
       req,
       Operator,
-      operatorFields,
+      operatorNonPassFields,
       { limit: 10 },
       {
         projection: { ...preProjections, ...projectors },
@@ -210,7 +214,9 @@ export const createOperator = async (
   try {
     const {
       preBody,
+      preOptions,
       bodyHandle,
+      dumpDataHandle,
       response: responseOpts,
       onlyDump = false,
       skipDump = false,
@@ -234,17 +240,19 @@ export const createOperator = async (
 
     // Dump handle
     if (!skipDump) {
+      let dumpData = { ...dumpArgs?.dump?.data, ...body };
+      if (dumpDataHandle) {
+        dumpData = await dumpDataHandle(dumpData);
+      }
+
       const dumpRes = await dumpUserAction({
-        ...dumpArgs,
         isNew: true,
+        ...dumpArgs,
         // @ts-ignore
         dump: {
           ...dumpArgs?.dump,
           collection: "operators",
-          data: {
-            ...dumpArgs?.dump?.data,
-            ...body,
-          },
+          data: dumpData,
           metadata: {
             id: id,
             name: body.brandName || body.name,
@@ -274,6 +282,7 @@ export const createOperator = async (
       const doc = await pipelineDBs.OPERATOR.createData({
         // @ts-ignore
         data: body,
+        options: preOptions,
       });
       const data = convertDataToJSON(doc);
       ResponseHandler.handleSuccess(res, {
@@ -287,7 +296,10 @@ export const createOperator = async (
     }
 
     // Allowed to dump only
-    const doc = Operator.hydrate({ _id: id, ...body });
+    const doc = Operator.hydrate(
+      { _id: id, ...body },
+      preOptions?.projection as any,
+    );
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
       ...responseOpts?.success,
@@ -312,14 +324,23 @@ export const createOperator = async (
 
 // UPDATE
 export const updateOperator = async (
-  req: ManagedRequest<Omit<Partial<OperatorSchema>, "branch" | "operator">>,
+  req: ManagedRequest<Partial<OperatorSchema>>,
   res: ManagedResponse,
-  options: CreateOptions & Pick<GetOptions, "preFilters"> = {},
+  options: CreateOptions &
+    Pick<GetOptions, "preFilters"> &
+    Partial<{
+      proceedToProcess: (
+        body: Partial<OperatorSchema>,
+        doc: Awaited<ReturnType<typeof pipelineDBs.OPERATOR.getData>>,
+      ) => Promise<boolean | undefined | null> | boolean | null | undefined;
+    }> = {},
 ) => {
   try {
     const {
       preBody,
       bodyHandle,
+      dumpDataHandle,
+      proceedToProcess,
       response: responseOpts,
       preFilters,
       preProjections,
@@ -333,16 +354,20 @@ export const updateOperator = async (
     let body = {
       ...preBody,
       ...req.body,
-      fullKeyword: generateSpaceKeyword(req.body?.name || "") || undefined,
-    } as SpaceSchema;
+    } as OperatorSchema;
     if (bodyHandle) {
       body = await bodyHandle(body);
+    }
+
+    // Password encryption on existence
+    if (body.password?.trim()) {
+      body.password = encodeCrypto(body.password);
     }
 
     const id = req.params.id;
 
     // Check exists or not first
-    let doc = await pipelineDBs.SPACE.getData({
+    let doc = await pipelineDBs.OPERATOR.getData({
       filter: { ...preFilters, _id: id },
       projection: { ...preProjections },
       options: { ...preOptions },
@@ -350,45 +375,38 @@ export const updateOperator = async (
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         ...responseOpts?.notFound,
-        errorType: responseOpts?.notFound?.errorType || "space-not-found",
-        message: responseOpts?.notFound?.message || "Space not found",
+        errorType: responseOpts?.notFound?.errorType || "operator-not-found",
+        message: responseOpts?.notFound?.message || "Operator not found",
       });
       return;
     }
 
-    // Handle city-area on upload
-    if (
-      body.location?.city &&
-      body.location?.area &&
-      doc.isSelected("location.city") &&
-      doc.location?.city !== body.location.city
-    ) {
-      areasUpdateMQ.sendMessage({
-        pairs: [
-          {
-            city: body?.location?.city?.trim(),
-            area: body?.location?.area?.trim(),
-          },
-        ],
-      });
+    // Mid process flow handler
+    if (proceedToProcess) {
+      const shouldProceed = await proceedToProcess(body, doc);
+      if (!shouldProceed) {
+        return;
+      }
     }
 
     // Dump handle
     if (!skipDump) {
+      let dumpData = { ...dumpArgs?.dump?.data, ...body };
+      if (dumpDataHandle) {
+        dumpData = await dumpDataHandle(dumpData);
+      }
+
       const dumpRes = await dumpUserAction({
-        ...dumpArgs,
         isNew: true,
+        ...dumpArgs,
         // @ts-ignore
         dump: {
           ...dumpArgs?.dump,
-          collection: "spaces",
-          data: {
-            ...dumpArgs?.dump?.data,
-            ...body,
-          },
+          collection: "operators",
+          data: dumpData,
           metadata: {
             id: id,
-            name: doc.name,
+            name: body.brandName || doc.brandName || body.name || doc.name,
           },
           action: "update",
         },
@@ -412,7 +430,7 @@ export const updateOperator = async (
 
     // Allowed to update
     if (!onlyDump) {
-      doc = await pipelineDBs.SPACE.updateData({
+      doc = await pipelineDBs.OPERATOR.updateData({
         filter: { ...preFilters, _id: id },
         updateData: body,
         options: {
@@ -424,15 +442,16 @@ export const updateOperator = async (
       if (!doc) {
         ResponseHandler.handleNotFound(res, {
           ...responseOpts?.notFound,
-          errorType: responseOpts?.notFound?.errorType || "space-not-found",
-          message: responseOpts?.notFound?.message || "Space not found",
+          errorType: responseOpts?.notFound?.errorType || "operator-not-found",
+          message: responseOpts?.notFound?.message || "Operator not found",
         });
         return;
       }
       const data = convertDataToJSON(doc);
       ResponseHandler.handleSuccess(res, {
         ...responseOpts?.success,
-        message: responseOpts?.success?.message || "Space updated successfully",
+        message:
+          responseOpts?.success?.message || "Operator updated successfully",
         data: { ...responseOpts?.success?.data, ...data },
       });
       return;
@@ -443,29 +462,25 @@ export const updateOperator = async (
     ResponseHandler.handleSuccess(res, {
       ...responseOpts?.success,
       message:
-        responseOpts?.success?.message || "Dumped space data successfully",
+        responseOpts?.success?.message || "Dumped operator data successfully",
       data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
       uniqueError: {
-        errorType: "space-unique-error",
-        msgPre: "Space",
+        errorType: "operator-unique-error",
+        msgPre: "Operator",
       },
     });
     if (errorData.handled) {
       return;
     }
     throw err;
-    // ResponseHandler.handleError(res, {
-    //   errorType: "update-space-error-failure",
-    //   message: "Failed to update space details",
-    // });
   }
 };
 
 // DELETE
-export const deleteSpace = async (
+export const deleteOperator = async (
   req: ManagedRequest,
   res: ManagedResponse,
   options: GetOptions &
@@ -485,7 +500,7 @@ export const deleteSpace = async (
     const id = req.params.id;
 
     // Check exists or not first
-    let doc = await pipelineDBs.SPACE.getData({
+    let doc = await pipelineDBs.OPERATOR.getData({
       filter: { ...preFilters, _id: id },
       projection: { ...preProjections },
       options: { ...preOptions },
@@ -493,8 +508,8 @@ export const deleteSpace = async (
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         ...responseOpts?.notFound,
-        errorType: responseOpts?.notFound?.errorType || "space-not-found",
-        message: responseOpts?.notFound?.message || "Space not found",
+        errorType: responseOpts?.notFound?.errorType || "operator-not-found",
+        message: responseOpts?.notFound?.message || "Operator not found",
       });
       return;
     }
@@ -507,7 +522,7 @@ export const deleteSpace = async (
         // @ts-ignore
         dump: {
           ...dumpArgs?.dump,
-          collection: "spaces",
+          collection: "operators",
           data: {
             ...dumpArgs?.dump?.data,
             id: id,
@@ -515,7 +530,7 @@ export const deleteSpace = async (
           },
           metadata: {
             id: id,
-            name: doc.name,
+            name: doc.brandName || doc.name,
           },
           action: dumpActions.REMOVE,
         },
@@ -539,22 +554,23 @@ export const deleteSpace = async (
 
     // Allowed to delete directly
     if (!onlyDump) {
-      doc = await pipelineDBs.SPACE.deleteData({
+      doc = await pipelineDBs.OPERATOR.deleteData({
         filter: { ...preFilters, _id: id },
         options: { ...preOptions },
       });
       if (!doc) {
         ResponseHandler.handleNotFound(res, {
           ...responseOpts?.notFound,
-          errorType: responseOpts?.notFound?.errorType || "space-not-found",
-          message: responseOpts?.notFound?.message || "Space not found",
+          errorType: responseOpts?.notFound?.errorType || "operator-not-found",
+          message: responseOpts?.notFound?.message || "Operator not found",
         });
         return;
       }
       const data = convertDataToJSON(doc);
       ResponseHandler.handleSuccess(res, {
         ...responseOpts?.success,
-        message: responseOpts?.success?.message || "Space deleted successfully",
+        message:
+          responseOpts?.success?.message || "Operator deleted successfully",
         data: { ...responseOpts?.success?.data, ...data },
       });
       return;
@@ -565,14 +581,11 @@ export const deleteSpace = async (
     ResponseHandler.handleSuccess(res, {
       ...responseOpts?.success,
       message:
-        responseOpts?.success?.message || "Dumped space deletion successfully",
+        responseOpts?.success?.message ||
+        "Dumped operator deletion successfully",
       data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err) {
     throw err;
-    // ResponseHandler.handleError(res, {
-    //   errorType: "delete-space-error-failure",
-    //   message: "Failed to delete space",
-    // });
   }
 };

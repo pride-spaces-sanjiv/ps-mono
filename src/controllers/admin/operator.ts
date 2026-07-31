@@ -1,5 +1,6 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Operator, operatorNonPassFields } from "@/database/models/operator.js";
+import * as generalControllers from "@/controllers/general/operator.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import {
   cleanPaginatedData,
@@ -28,67 +29,7 @@ export const getOperators = async (
   res: ManagedResponse,
 ) => {
   try {
-    const selfLevel = req.session.user?.userType;
-
-    const { fields, projectors } = getFieldsandProjectors(
-      req,
-      Operator,
-      operatorNonPassFields,
-    );
-    const searchFilters = getSearchFilters<typeof Operator>(req, {
-      fieldMaps: {
-        Name: "name",
-        Email: "email",
-      },
-    });
-    const { page, metrics, results, errored, err } = await paginatedResults(
-      req,
-      Operator,
-      operatorNonPassFields,
-      { limit: 10 },
-      {
-        projection: projectors,
-        filter: cleanObject({ ...searchFilters }, { excludeByValues: [""] }),
-      },
-    );
-
-    // On results error
-    if (errored && err) {
-      ResponseHandler.handleError(res, {
-        errorType: "get-operators-error",
-        message: "Failed to get operators list",
-      });
-      return;
-    }
-    if (results.length === 0) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operators-not-found",
-        message: "No operators found",
-        data: { results, page, metrics },
-      });
-      return;
-    }
-
-    const spaceCounts = await getSpaceCountsOfOperator(
-      results.map((r) => r.id),
-    );
-    const data = cleanPaginatedData({
-      results: results,
-      page,
-      metrics,
-      err,
-      errored,
-    });
-    ResponseHandler.handleSuccess(res, {
-      message: "Got operators list",
-      data: {
-        ...data,
-        results: data.results.map((r) => ({
-          ...r,
-          totalSpaces: spaceCounts[r.id] || 0,
-        })),
-      },
-    });
+    await generalControllers.getOperators(req, res);
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "get-operators-error-failure",
@@ -102,32 +43,7 @@ export const getOperator = async (
   res: ManagedResponse,
 ) => {
   try {
-    const { fields, projectors } = getFieldsandProjectors(
-      req,
-      Operator,
-      operatorNonPassFields,
-    );
-
-    const doc = await pipelineDBs.OPERATOR.getData({
-      filter: { _id: req.params.id },
-      projection: projectors,
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
-
-    const spaceCounts = await getSpaceCountsOfOperator([doc.id]);
-    const data = {
-      ...convertDataToJSON(doc),
-      totalSpaces: spaceCounts[doc.id] || 0,
-    };
-    ResponseHandler.handleSuccess(res, {
-      data: data,
-    });
+    await generalControllers.getOperator(req, res);
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "get-operator-error-failure",
@@ -142,67 +58,19 @@ export const createOperator = async (
 ) => {
   try {
     const sessionUser = req.session.user;
-    const body = req.body;
-    const encodedPass = encodeCrypto(body.password);
-    const id = new Types.ObjectId().toHexString();
 
-    // Handle dumping actions
-    const dumpRes = await dumpAdminAction({
-      isNew: true,
-      dump: {
-        collection: "operators",
-        data: { ...body, password: encodedPass, isActive: undefined },
-        metadata: {
-          id: id,
-          name: body.brandName || body.name,
+    await generalControllers.createOperator(req, res, {
+      onlyDump: sessionUser?.userType && sessionUser?.userType === "support",
+      dumpDataHandle: (dt) => ({ ...dt, isActive: undefined }),
+      dumpArgs: {
+        dump: {
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : dumpStatuses.APPROVED,
         },
-        action: "add",
-        status:
-          sessionUser?.userType === "support"
-            ? dumpStatuses.PENDING
-            : dumpStatuses.APPROVED,
       },
-      req: req,
-    });
-    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
-      ResponseHandler.handleUnauthorized(res, {
-        errorType: "dump-unauthorized",
-        message: "Dump action was unauthorized",
-      });
-      return;
-    }
-    if (dumpRes.error) {
-      ResponseHandler.handleUnauthorized(res, {
-        errorType: "dump-failed",
-        message: "Dump action was failed",
-      });
-      return;
-    }
-
-    // For lead and above direct create
-    if (
-      sessionUser?.userType &&
-      sessionUser?.userType !== "support" &&
-      adminLevels.includes(sessionUser.userType as AdminLevel)
-    ) {
-      const doc = await pipelineDBs.OPERATOR.createData({
-        // @ts-ignore
-        data: { ...body, password: encodedPass, _id: id },
-      });
-
-      const data = convertDataToJSON(doc);
-      ResponseHandler.handleSuccess(res, {
-        status: 201,
-        message: "Created operator successfully",
-        data: data,
-      });
-      return;
-    }
-
-    ResponseHandler.handleSuccess(res, {
-      status: 201,
-      message: "Dumped new operator successfully",
-      data: { ...body, password: undefined },
+      preOptions: { projection: { password: 0 } },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
@@ -229,76 +97,18 @@ export const updateOperator = async (
     const body = req.body;
     const sessionUser = req.session.user;
 
-    let doc = await pipelineDBs.OPERATOR.getData({
-      filter: { _id: req.params.id },
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
-
-    // Create dump for every update, support will request and others auto approve
-    // Handle dumping actions
-    const dumpRes = await dumpAdminAction({
-      dump: {
-        collection: "operators",
-        data: { ...body, isActive: undefined, id: req.params.id },
-        metadata: { id: req.params.id, name: doc.brandName || doc.name },
-        action: "update",
-        status:
-          sessionUser?.userType === "support"
-            ? dumpStatuses.PENDING
-            : dumpStatuses.APPROVED,
-      },
-      req: req,
-    });
-    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
-      ResponseHandler.handleUnauthorized(res, {
-        errorType: "dump-unauthorized",
-        message: "Dump action was unauthorized",
-      });
-      return;
-    }
-    if (dumpRes.error) {
-      ResponseHandler.handleError(res, {
-        errorType: "dump-failed",
-        message: "Dump action was failed",
-      });
-      return;
-    }
-
-    // For lead and above direct update
-    if (
-      sessionUser?.userType &&
-      sessionUser?.userType !== "support" &&
-      adminLevels.includes(sessionUser.userType as AdminLevel)
-    ) {
-      doc = await pipelineDBs.OPERATOR.updateData({
-        filter: { _id: req.params.id },
-        updateData: body,
-        options: {
-          new: true,
+    await generalControllers.updateOperator(req, res, {
+      onlyDump: sessionUser?.userType && sessionUser?.userType === "support",
+      dumpDataHandle: (dt) => ({ ...dt, isActive: undefined }),
+      dumpArgs: {
+        dump: {
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : dumpStatuses.APPROVED,
         },
-      });
-      if (!doc) {
-        ResponseHandler.handleNotFound(res, {
-          errorType: "operator-not-found",
-          message: "Operator not found",
-        });
-        return;
-      }
-    }
-
-    const spaceCounts = await getSpaceCountsOfOperator([doc.id]);
-    const data = {
-      ...convertDataToJSON(doc),
-      totalSpaces: spaceCounts[doc.id] || 0,
-    };
-    ResponseHandler.handleSuccess(res, {
-      data: data,
+      },
+      preOptions: { projection: { password: 0 } },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
@@ -324,75 +134,17 @@ export const deleteOperator = async (
   try {
     const sessionUser = req.session.user;
 
-    const doc = await pipelineDBs.OPERATOR.getData({
-      filter: { _id: req.params.id },
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
-
-    // Handle dumping actions
-    const dumpRes = await dumpAdminAction({
-      isNew: true,
-      dump: {
-        collection: "operators",
-        data: {},
-        metadata: {
-          id: doc.id,
-          name: doc.brandName || doc.name,
+    await generalControllers.deleteOperator(req, res, {
+      onlyDump: sessionUser?.userType && sessionUser?.userType === "support",
+      dumpArgs: {
+        dump: {
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : dumpStatuses.APPROVED,
         },
-        action: "remove",
-        status:
-          sessionUser?.userType === "support"
-            ? dumpStatuses.PENDING
-            : dumpStatuses.APPROVED,
       },
-      req: req,
-    });
-    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
-      ResponseHandler.handleUnauthorized(res, {
-        errorType: "dump-unauthorized",
-        message: "Dump action was unauthorized",
-      });
-      return;
-    }
-    if (dumpRes.error) {
-      ResponseHandler.handleUnauthorized(res, {
-        errorType: "dump-failed",
-        message: "Dump action was failed",
-      });
-      return;
-    }
-
-    // For lead and above direct delete
-    if (
-      sessionUser?.userType &&
-      sessionUser?.userType !== "support" &&
-      adminLevels.includes(sessionUser.userType as AdminLevel)
-    ) {
-      const doc = await pipelineDBs.OPERATOR.getData({
-        filter: { _id: req.params.id },
-      });
-      if (!doc) {
-        ResponseHandler.handleNotFound(res, {
-          errorType: "operator-not-found",
-          message: "Operator not found",
-        });
-        return;
-      }
-      ResponseHandler.handleSuccess(res, {
-        message: "Operator deleted successfully",
-        data: { id: doc.id },
-      });
-      return;
-    }
-    ResponseHandler.handleSuccess(res, {
-      message: "Dumped operator-removal successfully",
-      data: { id: doc.id },
+      preOptions: { projection: { password: 0 } },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -411,24 +163,11 @@ export const getPassword = async (
     const body = req.body;
     const sessionUser = req.session.user;
 
-    let doc = await pipelineDBs.OPERATOR.getData({
-      filter: { _id: req.params.id },
-      projection: { password: 1, _id: 1 },
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
-
-    const decodedPass = decodeCrypto(doc.password);
-    const data = { ...convertDataToJSON(doc), decodedPassword: decodedPass };
-
-    ResponseHandler.handleSuccess(res, {
-      message: "Operator password retrieved successfully",
-      data: data,
+    await generalControllers.getOperator(req, res, {
+      preProjections: { password: 1, createdAt: 1, updatedAt: 1 },
+      response: {
+        success: { message: "Operator password retrieved successfully" },
+      },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
@@ -454,83 +193,32 @@ export const updatePassword = async (
   try {
     const body = req.body;
     const sessionUser = req.session.user;
-    const password = encodeCrypto(body.password);
 
-    let doc = await pipelineDBs.OPERATOR.getData({
-      filter: { _id: req.params.id },
-      projection: { password: 1, _id: 1 },
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
-
-    if (compareCryptos(doc.password, password)) {
-      ResponseHandler.handleError(res, {
-        errorType: "password-matched",
-        message: "New password cannot be the same as the current password",
-      });
-      return;
-    }
-
-    // Handle dumping actions
-    const dumpRes = await dumpAdminAction({
-      dump: {
-        collection: "operators",
-        data: { id: req.params.id, password: password },
-        metadata: {
-          id: req.params.id,
-          name: doc.brandName || doc.name,
-          description: "Password was updated",
+    await generalControllers.updateOperator(req, res, {
+      onlyDump: sessionUser?.userType && sessionUser?.userType === "support",
+      dumpDataHandle: (dt) => ({ ...dt, isActive: undefined }),
+      proceedToProcess: (body, doc) => {
+        if (compareCryptos(doc?.password, body.password)) {
+          ResponseHandler.handleError(res, {
+            errorType: "password-matched",
+            message: "New password cannot be the same as the current password",
+          });
+          return false;
+        }
+        return true;
+      },
+      dumpArgs: {
+        dump: {
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : dumpStatuses.APPROVED,
         },
-        action: "update",
-        status:
-          sessionUser?.userType === "support"
-            ? dumpStatuses.PENDING
-            : dumpStatuses.APPROVED,
       },
-      req: req,
-    });
-    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
-      ResponseHandler.handleUnauthorized(res, {
-        errorType: "dump-unauthorized",
-        message: "Dump action was unauthorized",
-      });
-      return;
-    }
-    if (dumpRes.error) {
-      ResponseHandler.handleError(res, {
-        errorType: "dump-failed",
-        message: "Dump action was failed",
-      });
-      return;
-    }
-
-    doc = await pipelineDBs.OPERATOR.updateData({
-      filter: { _id: req.params.id },
-      updateData: { password: password },
-      options: {
-        new: true,
-        projection: { password: 1, _id: 1 },
+      preOptions: { projection: { password: 1, createdAt: 1, updatedAt: 1 } },
+      response: {
+        success: { message: "Operator password updated successfully" },
       },
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
-
-    const data = {
-      ...convertDataToJSON(doc),
-    };
-    ResponseHandler.handleSuccess(res, {
-      message: "Operator password updated successfully",
-      data: data,
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
