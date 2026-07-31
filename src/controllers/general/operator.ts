@@ -18,52 +18,22 @@ import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { OperatorSchema } from "@/database/schemas/operator.js";
-import {
-  RootFilterQuery,
-  QueryOptions,
-  AnyObject,
-  InclusionProjection,
-  ExclusionProjection,
-  Types,
-} from "mongoose";
-import { ModelToRaw } from "@/types/mongoose/document.js";
+import { Types } from "mongoose";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { dumpUserAction } from "@/utils/data/dumpAction.js";
 import { dumpActions } from "@/utils/data/dump.js";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
 import { encodeCrypto } from "@/utils/crypto.js";
+import { GeneralizedControllers } from "@/types/data/general-controllers.js";
 
-type RawOfModel = ModelToRaw<typeof Operator>;
-type GetOptions = Partial<{
-  preFilters: RootFilterQuery<RawOfModel>;
-  preProjections:
-    | InclusionProjection<RawOfModel>
-    | ExclusionProjection<RawOfModel>
-    | AnyObject;
-  preOptions: QueryOptions<RawOfModel>;
-  response: Partial<{
-    error: Partial<typeof ResponseHandler.options.handleErrorOptions>;
-    notFound: Partial<typeof ResponseHandler.options.handleNotFound>;
-    unAuthorized: Partial<
-      typeof ResponseHandler.options.handleUnauthorizedOptions
-    >;
-    success: Partial<typeof ResponseHandler.options.handleSuccess>;
-  }>;
-}>;
-type CreateOptions = Omit<GetOptions, "preFilters"> &
-  Partial<{
-    preBody: Partial<OperatorSchema>;
-    bodyHandle: <T = Partial<OperatorSchema>>(body: T) => T | Promise<T>;
-    dumpDataHandle: <T = Partial<OperatorSchema>>(body: T) => T | Promise<T>;
-    onlyDump: boolean;
-    skipDump: boolean;
-    dumpArgs: Partial<
-      Exclude<Parameters<typeof dumpUserAction>[0], undefined | null>
-    >;
-  }>;
-type FieldsAndProjectorsOptions = {
-  allowedProjectionFields: [...(keyof InclusionProjection<RawOfModel>)[]];
-};
+type ModelType = typeof Operator;
+type GetOptions = GeneralizedControllers.GetOptions<ModelType>;
+type CreateOptions = GeneralizedControllers.CreateOptions<
+  ModelType,
+  OperatorSchema
+>;
+type FieldsAndProjectorsOptions =
+  GeneralizedControllers.FieldsAndProjectorsOptions<ModelType>;
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -78,15 +48,6 @@ export const getOperators = async (
       response: responseOpts,
       allowedProjectionFields = operatorFields,
     } = options;
-
-    const preNonProjections =
-      preProjections &&
-      typeof preProjections === "object" &&
-      !Array.isArray(preProjections)
-        ? Object.entries(preProjections)
-            .filter(([k, v]) => !v)
-            .map(([k]) => k)
-        : [];
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -340,14 +301,7 @@ export const createOperator = async (
 export const updateOperator = async (
   req: ManagedRequest<Partial<OperatorSchema>>,
   res: ManagedResponse,
-  options: CreateOptions &
-    Pick<GetOptions, "preFilters"> &
-    Partial<{
-      proceedToProcess: (
-        body: Partial<OperatorSchema>,
-        doc: Awaited<ReturnType<typeof pipelineDBs.OPERATOR.getData>>,
-      ) => Promise<boolean | undefined | null> | boolean | null | undefined;
-    }> = {},
+  options: GeneralizedControllers.UpdateOptions<ModelType, OperatorSchema> = {},
 ) => {
   try {
     const {

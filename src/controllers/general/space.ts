@@ -15,47 +15,26 @@ import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { SpaceSchema } from "@/database/schemas/space.js";
-import {
-  ProjectionType,
-  RootFilterQuery,
-  QueryOptions,
-  AnyObject,
-  InclusionProjection,
-  ExclusionProjection,
-  Types,
-} from "mongoose";
-import { ModelToRaw } from "@/types/mongoose/document.js";
+import { Types } from "mongoose";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { dumpUserAction } from "@/utils/data/dumpAction.js";
 import { dumpActions, dumpStatuses } from "@/utils/data/dump.js";
 import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
 import { areasUpdateMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
+import { GeneralizedControllers } from "@/types/data/general-controllers.js";
 
-type RawOfModel = ModelToRaw<typeof Space>;
-type GetOptions = Partial<{
-  preFilters: RootFilterQuery<RawOfModel>;
-  preProjections:
-    | InclusionProjection<RawOfModel>
-    | ExclusionProjection<RawOfModel>
-    | AnyObject;
-  preOptions: QueryOptions<RawOfModel>;
-  response: Partial<{
-    error: typeof ResponseHandler.options.handleErrorOptions;
-    notFound: typeof ResponseHandler.options.handleNotFound;
-    unAuthorized: typeof ResponseHandler.options.handleUnauthorizedOptions;
-    success: typeof ResponseHandler.options.handleSuccess;
-  }>;
-}>;
-type CreateOptions = Omit<GetOptions, "preFilters"> &
-  Partial<{
-    preBody: Partial<SpaceSchema>;
-    bodyHandle: <T = Partial<SpaceSchema>>(body: T) => T | Promise<T>;
-    onlyDump: boolean;
-    skipDump: boolean;
-    dumpArgs: Partial<
-      Exclude<Parameters<typeof dumpUserAction>[0], undefined | null>
-    >;
-  }>;
+type ModelType = typeof Space;
+type GetOptions = GeneralizedControllers.GetOptions<ModelType>;
+type CreateOptions = GeneralizedControllers.CreateOptions<
+  ModelType,
+  SpaceSchema
+>;
+type UpdateOptions = GeneralizedControllers.UpdateOptions<
+  ModelType,
+  SpaceSchema
+>;
+type FieldsAndProjectorsOptions =
+  GeneralizedControllers.FieldsAndProjectorsOptions<ModelType>;
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -63,7 +42,7 @@ export const getSpaces = async (
     { [k: string]: any } & Partial<{ operator: string; branch: string }>
   >,
   res: ManagedResponse,
-  options: GetOptions = {},
+  options: GetOptions & Partial<FieldsAndProjectorsOptions> = {},
 ) => {
   try {
     const {
@@ -71,6 +50,7 @@ export const getSpaces = async (
       preProjections = undefined,
       preOptions,
       response: responseOpts,
+      allowedProjectionFields = spaceFields,
     } = options;
 
     const withOperator =
@@ -79,7 +59,7 @@ export const getSpaces = async (
     const { fields, projectors } = getFieldsandProjectors(
       req,
       Space,
-      spaceFields,
+      allowedProjectionFields,
     );
     const searchFilters = getSearchFilters<typeof Space>(req, {
       fieldMaps: {
@@ -177,7 +157,7 @@ export const getSpaces = async (
 export const getSpace = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
-  options: GetOptions = {},
+  options: GetOptions & Partial<FieldsAndProjectorsOptions> = {},
 ) => {
   try {
     const {
@@ -185,12 +165,13 @@ export const getSpace = async (
       preProjections = undefined,
       preOptions,
       response: responseOpts,
+      allowedProjectionFields = spaceFields,
     } = options;
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
       Space,
-      spaceFields,
+      allowedProjectionFields,
     );
     const withOperator =
       String(req.query?.withOperator || "").toLowerCase() === "true";
@@ -242,6 +223,7 @@ export const createSpace = async (
     const {
       preBody,
       bodyHandle,
+      dumpDataHandle,
       response: responseOpts,
       onlyDump = false,
       skipDump = false,
@@ -274,6 +256,11 @@ export const createSpace = async (
 
     // Dump handle
     if (!skipDump) {
+      let dumpData = { ...dumpArgs?.dump?.data, ...body };
+      if (dumpDataHandle) {
+        dumpData = await dumpDataHandle(dumpData);
+      }
+
       const dumpRes = await dumpUserAction({
         ...dumpArgs,
         isNew: true,
@@ -281,11 +268,7 @@ export const createSpace = async (
         dump: {
           ...dumpArgs?.dump,
           collection: "spaces",
-          data: {
-            ...dumpArgs?.dump?.data,
-            ...body,
-            flags: { ...body.flags, isActive: undefined },
-          },
+          data: dumpData,
           metadata: {
             id: id,
             name: body.name,
@@ -358,12 +341,14 @@ export const createSpace = async (
 export const updateSpace = async (
   req: ManagedRequest<Omit<Partial<SpaceSchema>, "branch" | "operator">>,
   res: ManagedResponse,
-  options: CreateOptions & Pick<GetOptions, "preFilters"> = {},
+  options: UpdateOptions = {},
 ) => {
   try {
     const {
       preBody,
       bodyHandle,
+      dumpDataHandle,
+      proceedToProcess,
       response: responseOpts,
       preFilters,
       preProjections,
@@ -400,6 +385,14 @@ export const updateSpace = async (
       return;
     }
 
+    // Mid process flow handler
+    if (proceedToProcess) {
+      const shouldProceed = await proceedToProcess(body, doc);
+      if (!shouldProceed) {
+        return;
+      }
+    }
+
     // Handle city-area on upload
     if (
       body.location?.city &&
@@ -419,6 +412,11 @@ export const updateSpace = async (
 
     // Dump handle
     if (!skipDump) {
+      let dumpData = { ...dumpArgs?.dump?.data, ...body };
+      if (dumpDataHandle) {
+        dumpData = await dumpDataHandle(dumpData);
+      }
+
       const dumpRes = await dumpUserAction({
         ...dumpArgs,
         isNew: true,
@@ -426,10 +424,7 @@ export const updateSpace = async (
         dump: {
           ...dumpArgs?.dump,
           collection: "spaces",
-          data: {
-            ...dumpArgs?.dump?.data,
-            ...body,
-          },
+          data: dumpData,
           metadata: {
             id: id,
             name: doc.name,

@@ -13,47 +13,26 @@ import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { AmenitySchema } from "@/database/schemas/amenity.js";
-import { dumpUserAction } from "@/utils/data/dumpAction.js";
-import {
-  ExclusionProjection,
-  InclusionProjection,
-  QueryOptions,
-  AnyObject,
-} from "mongoose";
-import { ModelToRaw } from "@/types/mongoose/document.js";
-import { RootFilterQuery } from "mongoose";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
+import { GeneralizedControllers } from "@/types/data/general-controllers.js";
 
-type RawOfModel = ModelToRaw<typeof Amenity>;
-type GetOptions = Partial<{
-  preFilters: RootFilterQuery<RawOfModel>;
-  preProjections:
-    | InclusionProjection<RawOfModel>
-    | ExclusionProjection<RawOfModel>
-    | AnyObject;
-  preOptions: QueryOptions<RawOfModel>;
-  response: Partial<{
-    error: typeof ResponseHandler.options.handleErrorOptions;
-    notFound: typeof ResponseHandler.options.handleNotFound;
-    unAuthorized: typeof ResponseHandler.options.handleUnauthorizedOptions;
-    success: typeof ResponseHandler.options.handleSuccess;
-  }>;
-}>;
-type CreateOptions = Omit<GetOptions, "preFilters"> &
-  Partial<{
-    preBody: Partial<AmenitySchema>;
-    bodyHandle: <T = Partial<AmenitySchema>>(body: T) => T | Promise<T>;
-    onlyDump: boolean;
-    skipDump: boolean;
-    dumpArgs: Partial<
-      Exclude<Parameters<typeof dumpUserAction>[0], undefined | null>
-    >;
-  }>;
+type ModelType = typeof Amenity;
+type GetOptions = GeneralizedControllers.GetOptions<ModelType>;
+type CreateOptions = GeneralizedControllers.CreateOptions<
+  ModelType,
+  AmenitySchema
+>;
+type UpdateOptions = GeneralizedControllers.UpdateOptions<
+  ModelType,
+  AmenitySchema
+>;
+type FieldsAndProjectorsOptions =
+  GeneralizedControllers.FieldsAndProjectorsOptions<ModelType>;
 
 export const getAmenities = async (
   req: ManagedRequest<any>,
   res: ManagedResponse,
-  options: GetOptions = {},
+  options: GetOptions & Partial<FieldsAndProjectorsOptions> = {},
 ) => {
   try {
     const {
@@ -61,12 +40,13 @@ export const getAmenities = async (
       preProjections = undefined,
       preOptions,
       response: responseOpts,
+      allowedProjectionFields = amenityFields,
     } = options;
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
       Amenity,
-      amenityFields,
+      allowedProjectionFields,
     );
 
     const searchFilters = getSearchFilters<typeof Amenity>(req, {
@@ -127,7 +107,7 @@ export const getAmenities = async (
 export const getAmenity = async (
   req: ManagedRequest,
   res: ManagedResponse,
-  options: GetOptions = {},
+  options: GetOptions & Partial<FieldsAndProjectorsOptions> = {},
 ) => {
   try {
     const {
@@ -135,9 +115,14 @@ export const getAmenity = async (
       preProjections = undefined,
       preOptions,
       response: responseOpts,
+      allowedProjectionFields = amenityFields,
     } = options;
 
-    const { projectors } = getFieldsandProjectors(req, Amenity, amenityFields);
+    const { projectors } = getFieldsandProjectors(
+      req,
+      Amenity,
+      allowedProjectionFields,
+    );
 
     const doc = await pipelineDBs.AMENITY.getData({
       filter: { ...preFilters, _id: req.params.id },
@@ -175,6 +160,7 @@ export const createAmenity = async (
     const {
       preBody,
       bodyHandle,
+      dumpDataHandle,
       response: responseOpts,
       onlyDump = false,
       skipDump = false,
@@ -219,12 +205,13 @@ export const createAmenity = async (
 export const updateAmenity = async (
   req: ManagedRequest<Partial<AmenitySchema>>,
   res: ManagedResponse,
-  options: CreateOptions & Pick<GetOptions, "preFilters"> = {},
+  options: UpdateOptions = {},
 ) => {
   try {
     const {
       preBody,
       bodyHandle,
+      proceedToProcess,
       response: responseOpts,
       preFilters,
       preOptions,
