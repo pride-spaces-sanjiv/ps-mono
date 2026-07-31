@@ -9,6 +9,7 @@ import { spaceTypes, spaceGrades } from "@/utils/data/spaceTypes.js";
 import { workingSizes } from "@/utils/data/workingSizes.js";
 import { FilesSchema } from "./schemas/files.js";
 import { LocationSchema } from "./schemas/location.js";
+import { spaceCategories } from "@/utils/data/category.js";
 
 const PersonSchema = new Conn.Schema(
   {
@@ -34,7 +35,7 @@ const PricingSchema = new Conn.Schema(
 
 const SpecsSchema = new Conn.Schema(
   {
-    category: { type: String, default: "Classic" },
+    category: { type: String, enum: spaceCategories, default: "Classic" },
     spaceType: { type: String, enum: spaceTypes, default: "Flex" },
     grade: { type: String, enum: spaceGrades, default: "B" },
     area: { type: Number },

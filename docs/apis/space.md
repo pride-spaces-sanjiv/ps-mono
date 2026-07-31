@@ -35,6 +35,7 @@ Get a paginated list of all spaces.
 | `City`      | `string`  | No       | Matches for `location.city` field   |
 | `State`     | `string`  | No       | Matches for `location.state` field  |
 | `Area`      | `string`  | No       | Matches for `location.area` field   |
+| `Category`  | `string`  | No       | Matches for `specs.category` field  |
 | `SpaceType` | `string`  | No       | Matches for `specs.spaceType` field |
 | `Grade`     | `string`  | No       | Matches for `specs.grade` field     |
 | `Oc`        | `boolean` | No       | Matches for `flags.isOc` field      |

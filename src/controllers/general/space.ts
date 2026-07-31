@@ -94,6 +94,7 @@ export const getSpaces = async (
     });
     const multiFilters = getMultiFilters<typeof Space>(req, {
       fieldMaps: {
+        Category: "specs.category",
         City: "location.city",
         State: "location.state",
         Area: "location.area",
