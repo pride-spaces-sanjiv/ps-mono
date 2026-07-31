@@ -8,7 +8,9 @@ export const getOperators = async (
   res: ManagedResponse,
 ) => {
   try {
-    await generalControllers.getOperators(req, res);
+    await generalControllers.getOperators(req, res, {
+      preProjections: { password: 0 },
+    });
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "get-operators-error-failure",
@@ -22,7 +24,9 @@ export const getOperator = async (
   res: ManagedResponse,
 ) => {
   try {
-    await generalControllers.getOperator(req, res);
+    await generalControllers.getOperator(req, res, {
+      preProjections: { password: 0 },
+    });
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "get-operator-error-failure",
