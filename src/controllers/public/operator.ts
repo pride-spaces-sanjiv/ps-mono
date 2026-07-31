@@ -2,6 +2,7 @@ import { ResponseHandler } from "@/middlewares/request.js";
 import * as generalControllers from "@/controllers/general/operator.js";
 // types
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { operatorNonPassFields } from "@/database/models/operator.js";
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -9,7 +10,7 @@ export const getOperators = async (
 ) => {
   try {
     await generalControllers.getOperators(req, res, {
-      preProjections: { password: 0 },
+      allowedProjectionFields: operatorNonPassFields,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -25,7 +26,7 @@ export const getOperator = async (
 ) => {
   try {
     await generalControllers.getOperator(req, res, {
-      preProjections: { password: 0 },
+      allowedProjectionFields: operatorNonPassFields,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {

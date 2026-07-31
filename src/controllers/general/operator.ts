@@ -61,11 +61,14 @@ type CreateOptions = Omit<GetOptions, "preFilters"> &
       Exclude<Parameters<typeof dumpUserAction>[0], undefined | null>
     >;
   }>;
+type FieldsAndProjectorsOptions = {
+  allowedProjectionFields: [...(keyof InclusionProjection<RawOfModel>)[]];
+};
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
-  options: GetOptions = {},
+  options: GetOptions & Partial<FieldsAndProjectorsOptions> = {},
 ) => {
   try {
     const {
@@ -73,12 +76,22 @@ export const getOperators = async (
       preProjections = undefined,
       preOptions,
       response: responseOpts,
+      allowedProjectionFields = operatorFields,
     } = options;
+
+    const preNonProjections =
+      preProjections &&
+      typeof preProjections === "object" &&
+      !Array.isArray(preProjections)
+        ? Object.entries(preProjections)
+            .filter(([k, v]) => !v)
+            .map(([k]) => k)
+        : [];
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
       Operator,
-      operatorFields,
+      allowedProjectionFields,
     );
     const searchFilters = getSearchFilters<typeof Operator>(req, {
       fieldMaps: {
@@ -157,7 +170,7 @@ export const getOperators = async (
 export const getOperator = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
-  options: GetOptions = {},
+  options: GetOptions & Partial<FieldsAndProjectorsOptions> = {},
 ) => {
   try {
     const {
@@ -165,12 +178,13 @@ export const getOperator = async (
       preProjections = undefined,
       preOptions,
       response: responseOpts,
+      allowedProjectionFields = operatorFields,
     } = options;
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
       Operator,
-      operatorFields,
+      allowedProjectionFields,
     );
 
     const id = req.params.id;

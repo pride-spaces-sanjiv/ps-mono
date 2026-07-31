@@ -6,13 +6,16 @@ import { compareCryptos } from "@/utils/crypto.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { OperatorSchema } from "@/database/schemas/operator.js";
 import { dumpStatuses } from "@/utils/data/dump.js";
+import { operatorNonPassFields } from "@/database/models/operator.js";
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
   try {
-    await generalControllers.getOperators(req, res);
+    await generalControllers.getOperators(req, res, {
+      allowedProjectionFields: operatorNonPassFields,
+    });
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "get-operators-error-failure",
@@ -26,7 +29,9 @@ export const getOperator = async (
   res: ManagedResponse,
 ) => {
   try {
-    await generalControllers.getOperator(req, res);
+    await generalControllers.getOperator(req, res, {
+      allowedProjectionFields: operatorNonPassFields,
+    });
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "get-operator-error-failure",
