@@ -1,4 +1,4 @@
-import { Model, ProjectionType } from "mongoose";
+import { FilterQuery, Model, ProjectionType, RootFilterQuery } from "mongoose";
 import { Aggregator, aggregate } from "mingo";
 import { $project, $sample } from "mingo/operators/pipeline";
 import { allGeneralFieldsEnabled } from "./fields.js";
@@ -10,6 +10,7 @@ import {
 import { ObjectDepthKeys } from "@/types/object.js";
 import { ManagedRequest } from "@/types/request.js";
 import { $jsonSchema } from "mingo/operators/query";
+import { cleanObject } from "../object/clean.js";
 
 export type SortOrder = "asc" | "desc";
 export type SortOptions<
@@ -270,6 +271,59 @@ export const getMultiFilters = <M extends Model<any>>(
       };
     }
     return filter;
+  } catch (err) {
+    return null;
+  }
+};
+
+export const getRangedFilters = <M extends Model<any>>(
+  req: ManagedRequest<
+    any,
+    {
+      [k: string]: any;
+    }
+  >,
+  options: Partial<{
+    rangedFieldMaps: Record<
+      string,
+      {
+        field: ObjectDepthKeys<ModelToRaw<M>>;
+        ranges: { id: number; min?: number; max?: number }[];
+      }
+    >;
+  }> = {},
+) => {
+  try {
+    const { rangedFieldMaps = {} } = options;
+    const filter = {} as Partial<
+      Record<
+        keyof ModelToRaw<M>,
+        { $or: Required<FilterQuery<ModelToRaw<M>>>["$or"] }
+      >
+    >;
+    for (const queryField in rangedFieldMaps) {
+      if (!Object.hasOwn(req.query, `r${queryField}`)) {
+        continue;
+      }
+      const rangeIds = rangedFieldMaps[queryField].ranges.map((r) => r.id);
+      const acceptedRanges = [
+        ...new Set(req.query[`r${queryField}`] as any[]),
+      ]?.filter((rg: number) => rangeIds.includes(Number(rg)));
+      const field = rangedFieldMaps[queryField].field;
+      if (acceptedRanges.length) {
+        filter[field] = {
+          $or: rangedFieldMaps[queryField].ranges
+            .filter((r) => acceptedRanges.includes(r.id))
+            .map((r) => ({
+              [field]: cleanObject(
+                { $gte: r.min, $lte: r.max },
+                { excludeByValues: [undefined] },
+              ),
+            })),
+        };
+      }
+    }
+    return { $and: Object.values(filter) };
   } catch (err) {
     return null;
   }

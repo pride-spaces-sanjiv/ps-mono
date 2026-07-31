@@ -41,3 +41,11 @@ Get a paginated list of all spaces.
 | `Oc`        | `boolean` | No       | Matches for `flags.isOc` field      |
 | `Sez`       | `boolean` | No       | Matches for `flags.isSez` field     |
 | `Operator`  | `string`  | No       | Matches for `operator` field        |
+
+3. **Ranged Filters**
+   Filter results within predefined numeric ranges using range IDs  
+   _Format_ - `r<field-name>`
+
+| Field Name | Type     | Required | Ranges / Options                                                            | Description                    |
+| :--------- | :------- | :------- | :-------------------------------------------------------------------------- | :----------------------------- |
+| `Seats`    | `number` | No       | `1`: 0 - 10<br>`2`: 10 - 50<br>`3`: 50 - 100<br>`4`: 100 - 500<br>`5`: 500+ | Ranges for `seats.total` field |

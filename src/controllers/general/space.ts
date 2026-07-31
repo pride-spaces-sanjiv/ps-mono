@@ -8,6 +8,7 @@ import {
 import {
   getFieldsandProjectors,
   getMultiFilters,
+  getRangedFilters,
   getSearchFilters,
 } from "@/utils/mongoose/filters.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
@@ -85,6 +86,20 @@ export const getSpaces = async (
         Operator: "operator",
       },
     });
+    const rangedFilters = getRangedFilters<typeof Space>(req, {
+      rangedFieldMaps: {
+        Seats: {
+          field: "seats.total",
+          ranges: [
+            { id: 1, min: 0, max: 10 },
+            { id: 2, min: 10, max: 50 },
+            { id: 3, min: 50, max: 100 },
+            { id: 4, min: 100, max: 500 },
+            { id: 4, min: 500 },
+          ],
+        },
+      },
+    });
 
     const { page, metrics, results, errored, err } = await paginatedResults(
       req,
@@ -94,7 +109,12 @@ export const getSpaces = async (
       {
         projection: { ...preProjections, ...projectors },
         filter: cleanObject(
-          { ...preFilters, ...searchFilters, ...multiFilters },
+          {
+            ...preFilters,
+            ...searchFilters,
+            ...multiFilters,
+            ...rangedFilters,
+          },
           { excludeByValues: [""] },
         ),
         options: preOptions,

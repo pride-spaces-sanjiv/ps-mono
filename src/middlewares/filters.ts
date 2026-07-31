@@ -12,7 +12,7 @@ export const parseFiltersQuery = async (
       if (!Object.hasOwn(query, key)) {
         continue;
       }
-      if (key.match(/^f[A-Z].+/)) {
+      if (key.match(/^[fr][A-Z].+/)) {
         if (!Array.isArray(query[key]) && query[key] !== undefined) {
           query[key] = [query[key]];
         }
