@@ -113,7 +113,6 @@ app.use(
   express.urlencoded({ extended: false, limit: "30mb", parameterLimit: 100 }),
 );
 app.use(express.json({ limit: "1mb" }));
-app.use(parseFiltersQuery);
 app.use((req, res, next) => {
   console.log("Query", req.query);
   if (!req.query || !Object.keys(req.query).length) {
@@ -135,6 +134,7 @@ app.use((req, res, next) => {
     >
   )(req, res, next);
 });
+app.use(parseFiltersQuery);
 
 // Custom headers]
 app.use((req, res, next) => {
