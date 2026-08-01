@@ -22,7 +22,7 @@ export const parseFiltersQuery = async (
     }
     console.log(
       "Query access stats:",
-      Object.getOwnPropertyDescriptor(req, "query"),
+      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(req), "query"),
       {
         frozen: Object.isFrozen(req.query),
         sealed: Object.isSealed(req.query),
