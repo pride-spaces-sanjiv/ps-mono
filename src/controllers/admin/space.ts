@@ -37,10 +37,10 @@ export const getSpaces = async (
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
-    const branchId = (req.query?.branch || "").trim();
-    const operatorId = (req.query?.operator || "").trim();
+    const branchId = (req.parsedQuery?.branch || "").trim();
+    const operatorId = (req.parsedQuery?.operator || "").trim();
     const withOperator =
-      String(req.query?.withOperator || "").toLowerCase() === "true";
+      String(req.parsedQuery?.withOperator || "").toLowerCase() === "true";
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -129,7 +129,7 @@ export const getSpace = async (
       spaceFields,
     );
     const withOperator =
-      String(req.query?.withOperator || "").toLowerCase() === "true";
+      String(req.parsedQuery?.withOperator || "").toLowerCase() === "true";
 
     const doc = await pipelineDBs.SPACE.getData({
       filter: { _id: req.params.id },

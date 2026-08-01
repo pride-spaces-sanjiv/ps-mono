@@ -319,7 +319,7 @@ export class RequestMiddleware {
         next: NextFunction,
       ) => {
         try {
-          const query = req.query;
+          const query = req.parsedQuery;
           console.log("Inside query :", query);
 
           if (!options?.allowEmpty) {

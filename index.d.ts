@@ -1,4 +1,5 @@
 import { SessionData as OldData } from "express-session";
+import "express-serve-static-core";
 
 type UserType =
   | "admin"
@@ -19,5 +20,17 @@ declare module "express-session" {
   }
   interface RequiredSessionData extends SessionData {
     user: NonNullable<Required<SessionData["user"]>>;
+  }
+}
+
+declare module "express-serve-static-core" {
+  interface Request<
+    P = ParamsDictionary,
+    ResBody = any,
+    ReqBody = any,
+    ReqQuery = ParsedQs,
+    LocalsObj extends Record<string, any> = Record<string, any>,
+  > {
+    parsedQuery: ReqQuery;
   }
 }

@@ -43,7 +43,10 @@ export const getFieldsandProjectors = <M extends Model<any>, F extends string>(
   ignoreFields?: F[],
 ) => {
   let fields =
-    (Array.isArray(req.query.field) ? req.query.field : [req.query.field])
+    (Array.isArray(req.parsedQuery.field)
+      ? req.parsedQuery.field
+      : [req.parsedQuery.field]
+    )
       // @ts-ignore
       .filter((f: F) => typeof f === "string")
       // @ts-ignore
@@ -171,17 +174,17 @@ export const getSortOptions = <
     const field =
       (allowTimestampFields &&
         (timestampFields.find(
-          (f) => f == req.query[String(options?.fields?.sortBy)],
+          (f) => f == req.parsedQuery[String(options?.fields?.sortBy)],
         ) ||
           timestampFields.find((f) => f == options?.defaultSortField))) ||
       (options?.fields?.sortBy &&
         options?.allowOnly?.find(
-          (f) => f == req.query[String(options?.fields?.sortBy)],
+          (f) => f == req.parsedQuery[String(options?.fields?.sortBy)],
         )) ||
       (options?.defaultSortField &&
         options?.allowOnly?.find((f) => f == options?.defaultSortField));
     const order =
-      req.query[String(options?.fields?.sortOrder)] === "asc"
+      req.parsedQuery[String(options?.fields?.sortOrder)] === "asc"
         ? "asc"
         : options?.defaultSortOrder || "desc";
     console.log("Finalised sorting field :", {
@@ -224,14 +227,14 @@ export const getSearchFilters = <M extends Model<any>>(
     >;
     for (const queryField in fieldMaps) {
       if (
-        !Object.hasOwn(req.query, `s${queryField}`) ||
-        !req.query[`s${queryField}`]
+        !Object.hasOwn(req.parsedQuery, `s${queryField}`) ||
+        !req.parsedQuery[`s${queryField}`]
       ) {
         continue;
       }
       const field = fieldMaps[queryField];
       filter[field] = {
-        $regex: String(req.query[`s${queryField}`])
+        $regex: String(req.parsedQuery[`s${queryField}`])
           .trim()
           .toLowerCase()
           .replace(/ +/g, " "),
@@ -260,14 +263,14 @@ export const getMultiFilters = <M extends Model<any>>(
     const filter = {} as Partial<Record<keyof ModelToRaw<M>, { $in: any[] }>>;
     for (const queryField in fieldMaps) {
       if (
-        !Object.hasOwn(req.query, `f${queryField}`) ||
-        !req.query[`f${queryField}`]
+        !Object.hasOwn(req.parsedQuery, `f${queryField}`) ||
+        !req.parsedQuery[`f${queryField}`]
       ) {
         continue;
       }
       const field = fieldMaps[queryField];
       filter[field] = {
-        $in: req.query[`f${queryField}`],
+        $in: req.parsedQuery[`f${queryField}`],
       };
     }
     return filter;
@@ -302,12 +305,12 @@ export const getRangedFilters = <M extends Model<any>>(
       >
     >;
     for (const queryField in rangedFieldMaps) {
-      if (!Object.hasOwn(req.query, `r${queryField}`)) {
+      if (!Object.hasOwn(req.parsedQuery, `r${queryField}`)) {
         continue;
       }
       const rangeIds = rangedFieldMaps[queryField].ranges.map((r) => r.id);
       const acceptedRanges = [
-        ...new Set(req.query[`r${queryField}`] as any[]),
+        ...new Set(req.parsedQuery[`r${queryField}`] as any[]),
       ]?.filter((rg: number) => rangeIds.includes(Number(rg)));
       const field = rangedFieldMaps[queryField].field;
       if (acceptedRanges.length) {

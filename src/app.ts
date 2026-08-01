@@ -2,12 +2,12 @@ import express, { RequestHandler } from "express";
 import session from "express-session";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { queryParser } from "express-query-parser";
 import moment from "moment";
 import fs from "fs";
 import util from "node:util";
 // Middlewares
 import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
+import { queryParser } from "@/middlewares/filters.js";
 // import { validateUserAccess } from "@/middlewares/users.js";
 // import {
 //   userAgentLogger,
@@ -113,7 +113,6 @@ app.use(
   express.urlencoded({ extended: false, limit: "30mb", parameterLimit: 100 }),
 );
 app.use(express.json({ limit: "1mb" }));
-app.use(parseFiltersQuery);
 app.use((req, res, next) => {
   console.log("Query", req.query);
   if (!req.query || !Object.keys(req.query).length) {
@@ -135,6 +134,7 @@ app.use((req, res, next) => {
     >
   )(req, res, next);
 });
+app.use(parseFiltersQuery);
 
 // Custom headers]
 app.use((req, res, next) => {

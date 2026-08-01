@@ -36,7 +36,7 @@ const getFile = async (
     fileType = mediaTypes.IMAGE,
   } = options;
   try {
-    const fileName = `${req.query.id}.${req.query.ext}`;
+    const fileName = `${req.parsedQuery.id}.${req.parsedQuery.ext}`;
     const destination = `${fileType?.trim() || ""}s/`.replace(
       /^s\//,
       "unknown/",

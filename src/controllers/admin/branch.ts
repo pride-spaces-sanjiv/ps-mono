@@ -20,7 +20,7 @@ export const getBranches = async (
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
-    const operatorId = (req.query?.operator || "").trim();
+    const operatorId = (req.parsedQuery?.operator || "").trim();
 
     const { fields, projectors } = getFieldsandProjectors(
       req,

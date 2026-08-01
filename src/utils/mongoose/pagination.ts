@@ -61,11 +61,14 @@ export const paginatedResults = async <
   };
   try {
     data.page = Math.max(
-      validateNumber(req.query.page, { convertToInt: true, invalidValue: 1 }),
+      validateNumber(req.parsedQuery.page, {
+        convertToInt: true,
+        invalidValue: 1,
+      }),
       1,
     );
     const allParams = { limit: 10, ...params };
-    const limit = validateNumber(req.query.limit ?? allParams.limit, {
+    const limit = validateNumber(req.parsedQuery.limit ?? allParams.limit, {
       convertToInt: true,
       invalidValue: 10,
     });

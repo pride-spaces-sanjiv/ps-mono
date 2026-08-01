@@ -55,7 +55,7 @@ export const getSpaces = async (
     } = options;
 
     const withOperator =
-      String(req.query?.withOperator || "").toLowerCase() === "true";
+      String(req.parsedQuery?.withOperator || "").toLowerCase() === "true";
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -194,7 +194,7 @@ export const getSpace = async (
       allowedProjectionFields,
     );
     const withOperator =
-      String(req.query?.withOperator || "").toLowerCase() === "true";
+      String(req.parsedQuery?.withOperator || "").toLowerCase() === "true";
 
     const doc = await pipelineDBs.SPACE.getData({
       filter: { ...preFilters, _id: req.params.id },

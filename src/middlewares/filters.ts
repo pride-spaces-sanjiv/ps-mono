@@ -7,7 +7,7 @@ export const parseFiltersQuery = async (
   next: NextFunction,
 ) => {
   try {
-    const query = req.query;
+    const query = req.parsedQuery;
     if (typeof query === "object" && query !== null) {
       for (const key in query) {
         if (!Object.prototype.hasOwnProperty.call(query, key)) {
@@ -15,21 +15,13 @@ export const parseFiltersQuery = async (
         }
         if (key.match(/^[fr][A-Z].+/)) {
           if (!Array.isArray(query[key]) && query[key] !== undefined) {
-            req.query[key] = [query[key]];
+            query[key] = [query[key]];
           }
         }
       }
     }
-    console.log(
-      "Query access stats:",
-      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(req), "query"),
-      {
-        frozen: Object.isFrozen(req.query),
-        sealed: Object.isSealed(req.query),
-        extensible: Object.isExtensible(req.query),
-      },
-    );
-    console.log("Parsed query filters :", req.query);
+    req.parsedQuery = { ...query };
+    console.log("Parsed query filters :", req.parsedQuery);
     next?.();
   } catch (err) {
     console.error("Filters Query parser error :", err);
@@ -39,3 +31,57 @@ export const parseFiltersQuery = async (
     });
   }
 };
+
+type QueryParserOptions = {
+  parseNull?: boolean;
+  parseUndefined?: boolean;
+  parseBoolean?: boolean;
+  parseNumber?: boolean;
+  parseArray?: boolean;
+};
+
+const parse = (value: unknown, options: QueryParserOptions): unknown => {
+  if (typeof value === "string") {
+    if (value === "") return "";
+
+    if (options.parseNull && value === "null") return null;
+    if (options.parseUndefined && value === "undefined") return undefined;
+
+    if (options.parseBoolean && (value === "true" || value === "false")) {
+      return value === "true";
+    }
+
+    if (
+      options.parseNumber &&
+      value.trim() !== "" &&
+      !Number.isNaN(Number(value))
+    ) {
+      return Number(value);
+    }
+
+    return value;
+  }
+
+  if (options.parseArray && Array.isArray(value)) {
+    return value.map((v) => parse(v, options));
+  }
+
+  if (value && typeof value === "object") {
+    for (const key of Object.keys(value)) {
+      (value as any)[key] = parse((value as any)[key], options);
+    }
+  }
+
+  return value;
+};
+
+export const queryParser =
+  (options: QueryParserOptions = {}) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    const parsed = parse(
+      structuredClone(req.query),
+      options,
+    ) as typeof req.query;
+    req.parsedQuery = { ...parsed };
+    next();
+  };
