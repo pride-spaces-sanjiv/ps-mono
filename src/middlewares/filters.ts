@@ -8,13 +8,15 @@ export const parseFiltersQuery = async (
 ) => {
   try {
     const query = req.query;
-    for (const key in query) {
-      if (!Object.hasOwn(query, key)) {
-        continue;
-      }
-      if (key.match(/^[fr][A-Z].+/)) {
-        if (!Array.isArray(query[key]) && query[key] !== undefined) {
-          req.query[key] = [query[key]];
+    if (typeof query === "object" && query !== null) {
+      for (const key in query) {
+        if (!Object.hasOwn(query, key)) {
+          continue;
+        }
+        if (key.match(/^[fr][A-Z].+/)) {
+          if (!Array.isArray(query[key]) && query[key] !== undefined) {
+            req.query[key] = [query[key]];
+          }
         }
       }
     }
