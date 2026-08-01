@@ -10,7 +10,7 @@ export const parseFiltersQuery = async (
     const query = req.query;
     if (typeof query === "object" && query !== null) {
       for (const key in query) {
-        if (!Object.hasOwn(query, key)) {
+        if (!Object.prototype.hasOwnProperty.call(query, key)) {
           continue;
         }
         if (key.match(/^[fr][A-Z].+/)) {
