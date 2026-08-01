@@ -14,7 +14,7 @@ export const parseFiltersQuery = async (
       }
       if (key.match(/^[fr][A-Z].+/)) {
         if (!Array.isArray(query[key]) && query[key] !== undefined) {
-          query[key] = [query[key]];
+          req.query[key] = [query[key]];
         }
       }
     }
