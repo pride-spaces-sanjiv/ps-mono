@@ -9,3 +9,4 @@
 ### 1. API Query Search and Multi filters
 
 1. [Spaces (centres)](./docs/apis/space.md)
+1. [Operators](./docs/apis/operator.md)
