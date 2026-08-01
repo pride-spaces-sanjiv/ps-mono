@@ -124,6 +124,7 @@ app.use((req, res, next) => {
       parseUndefined: true,
       parseBoolean: true,
       parseNumber: true,
+      parseArray: true,
     }) as RequestHandler<
       any,
       any,
