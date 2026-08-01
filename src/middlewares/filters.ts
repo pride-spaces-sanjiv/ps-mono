@@ -20,6 +20,15 @@ export const parseFiltersQuery = async (
         }
       }
     }
+    console.log(
+      "Query access stats:",
+      Object.getOwnPropertyDescriptor(req, "query"),
+      {
+        frozen: Object.isFrozen(req.query),
+        sealed: Object.isSealed(req.query),
+        extensible: Object.isExtensible(req.query),
+      },
+    );
     console.log("Parsed query filters :", req.query);
     next?.();
   } catch (err) {
