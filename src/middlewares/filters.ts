@@ -18,6 +18,7 @@ export const parseFiltersQuery = async (
         }
       }
     }
+    console.log("Parsed query filters :", req.query);
     next?.();
   } catch (err) {
     console.error("Filters Query parser error :", err);
