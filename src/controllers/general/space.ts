@@ -37,6 +37,7 @@ type UpdateOptions = GeneralizedControllers.UpdateOptions<
 type FieldsAndProjectorsOptions =
   GeneralizedControllers.FieldsAndProjectorsOptions<ModelType>;
 
+// GET 
 export const getSpaces = async (
   req: ManagedRequest<
     any,
