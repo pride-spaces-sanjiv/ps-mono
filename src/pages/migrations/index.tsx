@@ -45,12 +45,12 @@ const MigrationsPage = () => {
   return (
     <div className="admin-page-shell">
       <div className="admin-page-header">
-        <h1 className="text-2xl font-semibold">Migrations </h1>
+        <h1 className="text-2xl font-semibold">Bulk Centres Upload </h1>
       </div>
       <div className="py-4"></div>
       {/* <h1 className="text-lg font-semibold">Upload Migration Data </h1> */}
       <SpaceMigrationsUploadSection
-        titleProps={{ children: "Upload migration file" }}
+        titleProps={{ children: "Upload Centres file" }}
         processUpload={async (ref, file, setter) => {
           try {
             const done = await handleFileUpload(file);

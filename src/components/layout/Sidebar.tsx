@@ -150,7 +150,7 @@ const items: SidebarItem[] = [
   },
   {
     id: "migrations",
-    title: "Migrations",
+    title: "Bulk Upload",
     url: "/migrations",
     icon: HardDriveUpload,
   },
