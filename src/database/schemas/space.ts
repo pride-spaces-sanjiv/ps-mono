@@ -129,7 +129,7 @@ export const spaceSchema = z.object({
     .number()
     .min(0, "Price must be a positive number")
     .int("Price must be a positive integer"),
-  pricing: pricingSchema,
+  pricing: pricingSchema.partial(),
   facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
   files: filesSchema.partial().optional(),
   // approval: approvalSchema,

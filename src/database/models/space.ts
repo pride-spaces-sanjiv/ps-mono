@@ -23,19 +23,19 @@ const PersonSchema = new Conn.Schema(
 
 const PricingSchema = new Conn.Schema(
   {
-    dayPass: { type: Number, required: true, default: 0 },
-    perSeat: { type: Number, required: true, default: 0 },
-    dedicatedDesk: { type: Number, required: true, default: 0 },
-    flexiDesk: { type: Number, required: true, default: 0 },
-    privateCabin: { type: Number, required: true, default: 0 },
-    vo: { type: Number, required: true, default: 0 },
+    dayPass: { type: Number },
+    perSeat: { type: Number },
+    dedicatedDesk: { type: Number },
+    flexiDesk: { type: Number },
+    privateCabin: { type: Number },
+    vo: { type: Number },
   },
   { _id: false },
 );
 
 const SpecsSchema = new Conn.Schema(
   {
-    category: { type: String, enum: spaceCategories, default: "Classic" },
+    category: { type: String, enum: spaceCategories, default: "Starter" },
     spaceType: { type: String, enum: spaceTypes, default: "Flex" },
     grade: { type: String, enum: spaceGrades, default: "B" },
     area: { type: Number },

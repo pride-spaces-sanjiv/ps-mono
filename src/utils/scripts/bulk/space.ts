@@ -163,22 +163,25 @@ const generateCategory = (cat?: string | null) => {
 const generatePricing = (row?: RowData) => {
   const pricing: SpaceSchema["pricing"] = {
     dayPass:
-      Number(validifyStringValues(row?.daypass).replace(/[^0-9]/g, "")) || 0,
+      Number(validifyStringValues(row?.daypass).replace(/[^0-9]/g, "")) ??
+      undefined,
     perSeat:
-      Number(validifyStringValues(row?.perseat).replace(/[^0-9]/g, "")) || 0,
+      Number(validifyStringValues(row?.perseat).replace(/[^0-9]/g, "")) ??
+      undefined,
     dedicatedDesk:
-      Number(validifyStringValues(row?.dedicateddesk).replace(/[^0-9]/g, "")) ||
-      0,
+      Number(validifyStringValues(row?.dedicateddesk).replace(/[^0-9]/g, "")) ??
+      undefined,
     meetingRoom:
-      Number(validifyStringValues(row?.meetingroom).replace(/[^0-9]/g, "")) ||
-      0,
+      Number(validifyStringValues(row?.meetingroom).replace(/[^0-9]/g, "")) ??
+      undefined,
     flexiDesk:
-      Number(validifyStringValues(row?.flexihotdesk).replace(/[^0-9]/g, "")) ||
-      0,
+      Number(validifyStringValues(row?.flexihotdesk).replace(/[^0-9]/g, "")) ??
+      undefined,
     vo:
-      Number(validifyStringValues(row?.flexihotdesk).replace(/[^0-9]/g, "")) ||
-      0,
-    privateCabin: 0,
+      Number(
+        validifyStringValues(row?.vopricepermonth).replace(/[^0-9]/g, ""),
+      ) ?? undefined,
+    privateCabin: undefined,
   };
   return pricing;
 };
