@@ -14,7 +14,8 @@
     "dev": "nodemon src/index.ts --env=dev --max_cpus=2",
     "dev:local": "nodemon src/index.ts --env=local --max_cpus=2",
     "build": "npx tsc --noCheck && npx tsc-alias",
-    "scripts:dev:bulk": "npx tsx scripts/bulk.ts --env=dev"
+    "scripts:dev:bulk": "npx tsx scripts/bulk.ts --env=dev",
+    "scripts:dev:push-markets": "npx tsx scripts/push-markets.ts --env=dev"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1071.0",
