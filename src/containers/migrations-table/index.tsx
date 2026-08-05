@@ -146,6 +146,40 @@ const MigrationsTabledResults = ({
         cell: ({ row }) => <div>{page * limit + (row.index + 1) || "-"}</div>,
       },
       {
+        accessorKey: "collection",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Migration Type
+              {column.getIsSorted() === "asc" ? (
+                <ArrowDown />
+              ) : column.getIsSorted() === "desc" ? (
+                <ArrowUp />
+              ) : (
+                <ArrowUpDown />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => {
+          const collection = row.original.collection?.trim().toLowerCase();
+          return (
+            <div className="">
+              {collection === "spaces"
+                ? "Centres"
+                : collection === "operators"
+                  ? "Operators"
+                  : "-"}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: "ogFileName",
         header: ({ column }) => {
           return (
