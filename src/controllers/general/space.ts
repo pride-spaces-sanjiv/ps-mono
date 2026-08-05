@@ -37,7 +37,7 @@ type UpdateOptions = GeneralizedControllers.UpdateOptions<
 type FieldsAndProjectorsOptions =
   GeneralizedControllers.FieldsAndProjectorsOptions<ModelType>;
 
-// GET 
+// GET
 export const getSpaces = async (
   req: ManagedRequest<
     any,
@@ -90,7 +90,17 @@ export const getSpaces = async (
     const rangedFilters = getRangedFilters<typeof Space>(req, {
       rangedFieldMaps: {
         Seats: {
-          field: "seats.total",
+          fields: "seats.total",
+          ranges: [
+            { id: 1, min: 0, max: 10 },
+            { id: 2, min: 10, max: 50 },
+            { id: 3, min: 50, max: 100 },
+            { id: 4, min: 100, max: 500 },
+            { id: 4, min: 500 },
+          ],
+        },
+        AvailableSeats: {
+          fields: ["seats.total", "seats.booked"],
           ranges: [
             { id: 1, min: 0, max: 10 },
             { id: 2, min: 10, max: 50 },

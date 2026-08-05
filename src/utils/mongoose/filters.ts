@@ -290,7 +290,9 @@ export const getRangedFilters = <M extends Model<any>>(
     rangedFieldMaps: Record<
       string,
       {
-        field: ObjectDepthKeys<ModelToRaw<M>>;
+        fields:
+          | ObjectDepthKeys<ModelToRaw<M>>
+          | [ObjectDepthKeys<ModelToRaw<M>>, ObjectDepthKeys<ModelToRaw<M>>];
         ranges: { id: number; min?: number; max?: number }[];
       }
     >;
@@ -299,10 +301,7 @@ export const getRangedFilters = <M extends Model<any>>(
   try {
     const { rangedFieldMaps = {} } = options;
     const filter = {} as Partial<
-      Record<
-        keyof ModelToRaw<M>,
-        { $or: Required<FilterQuery<ModelToRaw<M>>>["$or"] }
-      >
+      Record<string, { $or: Required<FilterQuery<ModelToRaw<M>>>["$or"] }>
     >;
     for (const queryField in rangedFieldMaps) {
       if (!Object.hasOwn(req.parsedQuery, `r${queryField}`)) {
@@ -312,16 +311,89 @@ export const getRangedFilters = <M extends Model<any>>(
       const acceptedRanges = [
         ...new Set(req.parsedQuery[`r${queryField}`] as any[]),
       ]?.filter((rg: number) => rangeIds.includes(Number(rg)));
-      const field = rangedFieldMaps[queryField].field;
+      const fields = rangedFieldMaps[queryField].fields;
       if (acceptedRanges.length) {
-        filter[field] = {
+        const diff = Array.isArray(fields)
+          ? { $subtract: [`$${fields[0]}`, `$${fields[1]}`] }
+          : null;
+        filter[queryField] = {
+          $or: rangedFieldMaps[queryField].ranges
+            .filter((r) => acceptedRanges.includes(r.id))
+            .map((r) =>
+              diff
+                ? {
+                    $expr: {
+                      $and: [
+                        r.min !== undefined ? { $gte: [diff, r.min] } : false,
+                        r.max !== undefined ? { $lte: [diff, r.max] } : false,
+                      ].filter((v): v is boolean => !!v),
+                    },
+                  }
+                : {
+                    [fields as string]: cleanObject(
+                      { $gte: r.min, $lte: r.max },
+                      { excludeByValues: [undefined] },
+                    ),
+                  },
+            ),
+        };
+      }
+    }
+    const rangeFilters = { $and: Object.values(filter) };
+    console.log("Range filters :", rangeFilters);
+    return rangeFilters;
+  } catch (err) {
+    return null;
+  }
+};
+
+export const getDiffRangedFilters = <M extends Model<any>>(
+  req: ManagedRequest<
+    any,
+    {
+      [k: string]: any;
+    }
+  >,
+  options: Partial<{
+    rangedFieldMaps: Record<
+      string,
+      {
+        fields: [
+          ObjectDepthKeys<ModelToRaw<M>>,
+          ObjectDepthKeys<ModelToRaw<M>>,
+        ];
+        ranges: { id: number; min?: number; max?: number }[];
+      }
+    >;
+  }> = {},
+) => {
+  try {
+    const { rangedFieldMaps = {} } = options;
+    const filter = {} as Partial<
+      Record<string, { $or: Required<FilterQuery<ModelToRaw<M>>>["$or"] }>
+    >;
+    for (const queryField in rangedFieldMaps) {
+      if (!Object.hasOwn(req.parsedQuery, `r${queryField}`)) {
+        continue;
+      }
+      const rangeIds = rangedFieldMaps[queryField].ranges.map((r) => r.id);
+      const acceptedRanges = [
+        ...new Set(req.parsedQuery[`r${queryField}`] as any[]),
+      ]?.filter((rg: number) => rangeIds.includes(Number(rg)));
+      const fields = rangedFieldMaps[queryField].fields;
+      if (acceptedRanges.length) {
+        const diff = { $subtract: [`$${fields[0]}`, `$${fields[1]}`] };
+        filter[queryField] = {
           $or: rangedFieldMaps[queryField].ranges
             .filter((r) => acceptedRanges.includes(r.id))
             .map((r) => ({
-              [field]: cleanObject(
-                { $gte: r.min, $lte: r.max },
-                { excludeByValues: [undefined] },
-              ),
+              // [field]: cleanObject(
+              //   { $gte: r.min, $lte: r.max },
+              //   { excludeByValues: [undefined] },
+              // ),
+              $expr: {
+                $and: [{ $gte: [diff, r.min] }, { $lte: [diff, r.max] }],
+              },
             })),
         };
       }
