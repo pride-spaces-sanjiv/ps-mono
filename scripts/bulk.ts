@@ -126,7 +126,9 @@ const csvFile =
   "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
 console.time("Scripting Time :");
 const rows = await extractCSV<OperatorRowData>(csvFile);
-const bulkedOperators = await parseBulkOperatorsData(rows);
+const bulkedOperators = await parseBulkOperatorsData(rows, {
+  postFilter: (op) => !!op.slug?.trim(),
+});
 fs.writeFileSync(
   "./data/bulked-operators.json",
   JSON.stringify(bulkedOperators, null, 2),

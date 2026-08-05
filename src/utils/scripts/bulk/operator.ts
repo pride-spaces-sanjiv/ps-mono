@@ -170,7 +170,7 @@ export const parseBulkOperatorsData = async (
       .filter(options?.preFilter || ((row) => true))
       .map((row) => ({
         ...row,
-        slug: generateSlug(row),
+        slug: validifyStringValues(row.operatorslug) || "",
       }))
       .reduce(
         (prev, curr, i, self) => {
