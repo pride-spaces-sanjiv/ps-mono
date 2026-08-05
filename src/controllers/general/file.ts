@@ -396,7 +396,7 @@ export const uploadMigrationFile = async (
   res: ManagedResponse,
 ) => {
   try {
-    const migrationFor = req.parsedQuery.for || "spaces";
+    const migrationFor = req.parsedQuery?.for || "spaces";
     const files = await getUploadedFiles(req, res, {
       fileType: mediaTypes.MIGRATIONFILE,
       error: {

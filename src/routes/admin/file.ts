@@ -55,7 +55,7 @@ const migrationQuerySchema = z.object({
 });
 router.post(
   "/migration",
-  RequestMiddleware.queryValidator(migrationQuerySchema, {
+  RequestMiddleware.queryValidator(migrationQuerySchema.partial(), {
     validateOnlyPresent: true,
     allowEmpty: true,
   }),
