@@ -339,6 +339,7 @@ export const getRangedFilters = <M extends Model<any>>(
         };
       }
     }
+    console.log("Range or filters :", Object.values(filter));
     const rangeFilters = { $and: Object.values(filter) };
     console.log("Range filters :", rangeFilters);
     return rangeFilters;
