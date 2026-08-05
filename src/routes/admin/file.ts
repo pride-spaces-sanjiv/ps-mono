@@ -11,6 +11,7 @@ import {
 } from "@/controllers/general/file.js";
 import { mediaTypes } from "@/utils/data/media.js";
 import { mediaQuerySchema } from "@/database/schemas/media.js";
+import { dumpSchema } from "@/database/schemas/dump.js";
 
 const router = Router();
 
@@ -48,8 +49,16 @@ router.post(
   validateFileUpload({ fileType: mediaTypes.LAYOUT }),
   uploadLayoutFiles,
 );
+
+const migrationQuerySchema = z.object({
+  for: dumpSchema.shape.collection.default("spaces").optional(),
+});
 router.post(
   "/migration",
+  RequestMiddleware.queryValidator(migrationQuerySchema, {
+    validateOnlyPresent: true,
+    allowEmpty: true,
+  }),
   validateFileUpload({ fileType: mediaTypes.MIGRATIONFILE }),
   uploadMigrationFile,
 );

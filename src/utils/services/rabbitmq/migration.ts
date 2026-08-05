@@ -1,5 +1,5 @@
+import { extractCSV } from "@/utils/scripts/bulk/extract-csv.js";
 import {
-  extractCSV,
   parseBulkSpacesData,
   pushBulkSpacesData,
 } from "@/utils/scripts/bulk/space.js";
@@ -18,8 +18,21 @@ import { getDestinationFolder } from "@/utils/data/file.js";
 import { mediaTypes } from "@/utils/data/media.js";
 import { pipelineDBs } from "../pipeline/db.js";
 import { listS3Objects } from "../s3/list-objects.js";
+import {
+  parseBulkOperatorsData,
+  pushBulkOperatorsData,
+} from "@/utils/scripts/bulk/operator.js";
 
-const spacesHandler = async (data: WaitingMigrationMQ) => {
+const parsers = {
+  spaces: parseBulkSpacesData,
+  operators: parseBulkOperatorsData,
+};
+const pushers = {
+  spaces: pushBulkSpacesData,
+  operators: pushBulkOperatorsData,
+};
+
+const processHandler = async (data: WaitingMigrationMQ) => {
   try {
     const key = getFullMigrationS3Key(data.fileId, "json");
     const { Body } = await rustfsClient.send(
@@ -38,12 +51,16 @@ const spacesHandler = async (data: WaitingMigrationMQ) => {
 
     const rows = JSON.parse(bodyString);
     // const rows = await extractCSV(Body as Readable);
-    const parsed = await parseBulkSpacesData(rows);
+
+    const parsed = await parsers[data.collection as keyof typeof parsers](rows);
     if (!parsed || parsed.length === 0) {
       throw new Error("No valid data to process");
     }
 
-    const stats = await pushBulkSpacesData(parsed as any[]);
+    const stats = await pushers[data.collection as keyof typeof pushers](
+      parsed as any[],
+    );
+
     console.log("Migration part process completion stats :", data, stats);
 
     const updatedDoc = await pipelineDBs.MIGRATION.updateData({
@@ -108,8 +125,8 @@ const spacesHandler = async (data: WaitingMigrationMQ) => {
 const handler = async (data: WaitingMigrationMQ) => {
   try {
     const collection = data.collection;
-    if (collection === "spaces") {
-      return await spacesHandler(data);
+    if (collection === "spaces" || collection === "operators") {
+      return await processHandler(data);
     }
     throw new Error("Invalid collection");
   } catch (err) {
