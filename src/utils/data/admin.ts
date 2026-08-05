@@ -1,6 +1,6 @@
-export const adminLevels = ["super-admin", "admin", "support"] as const;
+export const adminLevels = ["super-admin", "admin", "lead", "support"] as const;
 export type AdminLevel = (typeof adminLevels)[number];
-export const adminLevelNos = adminLevels.map((_, i) => i as 0 | 1 | 2);
+export const adminLevelNos = adminLevels.map((_, i) => i as 0 | 1 | 2 | 3);
 
 export const compareAdminLevels = (level1: AdminLevel, level2: AdminLevel) => {
   const level1No = adminLevelNos[adminLevels.indexOf(level1)];

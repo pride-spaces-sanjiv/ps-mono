@@ -1,86 +1,20 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Operator, operatorNonPassFields } from "@/database/models/operator.js";
+import * as generalControllers from "@/controllers/general/operator.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
-import {
-  cleanPaginatedData,
-  paginatedResults,
-} from "@/utils/mongoose/pagination.js";
-import {
-  getFieldsandProjectors,
-  getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
-import { encodeCrypto } from "@/utils/crypto.js";
+import { compareCryptos } from "@/utils/crypto.js";
+// types
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { OperatorSchema } from "@/database/schemas/operator.js";
+import { dumpStatuses } from "@/utils/data/dump.js";
+import { operatorNonPassFields } from "@/database/models/operator.js";
 
 export const getOperators = async (
   req: ManagedRequest<any, { [k: string]: any }>,
   res: ManagedResponse,
 ) => {
   try {
-    const selfLevel = req.session.user?.userType;
-
-    const { fields, projectors } = getFieldsandProjectors(
-      req,
-      Operator,
-      operatorNonPassFields,
-    );
-    const searchFilters = getSearchFilters<typeof Operator>(req, {
-      fieldMaps: {
-        Name: "name",
-        Email: "email",
-      },
-    });
-    const { page, metrics, results, errored, err } = await paginatedResults(
-      req,
-      Operator,
-      operatorNonPassFields,
-      { limit: 10 },
-      {
-        projection: projectors,
-        filter: cleanObject({ ...searchFilters }, { excludeByValues: [""] }),
-      },
-    );
-
-    // On results error
-    if (errored && err) {
-      ResponseHandler.handleError(res, {
-        errorType: "get-operators-error",
-        message: "Failed to get operators list",
-      });
-      return;
-    }
-    if (results.length === 0) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operators-not-found",
-        message: "No operators found",
-        data: { results, page, metrics },
-      });
-      return;
-    }
-
-    const spaceCounts = await getSpaceCountsOfOperator(
-      results.map((r) => r.id),
-    );
-    const data = cleanPaginatedData({
-      results: results,
-      page,
-      metrics,
-      err,
-      errored,
-    });
-    ResponseHandler.handleSuccess(res, {
-      message: "Got operators list",
-      data: {
-        ...data,
-        results: data.results.map((r) => ({
-          ...r,
-          totalSpaces: spaceCounts[r.id] || 0,
-        })),
-      },
+    await generalControllers.getOperators(req, res, {
+      allowedProjectionFields: operatorNonPassFields,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -95,28 +29,8 @@ export const getOperator = async (
   res: ManagedResponse,
 ) => {
   try {
-    const { fields, projectors } = getFieldsandProjectors(
-      req,
-      Operator,
-      operatorNonPassFields,
-    );
-
-    const doc = await Operator.findOne({ _id: req.params.id }, projectors);
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
-
-    const spaceCounts = await getSpaceCountsOfOperator([doc.id]);
-    const data = {
-      ...convertDataToJSON(doc),
-      totalSpaces: spaceCounts[doc.id] || 0,
-    };
-    ResponseHandler.handleSuccess(res, {
-      data: data,
+    await generalControllers.getOperator(req, res, {
+      allowedProjectionFields: operatorNonPassFields,
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -131,19 +45,20 @@ export const createOperator = async (
   res: ManagedResponse,
 ) => {
   try {
-    const body = req.body;
-    const encodedPass = encodeCrypto(body.password);
-    const doc = new Operator({
-      ...body,
-      password: encodedPass,
-    });
-    await doc.save();
+    const sessionUser = req.session.user;
 
-    const data = convertDataToJSON(doc);
-    ResponseHandler.handleSuccess(res, {
-      status: 201,
-      message: "Created operator successfully",
-      data: data,
+    await generalControllers.createOperator(req, res, {
+      onlyDump: sessionUser?.userType && sessionUser?.userType === "support",
+      dumpDataHandle: (dt) => ({ ...dt, isActive: undefined }),
+      dumpArgs: {
+        dump: {
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : dumpStatuses.APPROVED,
+        },
+      },
+      preOptions: { projection: { password: 0 } },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
@@ -163,29 +78,25 @@ export const createOperator = async (
 };
 
 export const updateOperator = async (
-  req: ManagedRequest<Omit<OperatorSchema, "password">>,
+  req: ManagedRequest<Partial<Omit<OperatorSchema, "password">>>,
   res: ManagedResponse,
 ) => {
   try {
     const body = req.body;
-    const doc = await Operator.findOneAndUpdate({ _id: req.params.id }, body, {
-      new: true,
-    });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
+    const sessionUser = req.session.user;
 
-    const spaceCounts = await getSpaceCountsOfOperator([doc.id]);
-    const data = {
-      ...convertDataToJSON(doc),
-      totalSpaces: spaceCounts[doc.id] || 0,
-    };
-    ResponseHandler.handleSuccess(res, {
-      data: data,
+    await generalControllers.updateOperator(req, res, {
+      onlyDump: sessionUser?.userType && sessionUser?.userType === "support",
+      dumpDataHandle: (dt) => ({ ...dt, isActive: undefined }),
+      dumpArgs: {
+        dump: {
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : dumpStatuses.APPROVED,
+        },
+      },
+      preOptions: { projection: { password: 0 } },
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
@@ -209,22 +120,107 @@ export const deleteOperator = async (
   res: ManagedResponse,
 ) => {
   try {
-    const doc = await Operator.findOneAndDelete({ _id: req.params.id });
-    if (!doc) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "operator-not-found",
-        message: "Operator not found",
-      });
-      return;
-    }
+    const sessionUser = req.session.user;
 
-    ResponseHandler.handleSuccess(res, {
-      data: { id: doc.id },
+    await generalControllers.deleteOperator(req, res, {
+      onlyDump: sessionUser?.userType && sessionUser?.userType === "support",
+      dumpArgs: {
+        dump: {
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : dumpStatuses.APPROVED,
+        },
+      },
+      preOptions: { projection: { password: 0 } },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "delete-operator-error-failure",
       message: "Failed to delete operator",
+    });
+  }
+};
+
+// Password
+export const getPassword = async (
+  req: ManagedRequest,
+  res: ManagedResponse,
+) => {
+  try {
+    const body = req.body;
+    const sessionUser = req.session.user;
+
+    await generalControllers.getOperator(req, res, {
+      preProjections: { password: 1, createdAt: 1, updatedAt: 1 },
+      response: {
+        success: { message: "Operator password retrieved successfully" },
+      },
+    });
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "operator-unique-error",
+        msgPre: "Operator",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
+    ResponseHandler.handleError(res, {
+      errorType: "get-operator-password-error-failure",
+      message: "Failed to get operator password",
+    });
+  }
+};
+
+export const updatePassword = async (
+  req: ManagedRequest<Pick<OperatorSchema, "password">>,
+  res: ManagedResponse,
+) => {
+  try {
+    const body = req.body;
+    const sessionUser = req.session.user;
+
+    await generalControllers.updateOperator(req, res, {
+      onlyDump: sessionUser?.userType && sessionUser?.userType === "support",
+      dumpDataHandle: (dt) => ({ ...dt, isActive: undefined }),
+      proceedToProcess: (body, doc) => {
+        if (compareCryptos(doc?.password, body.password)) {
+          ResponseHandler.handleError(res, {
+            errorType: "password-matched",
+            message: "New password cannot be the same as the current password",
+          });
+          return false;
+        }
+        return true;
+      },
+      dumpArgs: {
+        dump: {
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : dumpStatuses.APPROVED,
+        },
+      },
+      preOptions: { projection: { password: 1, createdAt: 1, updatedAt: 1 } },
+      response: {
+        success: { message: "Operator password updated successfully" },
+      },
+    });
+  } catch (err: any) {
+    const errorData = handleMongooseError(err, res, {
+      uniqueError: {
+        errorType: "operator-unique-error",
+        msgPre: "Operator",
+      },
+    });
+    if (errorData.handled) {
+      return;
+    }
+    ResponseHandler.handleError(res, {
+      errorType: "update-operator-password-error-failure",
+      message: "Failed to update operator password",
     });
   }
 };

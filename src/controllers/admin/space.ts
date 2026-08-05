@@ -1,5 +1,6 @@
 import { ResponseHandler } from "@/middlewares/request.js";
 import { Space, spaceFields } from "@/database/models/space.js";
+import { Dump } from "@/database/models/dump.js";
 import { getSpaceOperatorsData } from "@/utils/mongoose/relations/space-operator.js";
 import {
   cleanPaginatedData,
@@ -12,8 +13,16 @@ import {
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
 import { cleanObject } from "@/utils/object/clean.js";
+import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+// types
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { SpaceSchema } from "@/database/schemas/space.js";
+import { ModelToDocument } from "@/types/mongoose/document.js";
+import { dumpStatuses } from "@/utils/data/dump.js";
+import { dumpAdminAction } from "@/utils/data/dumpAction.js";
+import { Types } from "mongoose";
+import { pipelineDBs } from "@/utils/services/pipeline/db.js";
+import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
 
 export const getSpaces = async (
   req: ManagedRequest<
@@ -28,10 +37,10 @@ export const getSpaces = async (
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
-    const branchId = (req.query?.branch || "").trim();
-    const operatorId = (req.query?.operator || "").trim();
+    const branchId = (req.parsedQuery?.branch || "").trim();
+    const operatorId = (req.parsedQuery?.operator || "").trim();
     const withOperator =
-      String(req.query?.withOperator || "").toLowerCase() === "true";
+      String(req.parsedQuery?.withOperator || "").toLowerCase() === "true";
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -120,9 +129,12 @@ export const getSpace = async (
       spaceFields,
     );
     const withOperator =
-      String(req.query?.withOperator || "").toLowerCase() === "true";
+      String(req.parsedQuery?.withOperator || "").toLowerCase() === "true";
 
-    const doc = await Space.findOne({ _id: req.params.id }, projectors);
+    const doc = await pipelineDBs.SPACE.getData({
+      filter: { _id: req.params.id },
+      projection: projectors,
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "space-not-found",
@@ -157,15 +169,66 @@ export const createSpace = async (
   res: ManagedResponse,
 ) => {
   try {
+    const sessionUser = req.session.user;
     const body = req.body;
-    const doc = new Space(body);
-    await doc.save();
+    // @ts-ignore
+    body.fullKeyword = generateSpaceKeyword(req.body?.name || "") || undefined;
+    const id = new Types.ObjectId().toHexString();
 
-    const data = convertDataToJSON(doc);
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      isNew: true,
+      dump: {
+        collection: "spaces",
+        data: { ...body, isActive: undefined },
+        metadata: {
+          id: id,
+          name: body.name,
+        },
+        action: "add",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-failed",
+        message: "Dump action was failed",
+      });
+      return;
+    }
+
+    // For lead and above direct create
+    if (
+      sessionUser?.userType &&
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
+    ) {
+      const doc = pipelineDBs.SPACE.createData({ data: { ...body, _id: id } });
+
+      const data = convertDataToJSON(doc);
+      ResponseHandler.handleSuccess(res, {
+        status: 201,
+        message: "Created space successfully",
+        data: data,
+      });
+      return;
+    }
+
     ResponseHandler.handleSuccess(res, {
       status: 201,
-      message: "Created space successfully",
-      data: data,
+      message: "Dumped new space successfully",
+      data: body,
     });
   } catch (err: any) {
     const errorData = handleMongooseError(err, res, {
@@ -178,8 +241,8 @@ export const createSpace = async (
       return;
     }
     ResponseHandler.handleError(res, {
-      errorType: "create-user-error-failure",
-      message: "Failed to create user",
+      errorType: "create-space-error-failure",
+      message: "Failed to create space",
     });
   }
 };
@@ -190,15 +253,68 @@ export const updateSpace = async (
 ) => {
   try {
     const body = req.body;
-    const doc = await Space.findOneAndUpdate({ _id: req.params.id }, body, {
-      new: true,
-    });
+    // @ts-ignore
+    body.fullKeyword = generateSpaceKeyword(req.body?.name || "") || undefined;
+
+    const sessionUser = req.session.user;
+    let doc: ModelToDocument<typeof Space> | null = null;
+
+    // Create dump for every update, support will request and others auto approve
+    doc = await pipelineDBs.SPACE.getData({ filter: { _id: req.params.id } });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "space-not-found",
         message: "Space not found",
       });
       return;
+    }
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      dump: {
+        collection: "spaces",
+        data: { ...body, isActive: undefined, id: req.params.id },
+        metadata: { id: req.params.id, name: doc.name },
+        action: "update",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      ResponseHandler.handleError(res, {
+        errorType: "dump-failed",
+        message: "Dump action was failed",
+      });
+      return;
+    }
+
+    // For lead and above direct update
+    if (
+      sessionUser?.userType &&
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
+    ) {
+      doc = await pipelineDBs.SPACE.updateData({
+        filter: { _id: req.params.id },
+        updateData: body,
+        options: { new: true },
+      });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "space-not-found",
+          message: "Space not found",
+        });
+        return;
+      }
     }
 
     const data = convertDataToJSON(doc);
@@ -227,7 +343,11 @@ export const deleteSpace = async (
   res: ManagedResponse,
 ) => {
   try {
-    const doc = await Space.findOneAndDelete({ _id: req.params.id });
+    const sessionUser = req.session.user;
+
+    const doc = await pipelineDBs.SPACE.getData({
+      filter: { _id: req.params.id },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "space-not-found",
@@ -236,9 +356,64 @@ export const deleteSpace = async (
       return;
     }
 
-    const data = convertDataToJSON(doc);
+    // Handle dumping actions
+    const dumpRes = await dumpAdminAction({
+      isNew: true,
+      dump: {
+        collection: "spaces",
+        data: {},
+        metadata: {
+          id: doc.id,
+          name: doc.name,
+        },
+        action: "remove",
+        status:
+          sessionUser?.userType === "support"
+            ? dumpStatuses.PENDING
+            : dumpStatuses.APPROVED,
+      },
+      req: req,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-unauthorized",
+        message: "Dump action was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "dump-failed",
+        message: "Dump action was failed",
+      });
+      return;
+    }
+
+    // For lead and above direct delete
+    if (
+      sessionUser?.userType &&
+      sessionUser?.userType !== "support" &&
+      adminLevels.includes(sessionUser.userType as AdminLevel)
+    ) {
+      const doc = await pipelineDBs.SPACE.deleteData({
+        filter: { _id: req.params.id },
+      });
+      if (!doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "space-not-found",
+          message: "Space not found",
+        });
+        return;
+      }
+      ResponseHandler.handleSuccess(res, {
+        message: "Space deleted successfully",
+        data: { id: doc.id },
+      });
+      return;
+    }
     ResponseHandler.handleSuccess(res, {
-      data: { id: data?.id },
+      message: "Dumped space-removal successfully",
+      data: { id: doc.id },
     });
   } catch (err) {
     ResponseHandler.handleError(res, {

@@ -27,11 +27,12 @@ const BranchSchema = new Conn.Schema(
   { timestamps: true },
 );
 indexFieldsFromSchema(BranchSchema, {
-  singleFields: ["name", "email", "operator"],
+  singleFields: ["name", "operator"],
 });
 
 // Model Instances
 export const Branch = Conn.model("Branch", BranchSchema, "branches");
+Branch.syncIndexes();
 
 // Field names
 export const branchFields = getFieldsOfModel(Branch, {

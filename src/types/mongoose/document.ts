@@ -1,4 +1,4 @@
-import { Document, Model, ObjectId, Schema } from "mongoose";
+import { Document, HydratedDocument, Model, ObjectId, Schema } from "mongoose";
 import { OnlyTypedFields } from "../object.js";
 
 export type SchemaToRaw<T extends Schema<any>, I extends boolean = true> =
@@ -11,6 +11,9 @@ export type ModelToRaw<T extends Model<any>, I extends boolean = true> =
           ? Pick<InstanceType<typeof Document<ObjectId>>, "id" | "_id">
           : {})
     : never;
+
+export type ModelToDocument<T extends Model<any>, I extends boolean = true> =
+  T extends Model<infer U> ? HydratedDocument<U> : never;
 
 export type ModelDocumentKeys<
   T extends Model<any>,

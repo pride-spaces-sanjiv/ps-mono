@@ -36,6 +36,7 @@ export const adminSchema = z.object({
   isGoogleAcc: z.boolean().default(false),
   level: z.enum(adminLevels).default("support"),
   phone: getPhoneSchema(),
+  isActive: z.boolean("Active status must be yes or no").default(true),
 });
 
 export type AdminSchema = z.infer<typeof adminSchema>;

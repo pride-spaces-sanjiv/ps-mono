@@ -9,8 +9,10 @@ import {
   createDump,
   updateDump,
   approveDump,
+  deleteDump,
 } from "@/controllers/general/dump.js";
 import { getIdSchema } from "@/database/schemas/string.js";
+import { adminLevels } from "@/utils/data/admin.js";
 
 const router = Router();
 
@@ -22,6 +24,11 @@ router.get(
 );
 router.post(
   "/",
+  allowAdminLevelsToPass({
+    allowedLevels: adminLevels.filter(
+      (lv) => lv !== "support" && lv !== "lead",
+    ),
+  }),
   RequestMiddleware.bodyValidator(dumpSchema, {
     validateOnlyPresent: false,
     overridePostValidation: true,
@@ -32,17 +39,39 @@ router.post(
 router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-  RequestMiddleware.bodyValidator(dumpSchema, {
-    allowEmpty: true,
-    validateOnlyPresent: true,
-    overridePostValidation: true,
-    extractOnlyRequiredFields: true,
-  }),
+  RequestMiddleware.bodyValidator(
+    dumpSchema.omit({
+      collection: true,
+      action: true,
+      metadata: true,
+      from: true,
+      to: true,
+    }),
+    {
+      allowEmpty: true,
+      validateOnlyPresent: true,
+      overridePostValidation: true,
+      extractOnlyRequiredFields: true,
+    },
+  ),
   updateDump,
+);
+router.delete(
+  "/:id",
+  RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  allowAdminLevelsToPass({
+    allowedLevels: adminLevels.filter(
+      (lv) => lv !== "support" && lv !== "lead",
+    ),
+  }),
+  deleteDump,
 );
 router.get(
   "/approve/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  allowAdminLevelsToPass({
+    allowedLevels: adminLevels.filter((lv) => lv !== "support"),
+  }),
   approveDump,
 );
 

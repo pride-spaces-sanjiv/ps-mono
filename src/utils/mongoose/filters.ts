@@ -1,7 +1,16 @@
-import { Model } from "mongoose";
-import { ManagedRequest } from "@/types/request.js";
-import { ModelDocumentKeys, ModelToRaw } from "@/types/mongoose/document.js";
+import { FilterQuery, Model, ProjectionType, RootFilterQuery } from "mongoose";
+import { Aggregator, aggregate } from "mingo";
+import { $project, $sample } from "mingo/operators/pipeline";
+import { allGeneralFieldsEnabled } from "./fields.js";
+import {
+  ModelDocumentKeys,
+  ModelToDocument,
+  ModelToRaw,
+} from "@/types/mongoose/document.js";
 import { ObjectDepthKeys } from "@/types/object.js";
+import { ManagedRequest } from "@/types/request.js";
+import { $jsonSchema } from "mingo/operators/query";
+import { cleanObject } from "../object/clean.js";
 
 export type SortOrder = "asc" | "desc";
 export type SortOptions<
@@ -12,6 +21,7 @@ export type SortOptions<
   allowOnly: F[];
   defaultSortField: F;
   defaultSortOrder: SortOrder;
+  allowTimestampFields: boolean;
   fields: Partial<{
     sortBy: SB;
     sortOrder: SO;
@@ -33,7 +43,10 @@ export const getFieldsandProjectors = <M extends Model<any>, F extends string>(
   ignoreFields?: F[],
 ) => {
   let fields =
-    (Array.isArray(req.query.field) ? req.query.field : [req.query.field])
+    (Array.isArray(req.parsedQuery.field)
+      ? req.parsedQuery.field
+      : [req.parsedQuery.field]
+    )
       // @ts-ignore
       .filter((f: F) => typeof f === "string")
       // @ts-ignore
@@ -79,6 +92,59 @@ export const cleanProjectors = <
   return cleaned;
 };
 
+export const projectiseDataToDoc = async <T extends any>(
+  model: Model<T>,
+  data: Partial<T>,
+  options: Partial<{ projection: ProjectionType<T> | null }> = {},
+) => {
+  let { projection = null } = options;
+
+  if (
+    projection &&
+    ((typeof projection === "object" && Object.keys(projection).length > 0) ||
+      (typeof projection === "string" && projection.trim()))
+  ) {
+    if (typeof projection === "string") {
+      projection = Object.fromEntries(
+        projection
+          .split(/ +/g)
+          .map((f) => [
+            f.trim().replace(/^-/, ""),
+            (f.trim().startsWith("-") ? 0 : 1) as 0 | 1,
+          ]),
+      ) as Exclude<ProjectionType<T>, string>;
+    }
+
+    // Check projection validity
+    const values = Object.values(projection);
+    const projectionType =
+      values[0] === 1 || values[0] === true
+        ? "inclusion"
+        : values[0] === 0 || values[0] === false
+          ? "exclusion"
+          : "invalid";
+    if (
+      projectionType === "invalid" ||
+      values.find((v) => (projectionType === "inclusion" ? !v : !!v))
+    ) {
+      throw new Error("Either of exclusion or inclusion allowed");
+    }
+
+    const docRaw = data;
+    const [projectedData] = new Aggregator([
+      {
+        $project: projection || {},
+        $jsonSchema,
+      },
+    ]).run([docRaw]);
+    const projectedDoc = model.hydrate(projectedData);
+    return projectedDoc;
+  }
+};
+
+const timestampFields = Object.keys(allGeneralFieldsEnabled).filter(
+  (k) => k !== "_id",
+) as (keyof Omit<typeof allGeneralFieldsEnabled, "_id">)[];
 /**
  * @description Returns `sort-options` based on query params
  * @description Checks for
@@ -104,17 +170,27 @@ export const getSortOptions = <
       // @ts-ignore
       fields: { sortBy: "sortBy", sortOrder: "sortOrder", ...options?.fields },
     };
+    const { allowTimestampFields = true } = options as typeof options & {};
     const field =
+      (allowTimestampFields &&
+        (timestampFields.find(
+          (f) => f == req.parsedQuery[String(options?.fields?.sortBy)],
+        ) ||
+          timestampFields.find((f) => f == options?.defaultSortField))) ||
       (options?.fields?.sortBy &&
         options?.allowOnly?.find(
-          (f) => f == req.query[String(options?.fields?.sortBy)],
+          (f) => f == req.parsedQuery[String(options?.fields?.sortBy)],
         )) ||
       (options?.defaultSortField &&
         options?.allowOnly?.find((f) => f == options?.defaultSortField));
     const order =
-      req.query[String(options?.fields?.sortOrder)] === "asc"
+      req.parsedQuery[String(options?.fields?.sortOrder)] === "asc"
         ? "asc"
         : options?.defaultSortOrder || "desc";
+    console.log("Finalised sorting field :", {
+      sortBy: field,
+      sortOrder: order as SortOrder,
+    });
 
     if (typeof field !== "string") {
       throw new Error("Sort field is not valid type, required string");
@@ -151,14 +227,14 @@ export const getSearchFilters = <M extends Model<any>>(
     >;
     for (const queryField in fieldMaps) {
       if (
-        !Object.hasOwn(req.query, `s${queryField}`) ||
-        !req.query[`s${queryField}`]
+        !Object.hasOwn(req.parsedQuery, `s${queryField}`) ||
+        !req.parsedQuery[`s${queryField}`]
       ) {
         continue;
       }
       const field = fieldMaps[queryField];
       filter[field] = {
-        $regex: String(req.query[`s${queryField}`])
+        $regex: String(req.parsedQuery[`s${queryField}`])
           .trim()
           .toLowerCase()
           .replace(/ +/g, " "),
@@ -166,6 +242,93 @@ export const getSearchFilters = <M extends Model<any>>(
       };
     }
     return filter;
+  } catch (err) {
+    return null;
+  }
+};
+
+export const getMultiFilters = <M extends Model<any>>(
+  req: ManagedRequest<
+    any,
+    {
+      [k: string]: any;
+    }
+  >,
+  options: Partial<{
+    fieldMaps: Record<string, ObjectDepthKeys<ModelToRaw<M>>>;
+  }> = {},
+) => {
+  try {
+    const { fieldMaps = {} } = options;
+    const filter = {} as Partial<Record<keyof ModelToRaw<M>, { $in: any[] }>>;
+    for (const queryField in fieldMaps) {
+      if (
+        !Object.hasOwn(req.parsedQuery, `f${queryField}`) ||
+        !req.parsedQuery[`f${queryField}`]
+      ) {
+        continue;
+      }
+      const field = fieldMaps[queryField];
+      filter[field] = {
+        $in: req.parsedQuery[`f${queryField}`],
+      };
+    }
+    return filter;
+  } catch (err) {
+    return null;
+  }
+};
+
+export const getRangedFilters = <M extends Model<any>>(
+  req: ManagedRequest<
+    any,
+    {
+      [k: string]: any;
+    }
+  >,
+  options: Partial<{
+    rangedFieldMaps: Record<
+      string,
+      {
+        field: ObjectDepthKeys<ModelToRaw<M>>;
+        ranges: { id: number; min?: number; max?: number }[];
+      }
+    >;
+  }> = {},
+) => {
+  try {
+    const { rangedFieldMaps = {} } = options;
+    const filter = {} as Partial<
+      Record<
+        keyof ModelToRaw<M>,
+        { $or: Required<FilterQuery<ModelToRaw<M>>>["$or"] }
+      >
+    >;
+    for (const queryField in rangedFieldMaps) {
+      if (!Object.hasOwn(req.parsedQuery, `r${queryField}`)) {
+        continue;
+      }
+      const rangeIds = rangedFieldMaps[queryField].ranges.map((r) => r.id);
+      const acceptedRanges = [
+        ...new Set(req.parsedQuery[`r${queryField}`] as any[]),
+      ]?.filter((rg: number) => rangeIds.includes(Number(rg)));
+      const field = rangedFieldMaps[queryField].field;
+      if (acceptedRanges.length) {
+        filter[field] = {
+          $or: rangedFieldMaps[queryField].ranges
+            .filter((r) => acceptedRanges.includes(r.id))
+            .map((r) => ({
+              [field]: cleanObject(
+                { $gte: r.min, $lte: r.max },
+                { excludeByValues: [undefined] },
+              ),
+            })),
+        };
+      }
+    }
+    const rangeFilters = { $and: Object.values(filter) };
+    console.log("Range filters :", rangeFilters);
+    return rangeFilters;
   } catch (err) {
     return null;
   }

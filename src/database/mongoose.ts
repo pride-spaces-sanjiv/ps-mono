@@ -9,4 +9,5 @@ export const Conn = await mongoose.connect(url, {
     password: process.env.MONGO_PASS,
   },
   authSource: "admin",
+  // dbName: process.env.MONGO_DB
 });

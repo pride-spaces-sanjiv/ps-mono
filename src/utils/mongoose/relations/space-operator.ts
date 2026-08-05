@@ -2,10 +2,15 @@ import { Types } from "mongoose";
 import { Operator } from "@/database/models/operator.js";
 import { Space } from "@/database/models/space.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
+import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 
 export const getSpaceCountsOfOperator = async (operators: string[]) => {
   // Count Spaces
   const spaceCounts = Object.fromEntries(
+    operators.map((operator) => [operator, 0]),
+  ) as Record<string, number>;
+
+  const resCounts = Object.fromEntries(
     (
       await Space.aggregate([
         {
@@ -24,12 +29,20 @@ export const getSpaceCountsOfOperator = async (operators: string[]) => {
       ])
     ).map((item) => [item._id, item.totalSpaces]) as [string, number][],
   );
+  // Update from res received
+  for (const id in resCounts) {
+    spaceCounts[id] = resCounts[id];
+  }
   return spaceCounts;
 };
 
 export const getSpaceOperatorsData = async (operators: string[]) => {
   const spaceCounts = await getSpaceCountsOfOperator(operators);
-  let results = (await Operator.find({ _id: { $in: operators } })).map(
+  let results = (
+    await pipelineDBs.OPERATOR.getMultiData({
+      filter: { _id: { $in: operators } },
+    })
+  ).map(
     (doc) =>
       new Operator(
         {

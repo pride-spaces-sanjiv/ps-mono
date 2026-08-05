@@ -12,21 +12,21 @@ import { getIdSchema } from "@/database/schemas/string.js";
 
 const router = Router();
 
-// router.get("/", getDumps);
-// router.get(
-//   "/:id",
-//   RequestMiddleware.paramValidator(getIdSchema(), "id"),
-//   getDump,
-// );
-router.post(
-  "/",
-  RequestMiddleware.bodyValidator(dumpSchema, {
-    validateOnlyPresent: false,
-    overridePostValidation: true,
-    extractOnlyRequiredFields: true,
-  }),
-  createDump,
+router.get("/", getDumps);
+router.get(
+  "/:id",
+  RequestMiddleware.paramValidator(getIdSchema(), "id"),
+  getDump,
 );
+// router.post(
+//   "/",
+//   RequestMiddleware.bodyValidator(dumpSchema, {
+//     validateOnlyPresent: false,
+//     overridePostValidation: true,
+//     extractOnlyRequiredFields: true,
+//   }),
+//   createDump,
+// );
 router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),

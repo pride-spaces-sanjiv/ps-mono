@@ -11,6 +11,7 @@ import { encodeCrypto } from "@/utils/crypto.js";
 import { AdminLevel, getAdminLowerLevels } from "@/utils/data/admin.js";
 import { type AdminSchema } from "@/database/schemas/user.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 
 export const getAdmins = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -75,7 +76,10 @@ export const getAdmin = async (
       adminNonPassFields,
     );
 
-    const doc = await Admin.findOne({ _id: req.params.id }, projectors);
+    const doc = await pipelineDBs.ADMIN.getData({
+      filter: { _id: req.params.id },
+      projection: projectors,
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "admin-not-found",
@@ -104,11 +108,12 @@ export const createAdmin = async (
   try {
     const body = req.body;
     const encodedPass = encodeCrypto(body.password);
-    const doc = new Admin({
-      ...body,
-      password: encodedPass,
+    const doc = await pipelineDBs.ADMIN.createData({
+      data: {
+        ...body,
+        password: encodedPass,
+      },
     });
-    await doc.save();
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
@@ -139,8 +144,12 @@ export const updateAdmin = async (
 ) => {
   try {
     const body = req.body;
-    const doc = await Admin.findOneAndUpdate({ _id: req.params.id }, body, {
-      new: true,
+    const doc = await pipelineDBs.ADMIN.updateData({
+      filter: { _id: req.params.id },
+      updateData: body,
+      options: {
+        new: true,
+      },
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {

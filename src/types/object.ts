@@ -23,16 +23,16 @@ export type ObjectFieldsMapsToObject<O extends Record<string, any>> = {
 };
 
 // Helper to limit recursion depth (prevents "Infinite Depth" errors)
-type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ...0[]];
+type Prev = [never, 0, 1, 2, 3, 4, 5, ...0[]];
 
-export type ObjectDepthKeys<T, D extends number = 10> = [D] extends [never]
+export type ObjectDepthKeys<T, D extends number = 5> = [D] extends [never]
   ? never
   : T extends object
     ? {
-        [K in keyof T]-?: K extends string | number
-          ? T[K] extends Record<string | number, any>
-            ? `${K}.${ObjectDepthKeys<T[K], Prev[D]>}`
-            : `${K}`
-          : never;
-      }[keyof T]
+        [K in keyof T & (string | number)]: T[K] extends readonly (infer U)[]
+          ? `${K}` | `${K}.${ObjectDepthKeys<U, Prev[D]>}`
+          : T[K] extends object | null | undefined
+            ? `${K}` | `${K}.${ObjectDepthKeys<NonNullable<T[K]>, Prev[D]>}`
+            : `${K}`;
+      }[keyof T & (string | number)]
     : never;

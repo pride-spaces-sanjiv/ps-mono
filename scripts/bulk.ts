@@ -14,7 +14,18 @@ import {
 import { Space } from "../src/database/models/space";
 import { Operator } from "../src/database/models/operator";
 import { facilities } from "../src/utils/data/facilities";
-import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
+import {
+  parseBulkOperatorsData,
+  pushBulkOperatorsData,
+} from "../src/utils/scripts/bulk/operator";
+import { extractCSV } from "../src/utils/scripts/bulk/extract-csv.js";
+import { RowData as SpaceRowData } from "../src/utils/scripts/data/space-headers.js";
+import { RowData as OperatorRowData } from "../src/utils/scripts/data/operator-headers.js";
+import {
+  parseBulkSpacesData,
+  pushBulkSpacesData,
+} from "../src/utils/scripts/bulk/space.js";
+import { getSpaceCountsOfOperator } from "../src/utils/mongoose/relations/space-operator.js";
 const { default: parsedData } = await import("../data/parsed-data.json", {
   assert: { type: "json" },
 });
@@ -26,9 +37,13 @@ const { default: convertedParsed } = await import(
 );
 // console.log(parsedData);
 
-const csvFile = "C:\\Users\\Sanjiv\\OneDrive\\Documents\\ps-dump-data.csv";
+// const csvFile =
+//   "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
+// const csvFile =
+//   "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - KA Operator HQ.csv";
+// npm run test scripts/bulk -- --env=dev
 
-const rows: any[] = [];
+// const rows: any[] = [];
 // fs.createReadStream(path.resolve(csvFile))
 //   .pipe(csv.parse({ headers: true }))
 //   .on("error", (error) => console.error(error))
@@ -99,13 +114,47 @@ const convertData = (data: (typeof parsedData)[number]) => {
   return parsed.data;
 };
 
-const convertedSpaces = parsedData
-  .map(convertData)
-  .filter((v): v is NonNullable<typeof v> => !!v);
+// const convertedSpaces = parsedData
+//   .map(convertData)
+//   .filter((v): v is NonNullable<typeof v> => !!v);
+// fs.writeFileSync(
+//   "./data/converted-spaces.json",
+//   JSON.stringify(convertedSpaces, null, 2),
+// );
+// Operator
+const csvFile =
+  "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
+console.time("Scripting Time :");
+const rows = await extractCSV<OperatorRowData>(csvFile);
+const bulkedOperators = await parseBulkOperatorsData(rows, {
+  postFilter: (op) => !!op.slug?.trim(),
+});
 fs.writeFileSync(
-  "./data/converted-spaces.json",
-  JSON.stringify(convertedSpaces, null, 2),
+  "./data/bulked-operators.json",
+  JSON.stringify(bulkedOperators, null, 2),
 );
+console.timeEnd("Scripting Time :");
+// console.time("Push Time :");
+// bulkedOperators && (await pushBulkOperatorsData(bulkedOperators));
+// console.timeEnd("Push Time :");
+
+// Spaces
+// const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centres 2.csv";
+// console.time("Scripting Time :");
+// const rows = await extractCSV<SpaceRowData>(csvFile);
+// let bulkedSpaces = await parseBulkSpacesData(rows, {
+//   preFilter: (row) => row.operatorslug?.toLowerCase().includes("enzyme"),
+// });
+// // bulkedSpaces = bulkedSpaces?.filter((_, i) => i < 3) || null;
+// fs.writeFileSync(
+//   "./data/bulked-spaces.json",
+//   JSON.stringify(bulkedSpaces, null, 2),
+// );
+// console.timeEnd("Scripting Time :");
+
+// console.time("Push Time :");
+// console.log(bulkedSpaces && (await pushBulkSpacesData(bulkedSpaces, true)));
+// console.timeEnd("Push Time :");
 
 let saves = 0;
 // await Space.deleteMany();

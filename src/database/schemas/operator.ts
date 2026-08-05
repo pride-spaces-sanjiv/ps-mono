@@ -9,6 +9,15 @@ import {
 import { approvalSchema } from "./dump.js";
 import { personSchema } from "./person.js";
 
+const gstNoSchema = z
+  .string()
+  .trim()
+  .min(1, "GST number is required")
+  .refine(
+    (v) => v.match(/^[A-Za-z0-9]{15}$/),
+    "GST number must be 15 characters long",
+  );
+
 // 1. Head Quarter Person
 export const headQuarterPersonSchema = personSchema;
 
@@ -22,31 +31,50 @@ export const headQuarterSchema = z.object({
 
 export type HeadQuarterSchema = z.infer<typeof headQuarterSchema>;
 
-// 3. Operator
+// 3. Branch
+export const branchSchema = z.object({
+  code: z.string().trim().min(1, "State Code is required"),
+  name: z.string().trim().min(1, "State Name is required"),
+  address: z.string().trim().min(1, "Branch Address is required"),
+  city: z.string().trim().min(1, "City is required"),
+  gstNo: gstNoSchema.optional(),
+  postalCode: z
+    .string("Postal Code is required")
+    .trim()
+    .min(3, "Postal Code must be min 3 chars")
+    .transform((arg) => arg.replace(/[^A-Za-z0-9]/g, ""))
+    .refine((val) => /^[A-Za-z0-9]+$/.test(val), "Postal Code is invalid"),
+  person: headQuarterPersonSchema.partial().optional(),
+  isPrimary: z.boolean().default(false),
+});
+
+export type BranchSchema = z.infer<typeof branchSchema>;
+
+// 4. Operator
 export const operatorSchema = z.object({
-  name: getNameSchema(),
+  name: getNameSchema({
+    keyName: "Operator Name",
+    alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
   email: getEmailSchema(),
   password: getPasswordSchema(),
   slug: getSlugSchema({ keyName: "Operator Slug" }),
-  brandName: getNameSchema({ keyName: "Brand Name" }),
-  gstNo: z
-    .string()
-    .trim()
-    .min(1, "GST number is required")
-    .refine(
-      (v) => v.match(/^[A-Za-z0-9]{15}$/),
-      "GST number must be 15 characters long",
-    ),
+  brandName: getNameSchema({
+    keyName: "Brand Name",
+    alphaRegexp: /^[A-Za-z0-9,\- ]+$/,
+    alphaRegexpMsg: "must only contain alpha numeric characters",
+  }),
+  person: headQuarterPersonSchema.partial().optional(),
+  gstNo: gstNoSchema,
   cinNo: z
     .string()
     .trim()
-    .min(1, "CIN number is required")
-    .refine(
-      (v) => v.match(/^[A-Za-z0-9]{21}$/),
-      "CIN number must be 21 characters long",
-    ),
-  headquarter: headQuarterSchema,
-  person: headQuarterPersonSchema,
+    .refine((v) => !v.match(/ +/), "CIN cannot have spaces")
+    .optional(),
+  headquarter: headQuarterSchema.partial().optional(),
+  branches: z.array(branchSchema).optional(),
+  establishedOn: z.date().optional(),
   isActive: z.boolean().optional().default(true),
   // approval: approvalSchema,
 });

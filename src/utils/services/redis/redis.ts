@@ -5,7 +5,7 @@ import { sleep } from "../../time.js";
 const redisStr = `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
 const redisClients: { [x: string]: RedisClientType } = {};
 
-export const RedisClientDBs = { general: 1, sessionStore: 0 };
+export const RedisClientDBs = { general: 1, sessionStore: 0, dbPiped: 2 };
 
 export const getRedisClient = async (db: number | string) => {
   try {
@@ -31,6 +31,17 @@ export const createRedisClient = (options: RedisClientOptions = {}) => {
   // @ts-ignore
   redisClients[database] = client;
   getRedisClient(database);
+
+  process.on("beforeExit", async (code) => {
+    try {
+      if (client && client?.isOpen) {
+        await client?.close();
+        await client?.destroy();
+      }
+    } catch (err) {
+      console.error("Error closing redis connection before exit :", err);
+    }
+  });
 
   client.on("connect", () => {
     console.log("Redis connected");
@@ -61,3 +72,11 @@ const redisStoreClient = createRedisClient({
   database: RedisClientDBs.sessionStore,
 });
 export const redisStore = new RedisStore({ client: redisStoreClient });
+
+export const RedisClients = {
+  GENERAL: RedisClient,
+  SESSION: redisStoreClient,
+  DBPIPED: createRedisClient({
+    database: RedisClientDBs.dbPiped,
+  }),
+};

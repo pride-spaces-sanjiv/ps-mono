@@ -1,5 +1,9 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Dump, dumpFields } from "@/database/models/dump.js";
+import {
+  allDumpFieldsEnabled,
+  Dump,
+  dumpFields,
+} from "@/database/models/dump.js";
 import { Space } from "@/database/models/space.js";
 import { Operator } from "@/database/models/operator.js";
 import {
@@ -12,13 +16,24 @@ import {
 } from "@/utils/mongoose/filters.js";
 import { handleMongooseError } from "@/utils/mongoose/error.js";
 import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { type AdminSchema } from "@/database/schemas/user.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 import { cleanObject } from "@/utils/object/clean.js";
-import { dumpCollectionNames } from "@/utils/data/dump.js";
+import { dumpCollectionNames, dumpStatuses } from "@/utils/data/dump.js";
+import {
+  dumpCollectionModels,
+  dumpCollectionSchemas,
+} from "@/utils/data/dump-maps.js";
 import { spaceSchema } from "@/database/schemas/space.js";
 import { operatorSchema } from "@/database/schemas/operator.js";
+import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { validateDataAndRespond } from "@/utils/schemas/validate.js";
+import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+import { NonAdminUserType, nonAdminUserTypes } from "@/utils/data/userTypes.js";
+import { ObjectDepthKeys } from "@/types/object.js";
+import { ModelToDocument, ModelToRaw } from "@/types/mongoose/document.js";
+import { RootFilterQuery } from "mongoose";
+import { DumpSchema } from "@/database/schemas/dump.js";
+import { dumpAdminAction, dumpUserAction } from "@/utils/data/dumpAction.js";
 
 export const getDumps = async (
   req: ManagedRequest<any, { [k: string]: any }>,
@@ -26,11 +41,31 @@ export const getDumps = async (
 ) => {
   try {
     const selfLevel = req.session.user?.userType;
+
     const searchFilters = getSearchFilters<typeof Dump>(req, {
       fieldMaps: {
         Collection: "collection",
+        FromId: "from.id",
+        ToId: "to.id",
+        FromName: "from.name",
+        FromEmail: "from.email",
+        ToName: "to.name",
+        ToEmail: "to.email",
+        Action: "action",
+        Status: "status",
       },
     });
+
+    const preLevelFilters: RootFilterQuery<ModelToRaw<typeof Dump>> =
+      selfLevel === "support" ||
+      nonAdminUserTypes.includes(selfLevel as NonAdminUserType)
+        ? {
+            $or: [
+              { "from.id": req.session.user?.id },
+              { "to.id": req.session.user?.id },
+            ],
+          }
+        : {};
 
     const { fields, projectors } = getFieldsandProjectors(
       req,
@@ -44,7 +79,14 @@ export const getDumps = async (
       { limit: 10 },
       {
         projection: projectors,
-        filter: cleanObject({ ...searchFilters }, { excludeByValues: [""] }),
+        filter: cleanObject(
+          { ...searchFilters, ...preLevelFilters },
+          { excludeByValues: [""] },
+        ),
+      },
+      {
+        defaultSortField: "updatedAt",
+        defaultSortOrder: "desc",
       },
     );
 
@@ -83,13 +125,29 @@ export const getDump = async (
   res: ManagedResponse,
 ) => {
   try {
+    const selfLevel = req.session.user?.userType;
+
     const { fields, projectors } = getFieldsandProjectors(
       req,
       Dump,
       dumpFields,
     );
 
-    const doc = await Dump.findOne({ _id: req.params.id }, projectors);
+    const preLevelFilters: RootFilterQuery<ModelToRaw<typeof Dump>> =
+      selfLevel === "support" ||
+      nonAdminUserTypes.includes(selfLevel as NonAdminUserType)
+        ? {
+            $or: [
+              { "from.id": req.session.user?.id },
+              { "to.id": req.session.user?.id },
+            ],
+          }
+        : {};
+
+    const doc = await pipelineDBs.DUMP.getData({
+      filter: { _id: req.params.id, ...preLevelFilters },
+      projection: projectors,
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "dump-not-found",
@@ -120,8 +178,7 @@ export const createDump = async (
 ) => {
   try {
     const body = req.body;
-    const doc = new Dump(body);
-    await doc.save();
+    const doc = await pipelineDBs.DUMP.createData(body);
 
     const data = convertDataToJSON(doc);
     ResponseHandler.handleSuccess(res, {
@@ -147,16 +204,24 @@ export const createDump = async (
 };
 
 export const updateDump = async (
-  req: ManagedRequest<{
-    collection: (typeof dumpCollectionNames)[keyof typeof dumpCollectionNames];
-    data: any;
-  }>,
+  req: ManagedRequest<
+    Omit<
+      Partial<DumpSchema>,
+      "collection" | "action" | "metadata" | "from" | "to"
+    >
+  >,
   res: ManagedResponse,
 ) => {
   try {
+    const sessionUser = req.session.user;
     const body = req.body;
-    const doc = await Dump.findOneAndUpdate({ _id: req.params.id }, body, {
-      new: true,
+    const isHigherAdmin =
+      !!sessionUser?.userType &&
+      adminLevels.includes(sessionUser.userType as AdminLevel) &&
+      sessionUser.userType !== "support";
+
+    const doc = await pipelineDBs.DUMP.getData({
+      filter: { _id: req.params.id },
     });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
@@ -166,12 +231,162 @@ export const updateDump = async (
       return;
     }
 
-    const data = convertDataToJSON(doc);
+    // Flag to check if last user who did to action is diff from curr
+    const doClone = !!(
+      isHigherAdmin &&
+      doc.to?.id &&
+      doc.to.id !== sessionUser.id
+    );
+
+    // Update approved dump in real collection
+    if (isHigherAdmin && body.status === dumpStatuses.APPROVED) {
+      if (!Object.keys(dumpCollectionModels).includes(doc.collection)) {
+        ResponseHandler.handleError(res, {
+          errorType: "invalid-dump-collection",
+          message: "Invalid dump collection",
+        });
+        return;
+      }
+
+      const model =
+        dumpCollectionModels[
+          doc.collection as keyof typeof dumpCollectionModels
+        ];
+      const schema =
+        dumpCollectionSchemas[
+          doc.collection as keyof typeof dumpCollectionSchemas
+        ];
+
+      // Validate data first
+      const { error, valid, parsed, handled } = validateDataAndRespond(
+        schema as NonNullable<typeof schema>,
+        // @ts-ignore
+        { ...doc.data, ...body?.data },
+        res,
+        { extractOnlyRequiredFields: true },
+      );
+      if (handled) {
+        return;
+      }
+      if (error) {
+        throw error;
+      }
+      if (!valid || !parsed) {
+        return ResponseHandler.handleError(res, {
+          errorType: "invalid-dump-data",
+          message: "Invalid dump data provided",
+        });
+      }
+
+      const id = parsed.id;
+      delete parsed.id;
+      // @ts-ignore
+      const updatedDoc = await model?.findOneAndUpdate(
+        { _id: doc.metadata?.id },
+        {
+          ...parsed,
+          approval: {
+            ...sessionUser,
+            lastRequested: doc.createdAt,
+          },
+        },
+        { new: true, projection: { password: 0 } },
+      );
+
+      if (!updatedDoc) {
+        return ResponseHandler.handleError(res, {
+          errorType: "dump-push-failure",
+          message: "Failed to push dump data to real",
+        });
+      }
+
+      // ResponseHandler.handleSuccess(res, {
+      //   message: "Approved dump successfully",
+      //   data: convertDataToJSON(updatedDoc),
+      // });
+    }
+
+    // Handle dumping actions
+    const dumpRes = await dumpUserAction({
+      dump: {
+        ...body,
+        status: doClone
+          ? doc.status
+          : !isHigherAdmin
+            ? dumpStatuses.PENDING
+            : body.status,
+        disabled:
+          doClone || (isHigherAdmin && body.status === dumpStatuses.APPROVED),
+      },
+      req: req,
+      senderDisabled: !!doClone,
+      isNew: false,
+      id: req.params.id,
+    });
+    if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+      ResponseHandler.handleUnauthorized(res, {
+        errorType: "update-dump-unauthorized",
+        message: "Dump update was unauthorized",
+      });
+      return;
+    }
+    if (dumpRes.notFound || !dumpRes.doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "dump-not-found",
+        message: "Dump not found",
+      });
+      return;
+    }
+    if (dumpRes.error) {
+      throw dumpRes.error;
+    }
+
+    // Handle cloning dump
+    if (doClone) {
+      const dumpRes = await dumpAdminAction({
+        // @ts-ignore
+        dump: {
+          ...doc.toJSON({ versionKey: false, flattenObjectIds: true }),
+          _id: undefined,
+          ...body,
+          // @ts-ignore
+          status:
+            sessionUser?.userType === "support"
+              ? dumpStatuses.PENDING
+              : body.status,
+          disabled:
+            sessionUser?.userType !== "support" &&
+            body.status === dumpStatuses.APPROVED,
+        },
+        req: req,
+        isNew: true,
+      });
+      if (dumpRes.disAllowed || dumpRes.levelInvalid) {
+        ResponseHandler.handleUnauthorized(res, {
+          errorType: "new-dump-unauthorized",
+          message: "Dump clone was unauthorized",
+        });
+        return;
+      }
+      if (dumpRes.notFound || !dumpRes.doc) {
+        ResponseHandler.handleNotFound(res, {
+          errorType: "dump-not-found",
+          message: "Dump not found",
+        });
+        return;
+      }
+      if (dumpRes.error) {
+        throw dumpRes.error;
+      }
+    }
+
+    const data = convertDataToJSON(dumpRes.doc);
     ResponseHandler.handleSuccess(res, {
       message: "Updated dump successfully",
       data: data,
     });
   } catch (err: any) {
+    console.error("Error updating dump :", err);
     const errorData = handleMongooseError(err, res, {
       uniqueError: {
         errorType: "dump-unique-error",
@@ -193,7 +408,9 @@ export const approveDump = async (
   res: ManagedResponse,
 ) => {
   try {
-    const doc = await Dump.findOne({ _id: req.params.id });
+    const doc = await pipelineDBs.DUMP.getData({
+      filter: { _id: req.params.id },
+    });
     if (!doc) {
       ResponseHandler.handleNotFound(res, {
         errorType: "dump-not-found",
@@ -214,6 +431,12 @@ export const approveDump = async (
         ? spaceSchema
         : data?.collection === "operators"
           ? operatorSchema
+          : null;
+    const pipelineDB =
+      data?.collection === "spaces"
+        ? pipelineDBs.SPACE
+        : data?.collection === "operators"
+          ? pipelineDBs.OPERATOR
           : null;
 
     // Validate data first
@@ -240,27 +463,64 @@ export const approveDump = async (
     const id = parsed.id;
     delete parsed.id;
     // @ts-ignore
-    const updatedDoc = await model?.findOneAndUpdate(
-      { _id: id },
-      {
+    const updatedDoc = await pipelineDB?.updateData({
+      filter: { _id: id },
+      updateData: {
         ...parsed,
         approval: {
+          id: req.session.user?.id,
+          email: req.session.user?.email,
           name: req.session.user?.name,
-          level: req.session.user?.userType,
+          userType: req.session.user?.userType,
           lastRequested: doc.updatedAt,
         },
       },
-      { new: true, projection: { password: 0 } },
-    );
+      options: { new: true, projection: { password: 0 } },
+    });
 
     ResponseHandler.handleSuccess(res, {
       message: "Approved dump successfully",
-      data: convertDataToJSON(updatedDoc),
+      data: convertDataToJSON(
+        // @ts-ignore
+        updatedDoc as
+          | ModelToDocument<typeof Space>
+          | ModelToDocument<typeof Operator>,
+      ),
     });
   } catch (err) {
     ResponseHandler.handleError(res, {
       errorType: "approve-dump-error-failure",
       message: "Failed to approve dump",
+    });
+  }
+};
+
+export const deleteDump = async (
+  req: ManagedRequest<any, { [k: string]: any }>,
+  res: ManagedResponse,
+) => {
+  try {
+    const doc = await pipelineDBs.DUMP.deleteData({
+      filter: { _id: req.params.id },
+    });
+
+    if (!doc) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "dump-not-found",
+        message: "Dump not found",
+      });
+      return;
+    }
+
+    const data = convertDataToJSON(doc);
+    ResponseHandler.handleSuccess(res, {
+      message: "Deleted dump successfully",
+      data: data,
+    });
+  } catch (err) {
+    ResponseHandler.handleError(res, {
+      errorType: "delete-dump-error-failure",
+      message: "Failed to delete dump",
     });
   }
 };

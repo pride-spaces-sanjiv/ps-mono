@@ -36,7 +36,7 @@ router.get(
 router.post(
   "/",
   preParseDateFieldsFromBody<SpaceSchema>({
-    fields: ["openTime", "closeTime"],
+    fields: ["timing.openTime", "timing.closeTime"],
   }),
   RequestMiddleware.bodyValidator(spaceSchema.omit({ operator: true }), {
     validateOnlyPresent: false,
@@ -50,7 +50,7 @@ router.put(
   "/:id",
   RequestMiddleware.paramValidator(getIdSchema(), "id"),
   preParseDateFieldsFromBody<SpaceSchema>({
-    fields: ["openTime", "closeTime"],
+    fields: ["timing.openTime", "timing.closeTime"],
   }),
   RequestMiddleware.bodyValidator(
     spaceSchema.omit({ branch: true, operator: true }),

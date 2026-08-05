@@ -8,3 +8,4 @@ backup/**/*
 scripts/backup/**/*.json
 /generated/prisma
 data/*
+tmp/*

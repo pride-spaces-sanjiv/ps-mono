@@ -2,22 +2,23 @@ import express, { RequestHandler } from "express";
 import session from "express-session";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { queryParser } from "express-query-parser";
 import moment from "moment";
 import fs from "fs";
 import util from "node:util";
 // Middlewares
 import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
+import { queryParser } from "@/middlewares/filters.js";
 // import { validateUserAccess } from "@/middlewares/users.js";
 // import {
 //   userAgentLogger,
 //   validateConnection,
 // } from "@/middlewares/connections.js";
 // Controllers
-import { getTokenInfo } from "./controllers/tokenInfo.js";
+import { getTokenInfo } from "@/controllers/tokenInfo.js";
 // Routers
 import { AdminRouter } from "@/routes/admin/route.js";
-import { OperatorRouter } from "./routes/operator/route.js";
+import { OperatorRouter } from "@/routes/operator/route.js";
+import { StatesRouter } from "@/routes/general/states/route.js";
 // import { PlaylistRouter } from "@/routes/playlist.js";
 // import { JioRouter } from "./routes/jio.js";
 // import { ZeeRouter } from "@/routes/zee.js";
@@ -31,16 +32,23 @@ import { OperatorRouter } from "./routes/operator/route.js";
 // Database
 // Services
 import { RedisClient, redisStore } from "@/utils/services/redis/redis.js";
+import { syncAllIndexes } from "@/utils/mongoose/sync-index.js";
 // Utils
 import { getIP } from "@/utils/ip.js";
+import { createTempDir } from "./middlewares/file.js";
 // Data
 // Types
 import {
   ManagedResponseWithLocalUrl,
   ManagedResponseWithLocalUrlIP,
 } from "@/types/request.js";
+import { GeneralRouter } from "./routes/general/route.js";
+import { parseFiltersQuery } from "./middlewares/filters.js";
 // import { handleMailQueue } from "./utils/services/rabbitmq/email.js";
 
+// Pre handlers
+syncAllIndexes();
+createTempDir();
 const app = express();
 // let startDate = moment();
 
@@ -56,11 +64,6 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) {
-        return callback(null, true);
-      }
-      if (
-        origin.includes("chrome-extension://opmeopcambhfimffbomjgemehjkbbmji")
-      ) {
         return callback(null, true);
       }
       if (origin?.match(/^http(s|)[:]\/\/localhost[:][345]00[0-9]{0,3}/)) {
@@ -91,7 +94,11 @@ app.use(
     secret: process.env.SESSION_SECRET as string,
     cookie: {
       maxAge: moment.duration(7, "days").asMilliseconds(),
-      secure: process.env.ENV === "dev" ? false : true,
+      secure:
+        process.env.ENV === "dev" &&
+        process.env.SESSION_SECURE?.trim().toLowerCase() !== "true"
+          ? false
+          : true,
       sameSite: "none",
       httpOnly: true,
     },
@@ -102,8 +109,10 @@ app.use(
 
 // Parser middlewares
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: false, limit: "1mb" }));
-app.use(express.json());
+app.use(
+  express.urlencoded({ extended: false, limit: "30mb", parameterLimit: 100 }),
+);
+app.use(express.json({ limit: "1mb" }));
 app.use((req, res, next) => {
   console.log("Query", req.query);
   if (!req.query || !Object.keys(req.query).length) {
@@ -115,6 +124,7 @@ app.use((req, res, next) => {
       parseUndefined: true,
       parseBoolean: true,
       parseNumber: true,
+      parseArray: true,
     }) as RequestHandler<
       any,
       any,
@@ -125,6 +135,7 @@ app.use((req, res, next) => {
     >
   )(req, res, next);
 });
+app.use(parseFiltersQuery);
 
 // Custom headers]
 app.use((req, res, next) => {
@@ -136,6 +147,7 @@ app.use((req, res, next) => {
     for (const key in headers) {
       res.setHeader(key, headers[key]);
     }
+    console.log("Logged Route :", req.url, req.originalUrl, req.path);
     next?.();
   } catch (err) {
     ResponseHandler.handleError(res, {
@@ -286,6 +298,8 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
 //   HotstarRouter,
 // );
 
+app.use("/states", StatesRouter);
+
 // Independent cache routes
 app.use((req, res: ManagedResponseWithLocalUrl, next) => {
   try {
@@ -306,6 +320,7 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
 }, RequestMiddleware.sendCachedData);
 app.use("/admin", AdminRouter);
 app.use("/operator", OperatorRouter);
+app.use("/general", GeneralRouter);
 // app.use("/users", RequestMiddleware.authenticateUser(1), usersRouter);
 // app.use("/group", RequestMiddleware.authenticateUser(1), groupRouter);
 // app.use("/account", RequestMiddleware.authenticateUser(0), accountRouter);

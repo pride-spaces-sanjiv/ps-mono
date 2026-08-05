@@ -1,5 +1,5 @@
 import { isObjectIdOrHexString } from "mongoose";
-import { minLength, z } from "zod";
+import { minLength, uuidv7, z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js/min";
 
 type StringSchemaOptions = {
@@ -23,6 +23,24 @@ export const getIdSchema = ({
   return schema;
 };
 
+// UUID
+type UUIDSchemaOptions = {
+  keyName: string;
+  doTrim: boolean;
+  schema: z.ZodUUID;
+};
+export const getUUIdSchema = ({
+  keyName = "Id",
+  doTrim = true,
+  schema,
+}: Partial<UUIDSchemaOptions> = {}) => {
+  schema = schema || z.uuidv7({ error: `${keyName} is invalid, must be UUID` });
+  if (doTrim) {
+    schema = schema.trim();
+  }
+  return schema;
+};
+
 // Name
 type NameSchemaOptions = StringSchemaOptions & {
   minLength: number;
@@ -33,8 +51,8 @@ export const getNameSchema = ({
   keyName = "Name",
   doTrim = true,
   minLength = 4,
-  alphaRegexp = /^[A-z ]+$/,
-  alphaRegexpMsg = "must only contain alphabets",
+  alphaRegexp = /^[A-z0-9,\- ]+$/,
+  alphaRegexpMsg = "must only contain alphabets numbers and hyphens",
   schema = z.string(),
 }: Partial<NameSchemaOptions> = {}) => {
   if (doTrim) {

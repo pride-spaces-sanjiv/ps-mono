@@ -11,6 +11,7 @@ import app from "./app.js";
 import { handleMailQueue } from "@/utils/services/rabbitmq/email.js";
 import { getProcessArgsObject } from "./utils/args.js";
 import { sleep } from "@/utils/time.js";
+import { handleMQWorkers } from "@/utils/services/workers/mq.js";
 // import { workers } from "@/utils/workers/handler.js";
 
 // ENV;
@@ -39,7 +40,7 @@ if (cluster.isPrimary) {
   });
 
   // Queues
-  // handleMailQueue();
+  handleMQWorkers();
 } else {
   // Workers run the HTTP server
   const server = createServer(app);

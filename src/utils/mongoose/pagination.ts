@@ -8,6 +8,11 @@ import {
 } from "mongoose";
 import { MongoError } from "mongodb";
 import {
+  getPipelineDBFromModelName,
+  PipelineDB,
+  pipelineDBs,
+} from "../services/pipeline/db.js";
+import {
   getFieldsandProjectors,
   getSortOptions,
   SortOptions,
@@ -17,16 +22,23 @@ import { validateNumber } from "@/utils/number.js";
 import { ManagedRequest } from "@/types/request.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 
+type PipelineNames = keyof typeof pipelineDBs;
+type PipelineModel<K extends PipelineNames> = Exclude<
+  ReturnType<(typeof pipelineDBs)[K]["getProtectedProps"]>["model"],
+  undefined | null
+>;
+
 export const paginatedResults = async <
-  M extends Model<any>,
-  T extends ModelToRaw<M>,
+  M extends Model<any> | PipelineModel<PDBKey>,
+  T extends ModelToRaw<M> = ModelToRaw<M>,
   F extends string = string,
+  PDBKey extends PipelineNames = PipelineNames,
 >(
   req: ManagedRequest<
     any,
     { page?: number; limit?: number; order?: "desc" | "asc"; [k: string]: any }
   >,
-  model: M,
+  model: M | PDBKey,
   acceptedFields?: F[],
   params?: Partial<{ limit: number }>,
   args?: Partial<{
@@ -49,15 +61,24 @@ export const paginatedResults = async <
   };
   try {
     data.page = Math.max(
-      validateNumber(req.query.page, { convertToInt: true, invalidValue: 1 }),
+      validateNumber(req.parsedQuery.page, {
+        convertToInt: true,
+        invalidValue: 1,
+      }),
       1,
     );
     const allParams = { limit: 10, ...params };
-    const limit = validateNumber(req.query.limit ?? allParams.limit, {
+    const limit = validateNumber(req.parsedQuery.limit ?? allParams.limit, {
       convertToInt: true,
       invalidValue: 10,
     });
     const offset = (data.page - 1) * limit;
+
+    // Get model from pipelineDBs if a dbName is provided
+    model =
+      typeof model === "string"
+        ? (pipelineDBs[model].getProtectedProps().model as M)
+        : model;
     const { projectors } = getFieldsandProjectors(
       req,
       model,
@@ -68,6 +89,11 @@ export const paginatedResults = async <
         allowOnly: acceptedFields || [],
         ...sorterOptions,
       }) || {};
+    console.log("Pagination sort options : ", {
+      sortBy,
+      sortOrder,
+      acceptedFields,
+    });
 
     const total = await model.countDocuments(args?.filter);
     const next = await model.countDocuments(args?.filter, {
@@ -75,12 +101,24 @@ export const paginatedResults = async <
       limit: limit,
     });
 
-    const results = (await model
+    const pipelineDB = getPipelineDBFromModelName(model.modelName);
+    const results = (await (
+      pipelineDB as Exclude<typeof pipelineDB, undefined>
+    ).getMultiData({
+      filter: args?.filter,
       // @ts-ignore
-      .find(args?.filter, { ...projectors, ...args?.projection }, args?.options)
-      .skip(offset)
-      .sort(sortBy ? { [sortBy]: sortOrder || "desc" } : {})
-      .limit(limit)) as FlattenMaps<T>[];
+      projection: { ...projectors, ...args?.projection },
+      options: args?.options,
+      offset: offset,
+      limit: limit,
+      sortOptions: sortBy ? { arg: { [sortBy]: sortOrder || "desc" } } : {},
+    })) as FlattenMaps<T>[];
+    //  (await model
+    //   // @ts-ignore
+    //   .find(args?.filter, { ...projectors, ...args?.projection }, args?.options)
+    //   .skip(offset)
+    //   .sort(sortBy ? { [sortBy]: sortOrder || "desc" } : {})
+    //   .limit(limit)) as FlattenMaps<T>[];
     data.results = results;
     data.metrics.total = total;
     data.metrics.next = next;
