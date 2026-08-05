@@ -16,57 +16,12 @@ import {
 import { encodeCrypto } from "@/utils/crypto.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { Document, Types } from "mongoose";
-
-const CSVHeaders = {
-  OPERATORREGISTEREDNAME: "operatorregisteredname",
-  GST: "gst",
-  OPERATORBRANDNAME: "operatorbrandname",
-  OPERATORSLUG: "operatorslug",
-  OPERATORHQADDRESS: "operatorhqaddress",
-  STATE: "state",
-  CITY: "city",
-  ZIPPINCODE: "zippincode",
-  HQEMAILFORLOGINID: "hqemailforloginid",
-  HQPOCEMAIL: "hqpocemail",
-  HQPOCMOBILENO: "hqpocmobileno",
-  HQLANDLINECUSTOMERCARENO: "hqlandlinecustomercareno",
-  HQPOCNAME: "hqpocname",
-  HQPOCDESIGNATION: "hqpocdesignation",
-  CIN: "cin",
-} as const;
-type CSVHeadersValues = (typeof CSVHeaders)[keyof typeof CSVHeaders];
-type RowData = Record<CSVHeadersValues, string | null | undefined>;
-
-const extractCSV = (csvFile: string) => {
-  const rows: RowData[] = [];
-  return new Promise<typeof rows>((res, rej) => {
-    fs.createReadStream(path.resolve(csvFile))
-      .pipe(
-        csv.parse({
-          headers: (hds) =>
-            hds.map((s) =>
-              s
-                ?.trim()
-                ?.replace(/[^A-z0-9]+/g, "")
-                .toLowerCase(),
-            ),
-        }),
-      )
-      .on("error", (error) => {
-        rej(error);
-      })
-      .on("data", (row: (typeof rows)[number]) => {
-        const convertedRow = shortenKeys(row);
-        rows.push(row);
-      })
-      .on("end", (rowCount: number, ...args: any[]) => {
-        console.log(`Parsed ${rowCount} rows`, "Args :", ...args);
-        console.log(rows);
-        res(rows);
-        // fs.writeFileSync("./parsed-data.json", JSON.stringify(rows, null, 2));
-      });
-  });
-};
+import {
+  RowData,
+  CSVHeaders,
+  CSVHeadersValues,
+} from "../data/operator-headers.js";
+import { extractCSV } from "./extract-csv.js";
 
 const generateSlug = (row: RowData) => {
   const slug =
@@ -172,7 +127,7 @@ const prepareData = (
   row: RowData & { slug: string; branches: BranchSchema[] },
 ) => {
   try {
-    const prepared: Partial<OperatorSchema> = {
+    const prepared: OperatorSchema = {
       name: validifyStringValues(row.operatorregisteredname),
       brandName: validifyStringValues(row.operatorbrandname),
       email: validifyStringValues(row.hqemailforloginid || row.hqpocemail),
@@ -193,6 +148,7 @@ const prepareData = (
         contactNo: convertAsPhoneNo(validifyStringValues(row.hqpocmobileno)),
       },
       branches: ensureSinglePrimaryBranch(row.branches),
+      isActive: true,
     };
     return prepared;
   } catch (err) {
@@ -200,11 +156,18 @@ const prepareData = (
   }
 };
 
-export const parseBulkOperatorsData = async (fileName: string) => {
+export const parseBulkOperatorsData = async (
+  rows: RowData[],
+  options: Partial<{
+    postModification: Parameters<ReturnType<typeof prepareData>[]["map"]>[0];
+    postFilter: Parameters<ReturnType<typeof prepareData>[]["filter"]>[0];
+    preFilter: Parameters<RowData[]["filter"]>[0];
+  }> = {},
+) => {
   try {
-    const rows = await extractCSV(fileName);
     const statesData = await getStatesData();
     const sluggedRows = rows
+      .filter(options?.preFilter || ((row) => true))
       .map((row) => ({
         ...row,
         slug: generateSlug(row),
@@ -240,7 +203,9 @@ export const parseBulkOperatorsData = async (fileName: string) => {
         branches: removeDuplicateBranches(row.branches, true),
       }))
       .map((row) => prepareData(row))
-      .filter((row) => !!row);
+      .filter((row) => !!row)
+      .filter(options?.postFilter || ((x) => true))
+      .map(options?.postModification || ((x) => x));
     return sluggedRows;
   } catch (err) {
     console.error("Failed to parse bulk operators data:", err);
@@ -252,10 +217,19 @@ export const pushBulkOperatorsData = async (
   operators: OperatorSchema[],
   fresh = false,
 ) => {
+  const stats = {
+    total: 0,
+    success: 0,
+    inserted: 0,
+    updated: 0,
+    failed: 0,
+  };
   try {
     if (fresh) {
       await Operator.deleteMany({});
     }
+    stats.total = operators.length;
+
     // Try pushing data
     const insertedDocs = [] as ModelToRaw<typeof Operator>[];
     const insertedErrors = [] as Error[];
@@ -295,6 +269,7 @@ export const pushBulkOperatorsData = async (
       "/",
       operators.length,
     );
+    let updatedCount = 0;
     if (remOperators.length > 0) {
       // Get old data
       const oldDocs = await Operator.find({
@@ -321,6 +296,8 @@ export const pushBulkOperatorsData = async (
           },
         })),
       );
+
+      updatedCount = updateRes.modifiedCount;
       console.log(
         "Updated operators :",
         updateRes.modifiedCount,
@@ -330,7 +307,12 @@ export const pushBulkOperatorsData = async (
         operators.length,
       );
     }
+    stats.success = insertedDocs.length + updatedCount;
+    stats.inserted = insertedDocs.length;
+    stats.updated = updatedCount;
+    stats.failed = remOperators.length - updatedCount;
   } catch (err: any) {
     console.error("Failed to push bulk operators data:", err);
   }
+  return stats;
 };

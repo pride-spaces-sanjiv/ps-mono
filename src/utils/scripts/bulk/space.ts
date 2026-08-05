@@ -27,47 +27,13 @@ import {
   CSVHeadersValues,
   RowData,
 } from "../data/space-headers.js";
+import { extractCSV } from "./extract-csv.js";
 import { Readable } from "stream";
 import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
 import { areasUpdateMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
 
 // Objects
 const spaceCounts = {} as Record<string, number>;
-
-export const extractCSV = (csvFile: string | Readable) => {
-  const rows: RowData[] = [];
-  const stream =
-    typeof csvFile === "string"
-      ? fs.createReadStream(path.resolve(csvFile))
-      : csvFile;
-  return new Promise<typeof rows>((res, rej) => {
-    stream
-      .pipe(
-        csv.parse({
-          headers: (hds) =>
-            hds.map((s) =>
-              s
-                ?.trim()
-                ?.replace(/[^A-z0-9]+/g, "")
-                .toLowerCase(),
-            ),
-        }),
-      )
-      .on("error", (error) => {
-        rej(error);
-      })
-      .on("data", (row: (typeof rows)[number]) => {
-        const convertedRow = shortenKeys(row);
-        rows.push(row);
-      })
-      .on("end", (rowCount: number, ...args: any[]) => {
-        console.log(`Parsed ${rowCount} rows`, "Args :", ...args);
-        console.log(rows);
-        res(rows);
-        // fs.writeFileSync("./parsed-data.json", JSON.stringify(rows, null, 2));
-      });
-  });
-};
 
 // Get states data
 const getStatesData = async () => {

@@ -18,8 +18,10 @@ import {
   parseBulkOperatorsData,
   pushBulkOperatorsData,
 } from "../src/utils/scripts/bulk/operator";
+import { extractCSV } from "../src/utils/scripts/bulk/extract-csv.js";
+import { RowData as SpaceRowData } from "../src/utils/scripts/data/space-headers.js";
+import { RowData as OperatorRowData } from "../src/utils/scripts/data/operator-headers.js";
 import {
-  extractCSV,
   parseBulkSpacesData,
   pushBulkSpacesData,
 } from "../src/utils/scripts/bulk/space.js";
@@ -120,34 +122,37 @@ const convertData = (data: (typeof parsedData)[number]) => {
 //   JSON.stringify(convertedSpaces, null, 2),
 // );
 // Operator
-// console.time("Scripting Time :");
-// const bulkedOperators = await parseBulkOperatorsData(csvFile);
-// fs.writeFileSync(
-//   "./data/bulked-operators.json",
-//   JSON.stringify(bulkedOperators, null, 2),
-// );
-// console.timeEnd("Scripting Time :");
+const csvFile =
+  "C:\\Users\\Sanjiv\\OneDrive\\Desktop\\Projects\\pride-spaces\\karnataka-operators.csv";
+console.time("Scripting Time :");
+const rows = await extractCSV<OperatorRowData>(csvFile);
+const bulkedOperators = await parseBulkOperatorsData(rows);
+fs.writeFileSync(
+  "./data/bulked-operators.json",
+  JSON.stringify(bulkedOperators, null, 2),
+);
+console.timeEnd("Scripting Time :");
 // console.time("Push Time :");
 // bulkedOperators && (await pushBulkOperatorsData(bulkedOperators));
 // console.timeEnd("Push Time :");
 
 // Spaces
-const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centres 2.csv";
-console.time("Scripting Time :");
-const rows = await extractCSV(csvFile);
-let bulkedSpaces = await parseBulkSpacesData(rows, {
-  preFilter: (row) => row.operatorslug?.toLowerCase().includes("enzyme"),
-});
-// bulkedSpaces = bulkedSpaces?.filter((_, i) => i < 3) || null;
-fs.writeFileSync(
-  "./data/bulked-spaces.json",
-  JSON.stringify(bulkedSpaces, null, 2),
-);
-console.timeEnd("Scripting Time :");
+// const csvFile = "C:\\Users\\Sanjiv\\Downloads\\KA Operator HQ - Centres 2.csv";
+// console.time("Scripting Time :");
+// const rows = await extractCSV<SpaceRowData>(csvFile);
+// let bulkedSpaces = await parseBulkSpacesData(rows, {
+//   preFilter: (row) => row.operatorslug?.toLowerCase().includes("enzyme"),
+// });
+// // bulkedSpaces = bulkedSpaces?.filter((_, i) => i < 3) || null;
+// fs.writeFileSync(
+//   "./data/bulked-spaces.json",
+//   JSON.stringify(bulkedSpaces, null, 2),
+// );
+// console.timeEnd("Scripting Time :");
 
-console.time("Push Time :");
-console.log(bulkedSpaces && (await pushBulkSpacesData(bulkedSpaces, true)));
-console.timeEnd("Push Time :");
+// console.time("Push Time :");
+// console.log(bulkedSpaces && (await pushBulkSpacesData(bulkedSpaces, true)));
+// console.timeEnd("Push Time :");
 
 let saves = 0;
 // await Space.deleteMany();
