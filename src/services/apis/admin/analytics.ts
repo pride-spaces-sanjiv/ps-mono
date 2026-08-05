@@ -1,4 +1,5 @@
-import { AxiosHeaders, type AxiosResponse } from "axios";
+import { ADMIN } from "../config";
+import type { AxiosResponse } from "axios";
 import type { GeneralResponseWithError } from "@/types/axios/response";
 
 export type AnalyticsSummary = {
@@ -89,18 +90,5 @@ export const staticAnalyticsSummary: AnalyticsSummary = {
 export const getAnalytics = async (): Promise<
   AxiosResponse<GeneralResponseWithError<AnalyticsSummary>>
 > => {
-  return {
-    data: {
-      success: true,
-      message: "Static analytics summary",
-      data: staticAnalyticsSummary,
-    },
-    status: 200,
-    statusText: "OK",
-    headers: {},
-    config: {
-      headers: new AxiosHeaders(),
-      url: analyticsPath,
-    },
-  };
+  return await ADMIN.get<GeneralResponseWithError<AnalyticsSummary>>(analyticsPath);
 };
