@@ -16,8 +16,11 @@ import { Readable } from "stream";
 import { pipelineDBs } from "@/utils/services/pipeline/db.js";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getDestinationFolder } from "@/utils/data/file.js";
-import { RowData } from "@/utils/scripts/data/space-headers.js";
+import { RowData as SpaceRowData } from "@/utils/scripts/data/space-headers.js";
+import { RowData as OperatorRowData } from "@/utils/scripts/data/operator-headers.js";
 import { waitingMigrationMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
+import { extractCSV } from "@/utils/scripts/bulk/extract-csv.js";
+import { DumpCollectionName } from "@/utils/data/dump.js";
 
 const getFile = async (
   req: ManagedRequest<any, MediaQuerySchema>,
@@ -281,6 +284,7 @@ const postMigrationUpload = async (
     | "originalname"
     | "size"
   >,
+  migrationFor: DumpCollectionName,
 ) => {
   try {
     const fileId = file.filename.replace(/\..*$/, "");
@@ -295,12 +299,14 @@ const postMigrationUpload = async (
 
     if (!Body) throw new Error("No file or Empty file");
 
-    const rows = await spaceMigrationUtils.extractCSV(Body as Readable);
+    const rows = await extractCSV<SpaceRowData | OperatorRowData>(
+      Body as Readable,
+    );
 
     // Save initate data to DB
     await pipelineDBs.MIGRATION.createData({
       data: {
-        collection: "spaces",
+        collection: migrationFor,
         fileId: fileId,
         uploadedFileName: file.originalname,
         stats: {
@@ -316,13 +322,16 @@ const postMigrationUpload = async (
 
     // Upload parts to s3
     // Parts creation of each max 100 rows
-    const parts = rows.reduce((prev, curr, i) => {
-      if (i % 100 === 0) {
-        prev.push([]);
-      }
-      prev[prev.length - 1].push(curr);
-      return prev;
-    }, [] as RowData[][]);
+    const parts = rows.reduce(
+      (prev, curr, i) => {
+        if (i % 100 === 0) {
+          prev.push([]);
+        }
+        prev[prev.length - 1].push(curr);
+        return prev;
+      },
+      [] as (SpaceRowData | OperatorRowData)[][],
+    );
     await pipelineDBs.MIGRATION.updateData({
       filter: { fileId: fileId },
       updateData: {
@@ -383,10 +392,11 @@ const postMigrationUpload = async (
 };
 
 export const uploadMigrationFile = async (
-  req: ManagedRequest<any>,
+  req: ManagedRequest<any, { for?: DumpCollectionName }>,
   res: ManagedResponse,
 ) => {
   try {
+    const migrationFor = req.parsedQuery?.for || "spaces";
     const files = await getUploadedFiles(req, res, {
       fileType: mediaTypes.MIGRATIONFILE,
       error: {
@@ -406,7 +416,7 @@ export const uploadMigrationFile = async (
     if (files) {
       const file = files[0];
       setTimeout(() => {
-        postMigrationUpload(file);
+        postMigrationUpload(file, migrationFor);
       }, 500);
     }
   } catch (err: any) {
