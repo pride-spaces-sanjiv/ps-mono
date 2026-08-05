@@ -8,12 +8,10 @@ import ActionButton from "@/components/buttons/action-btn";
 import { DownloadCloud, ImagePlus } from "lucide-react";
 import { downloadFile } from "@/utils/file/download";
 
-const centresSampleLink = new URL(
-  import.meta.env.VITE_RUSTFS_BASE.replace(/\/$/, "") +
-    "/pridespaces/samples/sample-centres-migration.xlsx",
-);
-
 type Props = {
+  labels: React.ComponentProps<typeof FileUpload>["labels"];
+  sampleUrl: URL | string;
+  sampleFileName: string;
   titleProps: React.ComponentProps<typeof FormSectionTitle>;
   fileType: MediaType;
   files: UploadedFile[];
@@ -33,7 +31,10 @@ type Props = {
   >;
 };
 
-export default function SpaceMigrationsUploadSection({
+export default function MigrationsUploadSection({
+  labels,
+  sampleUrl,
+  sampleFileName = "sample-file",
   titleProps,
   fileType = "migrationfile",
   processUpload,
@@ -85,6 +86,7 @@ export default function SpaceMigrationsUploadSection({
           }}
         >
           <FileUpload
+            labels={labels}
             fileType={mediaTypes.MIGRATIONFILE}
             onFilesUpload={(files) => {
               console.log("All uploaded migration files :", files);
@@ -102,19 +104,22 @@ export default function SpaceMigrationsUploadSection({
             }
           />
         </DialogModal>
-        <ActionButton
-          className="px-5 py-6"
-          onClick={() => {
-            downloadFile(
-              centresSampleLink.href,
-              `centres-sample${centresSampleLink.pathname.match(/\.[^\/.]+$/)?.[0]}`,
-            );
-          }}
-        >
-          <div className="flex gap-2 items-center">
-            Download Sample <DownloadCloud />
-          </div>
-        </ActionButton>
+        {!!sampleUrl && (
+          <ActionButton
+            className="px-5 py-6"
+            onClick={() => {
+              const url = new URL(sampleUrl);
+              downloadFile(
+                url.href,
+                `${sampleFileName}${url.pathname.match(/\.[^\/.]+$/)?.[0]}`,
+              );
+            }}
+          >
+            <div className="flex gap-2 items-center">
+              Download Sample <DownloadCloud />
+            </div>
+          </ActionButton>
+        )}
       </div>
     </>
   );

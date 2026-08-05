@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import { toast } from "sonner";
 import { Upload, X, FileText, Image, Video, Music } from "lucide-react";
@@ -29,7 +30,15 @@ export type UploadedFile = {
   error?: string;
 };
 
+type Labels = {
+  title: ReactNode;
+  description: ReactNode;
+  dndTitle: ReactNode;
+  dndBrowse: ReactNode;
+};
+
 type Props = {
+  labels: Partial<Labels>;
   fileType: MediaType;
   sizeLimit: { val: number; notation?: FileSizeNotation };
   onFilesUpload: (files: UploadedFile[]) => any;
@@ -94,6 +103,7 @@ export const simulateFileUpload = (
 };
 
 export default function FileUpload({
+  labels,
   fileType = "image",
   onFilesUpload,
   processFileUpload,
@@ -314,9 +324,12 @@ export default function FileUpload({
             <div className="mx-auto w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
               <Upload className="w-10 h-10 text-primary" />
             </div>
-            <h2 className="text-3xl font-semibold mb-2">{`Multi ${fileType.toUpperCase()} Upload`}</h2>
+            <h2 className="text-3xl font-semibold mb-2">
+              {labels?.title || `Multi ${fileType.toUpperCase()} Upload`}
+            </h2>
             <p className="text-muted-foreground text-lg">
-              {`Drag & drop or click to upload multiple ${fileType}s`}
+              {labels?.description ||
+                `Drag & drop or click to upload multiple ${fileType}s`}
               {!!sizeLimit?.val && (
                 <span className="block text-sm text-muted-foreground">
                   {"("}Max file size:{" "}
@@ -352,10 +365,14 @@ export default function FileUpload({
             />
             <div className="text-center">
               <Upload className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-xl font-medium">{`Drop your ${fileType}s here`}</p>
+              <p className="text-xl font-medium">
+                {labels?.dndTitle || `Drop your ${fileType}s here`}
+              </p>
               <p className="text-sm text-muted-foreground mt-2">
                 or{" "}
-                <span className="text-primary font-medium">{`browse ${fileType}s`}</span>
+                <span className="text-primary font-medium">
+                  {labels?.dndBrowse || `browse ${fileType}s`}
+                </span>
               </p>
             </div>
           </div>
