@@ -15,6 +15,7 @@ import { DataRouter } from "./data.js";
 import { DumpRouter } from "./dump.js";
 import { FileRouter } from "./file.js";
 import { MigrationRouter } from "./migration.js";
+import { AnalyticsRouter } from "./analytics.js";
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.use("/amenities", AmenityRouter);
 router.use("/files", FileRouter);
 router.use("/migrations", MigrationRouter);
 router.use("/dumps", DumpRouter);
+router.use("/analytics", AnalyticsRouter);
 router.use("/", DataRouter);
 
 export { router as AdminRouter };
