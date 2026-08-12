@@ -9,9 +9,9 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "build:crm-fr": "turbo run build -- --filter=ps-crm",
-    "build:admin-fr": "turbo run build -- --filter=admin-fr",
-    "build:backend-fr": "turbo run build -- --filter=pride-spaces-backend",
+    "build:crm-fr": "turbo run build --filter=ps-crm",
+    "build:admin-fr": "turbo run build --filter=admin-fr",
+    "build:backend-fr": "turbo run build --filter=pride-spaces-backend",
     "dev": "turbo run dev",
     "dev:local": "turbo run dev:local",
     "start": "turbo run start"
