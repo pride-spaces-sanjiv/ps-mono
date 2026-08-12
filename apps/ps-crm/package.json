@@ -11,9 +11,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@pride-spaces/types": "workspace:*",
-    "@pride-spaces/ui": "workspace:*",
-    "@pride-spaces/utils": "workspace:*",
+    "@pride-spaces/types": "*",
+    "@pride-spaces/ui": "*",
+    "@pride-spaces/utils": "*",
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
