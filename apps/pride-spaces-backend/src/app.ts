@@ -318,9 +318,13 @@ app.use((req, res: ManagedResponseWithLocalUrl, next) => {
     });
   }
 }, RequestMiddleware.sendCachedData);
+import { CRMRouter } from "@/routes/crm/lead.js";
+
 app.use("/admin", AdminRouter);
 app.use("/operator", OperatorRouter);
 app.use("/general", GeneralRouter);
+app.use("/crm", CRMRouter);
+app.use("/api/v1/crm", CRMRouter);
 // app.use("/users", RequestMiddleware.authenticateUser(1), usersRouter);
 // app.use("/group", RequestMiddleware.authenticateUser(1), groupRouter);
 // app.use("/account", RequestMiddleware.authenticateUser(0), accountRouter);
