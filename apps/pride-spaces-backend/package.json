@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1071.0",
+    "@pride-spaces/types": "*",
     "@aws-sdk/lib-storage": "^3.1071.0",
     "@henrygd/queue": "^1.2.0",
     "amqplib": "^0.10.8",

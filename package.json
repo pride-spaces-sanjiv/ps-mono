@@ -1,0 +1,19 @@
+{
+  "name": "pride-spaces-one",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "npm@11.11.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:local": "turbo run dev:local",
+    "start": "turbo run start"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}
