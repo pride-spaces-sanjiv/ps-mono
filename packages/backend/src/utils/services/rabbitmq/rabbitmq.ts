@@ -1,9 +1,9 @@
 import amqp, { Channel, connect } from "amqplib";
 import { EmailToken } from "@/database/models/email.js";
-import { sleep } from "@/utils/time.js";
+import { sleep } from "@pride-spaces/common/utils/time.js";
 import { NullableValue, PartialNullableObject } from "@/types/partial.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
-import { DumpCollectionName } from "@/utils/data/dump.js";
+import { DumpCollectionName } from "@pride-spaces/common/utils/data/dump.js";
 
 const defaults = {
   sendMessage: {

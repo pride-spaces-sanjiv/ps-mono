@@ -10,7 +10,7 @@ import {
 import { ObjectDepthKeys } from "@/types/object.js";
 import { ManagedRequest } from "@/types/request.js";
 import { $jsonSchema } from "mingo/operators/query";
-import { cleanObject } from "../object/clean.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
 
 export type SortOrder = "asc" | "desc";
 export type SortOptions<

@@ -15,8 +15,8 @@ import {
   occupancyStatuses,
   ownershipTypes,
   sources,
-} from "@/utils/data/conventional.js";
-import { spaceGrades } from "@/utils/data/spaceTypes.js";
+} from "@pride-spaces/common/utils/data/conventional.js";
+import { spaceGrades } from "@pride-spaces/common/utils/data/spaceTypes.js";
 import { approvalSchema } from "./dump.js";
 
 // --- Sub-Schemas ---

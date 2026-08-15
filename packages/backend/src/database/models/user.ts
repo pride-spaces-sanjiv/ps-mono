@@ -3,7 +3,7 @@ import {
   getFieldsOfModel,
   appendGeneralFields,
 } from "@/utils/mongoose/fields.js";
-import { adminLevels, type AdminLevel } from "@/utils/data/admin.js";
+import { adminLevels, type AdminLevel } from "@pride-spaces/common/utils/data/admin.js";
 import { cachePlugin } from "@/utils/mongoose/cachePlugin.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
 

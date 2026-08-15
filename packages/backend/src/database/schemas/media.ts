@@ -5,7 +5,7 @@ import {
   mediaStatuses,
   MediaType,
   mediaTypes,
-} from "@/utils/data/media.js";
+} from "@pride-spaces/common/utils/data/media.js";
 
 export const mediaTempSchema = z.object({
   fileId: z.string().min(1, "File Id is required"),

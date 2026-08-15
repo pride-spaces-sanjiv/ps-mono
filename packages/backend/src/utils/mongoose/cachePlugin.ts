@@ -9,7 +9,7 @@ import {
   getRedisObject,
   setRedisObject,
 } from "@/utils/services/redis/convert.js";
-import { datifyFieldsInObject } from "../object/datify.js";
+import { datifyFieldsInObject } from "@pride-spaces/common/utils/object/datify.js";
 import { SchemaToRaw } from "@/types/mongoose/document.js";
 
 const defaultDateFields = ["createdAt", "updatedAt"];

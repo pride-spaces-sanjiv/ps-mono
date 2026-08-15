@@ -2,7 +2,7 @@ import { createReadStream } from "fs";
 import path from "path";
 import * as csv from "fast-csv";
 import { Readable } from "stream";
-import { shortenKeys } from "@/utils/object/shorten-keys.js";
+import { shortenKeys } from "@pride-spaces/common/utils/object/shorten-keys.js";
 
 export const extractCSV = <R extends Record<string, unknown>>(
   csvFile: string | Readable,

@@ -5,7 +5,7 @@ import {
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
-import { spaceGrades } from "@/utils/data/spaceTypes.js";
+import { spaceGrades } from "@pride-spaces/common/utils/data/spaceTypes.js";
 import {
   dealStatuses,
   esgScores,
@@ -14,7 +14,7 @@ import {
   occupancyStatuses,
   ownershipTypes,
   sources,
-} from "@/utils/data/conventional.js";
+} from "@pride-spaces/common/utils/data/conventional.js";
 
 const PersonSchema = new Conn.Schema(
   {

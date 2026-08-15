@@ -8,12 +8,12 @@ import {
   operatorSchema,
 } from "@/database/schemas/operator.js";
 import { State } from "@/database/models/state-cities.js";
-import { shortenKeys } from "@/utils/object/shorten-keys.js";
+import { shortenKeys } from "@pride-spaces/common/utils/object/shorten-keys.js";
 import {
   invalidValues,
   validifyStringValues,
-} from "@/utils/string/validify-string.js";
-import { encodeCrypto } from "@/utils/crypto.js";
+} from "@pride-spaces/common/utils/string/validify-string.js";
+import { encodeCrypto } from "@pride-spaces/common/utils/crypto.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { Document, RootFilterQuery, Types } from "mongoose";
 import { Amenity } from "@/database/models/amenities.js";
@@ -21,15 +21,15 @@ import { Space } from "@/database/models/space.js";
 import { spaceSchema, SpaceSchema } from "@/database/schemas/space.js";
 import moment from "moment";
 import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
-import { SpaceGrade, SpaceType } from "@/utils/data/spaceTypes.js";
+import { SpaceGrade, SpaceType } from "@pride-spaces/common/utils/data/spaceTypes.js";
 import {
   CSVHeaders,
   CSVHeadersValues,
   RowData,
-} from "../data/space-headers.js";
+} from "@pride-spaces/common/utils/scripts/data/space-headers.js";
 import { extractCSV } from "./extract-csv.js";
 import { Readable } from "stream";
-import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
+import { generateSpaceKeyword } from "@pride-spaces/common/utils/data/name-keyword.js";
 import { areasUpdateMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
 
 // Objects

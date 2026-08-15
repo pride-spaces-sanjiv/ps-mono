@@ -5,11 +5,11 @@ import {
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
-import { spaceTypes, spaceGrades } from "@/utils/data/spaceTypes.js";
-import { workingSizes } from "@/utils/data/workingSizes.js";
+import { spaceTypes, spaceGrades } from "@pride-spaces/common/utils/data/spaceTypes.js";
+import { workingSizes } from "@pride-spaces/common/utils/data/workingSizes.js";
 import { FilesSchema } from "./schemas/files.js";
 import { LocationSchema } from "./schemas/location.js";
-import { spaceCategories } from "@/utils/data/category.js";
+import { spaceCategories } from "@pride-spaces/common/utils/data/category.js";
 
 const PersonSchema = new Conn.Schema(
   {

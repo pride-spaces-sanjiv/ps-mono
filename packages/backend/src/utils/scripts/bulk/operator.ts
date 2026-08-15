@@ -8,19 +8,19 @@ import {
   operatorSchema,
 } from "@/database/schemas/operator.js";
 import { State } from "@/database/models/state-cities.js";
-import { shortenKeys } from "@/utils/object/shorten-keys.js";
+import { shortenKeys } from "@pride-spaces/common/utils/object/shorten-keys.js";
 import {
   invalidValues,
   validifyStringValues,
-} from "@/utils/string/validify-string.js";
-import { encodeCrypto } from "@/utils/crypto.js";
+} from "@pride-spaces/common/utils/string/validify-string.js";
+import { encodeCrypto } from "@pride-spaces/common/utils/crypto.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 import { Document, Types } from "mongoose";
 import {
   RowData,
   CSVHeaders,
   CSVHeadersValues,
-} from "../data/operator-headers.js";
+} from "@pride-spaces/common/utils/scripts/data/operator-headers.js";
 import { extractCSV } from "./extract-csv.js";
 
 const generateSlug = (row: RowData) => {

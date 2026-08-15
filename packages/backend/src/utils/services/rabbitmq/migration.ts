@@ -9,13 +9,13 @@ import {
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { WaitingMigrationMQ, waitingMigrationMQ } from "./rabbitmq.js";
-import { sleep } from "@/utils/time.js";
+import { sleep } from "@pride-spaces/common/utils/time.js";
 import { rustfsClient } from "../s3/instance.js";
-import { getFullMigrationS3Key } from "@/utils/data/s3/keys.js";
+import { getFullMigrationS3Key } from "@pride-spaces/common/utils/data/s3/keys.js";
 import { Readable } from "stream";
 import path from "path";
-import { getDestinationFolder } from "@/utils/data/file.js";
-import { mediaTypes } from "@/utils/data/media.js";
+import { getDestinationFolder } from "@pride-spaces/common/utils/data/file.js";
+import { mediaTypes } from "@pride-spaces/common/utils/data/media.js";
 import { pipelineDBs } from "../pipeline/db.js";
 import { listS3Objects } from "../s3/list-objects.js";
 import {

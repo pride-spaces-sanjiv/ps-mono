@@ -1,6 +1,6 @@
 import { RedisStore } from "connect-redis";
 import Redis, { RedisClientOptions, RedisClientType } from "redis";
-import { sleep } from "../../time.js";
+import { sleep } from "@pride-spaces/common/utils/time.js";
 
 const redisStr = `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
 const redisClients: { [x: string]: RedisClientType } = {};

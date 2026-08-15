@@ -11,9 +11,9 @@ import {
   dumpActions,
   dumpCollectionNames,
   dumpStatuses,
-} from "@/utils/data/dump.js";
+} from "@pride-spaces/common/utils/data/dump.js";
 import { adminSchema } from "./user.js";
-import { userTypes } from "@/utils/data/userTypes.js";
+import { userTypes } from "@pride-spaces/common/utils/data/userTypes.js";
 
 export const approvalSchema = z.object({
   name: getNameSchema(),

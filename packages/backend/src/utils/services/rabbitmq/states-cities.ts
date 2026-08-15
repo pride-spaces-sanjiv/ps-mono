@@ -1,6 +1,6 @@
 import axios from "axios";
 import { State, City } from "@/database/models/state-cities.js";
-import { sleep } from "@/utils/time.js";
+import { sleep } from "@pride-spaces/common/utils/time.js";
 import { AnyBulkWriteOperation, Document, Model } from "mongoose";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 

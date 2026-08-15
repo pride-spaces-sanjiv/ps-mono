@@ -8,7 +8,7 @@ import {
 import { Upload } from "@aws-sdk/lib-storage";
 import { v7 } from "uuid";
 import { DiskStorageOptions, StorageEngine } from "multer";
-import { mediaTypes } from "@/utils/data/media.js";
+import { mediaTypes } from "@pride-spaces/common/utils/data/media.js";
 import path from "path";
 
 export const rustfsClient = new S3Client({

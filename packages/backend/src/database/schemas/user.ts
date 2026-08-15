@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminLevels } from "@/utils/data/admin.js";
+import { adminLevels } from "@pride-spaces/common/utils/data/admin.js";
 import {
   getEmailSchema,
   getNameSchema,

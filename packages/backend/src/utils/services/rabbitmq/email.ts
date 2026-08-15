@@ -4,7 +4,7 @@ import { isObjectIdOrHexString } from "mongoose";
 import path from "path";
 import { EmailMQ, emailsMQ } from "./rabbitmq.js";
 import { User } from "@/database/models/user.js";
-import { sleep } from "@/utils/time.js";
+import { sleep } from "@pride-spaces/common/utils/time.js";
 
 export const transporter = nodemailer.createTransport({
   host: "mail.tg-iptv.site",

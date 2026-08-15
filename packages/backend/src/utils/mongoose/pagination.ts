@@ -18,7 +18,7 @@ import {
   SortOptions,
 } from "./filters.js";
 import { convertDataToJSON } from "./conversion.js";
-import { validateNumber } from "@/utils/number.js";
+import { validateNumber } from "@pride-spaces/common/utils/number.js";
 import { ManagedRequest } from "@/types/request.js";
 import { ModelToRaw } from "@/types/mongoose/document.js";
 

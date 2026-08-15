@@ -1,5 +1,5 @@
 import { areasUpdateMQ, AreasUpdateMQ } from "./rabbitmq.js";
-import { sleep } from "@/utils/time.js";
+import { sleep } from "@pride-spaces/common/utils/time.js";
 import { City } from "@/database/models/state-cities.js";
 
 const handler = async (data: AreasUpdateMQ) => {

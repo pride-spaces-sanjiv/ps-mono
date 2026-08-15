@@ -3,7 +3,7 @@ import {
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
 import { Conn } from "../mongoose.js";
-import { dumpCollectionNames } from "@/utils/data/dump.js";
+import { dumpCollectionNames } from "@pride-spaces/common/utils/data/dump.js";
 
 // --- Schema ---
 

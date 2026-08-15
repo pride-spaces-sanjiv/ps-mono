@@ -4,7 +4,7 @@ import {
 } from "@/utils/mongoose/fields.js";
 import { Conn } from "../mongoose.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
-import { mediaStatuses, mediaTypes } from "@/utils/data/media.js";
+import { mediaStatuses, mediaTypes } from "@pride-spaces/common/utils/data/media.js";
 
 // --- Schema ---
 const MediaTempSchema = new Conn.Schema(

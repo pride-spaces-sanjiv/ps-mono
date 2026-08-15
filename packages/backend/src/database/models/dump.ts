@@ -5,14 +5,14 @@ import {
   getFieldsOfModel,
 } from "@/utils/mongoose/fields.js";
 import { indexFieldsFromSchema } from "@/utils/mongoose/indexing.js";
-import { userTypes } from "@/utils/data/userTypes.js";
+import { userTypes } from "@pride-spaces/common/utils/data/userTypes.js";
 import {
   dumpActions,
   dumpCollectionNames,
   dumpStatuses,
-} from "@/utils/data/dump.js";
+} from "@pride-spaces/common/utils/data/dump.js";
 // import { User } from "@/database/models/user.js";
-import { adminLevels } from "@/utils/data/admin.js";
+import { adminLevels } from "@pride-spaces/common/utils/data/admin.js";
 
 export const ApprovalSchema = new Conn.Schema(
   {
