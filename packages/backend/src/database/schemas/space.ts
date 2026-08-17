@@ -10,7 +10,10 @@ import { facilities } from "@pride-spaces/common/utils/data/facilities.js";
 import { spaceCategories } from "@pride-spaces/common/utils/data/category.js";
 import { approvalSchema } from "./dump.js";
 import { personSchema } from "./person.js";
-import { spaceGrades, spaceTypes } from "@pride-spaces/common/utils/data/spaceTypes.js";
+import {
+  spaceGrades,
+  spaceTypes,
+} from "@pride-spaces/common/utils/data/spaceTypes.js";
 import { workingSizes } from "@pride-spaces/common/utils/data/workingSizes.js";
 import { filesSchema } from "./files.js";
 import { locationSchema } from "./location.js";

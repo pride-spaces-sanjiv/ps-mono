@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "@pride-spaces/backend",
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
@@ -21,6 +21,7 @@
     "scripts:dev:push-markets": "npx tsx scripts/push-markets.ts --env=dev"
   },
   "dependencies": {
+    "@pride-spaces/common": "*",
     "@aws-sdk/client-s3": "^3.1071.0",
     "@pride-spaces/types": "*",
     "@aws-sdk/lib-storage": "^3.1071.0",

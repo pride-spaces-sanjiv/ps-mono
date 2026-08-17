@@ -1,0 +1,23 @@
+{
+  "name": "@pride-spaces/common",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "build": "npx tsc --noCheck && npx tsc-alias",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.10.13",
+    "tsc-alias": "^1.8.16",
+    "typescript": "~5.8.3"
+  }
+}

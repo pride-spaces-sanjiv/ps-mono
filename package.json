@@ -12,6 +12,8 @@
     "build:crm-fr": "turbo run build --filter=ps-crm",
     "build:admin-fr": "turbo run build --filter=admin-fr",
     "build:backend": "turbo run build --filter=backend",
+    "build:util-backend": "turbo run build --filter=@pride-spaces/backend",
+    "build:util-common": "turbo run build --filter=@pride-spaces/common",
     "dev": "turbo run dev",
     "dev:local": "turbo run dev:local",
     "start": "turbo run start"
