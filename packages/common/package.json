@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./*": "./src/*"
+    "./*": {
+      "development": "./src/*",
+      "default": "./dist/*"
+    }
   },
   "scripts": {
     "build": "npx tsc --noCheck && npx tsc-alias",

@@ -14,6 +14,7 @@
     "build:backend": "turbo run build --filter=backend",
     "build:util-backend": "turbo run build --filter=@pride-spaces/backend",
     "build:util-common": "turbo run build --filter=@pride-spaces/common",
+    "build:util-frontend": "turbo run build --filter=@pride-spaces/frontend",
     "dev": "turbo run dev",
     "dev:local": "turbo run dev:local",
     "start": "turbo run start"
