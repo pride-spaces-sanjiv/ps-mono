@@ -1,11 +1,14 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { getFieldsOfModel } from "@/utils/mongoose/fields.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { ModelToRaw } from "@/types/mongoose/document.js";
+import { getFieldsandProjectors } from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import { getFieldsOfModel } from "@pride-spaces/backend/utils/mongoose/fields.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import { ModelToRaw } from "@pride-spaces/backend/types/mongoose/document.js";
 import { Model } from "mongoose";
 import { RequiredSessionData } from "express-session";
 

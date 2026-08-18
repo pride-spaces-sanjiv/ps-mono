@@ -1,9 +1,12 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { SpaceSchema } from "@/database/schemas/space.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import { SpaceSchema } from "@pride-spaces/backend/database/schemas/space.js";
 import * as generalControllers from "../general/space.js";
-import { dumpStatuses } from "@/utils/data/dump.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
+import { dumpStatuses } from "@pride-spaces/common/utils/data/dump.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
 
 export const getSpaces = async (
   req: ManagedRequest<

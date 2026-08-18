@@ -1,6 +1,6 @@
 import { Request, RequestHandler, Response } from "express";
 import { ParsedQs } from "qs";
-import { OverrideObject } from "./object-override.js";
+import { OverrideObject } from "@pride-spaces/common/types/object-override.js";
 import { SetOptions } from "redis";
 
 export type ManagedRequestHandler<

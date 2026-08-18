@@ -1,15 +1,21 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Branch, branchFields } from "@/database/models/branch.js";
+import {
+  Branch,
+  branchFields,
+} from "@pride-spaces/backend/database/models/branch.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
-import { getFieldsandProjectors } from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { BranchSchema } from "@/database/schemas/branch.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
+import { getFieldsandProjectors } from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import { BranchSchema } from "@pride-spaces/backend/database/schemas/branch.js";
 
 export const getBranches = async (
   req: ManagedRequest<

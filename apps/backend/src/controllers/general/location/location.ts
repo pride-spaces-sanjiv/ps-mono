@@ -1,6 +1,9 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { getLatLngFromMapsURL } from "@/utils/data/geocode.js";
-import { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { getLatLngFromMapsURL } from "@pride-spaces/backend/utils/data/geocode.js";
+import {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 
 export const getLocationFromMapsURL = async (
   req: ManagedRequest<{ url: string }>,

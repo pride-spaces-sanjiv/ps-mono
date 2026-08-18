@@ -1,18 +1,24 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Amenity, amenityFields } from "@/database/models/amenities.js";
+import {
+  Amenity,
+  amenityFields,
+} from "@pride-spaces/backend/database/models/amenities.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
   getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { AmenitySchema } from "@/database/schemas/amenity.js";
+} from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import { AmenitySchema } from "@pride-spaces/backend/database/schemas/amenity.js";
 
 export const getAmenities = async (
   req: ManagedRequest<any>,

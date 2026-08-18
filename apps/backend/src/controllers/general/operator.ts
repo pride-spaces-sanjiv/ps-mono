@@ -3,28 +3,31 @@ import {
   Operator,
   operatorFields,
   operatorNonPassFields,
-} from "@/database/models/operator.js";
+} from "@pride-spaces/backend/database/models/operator.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
   getMultiFilters,
   getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { OperatorSchema } from "@/database/schemas/operator.js";
+} from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import { OperatorSchema } from "@pride-spaces/backend/database/schemas/operator.js";
 import { Types } from "mongoose";
-import { pipelineDBs } from "@/utils/services/pipeline/db.js";
-import { dumpUserAction } from "@/utils/data/dumpAction.js";
-import { dumpActions } from "@/utils/data/dump.js";
-import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
-import { encodeCrypto } from "@/utils/crypto.js";
-import { GeneralizedControllers } from "@/types/data/general-controllers.js";
+import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
+import { dumpUserAction } from "@pride-spaces/backend/utils/data/dumpAction.js";
+import { dumpActions } from "@pride-spaces/common/utils/data/dump.js";
+import { getSpaceCountsOfOperator } from "@pride-spaces/backend/utils/mongoose/relations/space-operator.js";
+import { encodeCrypto } from "@pride-spaces/common/utils/crypto.js";
+import { GeneralizedControllers } from "@pride-spaces/backend/types/data/general-controllers.js";
 
 type ModelType = typeof Operator;
 type GetOptions = GeneralizedControllers.GetOptions<ModelType>;

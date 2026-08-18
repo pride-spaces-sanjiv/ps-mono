@@ -7,7 +7,10 @@ import {
   adminLevels,
   compareAdminLevels,
 } from "@/utils/data/admin.js";
-import { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 
 // Check user exists by field value, then pass/exit
 export const checkUserExistenceByBodyValue = <T extends any, K extends string>(

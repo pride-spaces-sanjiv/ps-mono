@@ -1,26 +1,32 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { MediaType, mediaTypes } from "@/utils/data/media.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import {
+  MediaType,
+  mediaTypes,
+} from "@pride-spaces/common/utils/data/media.js";
 import path from "path";
-import { rustfsClient } from "@/utils/services/s3/instance.js";
+import { rustfsClient } from "@pride-spaces/backend/utils/services/s3/instance.js";
 import {
   HeadObjectCommand,
   S3ServiceException,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
-import { pickObjectFields } from "@/utils/object/clean.js";
-import { MediaQuerySchema } from "@/database/schemas/media.js";
+import { pickObjectFields } from "@pride-spaces/common/utils/object/clean.js";
+import { MediaQuerySchema } from "@pride-spaces/backend/database/schemas/media.js";
 import { newQueue } from "@henrygd/queue/rl";
-import * as spaceMigrationUtils from "@/utils/scripts/bulk/space.js";
+import * as spaceMigrationUtils from "@pride-spaces/backend/utils/scripts/bulk/space.js";
 import { Readable } from "stream";
-import { pipelineDBs } from "@/utils/services/pipeline/db.js";
+import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
 import { Upload } from "@aws-sdk/lib-storage";
-import { getDestinationFolder } from "@/utils/data/file.js";
-import { RowData as SpaceRowData } from "@/utils/scripts/data/space-headers.js";
-import { RowData as OperatorRowData } from "@/utils/scripts/data/operator-headers.js";
-import { waitingMigrationMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
-import { extractCSV } from "@/utils/scripts/bulk/extract-csv.js";
-import { DumpCollectionName } from "@/utils/data/dump.js";
+import { getDestinationFolder } from "@pride-spaces/common/utils/data/file.js";
+import { RowData as SpaceRowData } from "@pride-spaces/common/utils/scripts/data/space-headers.js";
+import { RowData as OperatorRowData } from "@pride-spaces/common/utils/scripts/data/operator-headers.js";
+import { waitingMigrationMQ } from "@pride-spaces/backend/utils/services/rabbitmq/rabbitmq.js";
+import { extractCSV } from "@pride-spaces/backend/utils/scripts/bulk/extract-csv.js";
+import { DumpCollectionName } from "@pride-spaces/common/utils/data/dump.js";
 
 const getFile = async (
   req: ManagedRequest<any, MediaQuerySchema>,

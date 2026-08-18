@@ -1,26 +1,42 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Builder, builderNonPassFields } from "@/database/models/builder.js";
-import { pipelineDBs } from "@/utils/services/pipeline/db.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
+import {
+  Builder,
+  builderNonPassFields,
+} from "@pride-spaces/backend/database/models/builder.js";
+import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
   getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject, deleteObjectFields } from "@/utils/object/clean.js";
-import { getSpaceCountsOfOperator } from "@/utils/mongoose/relations/space-operator.js";
-import { compareCryptos, decodeCrypto, encodeCrypto } from "@/utils/crypto.js";
-import { dumpAdminAction } from "@/utils/data/dumpAction.js";
-import { dumpStatuses } from "@/utils/data/dump.js";
-import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+} from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import {
+  cleanObject,
+  deleteObjectFields,
+} from "@pride-spaces/common/utils/object/clean.js";
+import { getSpaceCountsOfOperator } from "@pride-spaces/backend/utils/mongoose/relations/space-operator.js";
+import {
+  compareCryptos,
+  decodeCrypto,
+  encodeCrypto,
+} from "@pride-spaces/common/utils/crypto.js";
+import { dumpAdminAction } from "@pride-spaces/backend/utils/data/dumpAction.js";
+import { dumpStatuses } from "@pride-spaces/common/utils/data/dump.js";
+import {
+  AdminLevel,
+  adminLevels,
+} from "@pride-spaces/common/utils/data/admin.js";
 // types
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 import { Types } from "mongoose";
-import { BuilderSchema } from "@/database/schemas/builder.js";
+import { BuilderSchema } from "@pride-spaces/backend/database/schemas/builder.js";
 
 export const getBuilders = async (
   req: ManagedRequest<any, { [k: string]: any }>,

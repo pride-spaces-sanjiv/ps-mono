@@ -1,5 +1,8 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 import * as generalControllers from "@/controllers/general/space.js";
 
 export const getSpaces = async (

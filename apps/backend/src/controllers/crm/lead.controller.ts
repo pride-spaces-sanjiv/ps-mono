@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Lead } from "@/database/models/lead.js";
+import { Lead } from "@pride-spaces/backend/database/models/lead.js";
 
 const STL_DIGITAL_SAMPLE = {
   companyName: "STL Digital",

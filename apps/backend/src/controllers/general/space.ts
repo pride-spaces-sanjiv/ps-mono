@@ -1,28 +1,37 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Space, spaceFields } from "@/database/models/space.js";
-import { getSpaceOperatorsData } from "@/utils/mongoose/relations/space-operator.js";
+import {
+  Space,
+  spaceFields,
+} from "@pride-spaces/backend/database/models/space.js";
+import { getSpaceOperatorsData } from "@pride-spaces/backend/utils/mongoose/relations/space-operator.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
   getMultiFilters,
   getRangedFilters,
   getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { SpaceSchema } from "@/database/schemas/space.js";
+} from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import { SpaceSchema } from "@pride-spaces/backend/database/schemas/space.js";
 import { Types } from "mongoose";
-import { pipelineDBs } from "@/utils/services/pipeline/db.js";
-import { dumpUserAction } from "@/utils/data/dumpAction.js";
-import { dumpActions, dumpStatuses } from "@/utils/data/dump.js";
-import { generateSpaceKeyword } from "@/utils/data/name-keyword.js";
-import { areasUpdateMQ } from "@/utils/services/rabbitmq/rabbitmq.js";
-import { GeneralizedControllers } from "@/types/data/general-controllers.js";
+import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
+import { dumpUserAction } from "@pride-spaces/backend/utils/data/dumpAction.js";
+import {
+  dumpActions,
+  dumpStatuses,
+} from "@pride-spaces/common/utils/data/dump.js";
+import { generateSpaceKeyword } from "@pride-spaces/common/utils/data/name-keyword.js";
+import { areasUpdateMQ } from "@pride-spaces/backend/utils/services/rabbitmq/rabbitmq.js";
+import { GeneralizedControllers } from "@pride-spaces/backend/types/data/general-controllers.js";
 
 type ModelType = typeof Space;
 type GetOptions = GeneralizedControllers.GetOptions<ModelType>;

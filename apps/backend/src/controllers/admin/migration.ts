@@ -1,5 +1,8 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 import * as generalControllers from "@/controllers/general/migration.js";
 import { MigrationSchema } from "@/controllers/general/migration.js";
 

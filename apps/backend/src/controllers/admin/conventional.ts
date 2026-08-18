@@ -2,26 +2,35 @@ import { ResponseHandler } from "@/middlewares/request.js";
 import {
   ConventionalProperty,
   conventionalPropertyFields,
-} from "@/database/models/conventional.js";
-import { pipelineDBs, PipelineModel } from "@/utils/services/pipeline/db.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
+} from "@pride-spaces/backend/database/models/conventional.js";
+import {
+  pipelineDBs,
+  PipelineModel,
+} from "@pride-spaces/backend/utils/services/pipeline/db.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
   getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+} from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
+import {
+  AdminLevel,
+  adminLevels,
+} from "@pride-spaces/common/utils/data/admin.js";
 // types
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { ConventionalPropertySchema } from "@/database/schemas/conventional.js";
-import { ModelToDocument } from "@/types/mongoose/document.js";
-import { dumpStatuses } from "@/utils/data/dump.js";
-import { dumpAdminAction } from "@/utils/data/dumpAction.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import { ConventionalPropertySchema } from "@pride-spaces/backend/database/schemas/conventional.js";
+import { ModelToDocument } from "@pride-spaces/backend/types/mongoose/document.js";
+import { dumpStatuses } from "@pride-spaces/common/utils/data/dump.js";
+import { dumpAdminAction } from "@pride-spaces/backend/utils/data/dumpAction.js";
 import { Types } from "mongoose";
 
 export const getConventionals = async (

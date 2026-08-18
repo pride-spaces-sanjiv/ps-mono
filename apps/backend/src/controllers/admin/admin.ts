@@ -16,7 +16,10 @@ import {
   getAdminLowerLevels,
 } from "@pride-spaces/common/utils/data/admin.js";
 import { type AdminSchema } from "@pride-spaces/backend/database/schemas/user.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
 
 export const getAdmins = async (

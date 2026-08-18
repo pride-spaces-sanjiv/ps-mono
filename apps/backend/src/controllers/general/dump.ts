@@ -3,37 +3,55 @@ import {
   allDumpFieldsEnabled,
   Dump,
   dumpFields,
-} from "@/database/models/dump.js";
-import { Space } from "@/database/models/space.js";
-import { Operator } from "@/database/models/operator.js";
+} from "@pride-spaces/backend/database/models/dump.js";
+import { Space } from "@pride-spaces/backend/database/models/space.js";
+import { Operator } from "@pride-spaces/backend/database/models/operator.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
   getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import { dumpCollectionNames, dumpStatuses } from "@/utils/data/dump.js";
+} from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
+import {
+  dumpCollectionNames,
+  dumpStatuses,
+} from "@pride-spaces/common/utils/data/dump.js";
 import {
   dumpCollectionModels,
   dumpCollectionSchemas,
-} from "@/utils/data/dump-maps.js";
-import { spaceSchema } from "@/database/schemas/space.js";
-import { operatorSchema } from "@/database/schemas/operator.js";
-import { pipelineDBs } from "@/utils/services/pipeline/db.js";
-import { validateDataAndRespond } from "@/utils/schemas/validate.js";
-import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
-import { NonAdminUserType, nonAdminUserTypes } from "@/utils/data/userTypes.js";
-import { ObjectDepthKeys } from "@/types/object.js";
-import { ModelToDocument, ModelToRaw } from "@/types/mongoose/document.js";
+} from "@pride-spaces/backend/utils/data/dump-maps.js";
+import { spaceSchema } from "@pride-spaces/backend/database/schemas/space.js";
+import { operatorSchema } from "@pride-spaces/backend/database/schemas/operator.js";
+import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
+import { validateDataAndRespond } from "@pride-spaces/backend/utils/schemas/validate.js";
+import {
+  AdminLevel,
+  adminLevels,
+} from "@pride-spaces/common/utils/data/admin.js";
+import {
+  NonAdminUserType,
+  nonAdminUserTypes,
+} from "@pride-spaces/common/utils/data/userTypes.js";
+import { ObjectDepthKeys } from "@pride-spaces/backend/types/object.js";
+import {
+  ModelToDocument,
+  ModelToRaw,
+} from "@pride-spaces/backend/types/mongoose/document.js";
 import { RootFilterQuery } from "mongoose";
-import { DumpSchema } from "@/database/schemas/dump.js";
-import { dumpAdminAction, dumpUserAction } from "@/utils/data/dumpAction.js";
+import { DumpSchema } from "@pride-spaces/backend/database/schemas/dump.js";
+import {
+  dumpAdminAction,
+  dumpUserAction,
+} from "@pride-spaces/backend/utils/data/dumpAction.js";
 
 export const getDumps = async (
   req: ManagedRequest<any, { [k: string]: any }>,

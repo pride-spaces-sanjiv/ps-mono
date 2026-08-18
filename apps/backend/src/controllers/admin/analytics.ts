@@ -1,8 +1,11 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Space } from "@/database/models/space.js";
-import { Operator } from "@/database/models/operator.js";
-import { WorkspaceUnit } from "@/database/models/workspaceUnit.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { Space } from "@pride-spaces/backend/database/models/space.js";
+import { Operator } from "@pride-spaces/backend/database/models/operator.js";
+import { WorkspaceUnit } from "@pride-spaces/backend/database/models/workspaceUnit.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 
 export const getAnalyticsData = async (
   req: ManagedRequest<any, any>,
@@ -24,8 +27,12 @@ export const getAnalyticsData = async (
     });
 
     // Active & Verified Centres
-    const activeCentres = await Space.countDocuments({ "flags.isActive": true });
-    const verifiedCentres = await Space.countDocuments({ "flags.isVerified": true });
+    const activeCentres = await Space.countDocuments({
+      "flags.isActive": true,
+    });
+    const verifiedCentres = await Space.countDocuments({
+      "flags.isVerified": true,
+    });
     const pendingVerification = await Space.countDocuments({
       $or: [
         { "flags.isVerified": false },

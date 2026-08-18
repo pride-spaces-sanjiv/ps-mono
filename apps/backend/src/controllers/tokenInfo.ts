@@ -1,6 +1,9 @@
 import { RequestMiddleware, ResponseHandler } from "@/middlewares/request.js";
-import { adminLevels } from "@/utils/data/admin.js";
-import { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { adminLevels } from "@pride-spaces/common/utils/data/admin.js";
+import {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 
 const allLevels = [...adminLevels, "operator", "user"] as const;
 

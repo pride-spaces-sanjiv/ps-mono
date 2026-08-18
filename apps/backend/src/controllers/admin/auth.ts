@@ -1,9 +1,18 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Admin } from "@/database/models/user.js";
-import { compareCryptos, encodeCrypto } from "@/utils/crypto.js";
-import { decodeJWTwithCrypto, signJWTwithCrypto } from "@/utils/jwt.js";
-import { type AdminSchema } from "@/database/schemas/user.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { Admin } from "@pride-spaces/backend/database/models/user.js";
+import {
+  compareCryptos,
+  encodeCrypto,
+} from "@pride-spaces/common/utils/crypto.js";
+import {
+  decodeJWTwithCrypto,
+  signJWTwithCrypto,
+} from "@pride-spaces/common/utils/jwt.js";
+import { type AdminSchema } from "@pride-spaces/backend/database/schemas/user.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 
 export const login = async (
   req: ManagedRequest<Pick<AdminSchema, "email" | "password">>,

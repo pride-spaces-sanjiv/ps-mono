@@ -1,15 +1,15 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { State, stateFields } from "@/database/models/state-cities.js";
+import { State, stateFields } from "@pride-spaces/backend/database/models/state-cities.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
   getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
+} from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
 import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
 
 export const getStates = async (

@@ -1,13 +1,23 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Admin } from "@/database/models/user.js";
-import { compareCryptos, decodeCrypto, encodeCrypto } from "@/utils/crypto.js";
-import { decodeJWTwithCrypto, signJWTwithCrypto } from "@/utils/jwt.js";
-import { type AdminSchema } from "@/database/schemas/user.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { Admin } from "@pride-spaces/backend/database/models/user.js";
+import {
+  compareCryptos,
+  decodeCrypto,
+  encodeCrypto,
+} from "@pride-spaces/common/utils/crypto.js";
+import {
+  decodeJWTwithCrypto,
+  signJWTwithCrypto,
+} from "@pride-spaces/common/utils/jwt.js";
+import { type AdminSchema } from "@pride-spaces/backend/database/schemas/user.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 import { Model } from "mongoose";
-import { ModelToRaw } from "@/types/mongoose/document.js";
+import { ModelToRaw } from "@pride-spaces/backend/types/mongoose/document.js";
 import { RequiredSessionData } from "express-session";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
 
 type GetOptions<T extends any> = {
   projectors: keyof ModelToRaw<Model<T>>[];

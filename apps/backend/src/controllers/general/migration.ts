@@ -1,17 +1,23 @@
 import { ResponseHandler } from "@/middlewares/request.js";
-import { Migration, migrationFields } from "@/database/models/migration.js";
+import {
+  Migration,
+  migrationFields,
+} from "@pride-spaces/backend/database/models/migration.js";
 import {
   cleanPaginatedData,
   paginatedResults,
-} from "@/utils/mongoose/pagination.js";
+} from "@pride-spaces/backend/utils/mongoose/pagination.js";
 import {
   getFieldsandProjectors,
   getSearchFilters,
-} from "@/utils/mongoose/filters.js";
-import { handleMongooseError } from "@/utils/mongoose/error.js";
-import { convertDataToJSON } from "@/utils/mongoose/conversion.js";
-import { cleanObject } from "@/utils/object/clean.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+} from "@pride-spaces/backend/utils/mongoose/filters.js";
+import { handleMongooseError } from "@pride-spaces/backend/utils/mongoose/error.js";
+import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
+import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 import {
   RootFilterQuery,
   QueryOptions,
@@ -20,8 +26,8 @@ import {
   ExclusionProjection,
   DefaultTimestampProps,
 } from "mongoose";
-import { ModelToRaw } from "@/types/mongoose/document.js";
-import { pipelineDBs } from "@/utils/services/pipeline/db.js";
+import { ModelToRaw } from "@pride-spaces/backend/types/mongoose/document.js";
+import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
 
 type RawOfModel = ModelToRaw<typeof Migration>;
 export type MigrationSchema = Omit<
