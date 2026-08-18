@@ -1,8 +1,11 @@
 import { ResponseHandler } from "./request.js";
 import { NextFunction } from "express";
-import { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 import moment from "moment";
-import { ObjectDepthKeys } from "@/types/object.js";
+import { ObjectDepthKeys } from "@pride-spaces/backend/types/object.js";
 
 type Options<T extends Record<string, any>, K extends keyof T> = {
   fields: [...K[]];

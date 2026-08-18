@@ -1,12 +1,12 @@
 import { Model } from "mongoose";
 import { NextFunction } from "express";
-import { Admin } from "@/database/models/user.js";
+import { Admin } from "@pride-spaces/backend/database/models/user.js";
 import { ResponseHandler } from "./request.js";
 import {
   AdminLevel,
   adminLevels,
   compareAdminLevels,
-} from "@/utils/data/admin.js";
+} from "@pride-spaces/common/utils/data/admin.js";
 import {
   ManagedRequest,
   ManagedResponse,

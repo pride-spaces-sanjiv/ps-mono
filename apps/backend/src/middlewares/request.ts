@@ -7,21 +7,24 @@ import {
 } from "express";
 import moment from "moment";
 import { z } from "zod";
-import { Admin, User } from "@/database/models/user.js";
-import { RedisClient } from "@/utils/services/redis/redis.js";
-import { decodeCrypto } from "@/utils/crypto.js";
-import { decodeJWTwithCrypto } from "@/utils/jwt.js";
-import { AdminLevel, adminLevels } from "@/utils/data/admin.js";
+import { Admin, User } from "@pride-spaces/backend/database/models/user.js";
+import { RedisClient } from "@pride-spaces/backend/utils/services/redis/redis.js";
+import { decodeCrypto } from "@pride-spaces/common/utils/crypto.js";
+import { decodeJWTwithCrypto } from "@pride-spaces/common/utils/jwt.js";
+import {
+  AdminLevel,
+  adminLevels,
+} from "@pride-spaces/common/utils/data/admin.js";
 // types
 import { SessionData, RequiredSessionData } from "express-session";
 import { SetOptions } from "redis";
-import { ModelToRaw } from "../types/mongoose/document.js";
-import { ResponseLocals } from "../types/query.js";
+import { ModelToRaw } from "@pride-spaces/backend/types/mongoose/document.js";
+import { ResponseLocals } from "@pride-spaces/backend/types/query.js";
 import {
   ManagedRequest,
   ManagedResponse,
   ManagedResponseWithLocalUrl,
-} from "../types/request.js";
+} from "@pride-spaces/backend/types/request.js";
 import { Model } from "mongoose";
 
 type DynamicObject = { [k: string]: any };

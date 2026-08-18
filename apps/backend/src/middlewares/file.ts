@@ -2,14 +2,20 @@ import path from "path";
 import multer, { MulterError, ErrorCode } from "multer";
 import { v7 } from "uuid";
 import { ResponseHandler } from "./request.js";
-import { multerErrorMapping } from "@/utils/data/multer.js";
-import { pickObjectFields } from "@/utils/object/clean.js";
-import { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import { multerErrorMapping } from "@pride-spaces/backend/utils/data/multer.js";
+import { pickObjectFields } from "@pride-spaces/common/utils/object/clean.js";
+import {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 import { NextFunction } from "express";
-import { MediaType, mediaTypes } from "@/utils/data/media.js";
+import {
+  MediaType,
+  mediaTypes,
+} from "@pride-spaces/common/utils/data/media.js";
 import { existsSync, mkdirSync } from "fs";
-import { S3StorageEngine } from "@/utils/services/s3/instance.js";
-import { allowedExtensions } from "@/utils/data/media.js";
+import { S3StorageEngine } from "@pride-spaces/backend/utils/services/s3/instance.js";
+import { allowedExtensions } from "@pride-spaces/common/utils/data/media.js";
 
 export const tempDir = path.resolve(process.cwd(), "./tmp");
 

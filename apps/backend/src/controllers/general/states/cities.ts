@@ -15,7 +15,10 @@ import {
 } from "@pride-spaces/backend/utils/mongoose/filters.js";
 import { convertDataToJSON } from "@pride-spaces/backend/utils/mongoose/conversion.js";
 import { cleanObject } from "@pride-spaces/common/utils/object/clean.js";
-import type { ManagedRequest, ManagedResponse } from "@/types/request.js";
+import type {
+  ManagedRequest,
+  ManagedResponse,
+} from "@pride-spaces/backend/types/request.js";
 
 export const getCities = async (
   req: ManagedRequest<any>,
