@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { Operator } from "@/database/models/operator.js";
+import { Operator } from "@pride-spaces/backend/database/models/operator.js";
 import { RequestMiddleware } from "@/middlewares/request.js";
 // import { allowAdminLevelByBody } from "@/middlewares/checkUser.js";
-import { operatorSchema } from "@/database/schemas/operator.js";
+import { operatorSchema } from "@pride-spaces/backend/database/schemas/operator.js";
 // Controllers
 import { getData, updateData } from "@/controllers/general/data.js";
 

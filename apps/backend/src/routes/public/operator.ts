@@ -2,7 +2,7 @@ import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
 // Controllers
 import { getOperator, getOperators } from "@/controllers/public/operator.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 
 const router = Router();
 

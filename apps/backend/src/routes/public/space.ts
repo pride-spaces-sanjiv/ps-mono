@@ -3,7 +3,7 @@ import { z } from "zod";
 import { RequestMiddleware } from "@/middlewares/request.js";
 // Controllers
 import { getSpace, getSpaces } from "@/controllers/public/space.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 
 const router = Router();
 

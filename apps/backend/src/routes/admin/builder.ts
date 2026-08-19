@@ -5,8 +5,8 @@ import {
   authorizeAdminDetailsByParam,
   checkUserExistenceByBodyValue,
 } from "@/middlewares/checkUser.js";
-import { Builder } from "@/database/models/builder.js";
-import { builderSchema } from "@/database/schemas/builder.js";
+import { Builder } from "@pride-spaces/backend/database/models/builder.js";
+import { builderSchema } from "@pride-spaces/backend/database/schemas/builder.js";
 // Controllers
 import {
   createBuilder,
@@ -17,8 +17,8 @@ import {
   updateBuilder,
   updatePassword,
 } from "@/controllers/admin/builder.js";
-import { getIdSchema } from "@/database/schemas/string.js";
-import { adminLevels } from "@/utils/data/admin.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
+import { adminLevels } from "@pride-spaces/common/utils/data/admin.js";
 
 const router = Router();
 

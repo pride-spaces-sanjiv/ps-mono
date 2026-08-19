@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Admin } from "@/database/models/user.js";
+import { Admin } from "@pride-spaces/backend/database/models/user.js";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import {
   allowAdminLevelByBody,
@@ -15,8 +15,8 @@ import {
   updateAdmin,
 } from "@/controllers/admin/admin.js";
 import { changePassword, getPassword } from "@/controllers/general/password.js";
-import { adminSchema } from "@/database/schemas/user.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { adminSchema } from "@pride-spaces/backend/database/schemas/user.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 
 const router = Router();
 

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { conventionalPropertySchema } from "@/database/schemas/conventional.js";
+import { conventionalPropertySchema } from "@pride-spaces/backend/database/schemas/conventional.js";
 // Controllers
 import {
   getConventionals,
@@ -9,7 +9,7 @@ import {
   updateConventional,
   deleteConventional,
 } from "@/controllers/admin/conventional.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 
 const router = Router();
 

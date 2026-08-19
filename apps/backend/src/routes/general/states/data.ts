@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 import { getStates, getState } from "@/controllers/general/states/data.js";
 
 const router = Router();

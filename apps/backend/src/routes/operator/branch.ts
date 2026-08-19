@@ -2,8 +2,8 @@ import { Router } from "express";
 import { z } from "zod";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { checkUserExistenceByBodyValue } from "@/middlewares/checkUser.js";
-import { Branch } from "@/database/models/branch.js";
-import { branchSchema } from "@/database/schemas/branch.js";
+import { Branch } from "@pride-spaces/backend/database/models/branch.js";
+import { branchSchema } from "@pride-spaces/backend/database/schemas/branch.js";
 // Controllers
 import {
   getBranch,
@@ -12,7 +12,7 @@ import {
   updateBranch,
   deleteBranch,
 } from "@/controllers/operator/branch.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 
 const router = Router();
 

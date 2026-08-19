@@ -3,8 +3,8 @@ import { z } from "zod";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { checkUserExistenceByBodyValue } from "@/middlewares/checkUser.js";
 import { preParseDateFieldsFromBody } from "@/middlewares/parseDateFields.js";
-import { Space } from "@/database/models/space.js";
-import { spaceSchema, type SpaceSchema } from "@/database/schemas/space.js";
+import { Space } from "@pride-spaces/backend/database/models/space.js";
+import { spaceSchema, type SpaceSchema } from "@pride-spaces/backend/database/schemas/space.js";
 // Controllers
 import {
   getSpace,
@@ -13,7 +13,7 @@ import {
   updateSpace,
   deleteSpace,
 } from "@/controllers/admin/space.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 
 const router = Router();
 

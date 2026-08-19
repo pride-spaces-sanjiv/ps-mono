@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { Operator } from "@/database/models/operator.js";
+import { Operator } from "@pride-spaces/backend/database/models/operator.js";
 // Routers
 import { AuthRouter } from "./auth.js";
 // import { UserRouter } from "./user.js";

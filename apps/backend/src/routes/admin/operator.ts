@@ -5,7 +5,7 @@ import {
   authorizeAdminDetailsByParam,
   checkUserExistenceByBodyValue,
 } from "@/middlewares/checkUser.js";
-import { operatorSchema } from "@/database/schemas/operator.js";
+import { operatorSchema } from "@pride-spaces/backend/database/schemas/operator.js";
 // Controllers
 import {
   createOperator,
@@ -16,9 +16,9 @@ import {
   updateOperator,
   updatePassword,
 } from "@/controllers/admin/operator.js";
-import { getIdSchema } from "@/database/schemas/string.js";
-import { Operator } from "@/database/models/operator.js";
-import { adminLevels } from "@/utils/data/admin.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
+import { Operator } from "@pride-spaces/backend/database/models/operator.js";
+import { adminLevels } from "@pride-spaces/common/utils/data/admin.js";
 
 const router = Router();
 

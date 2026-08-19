@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { type DumpSchema, dumpSchema } from "@/database/schemas/dump.js";
+import { type DumpSchema, dumpSchema } from "@pride-spaces/backend/database/schemas/dump.js";
 // Controllers
 import {
   getDumps,
@@ -8,7 +8,7 @@ import {
   createDump,
   updateDump,
 } from "@/controllers/general/dump.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 
 const router = Router();
 

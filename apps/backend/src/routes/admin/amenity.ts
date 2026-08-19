@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { z } from "zod";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { Amenity } from "@/database/models/amenities.js";
+import { Amenity } from "@pride-spaces/backend/database/models/amenities.js";
 import {
   amenitySchema,
   type AmenitySchema,
-} from "@/database/schemas/amenity.js";
+} from "@pride-spaces/backend/database/schemas/amenity.js";
 
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 import {
   getAmenities,
   getAmenity,

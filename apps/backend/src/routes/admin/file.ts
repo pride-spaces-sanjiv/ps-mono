@@ -9,9 +9,9 @@ import {
   uploadLayoutFiles,
   uploadMigrationFile,
 } from "@/controllers/general/file.js";
-import { mediaTypes } from "@/utils/data/media.js";
-import { mediaQuerySchema } from "@/database/schemas/media.js";
-import { dumpSchema } from "@/database/schemas/dump.js";
+import { mediaTypes } from "@pride-spaces/common/utils/data/media.js";
+import { mediaQuerySchema } from "@pride-spaces/backend/database/schemas/media.js";
+import { dumpSchema } from "@pride-spaces/backend/database/schemas/dump.js";
 
 const router = Router();
 

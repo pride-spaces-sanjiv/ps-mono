@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { checkUserExistenceByBodyValue } from "@/middlewares/checkUser.js";
-import { User } from "@/database/models/user.js";
-import { userSchema } from "@/database/schemas/user.js";
+import { User } from "@pride-spaces/backend/database/models/user.js";
+import { userSchema } from "@pride-spaces/backend/database/schemas/user.js";
 // Controllers
 import {
   getUsers,
@@ -11,7 +11,7 @@ import {
   updateUser,
   deleteUser,
 } from "@/controllers/admin/user.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 
 const router = Router();
 

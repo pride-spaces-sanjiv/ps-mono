@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { Admin } from "@/database/models/user.js";
+import { Admin } from "@pride-spaces/backend/database/models/user.js";
 import { LocationRouter } from "@/routes/general/location/route.js";
 import { OperatorRouter } from "@/routes/public/operator.js";
 import { SpaceRouter } from "@/routes/public/space.js";

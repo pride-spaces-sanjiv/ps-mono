@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { RequestMiddleware } from "@/middlewares/request.js";
-import { getIdSchema } from "@/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
 import {
   getAmenities,
   getAmenity,

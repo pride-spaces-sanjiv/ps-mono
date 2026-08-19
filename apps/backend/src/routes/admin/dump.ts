@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { RequestMiddleware } from "@/middlewares/request.js";
 import { allowAdminLevelsToPass } from "@/middlewares/checkUser.js";
-import { type DumpSchema, dumpSchema } from "@/database/schemas/dump.js";
+import { type DumpSchema, dumpSchema } from "@pride-spaces/backend/database/schemas/dump.js";
 // Controllers
 import {
   getDumps,
@@ -11,8 +11,8 @@ import {
   approveDump,
   deleteDump,
 } from "@/controllers/general/dump.js";
-import { getIdSchema } from "@/database/schemas/string.js";
-import { adminLevels } from "@/utils/data/admin.js";
+import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
+import { adminLevels } from "@pride-spaces/common/utils/data/admin.js";
 
 const router = Router();
 
