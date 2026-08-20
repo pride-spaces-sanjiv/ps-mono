@@ -3,10 +3,6 @@ node_modules/
 .pnpm-store/
 
 # Production & Build outputs
-dist/
-dist-ssr/
-build/
-out/
 .turbo/
 *.tsbuildinfo
 
@@ -14,6 +10,7 @@ out/
 .env
 .env*
 .env.*
+!.env.*example
 
 # Test Coverage
 coverage/
@@ -39,17 +36,3 @@ lerna-debug.log*
 *.sw?
 .DS_Store
 Thumbs.db
-
-# Deployment & Temporary Cache
-.vercel/
-.netlify/
-tmp/
-.eslintcache
-
-# Project & Backend Specific Ignores
-datasets/
-backup/
-scripts/backup/**/*.json
-generated/prisma/
-data/
-*.csv
