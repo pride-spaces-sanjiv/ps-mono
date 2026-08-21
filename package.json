@@ -17,6 +17,9 @@
     "build:util-frontend": "turbo run build --filter=@pride-spaces/frontend",
     "dev": "turbo run dev",
     "dev:local": "turbo run dev:local",
+    "dev:crm-fr": "turbo run dev --filter=ps-crm",
+    "dev:admin-fr": "turbo run dev --filter=admin-fr",
+    "dev:backend": "turbo run dev --filter=backend",
     "start": "turbo run start"
   },
   "devDependencies": {

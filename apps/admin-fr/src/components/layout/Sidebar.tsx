@@ -2,7 +2,10 @@ import { useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { ADMIN_PERMISSIONS } from "@pride-spaces/types";
+import {
+  ADMIN_PERMISSIONS,
+  defaultSidebarPermissions,
+} from "@pride-spaces/common/utils/data/user.js";
 import * as secureStorage from "@secure-storage/common";
 import {
   Sidebar,
@@ -55,15 +58,7 @@ type SidebarSubItem = {
   activeUrls?: string[];
 };
 
-const sidebarPermissions: Record<string, string[]> = {
-  "super-admin": ADMIN_PERMISSIONS,
-  admin: ADMIN_PERMISSIONS,
-  support: ADMIN_PERMISSIONS,
-
-  operator: ["settings", "dashboard", "operators", "notifications"],
-
-  builder: [],
-};
+const sidebarPermissions = defaultSidebarPermissions;
 // Menu items with icons and routes
 const items: SidebarItem[] = [
   {

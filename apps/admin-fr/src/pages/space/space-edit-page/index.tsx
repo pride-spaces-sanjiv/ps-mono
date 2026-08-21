@@ -60,6 +60,8 @@ const defaultTime = moment().hour(0).minute(0).toDate();
 
 const SpaceEditPage = () => {
   const { id } = useParams();
+  const location = useLocation();
+
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const isConfirmedRef = useRef(false);
   const seatsHasPressedEnter = useRef(false);
@@ -91,7 +93,11 @@ const SpaceEditPage = () => {
   const { amenitiesData } = useAmenities();
 
   // Fetch Data using Centre ID
-  const { data: res, isFetching, refetch } = useQuery({
+  const {
+    data: res,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: [queryKeys.SPACES, id],
     queryFn: () =>
       getSpaceById({ query: { withOperator: true }, url: `/${id}` }),
@@ -969,7 +975,9 @@ const SpaceEditPage = () => {
               if (!seatsHasPressedEnter.current) {
                 if (res?.data?.data) {
                   const currentBooked = res.data.data.seats?.booked ?? 0;
-                  setValue("seats.booked", currentBooked, { shouldValidate: true });
+                  setValue("seats.booked", currentBooked, {
+                    shouldValidate: true,
+                  });
                 }
               }
               seatsHasPressedEnter.current = false;
@@ -1070,7 +1078,7 @@ const SpaceEditPage = () => {
                   setValue(
                     "timing.openDays",
                     items.filter((val) => typeof val === "number"),
-                    { shouldValidate: true }
+                    { shouldValidate: true },
                   );
                   autoSave();
                 }}
@@ -1169,7 +1177,7 @@ const SpaceEditPage = () => {
                   items.filter(
                     (val) => typeof val === "string",
                   ) as WorkingSize[],
-                  { shouldValidate: true }
+                  { shouldValidate: true },
                 );
                 autoSave();
               }}
@@ -1182,7 +1190,9 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             placeholder="2024"
             type="number"
-            {...registerWithAutoSave("timing.operationalSince", { valueAsNumber: true })}
+            {...registerWithAutoSave("timing.operationalSince", {
+              valueAsNumber: true,
+            })}
             error={errors.timing?.operationalSince}
             {...changedFieldProps(mainChanges.allData, "operationalSince")}
           />
@@ -1210,7 +1220,9 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...registerWithAutoSave("pricing.dayPass", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.dayPass", {
+              valueAsNumber: true,
+            })}
             error={errors.pricing?.dayPass}
             {...changedFieldProps(pricingChanges.allData, "dayPass")}
           />
@@ -1222,7 +1234,9 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...registerWithAutoSave("pricing.meetingRoom", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.meetingRoom", {
+              valueAsNumber: true,
+            })}
             error={errors.pricing?.meetingRoom}
           />
           <FormField
@@ -1233,7 +1247,9 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...registerWithAutoSave("pricing.dedicatedDesk", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.dedicatedDesk", {
+              valueAsNumber: true,
+            })}
             error={errors.pricing?.dedicatedDesk}
             {...changedFieldProps(pricingChanges.allData, "dedicatedDesk")}
           />
@@ -1245,7 +1261,9 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...registerWithAutoSave("pricing.flexiDesk", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.flexiDesk", {
+              valueAsNumber: true,
+            })}
             error={errors.pricing?.flexiDesk}
           />
           <FormField
@@ -1256,7 +1274,9 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...registerWithAutoSave("pricing.perSeat", { valueAsNumber: true })}
+            {...registerWithAutoSave("pricing.perSeat", {
+              valueAsNumber: true,
+            })}
             error={errors.pricing?.perSeat}
             {...changedFieldProps(pricingChanges.allData, "perSeat")}
           />
@@ -1563,12 +1583,12 @@ const SpaceEditPage = () => {
             <div className="flex items-center  gap-4">
               <label className="text-muted-foreground text-sm">Verified</label>
               <Switch
-                key={
-                  watch("flags.isVerified") ? "verified" : "unverified"
-                }
+                key={watch("flags.isVerified") ? "verified" : "unverified"}
                 checked={!!watch("flags.isVerified")}
                 onCheckedChange={(checked) => {
-                  setValue("flags.isVerified", checked, { shouldValidate: true });
+                  setValue("flags.isVerified", checked, {
+                    shouldValidate: true,
+                  });
                   autoSave();
                 }}
               />
@@ -1716,7 +1736,9 @@ const SpaceEditPage = () => {
               if (!open && !isConfirmedRef.current) {
                 if (res?.data?.data) {
                   const currentBooked = res.data.data.seats?.booked ?? 0;
-                  setValue("seats.booked", currentBooked, { shouldValidate: true });
+                  setValue("seats.booked", currentBooked, {
+                    shouldValidate: true,
+                  });
                 }
               }
             }}
