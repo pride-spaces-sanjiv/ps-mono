@@ -61,6 +61,7 @@ const defaultTime = moment().hour(0).minute(0).toDate();
 const SpaceEditPage = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const isConfirmedRef = useRef(false);
@@ -550,7 +551,7 @@ const SpaceEditPage = () => {
         toast.success(
           `File uploaded successfully: ${fileType} ${file.file.name}`,
         );
-        return true;
+        return res;
       }
       throw new Error("Invalid response");
     } catch (error) {
@@ -1464,11 +1465,16 @@ const SpaceEditPage = () => {
           <SpaceImagesUploadSection
             processUpload={async (file, setter) => {
               try {
-                const done = await handleFileUpload(file, mediaTypes.IMAGE);
-                if (!done) {
+                const fileRes = await handleFileUpload(file, mediaTypes.IMAGE);
+                if (!fileRes) {
                   throw new Error("Incomplete");
                 }
-                autoSave();
+
+                setValue("files.images", [
+                  ...(watch("files.images", []) || []),
+                  fileRes.data.data.files?.[0]?.filename,
+                ]);
+                // autoSave();
                 return {
                   status: "completed",
                 };
@@ -1482,11 +1488,17 @@ const SpaceEditPage = () => {
           <SpaceLayoutsUploadSection
             processUpload={async (file, setter) => {
               try {
-                const done = await handleFileUpload(file, mediaTypes.LAYOUT);
-                if (!done) {
+                const fileRes = await handleFileUpload(file, mediaTypes.LAYOUT);
+                if (!fileRes) {
                   throw new Error("Incomplete");
                 }
-                autoSave();
+
+                setValue("files.layouts", [
+                  ...(watch("files.layouts", []) || []),
+                  fileRes.data.data.files?.[0]?.filename,
+                ]);
+
+                // autoSave();
                 return {
                   status: "completed",
                 };
