@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
-import { ArrowLeft, ImagePlus, MessageSquareWarning } from "lucide-react";
+import { ArrowLeft, ImagePlus, MessageSquareWarning, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAmenities } from "@/services/hooks/useAmenities";
 import { useUser } from "@/services/hooks/use-user";
@@ -596,9 +596,7 @@ const SpaceEditPage = () => {
         )}
 
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-          }}
+          onSubmit={handleSubmit((data, e) => onSubmit(data))}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               const target = e.target as HTMLElement;
@@ -1717,7 +1715,7 @@ const SpaceEditPage = () => {
           </div>
 
           {/* Delete trigger */}
-          <div className="col-span-full flex justify-center pt-4">
+          <div className="col-span-full flex justify-end pt-4 gap-2">
             <DialogModal
               triggerProps={{
                 children: (
@@ -1739,6 +1737,11 @@ const SpaceEditPage = () => {
             >
               <ActionButton variant={"destructive"}>Move to bin</ActionButton>
             </DialogModal>
+            <ActionButton loading={updateLoading} type="submit">
+              <div className="flex items-center gap-2">
+                Save Changes <Save />
+              </div>
+            </ActionButton>
           </div>
 
           <DialogModal
