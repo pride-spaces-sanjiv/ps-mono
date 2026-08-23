@@ -5,21 +5,21 @@ import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/utils/object/file";
 import { Trash2, X } from "lucide-react";
 
-type Render = ReactNode | ((file: UploadedFile) => ReactNode);
+type Render = ReactNode | ((file: UploadedFile | string) => ReactNode);
 type Props = {
   btnProps: React.ComponentProps<typeof Button>;
   delBtnProps: React.ComponentProps<typeof Button>;
   textWrapperProps: React.HTMLAttributes<HTMLDivElement>;
   nameProps: React.HTMLAttributes<HTMLDivElement>;
   sizeProps: React.HTMLAttributes<HTMLDivElement>;
-  file: UploadedFile;
+  file: UploadedFile | string;
   canPreview: boolean;
   renderPreview: Render;
   renderName: Render;
   renderSize: Render;
 };
 
-const handleRender = (render: Render, file?: UploadedFile) => {
+const handleRender = (render: Render, file?: UploadedFile | string) => {
   if (typeof render === "function") {
     return file ? render?.(file) : undefined;
   }
@@ -77,28 +77,34 @@ export default function FilePreview({
           textWrapperProps?.className,
         )}
       >
-        <div
-          title={file?.file.name}
-          {...nameProps}
-          className={cn(
-            "font-bold bg-gray-700 px-3 py-2 rounded-sm max-w-[200px] overflow-hidden overflow-ellipsis text-nowrap",
-            nameProps?.className,
-          )}
-        >
-          {nameProps?.children ||
-            handleRender(renderName, file) ||
-            file?.file.name ||
-            "No file name"}
-        </div>
-        <div
-          {...sizeProps}
-          className={cn("text-sm pt-3", sizeProps?.className)}
-        >
-          {sizeProps?.children ||
-            handleRender(renderSize, file) ||
-            (file ? "Size : " + formatFileSize(file?.file.size) : undefined) ||
-            "Unknown file size"}
-        </div>
+        {typeof file === "object" && (
+          <div
+            title={file?.file.name}
+            {...nameProps}
+            className={cn(
+              "font-bold bg-gray-700 px-3 py-2 rounded-sm max-w-[200px] overflow-hidden overflow-ellipsis text-nowrap",
+              nameProps?.className,
+            )}
+          >
+            {nameProps?.children ||
+              handleRender(renderName, file) ||
+              file?.file.name ||
+              "No file name"}
+          </div>
+        )}
+        {typeof file === "object" && (
+          <div
+            {...sizeProps}
+            className={cn("text-sm pt-3", sizeProps?.className)}
+          >
+            {sizeProps?.children ||
+              handleRender(renderSize, file) ||
+              (file
+                ? "Size : " + formatFileSize(file?.file.size)
+                : undefined) ||
+              "Unknown file size"}
+          </div>
+        )}
         <Button
           variant={"destructive"}
           type="button"

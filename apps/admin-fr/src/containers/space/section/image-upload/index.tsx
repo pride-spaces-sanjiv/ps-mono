@@ -8,13 +8,19 @@ import ActionButton from "@/components/buttons/action-btn";
 import { ImagePlus } from "lucide-react";
 
 type Props = {
+  existingFiles: string[];
   titleProps: React.ComponentProps<typeof FormSectionTitle>;
   fileType: MediaType;
   files: UploadedFile[];
   processUpload: React.ComponentProps<typeof FileUpload>["processFileUpload"];
 };
 
+const imageURL = (import.meta.env.VITE_RUSTFS_BASE as string).concat(
+  "/pridespaces/images/{{id}}",
+);
+
 export default function SpaceImagesUploadSection({
+  existingFiles = [],
   titleProps,
   fileType = "image",
   files = [],
@@ -35,7 +41,25 @@ export default function SpaceImagesUploadSection({
             canPreview={true}
             renderPreview={(file) => (
               <img
-                src={file?.imageSrc}
+                src={typeof file === "string" ? file : file?.imageSrc}
+                alt="Preview"
+                className="w-full h-full object-contain"
+              />
+            )}
+          />
+        ))}
+        {existingFiles.map((id, i) => (
+          <FilePreview
+            key={`existing-${fileType}-${i}`}
+            file={id}
+            canPreview={true}
+            renderPreview={(file) => (
+              <img
+                src={
+                  typeof file === "string"
+                    ? imageURL.replace("{{id}}", file)
+                    : ""
+                }
                 alt="Preview"
                 className="w-full h-full object-contain"
               />

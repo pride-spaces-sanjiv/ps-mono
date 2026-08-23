@@ -1462,6 +1462,9 @@ const SpaceEditPage = () => {
 
           {/* Images */}
           <SpaceImagesUploadSection
+            existingFiles={defaultValues?.files?.images?.filter(
+              (s) => typeof s === "string",
+            )}
             processUpload={async (file, setter) => {
               try {
                 const fileRes = await handleFileUpload(file, mediaTypes.IMAGE);
@@ -1485,6 +1488,9 @@ const SpaceEditPage = () => {
 
           {/* Layouts */}
           <SpaceLayoutsUploadSection
+            existingFiles={defaultValues?.files?.layouts?.filter(
+              (s) => typeof s === "string",
+            )}
             processUpload={async (file, setter) => {
               try {
                 const fileRes = await handleFileUpload(file, mediaTypes.LAYOUT);

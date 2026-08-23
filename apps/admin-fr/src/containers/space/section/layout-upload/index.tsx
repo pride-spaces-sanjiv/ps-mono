@@ -8,6 +8,7 @@ import ActionButton from "@/components/buttons/action-btn";
 import { ImagePlus } from "lucide-react";
 
 type Props = {
+  existingFiles: string[];
   titleProps: React.ComponentProps<typeof FormSectionTitle>;
   fileType: MediaType;
   files: UploadedFile[];
@@ -15,8 +16,9 @@ type Props = {
 };
 
 export default function SpaceLayoutsUploadSection({
+  existingFiles = [],
   titleProps,
-  fileType = "image",
+  fileType = "layout",
   // files = [],
   processUpload,
 }: Partial<Props>) {
@@ -32,7 +34,7 @@ export default function SpaceLayoutsUploadSection({
           <FilePreview
             key={`${fileType}-${i}`}
             file={file}
-            canPreview={true}
+            canPreview={false}
             renderPreview={(file) => (
               <img
                 src={file?.imageSrc}
@@ -50,7 +52,7 @@ export default function SpaceLayoutsUploadSection({
           children: (
             <ActionButton variant={"secondary"} className="max-w-fit px-5 py-6">
               <div className="flex gap-2 items-center">
-                Upload Layouts <ImagePlus />
+                Upload Floor Plans <ImagePlus />
               </div>
             </ActionButton>
           ),
@@ -61,6 +63,12 @@ export default function SpaceLayoutsUploadSection({
         }}
       >
         <FileUpload
+          labels={{
+            title: "Upload Floor Plans",
+            description: "You floor plans tell more about the complex !",
+            dndTitle: "Drop your floor plans here",
+            dndBrowse: "browse them",
+          }}
           fileType={mediaTypes.LAYOUT}
           onFilesUpload={(files) => {
             console.log("All uploaded layouts :", files);
