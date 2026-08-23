@@ -798,7 +798,7 @@ const SpaceEditPage = () => {
           )}
 
           {/* Opening Day */}
-          <FormField
+          {/* <FormField
             key={`opening-day-${watch("timing.openingDay")}`}
             label="Opening Day"
             labelPosition="embedded"
@@ -836,10 +836,68 @@ const SpaceEditPage = () => {
               },
             }}
             {...changedFieldProps(mainChanges.allData, "openingDay")}
-          />
+          /> */}
+
+          {/* Open days */}
+          <FormField
+            label="Operational Days"
+            labelPosition="embedded"
+            // embeddedWrapperProps={{className: "max-w-full"}}
+            error={{
+              message: errors.timing?.openDays?.message,
+              type: errors.timing?.openDays?.type || "validate",
+            }}
+            {...changedFieldProps(mainChanges.allData, "openDays")}
+          >
+            <GroupedSearchSelect
+              key={`days-${defaultValues?.timing?.openDays?.length}`}
+              type="multiple"
+              showSearch={false}
+              defaultSelected={
+                defaultValues?.timing?.openDays ||
+                days.map((_, i) => i + 1).filter((_, i) => i < 7)
+              }
+              items={days.map((dt, i) => ({
+                label: dt,
+                value: i + 1,
+              }))}
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"outline"}
+                    className={
+                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto justify-start"
+                    }
+                  >
+                    {watch("timing.openDays", []).length > 0 ? (
+                      <ChippedElements
+                        className=""
+                        elements={watch("timing.openDays", [])
+                          .sort((a, b) => a - b)
+                          .map((s) => shortDays[s - 1])
+                          .filter((v) => !!v)}
+                      />
+                    ) : (
+                      "Select Days"
+                    )}
+                  </ActionButton>
+                ),
+              }}
+              contentProps={{ className: "max-h-[300px]" }}
+              onSelect={(items) => {
+                setValue(
+                  "timing.openDays",
+                  items.filter((val) => typeof val === "number"),
+                  { shouldValidate: true },
+                );
+                autoSave();
+              }}
+            />
+          </FormField>
 
           {/* Closing Day */}
-          <FormField
+          {/* <FormField
             key={`closing-day-${watch("timing.closingDay")}`}
             label="Closing Day"
             labelPosition="embedded"
@@ -877,7 +935,7 @@ const SpaceEditPage = () => {
               },
             }}
             {...changedFieldProps(mainChanges.allData, "closingDay")}
-          />
+          /> */}
 
           {/* Open Time */}
 
@@ -1028,67 +1086,6 @@ const SpaceEditPage = () => {
             disabled
           />
 
-          {/* Open Days */}
-
-          {watch("specs.spaceType", "Flex") !== "MOS" && (
-            <FormField
-              label="Operational Days"
-              labelPosition="embedded"
-              // embeddedWrapperProps={{className: "max-w-full"}}
-              error={{
-                message: errors.timing?.openDays?.message,
-                type: errors.timing?.openDays?.type || "validate",
-              }}
-              {...changedFieldProps(mainChanges.allData, "openDays")}
-            >
-              <GroupedSearchSelect
-                key={`days-${defaultValues?.timing?.openDays?.length}`}
-                type="multiple"
-                showSearch={false}
-                defaultSelected={
-                  defaultValues?.timing?.openDays ||
-                  days.map((_, i) => i + 1).filter((_, i) => i < 7)
-                }
-                items={days.map((dt, i) => ({
-                  label: dt,
-                  value: i + 1,
-                }))}
-                triggerProps={{
-                  children: (
-                    <ActionButton
-                      type="button"
-                      variant={"outline"}
-                      className={
-                        "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
-                      }
-                    >
-                      {watch("timing.openDays", []).length > 0 ? (
-                        <ChippedElements
-                          className=""
-                          elements={watch("timing.openDays", [])
-                            .sort((a, b) => a - b)
-                            .map((s) => shortDays[s - 1])
-                            .filter((v) => !!v)}
-                        />
-                      ) : (
-                        "Select Days"
-                      )}
-                    </ActionButton>
-                  ),
-                }}
-                contentProps={{ className: "max-h-[300px]" }}
-                onSelect={(items) => {
-                  setValue(
-                    "timing.openDays",
-                    items.filter((val) => typeof val === "number"),
-                    { shouldValidate: true },
-                  );
-                  autoSave();
-                }}
-              />
-            </FormField>
-          )}
-
           {/* Amenities */}
           <FormField
             label="Amenities"
@@ -1104,7 +1101,7 @@ const SpaceEditPage = () => {
             {...changedFieldProps(mainChanges.allData, "facilities")}
           >
             <SelectAmenities
-              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
+              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto justify-start"
               defaultAmenities={watch("facilities", [])}
               onSelect={(amenities) => {
                 console.log(amenities);
