@@ -21,7 +21,7 @@ import {
   spaceSchema,
   type SpaceSchema,
 } from "@pride-spaces/common/utils/schemas/space.js";
-import { datifyObjectValues } from "@/utils/object/datify";
+import { datifyObjectValues } from "@pride-spaces/common/utils/object/datify.js";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
@@ -117,69 +117,71 @@ const SpaceEditPage = () => {
       const notificationData =
         fromRoute === "notifications" ? locData?.data : undefined;
 
-      return {
-        mainChanges: compareFields(currentData, notificationData, {
-          excludeFields: [
-            "id",
-            "createdAt",
-            "updatedAt",
-            "references",
-            "location",
-            "person",
-            "pricing",
-          ],
-        }),
-        locationChanges: compareFields(
-          currentData?.location,
-          notificationData?.location,
-        ),
-        personChanges: compareFields(
-          currentData?.person,
-          notificationData?.person,
-        ),
-        pricingChanges: compareFields(
-          currentData?.pricing,
-          notificationData?.pricing,
-        ),
-      };
+      return !notificationData
+        ? {}
+        : {
+            mainChanges: compareFields(currentData, notificationData, {
+              excludeFields: [
+                "id",
+                "createdAt",
+                "updatedAt",
+                "references",
+                "location",
+                "person",
+                "pricing",
+              ],
+            }),
+            locationChanges: compareFields(
+              currentData?.location,
+              notificationData?.location,
+            ),
+            personChanges: compareFields(
+              currentData?.person,
+              notificationData?.person,
+            ),
+            pricingChanges: compareFields(
+              currentData?.pricing,
+              notificationData?.pricing,
+            ),
+          };
     }, [res?.data, locData?.data, fromRoute]);
 
   const allUpdatedData = useMemo(() => {
     return {
-      ...mainChanges.allData,
-      ...(locationChanges.allFields.length
+      ...mainChanges?.allData,
+      ...(locationChanges?.allFields.length
         ? {
             location: {
               ...res?.data?.data?.location,
-              ...locationChanges.allData,
+              ...locationChanges?.allData,
             },
           }
         : {}),
-      ...(personChanges.allFields.length
+      ...(personChanges?.allFields.length
         ? {
             person: {
               ...res?.data?.data?.person,
-              ...personChanges.allData,
+              ...personChanges?.allData,
             },
           }
         : {}),
-      ...(pricingChanges.allFields.length
+      ...(pricingChanges?.allFields.length
         ? {
             pricing: {
               ...res?.data?.data?.pricing,
-              ...pricingChanges.allData,
+              ...pricingChanges?.allData,
             },
           }
         : {}),
     };
   }, [
-    mainChanges.allData,
-    locationChanges.allData,
-    locationChanges.allFields.length,
-    personChanges.allData,
-    personChanges.allFields.length,
-    pricingChanges.allData,
-    pricingChanges.allFields.length,
+    mainChanges?.allData,
+    locationChanges?.allData,
+    locationChanges?.allFields.length,
+    personChanges?.allData,
+    personChanges?.allFields.length,
+    pricingChanges?.allData,
+    pricingChanges?.allFields.length,
     res?.data?.data?.location,
     res?.data?.data?.person,
     res?.data?.data?.pricing,
@@ -215,8 +217,6 @@ const SpaceEditPage = () => {
     defaultValues: {
       timing: {
         openDays: days.map((_, i) => i + 1).filter((_, i) => i < 6),
-        openingDay: "Monday",
-        closingDay: "Saturday",
         openTime: defaultTime,
         closeTime: defaultTime,
         operationalSince: undefined,
@@ -300,12 +300,13 @@ const SpaceEditPage = () => {
     }
     if (res?.data?.data) {
       const modified = datifyObjectValues(
-        { ...res?.data?.data, ...allUpdatedData },
+        { ...res?.data?.data, ...(isDump ? allUpdatedData : {}) },
         ["createdAt", "updatedAt", "timing.closeTime", "timing.openTime"],
       );
+      console.log("Modified centre data :", modified);
       reset({
         ...modified,
-        slug: modified?.references?.operator?.slug,
+        slug: modified?.slug || modified?.references?.operator?.slug,
 
         timing: {
           ...modified?.timing,
@@ -600,7 +601,15 @@ const SpaceEditPage = () => {
         )}
 
         <form
-          onSubmit={handleSubmit((data, e) => onSubmit(data))}
+          onSubmit={handleSubmit(
+            (data) => {
+              console.log("Centre form data valid :", data);
+              onSubmit(data);
+            },
+            (errors) => {
+              console.log("Centre form data invalid :", errors, watch());
+            },
+          )}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               const target = e.target as HTMLElement;
@@ -639,7 +648,7 @@ const SpaceEditPage = () => {
             placeholder="My Centre"
             {...registerWithAutoSave("name")}
             error={errors.name}
-            {...changedFieldProps(mainChanges.allData, "name")}
+            {...changedFieldProps(mainChanges?.allData, "name")}
           />
 
           <FormField
@@ -650,7 +659,7 @@ const SpaceEditPage = () => {
             readOnly
             {...registerWithAutoSave("slug")}
             error={errors.slug}
-            {...changedFieldProps(mainChanges.allData, "slug")}
+            {...changedFieldProps(mainChanges?.allData, "slug")}
           />
 
           <FormField
@@ -660,7 +669,7 @@ const SpaceEditPage = () => {
             readOnly
             disabled
             error={errors.operator}
-            {...changedFieldProps(mainChanges.allData, "operator")}
+            {...changedFieldProps(mainChanges?.allData, "operator")}
           />
 
           <FormField
@@ -685,7 +694,7 @@ const SpaceEditPage = () => {
                 },
               },
             }}
-            {...changedFieldProps(mainChanges.allData, "category")}
+            {...changedFieldProps(mainChanges?.allData, "category")}
           />
 
           <FormField
@@ -710,7 +719,7 @@ const SpaceEditPage = () => {
               },
             }}
             error={errors.specs?.spaceType}
-            {...changedFieldProps(mainChanges.allData, "spaceType")}
+            {...changedFieldProps(mainChanges?.allData, "spaceType")}
           />
 
           <FormField
@@ -735,7 +744,7 @@ const SpaceEditPage = () => {
                 },
               },
             }}
-            {...changedFieldProps(mainChanges.allData, "grade")}
+            {...changedFieldProps(mainChanges?.allData, "grade")}
           />
 
           {/* Sez or Oc based on grade */}
@@ -765,7 +774,7 @@ const SpaceEditPage = () => {
                   },
                 },
               }}
-              {...changedFieldProps(mainChanges.allData, "grade")}
+              {...changedFieldProps(mainChanges?.allData, "grade")}
             />
           ) : (
             <FormField
@@ -793,7 +802,7 @@ const SpaceEditPage = () => {
                   },
                 },
               }}
-              {...changedFieldProps(mainChanges.allData, "grade")}
+              {...changedFieldProps(mainChanges?.allData, "grade")}
             />
           )}
 
@@ -835,7 +844,7 @@ const SpaceEditPage = () => {
                 },
               },
             }}
-            {...changedFieldProps(mainChanges.allData, "openingDay")}
+            {...changedFieldProps(mainChanges?.allData, "openingDay")}
           /> */}
 
           {/* Open days */}
@@ -847,7 +856,7 @@ const SpaceEditPage = () => {
               message: errors.timing?.openDays?.message,
               type: errors.timing?.openDays?.type || "validate",
             }}
-            {...changedFieldProps(mainChanges.allData, "openDays")}
+            {...changedFieldProps(mainChanges?.allData, "openDays")}
           >
             <GroupedSearchSelect
               key={`days-${defaultValues?.timing?.openDays?.length}`}
@@ -934,13 +943,13 @@ const SpaceEditPage = () => {
                 },
               },
             }}
-            {...changedFieldProps(mainChanges.allData, "closingDay")}
+            {...changedFieldProps(mainChanges?.allData, "closingDay")}
           /> */}
 
           {/* Open Time */}
 
           <FormField
-            name="timing.openTime"
+            // name="timing.openTime"
             label="Open Time"
             labelPosition="embedded"
             type="time"
@@ -952,26 +961,27 @@ const SpaceEditPage = () => {
             }
             onChange={(e) => {
               const val = e.currentTarget.value;
+              console.log("Open time :", moment(val, "HH:mm", true).toDate());
               setValue("timing.openTime", moment(val, "HH:mm", true).toDate(), {
                 shouldValidate: true,
               });
             }}
-            onBlur={() => {
-              if (activeInputHasPressedEnter.current["timing.openTime"]) {
-                autoSave();
-              } else {
-                revertAllFormFields();
-              }
-              activeInputHasPressedEnter.current["timing.openTime"] = false;
-            }}
+            // onBlur={() => {
+            //   if (activeInputHasPressedEnter.current["timing.openTime"]) {
+            //     autoSave();
+            //   } else {
+            //     revertAllFormFields();
+            //   }
+            //   activeInputHasPressedEnter.current["timing.openTime"] = false;
+            // }}
             error={errors.timing?.openTime}
-            {...changedFieldProps(mainChanges.allData, "openTime")}
+            {...changedFieldProps(mainChanges?.allData, "openTime")}
           />
 
           {/* Close Time */}
 
           <FormField
-            name="timing.closeTime"
+            // name="timing.closeTime"
             label="Close Time"
             labelPosition="embedded"
             type="time"
@@ -991,16 +1001,16 @@ const SpaceEditPage = () => {
                 },
               );
             }}
-            onBlur={() => {
-              if (activeInputHasPressedEnter.current["timing.closeTime"]) {
-                autoSave();
-              } else {
-                revertAllFormFields();
-              }
-              activeInputHasPressedEnter.current["timing.closeTime"] = false;
-            }}
+            // onBlur={() => {
+            //   if (activeInputHasPressedEnter.current["timing.closeTime"]) {
+            //     autoSave();
+            //   } else {
+            //     revertAllFormFields();
+            //   }
+            //   activeInputHasPressedEnter.current["timing.closeTime"] = false;
+            // }}
             error={errors.timing?.closeTime}
-            {...changedFieldProps(mainChanges.allData, "closeTime")}
+            {...changedFieldProps(mainChanges?.allData, "closeTime")}
           />
 
           <FormField
@@ -1011,7 +1021,7 @@ const SpaceEditPage = () => {
               valueAsNumber: true,
             })}
             error={errors.seats?.total}
-            {...changedFieldProps(mainChanges.allData, "totalSeats")}
+            {...changedFieldProps(mainChanges?.allData, "totalSeats")}
           />
 
           <FormField
@@ -1067,7 +1077,7 @@ const SpaceEditPage = () => {
               }
             }}
             error={errors.seats?.booked}
-            {...changedFieldProps(mainChanges.allData, "seats")}
+            {...changedFieldProps(mainChanges?.allData, "seats")}
           />
 
           <FormField
@@ -1098,7 +1108,7 @@ const SpaceEditPage = () => {
                 errors?.facilities?.type ||
                 "validate",
             }}
-            {...changedFieldProps(mainChanges.allData, "facilities")}
+            {...changedFieldProps(mainChanges?.allData, "facilities")}
           >
             <SelectAmenities
               className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto justify-start"
@@ -1140,7 +1150,7 @@ const SpaceEditPage = () => {
                 errors?.specs?.workingSizes?.type ||
                 "validate",
             }}
-            {...changedFieldProps(mainChanges.allData, "workingSizes")}
+            {...changedFieldProps(mainChanges?.allData, "workingSizes")}
           >
             <GroupedSearchSelect
               key={`working-sizes-${defaultValues?.specs?.workingSizes?.length}`}
@@ -1194,7 +1204,7 @@ const SpaceEditPage = () => {
               valueAsNumber: true,
             })}
             error={errors.timing?.operationalSince}
-            {...changedFieldProps(mainChanges.allData, "operationalSince")}
+            {...changedFieldProps(mainChanges?.allData, "operationalSince")}
           />
 
           {/* Area in sq.ft */}
@@ -1207,7 +1217,7 @@ const SpaceEditPage = () => {
             min={0}
             {...registerWithAutoSave("specs.area", { valueAsNumber: true })}
             error={errors.specs?.area}
-            {...changedFieldProps(mainChanges.allData, "area")}
+            {...changedFieldProps(mainChanges?.allData, "area")}
           />
 
           {/* Pricing Details */}
@@ -1224,7 +1234,7 @@ const SpaceEditPage = () => {
               valueAsNumber: true,
             })}
             error={errors.pricing?.dayPass}
-            {...changedFieldProps(pricingChanges.allData, "dayPass")}
+            {...changedFieldProps(pricingChanges?.allData, "dayPass")}
           />
           <FormField
             label="Meeting Room"
@@ -1251,7 +1261,7 @@ const SpaceEditPage = () => {
               valueAsNumber: true,
             })}
             error={errors.pricing?.dedicatedDesk}
-            {...changedFieldProps(pricingChanges.allData, "dedicatedDesk")}
+            {...changedFieldProps(pricingChanges?.allData, "dedicatedDesk")}
           />
           <FormField
             label="Flexi/Hot Desk"
@@ -1278,7 +1288,7 @@ const SpaceEditPage = () => {
               valueAsNumber: true,
             })}
             error={errors.pricing?.perSeat}
-            {...changedFieldProps(pricingChanges.allData, "perSeat")}
+            {...changedFieldProps(pricingChanges?.allData, "perSeat")}
           />
           <FormField
             key={`vo-service-${watch("flags.isVoService")}`}
@@ -1353,7 +1363,7 @@ const SpaceEditPage = () => {
             placeholder="https://maps.app.goo.gl/..."
             {...registerWithAutoSave("location.url")}
             error={errors.location?.url}
-            {...changedFieldProps(locationChanges.allData, "url")}
+            {...changedFieldProps(locationChanges?.allData, "url")}
           />
 
           <FormField
@@ -1362,7 +1372,7 @@ const SpaceEditPage = () => {
             placeholder="Mumbai"
             {...registerWithAutoSave("location.city")}
             error={errors.location?.city}
-            {...changedFieldProps(locationChanges.allData, "city")}
+            {...changedFieldProps(locationChanges?.allData, "city")}
           />
 
           <FormField
@@ -1371,7 +1381,7 @@ const SpaceEditPage = () => {
             placeholder="Maharashtra"
             {...registerWithAutoSave("location.state")}
             error={errors.location?.state}
-            {...changedFieldProps(locationChanges.allData, "state")}
+            {...changedFieldProps(locationChanges?.allData, "state")}
           />
 
           <FormField
@@ -1380,7 +1390,7 @@ const SpaceEditPage = () => {
             placeholder="India"
             {...registerWithAutoSave("location.country")}
             error={errors.location?.country}
-            {...changedFieldProps(locationChanges.allData, "country")}
+            {...changedFieldProps(locationChanges?.allData, "country")}
           />
 
           <FormField
@@ -1389,7 +1399,7 @@ const SpaceEditPage = () => {
             placeholder="Panvel"
             {...registerWithAutoSave("location.area")}
             error={errors.location?.area}
-            {...changedFieldProps(locationChanges.allData, "area")}
+            {...changedFieldProps(locationChanges?.allData, "area")}
           />
 
           <FormField
@@ -1398,7 +1408,7 @@ const SpaceEditPage = () => {
             placeholder="349203"
             {...registerWithAutoSave("location.postalCode")}
             error={errors.location?.postalCode}
-            {...changedFieldProps(locationChanges.allData, "postalCode")}
+            {...changedFieldProps(locationChanges?.allData, "postalCode")}
           />
 
           <FormField
@@ -1408,7 +1418,7 @@ const SpaceEditPage = () => {
             step="any"
             {...registerWithAutoSave("location.lat")}
             error={errors.location?.lat}
-            {...changedFieldProps(locationChanges.allData, "lat")}
+            {...changedFieldProps(locationChanges?.allData, "lat")}
           />
 
           <FormField
@@ -1418,7 +1428,7 @@ const SpaceEditPage = () => {
             step="any"
             {...registerWithAutoSave("location.lng")}
             error={errors.location?.lng}
-            {...changedFieldProps(locationChanges.allData, "lng")}
+            {...changedFieldProps(locationChanges?.allData, "lng")}
           />
 
           {/* Maps */}
@@ -1457,7 +1467,7 @@ const SpaceEditPage = () => {
             inputType="textarea"
             {...registerWithAutoSave("location.address")}
             error={errors.location?.address}
-            {...changedFieldProps(locationChanges.allData, "address")}
+            {...changedFieldProps(locationChanges?.allData, "address")}
           />
 
           {/* Images */}
@@ -1472,10 +1482,13 @@ const SpaceEditPage = () => {
                   throw new Error("Incomplete");
                 }
 
-                setValue("files.images", [
-                  ...(watch("files.images", []) || []),
-                  fileRes.data.data.files?.[0]?.filename,
-                ]);
+                const files = [
+                  ...new Set([
+                    ...(watch("files.images", []) || []),
+                    fileRes.data.data.files?.[0]?.filename,
+                  ]),
+                ];
+                setValue("files.images", files, { shouldValidate: true });
                 // autoSave();
                 return {
                   status: "completed",
@@ -1498,10 +1511,13 @@ const SpaceEditPage = () => {
                   throw new Error("Incomplete");
                 }
 
-                setValue("files.layouts", [
-                  ...(watch("files.layouts", []) || []),
-                  fileRes.data.data.files?.[0]?.filename,
-                ]);
+                const files = [
+                  ...new Set([
+                    ...(watch("files.layouts", []) || []),
+                    fileRes.data.data.files?.[0]?.filename,
+                  ]),
+                ];
+                setValue("files.layouts", files, { shouldValidate: true });
 
                 // autoSave();
                 return {
@@ -1525,7 +1541,7 @@ const SpaceEditPage = () => {
             disabled={POCSameAsOperator}
             {...registerWithAutoSave("person.name")}
             error={errors?.person?.name}
-            {...changedFieldProps(personChanges.allData, "name")}
+            {...changedFieldProps(personChanges?.allData, "name")}
           />
 
           <FormField
@@ -1537,7 +1553,7 @@ const SpaceEditPage = () => {
             placeholder="john.doe@example.com"
             {...registerWithAutoSave("person.email")}
             error={errors?.person?.email}
-            {...changedFieldProps(personChanges.allData, "email")}
+            {...changedFieldProps(personChanges?.allData, "email")}
           />
 
           <FormField
@@ -1552,7 +1568,7 @@ const SpaceEditPage = () => {
             disabled={POCSameAsOperator}
             defaultValue={defaultValues?.person?.contactNo}
             value={watch("person.contactNo")}
-            {...changedFieldProps(personChanges.allData, "contactNo")}
+            {...changedFieldProps(personChanges?.allData, "contactNo")}
             placeholder="+1-123-456-7890"
             onChange={(val) => {
               console.log("POC contact number:", val);
@@ -1579,7 +1595,7 @@ const SpaceEditPage = () => {
             disabled={POCSameAsOperator}
             {...registerWithAutoSave("person.role")}
             error={errors?.person?.role}
-            {...changedFieldProps(personChanges.allData, "role")}
+            {...changedFieldProps(personChanges?.allData, "role")}
           />
 
           {/* Status */}

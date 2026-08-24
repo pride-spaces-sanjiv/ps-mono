@@ -1,9 +1,11 @@
+import { ObjectDepthKeys } from "@/types/object.js";
+
 type DatifyFields<T extends Record<string, any>, F extends keyof T> = Omit<
   T,
   F
 > & { [K in F]?: Date };
 export const datifyFieldsInObject = <
-  T extends Record<string, any>,
+  T extends { [k: string]: any },
   F extends keyof T,
 >(
   obj: T,
@@ -20,4 +22,48 @@ export const datifyFieldsInObject = <
     obj[field] = new Date(obj[field]);
   }
   return obj;
+};
+
+export type Datified<
+  T extends { [k: string]: any },
+  K extends (keyof T)[],
+> = Omit<T, K[number]> & { [P in K[number]]: Date };
+
+/**
+ * @description Change date `string` or `number` fields to `Date` type
+ * @description Use the `fields` parameter to pass fields to change to `Date` type if valid
+ * @description On failure returns null
+ */
+export const datifyObjectValues = <
+  T extends { [k: string]: any },
+  K extends ObjectDepthKeys<T>[],
+>(
+  data: T,
+  fields: [...K],
+) => {
+  try {
+    const modified = { ...data };
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      console.log("Modifying field in datify :", field, data[field]);
+      if (
+        !Object.prototype.hasOwnProperty.call(data, field) &&
+        !Object.prototype.hasOwnProperty.call(modified, field)
+      ) {
+        continue;
+      }
+      const value = data[field];
+      if (typeof value === "string") {
+        // @ts-ignore
+        modified[field] = new Date(value);
+      }
+      if (typeof value === "number") {
+        // @ts-ignore
+        modified[field] = new Date(value);
+      }
+    }
+    return modified as Datified<T, K>;
+  } catch (err) {
+    return null;
+  }
 };
