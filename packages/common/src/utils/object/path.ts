@@ -6,20 +6,24 @@ export const hasPath = <
 >(
   obj: O,
   path: T,
-): boolean => {
-  const keys = path.split(".");
+) => {
+  try {
+    const keys = path.split(".");
 
-  let current = obj;
+    let current = obj;
 
-  for (const key of keys) {
-    if (!Object.prototype.hasOwnProperty.call(current, key)) {
-      return false;
+    for (const key of keys) {
+      if (!Object.prototype.hasOwnProperty.call(current, key)) {
+        return false;
+      }
+
+      current = current[key];
     }
 
-    current = current[key];
+    return true;
+  } catch (err) {
+    return false;
   }
-
-  return true;
 };
 
 export const getPathValue = <
@@ -34,4 +38,25 @@ export const getPathValue = <
   } catch (err) {
     return null;
   }
+};
+
+export const setPathValue = <
+  O extends Record<string, any>,
+  T extends ObjectDepthKeys<O>,
+>(
+  obj: O,
+  path: T,
+  value: any,
+) => {
+  try {
+    const keys = path.split(".");
+    const lastKey = keys.pop()!;
+
+    const target = keys.reduce((current, key) => {
+      return current[key];
+    }, obj);
+
+    // @ts-ignore
+    target[lastKey] = value;
+  } catch (err) {}
 };
