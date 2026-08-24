@@ -1,4 +1,5 @@
 import { ObjectDepthKeys } from "@/types/object.js";
+import { getPathValue, hasPath } from "./path.js";
 
 type DatifyFields<T extends Record<string, any>, F extends keyof T> = Omit<
   T,
@@ -46,13 +47,10 @@ export const datifyObjectValues = <
     for (let i = 0; i < fields.length; i++) {
       const field = fields[i];
       console.log("Modifying field in datify :", field, data[field]);
-      if (
-        !Object.prototype.hasOwnProperty.call(data, field) &&
-        !Object.prototype.hasOwnProperty.call(modified, field)
-      ) {
+      if (!hasPath(data, field)) {
         continue;
       }
-      const value = data[field];
+      const value = getPathValue(data, field);
       if (typeof value === "string") {
         // @ts-ignore
         modified[field] = new Date(value);
