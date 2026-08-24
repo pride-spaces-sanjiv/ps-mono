@@ -545,13 +545,14 @@ const SpaceEditPage = () => {
         : uploadLayoutFile({ body: formData }));
       if (res.status === 201 && res?.data?.data?.files) {
         const resFile = res.data?.data?.files[0];
-        const oldFiles = watch("files", {});
+        const oldAllFiles = watch("files", {});
+        const currentFiles = new Set([
+          ...(oldAllFiles?.[`${fileType}s` as keyof typeof oldAllFiles] || []),
+          resFile.filename,
+        ]);
         setValue("files", {
-          ...oldFiles,
-          [`${fileType}s`]: [
-            ...(oldFiles?.[`${fileType}s`] || []),
-            resFile.filename,
-          ],
+          ...oldAllFiles,
+          [`${fileType}s`]: Array.from(currentFiles),
         });
         toast.success(
           `File uploaded successfully: ${fileType} ${file.file.name}`,
@@ -1481,14 +1482,6 @@ const SpaceEditPage = () => {
                 if (!fileRes) {
                   throw new Error("Incomplete");
                 }
-
-                const files = [
-                  ...new Set([
-                    ...(watch("files.images", []) || []),
-                    fileRes.data.data.files?.[0]?.filename,
-                  ]),
-                ];
-                setValue("files.images", files, { shouldValidate: true });
                 // autoSave();
                 return {
                   status: "completed",
@@ -1510,14 +1503,6 @@ const SpaceEditPage = () => {
                 if (!fileRes) {
                   throw new Error("Incomplete");
                 }
-
-                const files = [
-                  ...new Set([
-                    ...(watch("files.layouts", []) || []),
-                    fileRes.data.data.files?.[0]?.filename,
-                  ]),
-                ];
-                setValue("files.layouts", files, { shouldValidate: true });
 
                 // autoSave();
                 return {
