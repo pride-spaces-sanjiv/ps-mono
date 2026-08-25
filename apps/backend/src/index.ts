@@ -1,18 +1,18 @@
-import { ENV } from "@/utils/env.js";
+import { ENV } from "@pride-spaces/common/utils/env.js";
 ENV;
-// import { loggings } from "@/utils/console.js";
-// import * as MQs from "@/utils/services/rabbitmq/rabbitmq.js";
+// import { loggings } from "@pride-spaces/backend/utils/console.js";
+// import * as MQs from "@pride-spaces/backend/utils/services/rabbitmq/rabbitmq.js";
 import cluster from "cluster";
 import os from "os";
 import process from "process";
 import { createServer } from "http";
 import moment from "moment";
 import app from "./app.js";
-import { handleMailQueue } from "@/utils/services/rabbitmq/email.js";
-import { getProcessArgsObject } from "./utils/args.js";
-import { sleep } from "@/utils/time.js";
-import { handleMQWorkers } from "@/utils/services/workers/mq.js";
-// import { workers } from "@/utils/workers/handler.js";
+import { handleMailQueue } from "@pride-spaces/backend/utils/services/rabbitmq/email.js";
+import { getProcessArgsObject } from "@pride-spaces/common/utils/args.js";
+import { sleep } from "@pride-spaces/common/utils/time.js";
+import { handleMQWorkers } from "@pride-spaces/backend/utils/services/workers/mq.js";
+// import { workers } from "@pride-spaces/backend/utils/workers/handler.js";
 
 // ENV;
 // loggings;

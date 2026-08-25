@@ -31,10 +31,13 @@ import { StatesRouter } from "@/routes/general/states/route.js";
 // import { commonRouter } from "./routes/common/route.js";
 // Database
 // Services
-import { RedisClient, redisStore } from "@/utils/services/redis/redis.js";
-import { syncAllIndexes } from "@/utils/mongoose/sync-index.js";
+import {
+  RedisClient,
+  redisStore,
+} from "@pride-spaces/backend/utils/services/redis/redis.js";
+import { syncAllIndexes } from "@pride-spaces/backend/utils/mongoose/sync-index.js";
 // Utils
-import { getIP } from "@/utils/ip.js";
+import { getIP } from "@pride-spaces/backend/utils/ip.js";
 import { createTempDir } from "./middlewares/file.js";
 // Data
 // Types
