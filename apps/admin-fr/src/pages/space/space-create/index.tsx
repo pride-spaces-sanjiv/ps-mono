@@ -27,6 +27,7 @@ import {
 import MapsField from "@/components/maps";
 import FormField from "@/components/form/field";
 import FormSectionTitle from "@/components/form/section/title";
+import { SelectPicker } from "@/components/select";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
@@ -123,6 +124,7 @@ const SpaceCreatePage = () => {
         isOc: false,
         isSez: false,
         isVoService: false,
+        isEventSpace: false,
       },
 
       terms: {
@@ -139,11 +141,48 @@ const SpaceCreatePage = () => {
         privateCabin: 0,
         meetingRoom: 0,
         vo: 0,
+        eventSpaceBrief: "",
+        eventSpaceCharges: "",
       },
     },
   });
 
   const selectedGrade = watch("specs.grade");
+
+  const openTimeWatch = watch("timing.openTime");
+  const closeTimeWatch = watch("timing.closeTime");
+
+  const timeOptions = useMemo(() => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (const min of [0, 30]) {
+        const hh = hour.toString().padStart(2, "0");
+        const mm = min.toString().padStart(2, "0");
+        const val = `${hh}:${mm}`;
+        const label = moment(val, "HH:mm").format("hh:mma");
+        options.push({ label, value: val });
+      }
+    }
+    const currentOpen = openTimeWatch
+      ? moment(openTimeWatch).format("HH:mm")
+      : null;
+    if (currentOpen && !options.some((o) => o.value === currentOpen)) {
+      options.push({
+        label: moment(currentOpen, "HH:mm").format("hh:mma"),
+        value: currentOpen,
+      });
+    }
+    const currentClose = closeTimeWatch
+      ? moment(closeTimeWatch).format("HH:mm")
+      : null;
+    if (currentClose && !options.some((o) => o.value === currentClose)) {
+      options.push({
+        label: moment(currentClose, "HH:mm").format("hh:mma"),
+        value: currentClose,
+      });
+    }
+    return options;
+  }, [openTimeWatch, closeTimeWatch]);
 
   const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
 
@@ -380,49 +419,54 @@ const SpaceCreatePage = () => {
             }}
           />
 
+          {/* Operating Hours (Unified Open & Close Time) */}
           <FormField
-            label="Open Time"
+            label="Operating Hours"
             labelPosition="embedded"
-            type="time"
-            key={`open-time-${String(defaultValues?.timing?.openTime)}`}
-            defaultValue={
-              defaultValues?.timing?.openTime
-                ? moment(defaultValues.timing.openTime).format("HH:mm")
-                : undefined
-            }
-            onChange={(e) => {
-              const val = e.currentTarget.value;
-
-              setValue("timing.openTime", moment(val, "HH:mm", true).toDate(), {
-                shouldValidate: true,
-              });
-            }}
-            error={errors.timing?.openTime}
-          />
-
-          <FormField
-            label="Close Time"
-            labelPosition="embedded"
-            type="time"
-            key={`close-time-${String(defaultValues?.timing?.closeTime)}`}
-            defaultValue={
-              defaultValues?.timing?.closeTime
-                ? moment(defaultValues.timing.closeTime).format("HH:mm")
-                : undefined
-            }
-            onChange={(e) => {
-              const val = e.currentTarget.value;
-
-              setValue(
-                "timing.closeTime",
-                moment(val, "HH:mm", true).toDate(),
-                {
-                  shouldValidate: true,
-                },
-              );
-            }}
-            error={errors.timing?.closeTime}
-          />
+            error={errors.timing?.openTime || errors.timing?.closeTime}
+          >
+            <div className="flex items-center gap-1.5 px-2 py-1 grow shrink min-w-0 min-h-[40px] flex-nowrap">
+              <SelectPicker
+                key={`open-picker-${watch("timing.openTime")}`}
+                className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
+                items={timeOptions}
+                valueProps={{ placeholder: "Start Time" }}
+                wrapperProps={{
+                  value: watch("timing.openTime")
+                    ? moment(watch("timing.openTime")).format("HH:mm")
+                    : "09:00",
+                  onValueChange: (val) => {
+                    setValue(
+                      "timing.openTime",
+                      moment(val, "HH:mm", true).toDate(),
+                      { shouldValidate: true },
+                    );
+                  },
+                }}
+              />
+              <span className="text-xs font-semibold text-muted-foreground shrink-0 px-0.5 select-none">
+                to
+              </span>
+              <SelectPicker
+                key={`close-picker-${watch("timing.closeTime")}`}
+                className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
+                items={timeOptions}
+                valueProps={{ placeholder: "End Time" }}
+                wrapperProps={{
+                  value: watch("timing.closeTime")
+                    ? moment(watch("timing.closeTime")).format("HH:mm")
+                    : "18:00",
+                  onValueChange: (val) => {
+                    setValue(
+                      "timing.closeTime",
+                      moment(val, "HH:mm", true).toDate(),
+                      { shouldValidate: true },
+                    );
+                  },
+                }}
+              />
+            </div>
+          </FormField>
 
           <FormField
             label="Total Seats"
@@ -809,6 +853,72 @@ const SpaceCreatePage = () => {
               {...register("pricing.vo", { valueAsNumber: true })}
               error={errors.pricing?.vo}
             />
+          )}
+
+          <FormField
+            key={`event-space-${watch("flags.isEventSpace")}`}
+            label="Event Space"
+            labelPosition="embedded"
+            inputType="select"
+            items={[
+              { label: "YES", value: "true" },
+              { label: "NO", value: "false" },
+            ]}
+            error={errors?.flags?.isEventSpace}
+            pickerProps={{
+              wrapperProps: {
+                value: watch("flags.isEventSpace") ? "true" : "false",
+                onValueChange: (val) => {
+                  const isYes = val === "true";
+                  setValue("flags.isEventSpace", isYes, {
+                    shouldValidate: true,
+                  });
+                  if (!isYes) {
+                    setValue("pricing.eventSpaceBrief", "", {
+                      shouldValidate: true,
+                    });
+                    setValue("pricing.eventSpaceCharges", "", {
+                      shouldValidate: true,
+                    });
+                  }
+                },
+              },
+            }}
+          />
+
+          {watch("flags.isEventSpace") && (
+            <>
+              <div className="col-span-full flex flex-col gap-1">
+                <FormField
+                  label="Event Space Brief"
+                  labelPosition="embedded"
+                  placeholder="Brief description of the event space..."
+                  inputType="textarea"
+                  rows={2}
+                  required
+                  {...register("pricing.eventSpaceBrief")}
+                  error={errors.pricing?.eventSpaceBrief}
+                />
+                <div className="flex justify-end text-xs text-muted-foreground px-1">
+                  <span>
+                    {(watch("pricing.eventSpaceBrief") || "")
+                      .trim()
+                      .split(/\s+/)
+                      .filter(Boolean).length}
+                    /200 words
+                  </span>
+                </div>
+              </div>
+              <FormField
+                label="Event Space Charges"
+                labelPosition="embedded"
+                placeholder="e.g. ₹5,000 / hour"
+                required
+                {...register("pricing.eventSpaceCharges")}
+                error={errors.pricing?.eventSpaceCharges}
+                wrapperProps={{ className: "col-span-full" }}
+              />
+            </>
           )}
 
           {/* Terms & Conditions */}

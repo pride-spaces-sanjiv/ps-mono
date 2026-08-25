@@ -176,7 +176,17 @@ const AppRoutes = () => {
               </div>
             }
           >
-            <Route path="/" element={<LandingPage />} />
+            {/* Root Route: Redirect to dashboard if logged in, otherwise to login */}
+            <Route
+              path="/"
+              element={
+                !!tokenData?.token && !expired ? (
+                  <PostLoginRedirect />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
             <Route element={expired && <Navigate to={"/login"} />} />
             <Route
               element={
@@ -188,7 +198,6 @@ const AppRoutes = () => {
               {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/home" element={<LandingPage />} />
             </Route>
             <Route path="/*" element={<PrivateRoutes />} />
           </Route>

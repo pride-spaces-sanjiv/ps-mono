@@ -217,8 +217,8 @@ const AmenitiesTable = ({
           )?.icon as LucideIconComponent | undefined;
           return (
             <div className="flex justify-center">
-              <div className="bg-secondary w-fit h-fit rounded-lg px-2 py-2">
-                {Icon ? <Icon className="size-[18px] text-white" /> : "-"}
+              <div className="bg-primary/10 border border-primary/20 text-primary w-fit h-fit rounded-lg p-2 shadow-xs">
+                {Icon ? <Icon className="size-[18px]" /> : "-"}
               </div>
             </div>
           );

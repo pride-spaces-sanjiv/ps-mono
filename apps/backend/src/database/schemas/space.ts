@@ -74,6 +74,8 @@ const flagsSchema = z.object({
   isSez: z.boolean().default(false).optional(),
   isVerified: z.boolean().default(false).optional(),
   isActive: z.boolean().default(false).optional(),
+  isVoService: z.boolean().default(false).optional(),
+  isEventSpace: z.boolean().default(false).optional(),
 });
 
 // --- Pricing
@@ -103,6 +105,9 @@ export const pricingSchema = z.object({
     .min(0, "Private cabin price must be a positive number")
     .default(0),
   vo: z.number().min(0, "VO price must be a positive number").default(0),
+  voService: z.string().optional(),
+  eventSpaceBrief: z.string().optional(),
+  eventSpaceCharges: z.string().optional(),
 });
 
 // --- Space Schema ---

@@ -382,12 +382,12 @@ const OperatorEditPage = () => {
       </div>
       <div className="w-full max-w-4xl mx-auto py-8">
         {isDump && locData?.comment && !isDumpDisabled && (
-          <div className="mb-5 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-            <div className="mb-2 flex items-center gap-2 font-semibold text-amber-200">
-              <MessageSquareWarning className="size-4" />
+          <div className="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 shadow-xs">
+            <div className="mb-2 flex items-center gap-2 font-semibold text-amber-900">
+              <MessageSquareWarning className="size-4 text-amber-700" />
               Correction requested
             </div>
-            <p className="leading-relaxed text-amber-50/90">
+            <p className="leading-relaxed text-amber-800">
               {locData.comment}
             </p>
           </div>

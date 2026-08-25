@@ -148,7 +148,7 @@ export default function AmenityIconSelector({
             className={cn("", props?.className)}
           >
             {Selected ? (
-              <Selected className="text-white size-[18px]" />
+              <Selected className="text-foreground size-[18px]" />
             ) : (
               props?.children || "Select"
             )}
@@ -190,19 +190,18 @@ export default function AmenityIconSelector({
               .map((dt, i) => {
                 const Icon = dt.icon as LucideIconComponent;
                 return (
-                  <Tooltip>
+                  <Tooltip key={`icon-${i}`}>
                     <TooltipTrigger asChild>
                       <ActionButton
-                        variant={"secondary"}
-                        className="rounded-lg px-2 py-2 bg-secondary"
-                        key={`icon-${i}`}
+                        variant={"outline"}
+                        className="rounded-lg p-2 bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary"
                         onClick={() => {
                           dialogClose?.current?.click?.();
                           onSelect?.(dt.key);
                           setSelected(Icon);
                         }}
                       >
-                        <Icon className="size-[18px] text-white" />
+                        <Icon className="size-[18px]" />
                       </ActionButton>
                     </TooltipTrigger>
                     <TooltipContent>{dt.key}</TooltipContent>

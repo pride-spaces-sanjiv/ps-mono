@@ -7,11 +7,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-// import { getOperators } from "@/services/apis/admin/operators";
 import {
   type ColumnDef,
   type ColumnFiltersState,
   flexRender,
+  type Column,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -25,30 +25,26 @@ import {
   ArrowUp,
   ArrowUpDown,
   ChevronDown,
-  MoreHorizontal,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { keepPreviousData } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { keepPreviousData, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import moment from "moment";
 import { usePaginatedQuery } from "@/services/hooks/usePaginatedQuery";
-import { useUser } from "@/services/hooks/use-user";
-import { getAdmins } from "@/services/apis/admin/admins";
+import { getAdmins, updateAdmin } from "@/services/apis/admin/admins";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
 import { datifyObjectValues } from "@/utils/object/datify";
 import { cn } from "@/utils/className";
-import { dashToUpperCased } from "@/utils/string/dashed";
-import { formatOpenDays } from "@/utils/data/days";
 import { getAdminLabel, type AdminLevel } from "@/utils/data/admin";
 import { queryKeys } from "@/utils/query-keys";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SelectPicker } from "@/components/select";
@@ -71,6 +67,45 @@ type Props = {
   inputProps: Parameters<typeof Input>[0];
 } & React.JSX.IntrinsicElements["div"];
 
+const SortableHeader = ({
+  column,
+  children,
+}: {
+  column: Column<Admin, unknown>;
+  children: React.ReactNode;
+}) => (
+  <Button
+    variant="ghost"
+    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+  >
+    {children}
+    {column.getIsSorted() === "asc" ? (
+      <ArrowDown />
+    ) : column.getIsSorted() === "desc" ? (
+      <ArrowUp />
+    ) : (
+      <ArrowUpDown />
+    )}
+  </Button>
+);
+
+const TextCell = ({
+  children,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div
+      className={cn("max-w-[220px] truncate whitespace-nowrap", className)}
+      title={typeof children === "string" ? children : undefined}
+    >
+      {children || "-"}
+    </div>
+  );
+};
+
 const AdminsTable = ({
   id,
   className,
@@ -90,10 +125,7 @@ const AdminsTable = ({
 }: Partial<Props>) => {
   const navigate = useNavigate();
 
-  const { userLevel, fetchCount, userData } = useUser();
-
   const [search, setSearch] = useState({ field: "Name", value: "" });
-
   const debouncedSearch = useDebouncer(search, 500);
 
   const {
@@ -103,10 +135,11 @@ const AdminsTable = ({
     setPage,
     limit,
     setLimit,
+    refetch,
   } = usePaginatedQuery({
     limit: 20,
     queryKey: [
-      queryKeys.OPERATORS,
+      queryKeys.ADMINS,
       debouncedSearch.field,
       debouncedSearch.value,
     ],
@@ -121,88 +154,118 @@ const AdminsTable = ({
     placeholderData: keepPreviousData,
   });
 
+  // Update status mutation
+  const { mutateAsync: updateMutater, isPending: isUpdating } = useMutation({
+    mutationFn: updateAdmin,
+  });
+
   const admins: Admin[] = useMemo(
-    () => ((res?.data?.data?.results ?? []) as Admin[]).filter(Boolean),
+    () =>
+      ((res?.data?.data?.results ?? []) as Admin[])
+        .map((dt) => datifyObjectValues(dt, ["createdAt", "updatedAt"]))
+        .filter(Boolean),
     [res?.data?.data?.results],
   );
-  console.log("admins", admins);
 
-  // Columns definition
+  // Columns definition matching Centre table
   const columns: ColumnDef<Admin>[] = useMemo(
     () => [
       {
+        accessorKey: "serialNo",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Serial No</SortableHeader>
+        ),
+        cell: ({ row }) => <div>{page * limit + (row.index + 1) || "-"}</div>,
+      },
+      {
         accessorKey: "name",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Name
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.getValue("name") || "-"}</div>,
+        header: ({ column }) => (
+          <SortableHeader column={column}>Name</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell className="font-medium text-foreground">
+            {row.original?.name}
+          </TextCell>
+        ),
       },
       {
         accessorKey: "email",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Email
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
-        cell: ({ row }) => <div>{row.original?.email || "-"}</div>,
+        header: ({ column }) => (
+          <SortableHeader column={column}>Email</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <TextCell className="text-foreground">
+            {row.original?.email}
+          </TextCell>
+        ),
       },
       {
-        accessorKey: "memberType",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Member Type
-              {column.getIsSorted() === "asc" ? (
-                <ArrowDown />
-              ) : column.getIsSorted() === "desc" ? (
-                <ArrowUp />
-              ) : (
-                <ArrowUpDown />
-              )}
-            </Button>
-          );
-        },
+        accessorKey: "phone",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Phone</SortableHeader>
+        ),
         cell: ({ row }) => (
-          <div>{getAdminLabel(row.original.level as AdminLevel) || "-"}</div>
+          <TextCell className="text-foreground">
+            {row.original?.phone || "-"}
+          </TextCell>
+        ),
+      },
+      {
+        accessorKey: "level",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Member Role</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <div>
+            <span className="inline-flex items-center rounded-md bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              {getAdminLabel(row.original.level as AdminLevel) || "-"}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "isActive",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Active Status</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <div className="flex justify-center">
+            <Switch
+              key={row.original?.isActive ? "active" : "inactive"}
+              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400"
+              defaultChecked={!!row.original?.isActive}
+              disabled={isUpdating}
+              onCheckedChange={async (checked) => {
+                try {
+                  await updateMutater({
+                    url: row.original.id,
+                    body: { isActive: checked },
+                  });
+                  toast.success("Status updated successfully");
+                  refetch();
+                } catch (error) {
+                  toast.error("Failed to update status");
+                }
+              }}
+            />
+          </div>
+        ),
+      },
+      {
+        accessorKey: "updatedAt",
+        header: ({ column }) => (
+          <SortableHeader column={column}>Last Updated</SortableHeader>
+        ),
+        cell: ({ row }) => (
+          <div className="whitespace-nowrap text-xs text-muted-foreground">
+            {row.original?.updatedAt
+              ? moment(row.original.updatedAt).format("DD MMM YYYY hh:mm A")
+              : "-"}
+          </div>
         ),
       },
     ],
-    [navigate],
+    [navigate, page, limit, isUpdating, updateMutater, refetch],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -276,7 +339,7 @@ const AdminsTable = ({
               setSearch({ value: "", field: value });
             },
           }}
-          items={["Name", "Email"].map((s) => ({
+          items={["Name", "Email", "Username", "Phone"].map((s) => ({
             label: s,
             value: s,
           }))}
@@ -308,8 +371,9 @@ const AdminsTable = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
       <div className="admin-table-frame">
-        <Table className="admin-data-table min-w-[1120px]">
+        <Table className="admin-data-table min-w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -348,7 +412,7 @@ const AdminsTable = ({
                   onDoubleClick={() => navigate(`/team/${row.original?.id}`)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="whitespace-nowrap">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
@@ -370,6 +434,7 @@ const AdminsTable = ({
           </TableBody>
         </Table>
       </div>
+
       <TablePaginationFooter
         table={table}
         page={page}
