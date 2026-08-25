@@ -1,0 +1,16 @@
+{
+  "apps": [
+    {
+      "name": "ps-backend-dev",
+      "script": "npm",
+      "args": "run start:dev --workspace=backend",
+      "watch": false
+    },
+    {
+      "name": "ps-fr-admin",
+      "script": "./script.sh",
+      "args": "--env-file .env.dev",
+      "watch": ["dist"]
+    }
+  ]
+}

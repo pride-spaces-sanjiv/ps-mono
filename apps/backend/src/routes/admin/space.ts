@@ -4,7 +4,10 @@ import { RequestMiddleware } from "@/middlewares/request.js";
 import { checkUserExistenceByBodyValue } from "@/middlewares/checkUser.js";
 import { preParseDateFieldsFromBody } from "@/middlewares/parseDateFields.js";
 import { Space } from "@pride-spaces/backend/database/models/space.js";
-import { spaceSchema, type SpaceSchema } from "@pride-spaces/backend/database/schemas/space.js";
+import {
+  spaceSchema,
+  type SpaceSchema,
+} from "@pride-spaces/backend/database/schemas/space.js";
 // Controllers
 import {
   getSpace,
