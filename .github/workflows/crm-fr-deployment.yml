@@ -1,4 +1,4 @@
-name: Backend-Deployment
+name: Auto-Deployment
 on:
     workflow_run:
         workflows: ["Packages-Build"]
@@ -8,35 +8,14 @@ jobs:
     auto-deploy:
         runs-on: ubuntu-latest
         env:
+            pm2_name: "ps-crm-fr"
             project_dir: "/home/${{ secrets.USERNAME }}/htdocs/pridespaces/monorepo"
-            pm2_name: "ps-backend-dev"
+            script-name: "build-dev"
 
         steps:
             - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
-
-            # Install dependencies and build
-            # - name: Setting Up Node JS
-            #   uses: actions/setup-node@v4
-            #   with:
-            #     node-version: "22.x"
-            # - name: Installing node dependencies
-            #   run: npm i
-            # - name: Building TS -> JS
-            #   run: npm run build
-
-            # SFTP using milanmk actions
-            # - name: SFTP build files transfer
-            #   uses: milanmk/actions-file-deployer@master
-            #   with:
-            #     remote-protocol: "sftp"
-            #     remote-host: ${{ secrets.HOST }}
-            #     remote-user: ${{ secrets.USERNAME }}
-            #     remote-password: ${{ secrets.PASSWORD }}
-            #     remote-path: "${{env.project_dir}}"
-            #     sync-delta-excludes: "dist/*"
-            #     sync: full # full for all files transfer and delta for only changed
 
             # Connect to server and clone pull repo
             - name: Handle server connection
@@ -50,12 +29,13 @@ jobs:
                       echo "SSH actions starting...🔰🔰🔰"
                       cd "${{env.project_dir}}" && echo "Moved to directory"
                       git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
-                      git checkout "${{github.ref_name}}" && echo "Checked out branch ✅" || echo "Checkout failed ❌"
+                      git fetch origin "${{github.ref_name}}" && git checkout "${{github.ref_name}}" && echo "Fetched latest changes ✅" || echo "Fetch latest changes failed ❌"
                       git pull origin "${{github.ref_name}}" && echo "Pulled latest ✅" || echo "Pull latest failed ❌"
+                      chmod +x build-script.sh && echo "Build script executable set ✅" || echo "Failed to set build script executable ❌"
                       npm i && echo "NPM Packages installed ✅" || echo "NPM packages installation failed ❌"
-                      npm run build -- --filter=backend && echo "Build files ✅" || echo "NPM Build failed ❌"
+                      npm run build -- --workspace=ps-crm && echo "Build files ✅" || echo "NPM Build failed ❌"
+                      git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
+                      cd "apps/ps-crm" && echo "Moved to ps-crm directory"
                       pm2 startOrRestart pm2.json && echo "PM2 restarted ✅" || echo "PM2 restart failed ❌"
                       echo "${{ secrets.PASSWORD }}" | sudo -S systemctl restart nginx && echo "Nginx restarted ✅" || echo "Nginx restart failed ❌"
-                      git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
-                      git stash clear && echo "Stashed changes cleared ✅" || echo "Stash clear failed ❌"
                       echo "SSH actions Ended ✅"
