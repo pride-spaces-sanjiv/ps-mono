@@ -216,13 +216,12 @@ export function AppSidebar() {
     <Sidebar className="fixed left-0 top-0 h-screen w-64 border-r">
       <SidebarContent>
         {/* Main Navigation */}
-        <SidebarGroup className="gap-2 h-full bg-popover">
-          <SidebarGroupLabel className="text-xl self-center font-bold text-accent-foreground flex items-center gap-2">
-            {/* <Tv className="w-8 h-8 text-primary" /> */}
-            <span className="">Pride Spaces</span>
+        <SidebarGroup className="gap-2 h-full bg-sidebar">
+          <SidebarGroupLabel className="text-xl self-center font-extrabold text-foreground flex items-center gap-2 py-4">
+            <span className="tracking-tight text-foreground font-bold">Pride Spaces</span>
           </SidebarGroupLabel>
-          <SidebarGroupContent className="py-3">
-            <SidebarMenu>
+          <SidebarGroupContent className="py-2">
+            <SidebarMenu className="gap-1">
               {validItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
@@ -231,13 +230,13 @@ export function AppSidebar() {
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary"
+                        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-800 font-medium transition-all hover:bg-slate-100 hover:text-black"
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className="h-4 w-4 text-slate-600" />
                         <span className="min-w-0 flex-1 truncate">
                           {item.title}
                         </span>
-                        <ArrowUpRight className="h-4 w-4 shrink-0 opacity-75" />
+                        <ArrowUpRight className="h-4 w-4 shrink-0 opacity-60" />
                       </a>
                     ) : (
                       <NavLink
@@ -248,21 +247,26 @@ export function AppSidebar() {
                           }
                         }}
                         className={({ isActive }) =>
-                          `flex items-center gap-2 rounded-lg px-3 py-2 text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary ${
+                          `flex items-center gap-2.5 rounded-lg px-3 py-2 transition-all ${
                             isActive || isItemActive(item)
-                              ? "text-accent-foreground font-medium bg-muted/65"
-                              : ""
+                              ? "bg-slate-100 text-slate-950 font-semibold border border-slate-200/80 shadow-2xs"
+                              : "text-slate-800 font-medium hover:bg-slate-100 hover:text-black"
                           }`
                         }
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon
+                          className={cn(
+                            "h-4 w-4",
+                            isItemActive(item) ? "text-primary" : "text-slate-600",
+                          )}
+                        />
                         <span className="min-w-0 flex-1 truncate">
                           {item.title}
                         </span>
                         {item.tabs?.length ? (
                           <ChevronDown
                             className={cn(
-                              "h-4 w-4 shrink-0 transition-transform",
+                              "h-4 w-4 shrink-0 text-slate-500 transition-transform",
                               openSubtabs[item.title] ? "rotate-180" : "",
                             )}
                           />
@@ -275,21 +279,25 @@ export function AppSidebar() {
                     )}
                   </SidebarMenuButton>
                   {item.tabs?.length && openSubtabs[item.title] ? (
-                    <SidebarMenuSub className="mx-0 ml-[31px] mt-1 gap-0 border-l border-accent-foreground/20 px-0 py-1">
+                    <SidebarMenuSub className="mx-0 ml-[31px] mt-1 gap-1 border-l border-border px-0 py-1">
                       {item.tabs.map((tab) => (
                         <SidebarMenuSubItem key={tab.title}>
                           <NavLink
                             to={tab.url}
                             className={() =>
-                              `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm text-accent-foreground transition-all hover:text-primary-foreground hover:bg-primary ${
-                                isItemActive(tab) ? "font-medium" : ""
+                              `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm transition-all ${
+                                isItemActive(tab)
+                                  ? "bg-slate-100 text-slate-950 font-semibold"
+                                  : "text-slate-700 font-medium hover:bg-slate-100 hover:text-black"
                               }`
                             }
                           >
                             <span
                               className={cn(
-                                "h-1.5 w-1.5 shrink-0 rounded-full bg-accent-foreground/50 transition-colors group-hover:bg-primary",
-                                isItemActive(tab) ? "bg-primary" : "",
+                                "h-1.5 w-1.5 shrink-0 rounded-full transition-colors",
+                                isItemActive(tab)
+                                  ? "bg-primary"
+                                  : "bg-slate-400 group-hover:bg-slate-700",
                               )}
                             />
                             <span>{tab.title}</span>
@@ -310,13 +318,7 @@ export function AppSidebar() {
               }}
             >
               <div className="flex gap-2 items-center">
-                {/* {expired ? (
-                  "Login"
-                ) : (
-                  <> */}
                 <LogOutIcon /> Logout
-                {/* </>
-                )} */}
               </div>
             </ActionButton>
           </SidebarGroupContent>

@@ -35,13 +35,11 @@ export default function ActionButton({
           className={cn(
             "animate-spin inline-block size-6 border-3 border-current border-t-transparent text-primary-foreground rounded-full dark:text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
             loading ? "opacity-100" : "opacity-0 size-0",
-            props?.variant && props?.variant === "default"
-              ? "text-foreground"
+            !props?.variant || props?.variant === "default"
+              ? "text-primary-foreground"
               : props?.variant === "destructive"
-                ? "text-foreground"
-                : props?.variant === "outline"
-                  ? "text-card-foreground"
-                  : "",
+                ? "text-destructive-foreground"
+                : "text-foreground",
             loaderProps?.className,
           )}
         >

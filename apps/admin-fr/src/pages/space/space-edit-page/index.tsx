@@ -39,6 +39,7 @@ import {
 import { GroupedSearchSelect } from "@/components/search-select";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import { DialogModal } from "@/components/dialog";
+import { SelectPicker } from "@/components/select";
 import FormField from "@/components/form/field";
 import FormSectionTitle from "@/components/form/section/title";
 import MapsField from "@/components/maps";
@@ -260,7 +261,43 @@ const SpaceEditPage = () => {
       },
     },
   });
+
   const selectedGrade = watch("specs.grade");
+
+  const openTimeWatch = watch("timing.openTime");
+  const closeTimeWatch = watch("timing.closeTime");
+
+  const timeOptions = useMemo(() => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (const min of [0, 30]) {
+        const hh = hour.toString().padStart(2, "0");
+        const mm = min.toString().padStart(2, "0");
+        const val = `${hh}:${mm}`;
+        const label = moment(val, "HH:mm").format("hh:mma");
+        options.push({ label, value: val });
+      }
+    }
+    const currentOpen = openTimeWatch
+      ? moment(openTimeWatch).format("HH:mm")
+      : null;
+    if (currentOpen && !options.some((o) => o.value === currentOpen)) {
+      options.push({
+        label: moment(currentOpen, "HH:mm").format("hh:mma"),
+        value: currentOpen,
+      });
+    }
+    const currentClose = closeTimeWatch
+      ? moment(closeTimeWatch).format("HH:mm")
+      : null;
+    if (currentClose && !options.some((o) => o.value === currentClose)) {
+      options.push({
+        label: moment(currentClose, "HH:mm").format("hh:mma"),
+        value: currentClose,
+      });
+    }
+    return options;
+  }, [openTimeWatch, closeTimeWatch]);
   const operatorData = useMemo(
     () =>
       (res?.data?.data?.references?.operator as
@@ -590,12 +627,12 @@ const SpaceEditPage = () => {
 
       <div className="w-full max-w-4xl mx-auto py-8">
         {isDump && locData?.comment && (
-          <div className="mb-5 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-            <div className="mb-2 flex items-center gap-2 font-semibold text-amber-200">
-              <MessageSquareWarning className="size-4" />
+          <div className="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 shadow-xs">
+            <div className="mb-2 flex items-center gap-2 font-semibold text-amber-900">
+              <MessageSquareWarning className="size-4 text-amber-700" />
               Correction requested
             </div>
-            <p className="leading-relaxed text-amber-50/90">
+            <p className="leading-relaxed text-amber-800">
               {locData.comment}
             </p>
           </div>
@@ -947,72 +984,57 @@ const SpaceEditPage = () => {
             {...changedFieldProps(mainChanges?.allData, "closingDay")}
           /> */}
 
-          {/* Open Time */}
-
+          {/* Operating Hours (Unified Open & Close Time) */}
           <FormField
-            // name="timing.openTime"
-            label="Open Time"
+            label="Operating Hours"
             labelPosition="embedded"
-            type="time"
-            key={`open-time-${String(defaultValues?.timing?.openTime)}`}
-            defaultValue={
-              defaultValues?.timing?.openTime
-                ? moment(defaultValues?.timing?.openTime).format("HH:mm")
-                : undefined
-            }
-            onChange={(e) => {
-              const val = e.currentTarget.value;
-              console.log("Open time :", moment(val, "HH:mm", true).toDate());
-              setValue("timing.openTime", moment(val, "HH:mm", true).toDate(), {
-                shouldValidate: true,
-              });
-            }}
-            // onBlur={() => {
-            //   if (activeInputHasPressedEnter.current["timing.openTime"]) {
-            //     autoSave();
-            //   } else {
-            //     revertAllFormFields();
-            //   }
-            //   activeInputHasPressedEnter.current["timing.openTime"] = false;
-            // }}
-            error={errors.timing?.openTime}
+            error={errors.timing?.openTime || errors.timing?.closeTime}
             {...changedFieldProps(mainChanges?.allData, "openTime")}
-          />
-
-          {/* Close Time */}
-
-          <FormField
-            // name="timing.closeTime"
-            label="Close Time"
-            labelPosition="embedded"
-            type="time"
-            key={`close-time-${String(defaultValues?.timing?.closeTime)}`}
-            defaultValue={
-              defaultValues?.timing?.closeTime
-                ? moment(defaultValues?.timing?.closeTime).format("HH:mm")
-                : undefined
-            }
-            onChange={(e) => {
-              const val = e.currentTarget.value;
-              setValue(
-                "timing.closeTime",
-                moment(val, "HH:mm", true).toDate(),
-                {
-                  shouldValidate: true,
-                },
-              );
-            }}
-            // onBlur={() => {
-            //   if (activeInputHasPressedEnter.current["timing.closeTime"]) {
-            //     autoSave();
-            //   } else {
-            //     revertAllFormFields();
-            //   }
-            //   activeInputHasPressedEnter.current["timing.closeTime"] = false;
-            // }}
-            error={errors.timing?.closeTime}
-            {...changedFieldProps(mainChanges?.allData, "closeTime")}
-          />
+          >
+            <div className="flex items-center gap-1.5 px-2 py-1 grow shrink min-w-0 min-h-[40px] flex-nowrap">
+              <SelectPicker
+                key={`open-picker-${watch("timing.openTime")}`}
+                className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
+                items={timeOptions}
+                valueProps={{ placeholder: "Start Time" }}
+                wrapperProps={{
+                  value: watch("timing.openTime")
+                    ? moment(watch("timing.openTime")).format("HH:mm")
+                    : "09:00",
+                  onValueChange: (val) => {
+                    setValue(
+                      "timing.openTime",
+                      moment(val, "HH:mm", true).toDate(),
+                      { shouldValidate: true },
+                    );
+                    autoSave();
+                  },
+                }}
+              />
+              <span className="text-xs font-semibold text-muted-foreground shrink-0 px-0.5 select-none">
+                to
+              </span>
+              <SelectPicker
+                key={`close-picker-${watch("timing.closeTime")}`}
+                className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
+                items={timeOptions}
+                valueProps={{ placeholder: "End Time" }}
+                wrapperProps={{
+                  value: watch("timing.closeTime")
+                    ? moment(watch("timing.closeTime")).format("HH:mm")
+                    : "18:00",
+                  onValueChange: (val) => {
+                    setValue(
+                      "timing.closeTime",
+                      moment(val, "HH:mm", true).toDate(),
+                      { shouldValidate: true },
+                    );
+                    autoSave();
+                  },
+                }}
+              />
+            </div>
+          </FormField>
 
           <FormField
             label="Total Seats"
@@ -1329,6 +1351,73 @@ const SpaceEditPage = () => {
               {...registerWithAutoSave("pricing.vo", { valueAsNumber: true })}
               error={errors.pricing?.vo}
             />
+          )}
+
+          <FormField
+            key={`event-space-${watch("flags.isEventSpace")}`}
+            label="Event Space"
+            labelPosition="embedded"
+            inputType="select"
+            items={[
+              { label: "YES", value: "true" },
+              { label: "NO", value: "false" },
+            ]}
+            error={errors?.flags?.isEventSpace}
+            pickerProps={{
+              wrapperProps: {
+                value: watch("flags.isEventSpace") ? "true" : "false",
+                onValueChange: (val) => {
+                  const isYes = val === "true";
+                  setValue("flags.isEventSpace", isYes, {
+                    shouldValidate: true,
+                  });
+                  if (!isYes) {
+                    setValue("pricing.eventSpaceBrief", "", {
+                      shouldValidate: true,
+                    });
+                    setValue("pricing.eventSpaceCharges", "", {
+                      shouldValidate: true,
+                    });
+                  }
+                  autoSave();
+                },
+              },
+            }}
+          />
+
+          {watch("flags.isEventSpace") && (
+            <>
+              <div className="col-span-full flex flex-col gap-1">
+                <FormField
+                  label="Event Space Brief"
+                  labelPosition="embedded"
+                  placeholder="Brief description of the event space..."
+                  inputType="textarea"
+                  rows={2}
+                  required
+                  {...registerWithAutoSave("pricing.eventSpaceBrief")}
+                  error={errors.pricing?.eventSpaceBrief}
+                />
+                <div className="flex justify-end text-xs text-muted-foreground px-1">
+                  <span>
+                    {(watch("pricing.eventSpaceBrief") || "")
+                      .trim()
+                      .split(/\s+/)
+                      .filter(Boolean).length}
+                    /200 words
+                  </span>
+                </div>
+              </div>
+              <FormField
+                label="Event Space Charges"
+                labelPosition="embedded"
+                placeholder="e.g. ₹5,000 / hour"
+                required
+                {...registerWithAutoSave("pricing.eventSpaceCharges")}
+                error={errors.pricing?.eventSpaceCharges}
+                wrapperProps={{ className: "col-span-full" }}
+              />
+            </>
           )}
 
           {/* Terms & Conditions */}
@@ -1722,29 +1811,8 @@ const SpaceEditPage = () => {
             </div>
           </div>
 
-          {/* Delete trigger */}
+          {/* Save Action */}
           <div className="col-span-full flex justify-end pt-4 gap-2">
-            <DialogModal
-              triggerProps={{
-                children: (
-                  <ActionButton
-                    type="button"
-                    variant={"destructive"}
-                    loading={updateLoading}
-                    className="max-w-fit"
-                  >
-                    Move to bin
-                  </ActionButton>
-                ),
-              }}
-              titleProps={{ children: "Centre Delete Confirmation" }}
-              descriptionProps={{
-                children:
-                  "Are you sure to delete this centre ? You cannot undo this action.",
-              }}
-            >
-              <ActionButton variant={"destructive"}>Move to bin</ActionButton>
-            </DialogModal>
             <ActionButton loading={updateLoading} type="submit">
               <div className="flex items-center gap-2">
                 Save Changes <Save />

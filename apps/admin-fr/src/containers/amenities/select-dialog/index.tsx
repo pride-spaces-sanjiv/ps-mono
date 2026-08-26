@@ -157,7 +157,7 @@ export default function SelectAmenities({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div
-                          className="rounded-lg px-2 py-2 bg-secondary text-white"
+                          className="rounded-lg p-2 bg-primary/10 border border-primary/20 text-primary"
                           key={`icon-${i}`}
                         >
                           {Icon ? <Icon className="size-[18px]" /> : "None"}

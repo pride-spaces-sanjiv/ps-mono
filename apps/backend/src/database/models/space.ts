@@ -29,6 +29,9 @@ const PricingSchema = new Conn.Schema(
     flexiDesk: { type: Number },
     privateCabin: { type: Number },
     vo: { type: Number },
+    voService: { type: String },
+    eventSpaceBrief: { type: String },
+    eventSpaceCharges: { type: String },
   },
   { _id: false },
 );
@@ -69,6 +72,8 @@ const FlagsSchema = new Conn.Schema(
     isSez: { type: Boolean, default: false },
     isVerified: { type: Boolean },
     isActive: { type: Boolean },
+    isVoService: { type: Boolean, default: false },
+    isEventSpace: { type: Boolean, default: false },
   },
   { _id: false },
 );

@@ -80,6 +80,7 @@ const flagsSchema = z.object({
   isVerified: z.boolean().default(false).optional(),
   isActive: z.boolean().default(false).optional(),
   isVoService: z.boolean().default(false).optional(),
+  isEventSpace: z.boolean().default(false).optional(),
 });
 
 // --- Pricing
@@ -120,10 +121,12 @@ export const pricingSchema = z.object({
     .max(99999, "Price cannot exceed 5 digits (max 99999)")
     .default(0),
   voService: z.string().optional(),
+  eventSpaceBrief: z.string().optional(),
+  eventSpaceCharges: z.string().optional(),
 });
 
 // --- Space Schema ---
-export const spaceSchema = z.object({
+export const baseSpaceSchema = z.object({
   branch: getIdSchema({ keyName: "Branch ID" }).optional(),
   operator: getIdSchema({ keyName: "Operator ID" }),
   name: getNameSchema({
@@ -152,6 +155,43 @@ export const spaceSchema = z.object({
   facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
   files: filesSchema.partial().optional(),
   // approval: approvalSchema,
+});
+
+export const spaceSchema = baseSpaceSchema.superRefine((data, ctx) => {
+  if (data.flags?.isEventSpace) {
+    if (
+      !data.pricing?.eventSpaceBrief ||
+      !data.pricing.eventSpaceBrief.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Event Space Brief is required",
+        path: ["pricing", "eventSpaceBrief"],
+      });
+    } else {
+      const wordCount = data.pricing.eventSpaceBrief
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length;
+      if (wordCount > 200) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Event Space Brief cannot exceed 200 words (currently ${wordCount} words)`,
+          path: ["pricing", "eventSpaceBrief"],
+        });
+      }
+    }
+    if (
+      !data.pricing?.eventSpaceCharges ||
+      !data.pricing.eventSpaceCharges.trim()
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Event Space Charges are required",
+        path: ["pricing", "eventSpaceCharges"],
+      });
+    }
+  }
 });
 
 // TypeScript Types (Optional but recommended)
