@@ -1,4 +1,4 @@
-name: Auto-Deployment
+name: Admin-Frontend-Deployment
 on:
     workflow_run:
         workflows: ["Packages-Build"]
@@ -6,6 +6,10 @@ on:
             - completed
 jobs:
     auto-deploy:
+        if: >
+            github.event.workflow_run.conclusion == 'success' &&
+            github.event.workflow_run.head_branch == 'dev'
+
         runs-on: ubuntu-latest
         env:
             pm2_name: "ps-fr-admin"
@@ -35,8 +39,8 @@ jobs:
                       chmod +x script.sh && echo "Serve script executable set ✅" || echo "Failed to set serve script executable ❌"
                       npm i && echo "NPM Packages installed ✅" || echo "NPM packages installation failed ❌"
                       npm run build-dev --workspace=admin-fr && echo "Build files ✅" || echo "NPM Build failed ❌
-                      git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
                       cd "apps/admin-fr" && echo "Moved to admin-fr directory"
                       pm2 startOrRestart pm2.json && echo "PM2 restarted ✅" || echo "PM2 restart failed ❌"
                       echo "${{ secrets.PASSWORD }}" | sudo -S systemctl restart nginx && echo "Nginx restarted ✅" || echo "Nginx restart failed ❌"
+                      git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
                       echo "SSH actions Ended ✅"

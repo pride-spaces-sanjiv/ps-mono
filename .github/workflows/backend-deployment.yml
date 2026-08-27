@@ -6,6 +6,10 @@ on:
             - completed
 jobs:
     auto-deploy:
+        if: >
+            github.event.workflow_run.conclusion == 'success' &&
+            github.event.workflow_run.head_branch == 'dev'
+
         runs-on: ubuntu-latest
         env:
             project_dir: "/home/${{ secrets.USERNAME }}/htdocs/pridespaces/monorepo"
