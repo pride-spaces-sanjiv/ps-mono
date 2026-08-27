@@ -2,12 +2,11 @@ name: GH-Actions-Post-Clearance
 on:
     workflow_run:
         workflows:
-            [
-                "Packages-Build",
-                "Backend-Deployment",
-                "Admin-Frontend-Deployment",
-                "CRM-Frontend-Deployment",
-            ]
+            - "Packages-Build"
+            - "Backend-Deployment"
+            - "Admin-Frontend-Deployment"
+            - "CRM-Frontend-Deployment"
+
         types:
             - completed
 jobs:
