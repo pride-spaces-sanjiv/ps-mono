@@ -1,0 +1,40 @@
+name: GH-Actions-Post-Clearance
+on:
+    workflow_run:
+        workflows:
+            [
+                "Packages-Build",
+                "Backend-Deployment",
+                "Admin-Frontend-Deployment",
+                "CRM-Frontend-Deployment",
+            ]
+        types:
+            - completed
+jobs:
+    auto-deploy:
+        if: >
+            github.event.workflow_run.head_branch == 'dev'
+
+        runs-on: ubuntu-latest
+        env:
+            project_dir: "/home/${{ secrets.USERNAME }}/htdocs/pridespaces/monorepo"
+            pm2_name: "ps-backend-dev"
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            # Connect to server and clone pull repo
+            - name: Handle server connection
+              uses: appleboy/ssh-action@v1.2.0
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USERNAME }}
+                  password: ${{ secrets.PASSWORD }}
+                  port: 22
+                  script: |
+                      echo "SSH actions starting...🔰🔰🔰"
+                      git stash && echo "Stashed changes ✅" || echo "Stash failed ❌"
+                      git stash clear && echo "Stashed changes cleared ✅" || echo "Stash clear failed ❌"
+                      echo "SSH actions Ended ✅"
