@@ -1,4 +1,5 @@
 import { ObjectDepthKeys } from "@/types/object.js";
+import { isPlainObject } from "./plain.js";
 
 export const hasPath = <
   O extends Record<string, any>,
@@ -59,4 +60,53 @@ export const setPathValue = <
     // @ts-ignore
     target[lastKey] = value;
   } catch (err) {}
+};
+
+export const findPathsMatchingValues = <
+  O extends Record<string, any>,
+  V extends any,
+>(
+  obj: O,
+  values: [...V[]],
+): ObjectDepthKeys<O>[] => {
+  try {
+    const paths: ObjectDepthKeys<O>[] = [];
+    const valueSet = new Set(values);
+
+    const walk = (current: any, path: string) => {
+      if (
+        typeof current !== "object" ||
+        (typeof current === "object" && current === null)
+      ) {
+        if (valueSet.has(current as V)) {
+          paths.push(path as ObjectDepthKeys<O>);
+        }
+        return;
+      }
+
+      if (Array.isArray(current)) {
+        for (let i = 0; i < current.length; i++) {
+          const nextPath = path ? `${path}.${i}` : String(i);
+          walk(current[i], nextPath);
+        }
+
+        return;
+      }
+
+      if (!isPlainObject(current)) {
+        return;
+      }
+
+      for (const key of Object.keys(current)) {
+        const nextPath = path ? `${path}.${key}` : key;
+        walk((current as Record<string, any>)[key], nextPath);
+      }
+    };
+
+    walk(obj, "");
+
+    return paths;
+  } catch (err) {
+    return [];
+  }
 };

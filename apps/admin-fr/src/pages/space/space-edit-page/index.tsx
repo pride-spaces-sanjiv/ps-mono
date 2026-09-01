@@ -632,9 +632,7 @@ const SpaceEditPage = () => {
               <MessageSquareWarning className="size-4 text-amber-700" />
               Correction requested
             </div>
-            <p className="leading-relaxed text-amber-800">
-              {locData.comment}
-            </p>
+            <p className="leading-relaxed text-amber-800">{locData.comment}</p>
           </div>
         )}
 
@@ -1393,17 +1391,18 @@ const SpaceEditPage = () => {
                   labelPosition="embedded"
                   placeholder="Brief description of the event space..."
                   inputType="textarea"
-                  rows={2}
                   required
-                  {...registerWithAutoSave("pricing.eventSpaceBrief")}
+                  {...register("pricing.eventSpaceBrief")}
                   error={errors.pricing?.eventSpaceBrief}
                 />
                 <div className="flex justify-end text-xs text-muted-foreground px-1">
                   <span>
-                    {(watch("pricing.eventSpaceBrief") || "")
-                      .trim()
-                      .split(/\s+/)
-                      .filter(Boolean).length}
+                    {
+                      (watch("pricing.eventSpaceBrief") || "")
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean).length
+                    }
                     /200 words
                   </span>
                 </div>
@@ -1413,7 +1412,7 @@ const SpaceEditPage = () => {
                 labelPosition="embedded"
                 placeholder="e.g. ₹5,000 / hour"
                 required
-                {...registerWithAutoSave("pricing.eventSpaceCharges")}
+                {...register("pricing.eventSpaceCharges")}
                 error={errors.pricing?.eventSpaceCharges}
                 wrapperProps={{ className: "col-span-full" }}
               />
