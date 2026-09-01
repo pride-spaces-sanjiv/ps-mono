@@ -31,6 +31,7 @@ export default defineConfig((conf) => {
           SECURE_STORAGE_SECRET: "HI-AulqM2w8yPcdpKF7KVg",
           SECURE_STORAGE_PREFIX: "pnl-itv",
           VITE_BASE_API: env.VITE_BASE_API || "https://panel-api.tg-iptv.site",
+          VITE_CRM_URL: env.VITE_CRM_URL || "https://crm.pridespaces.com",
         },
       },
     },

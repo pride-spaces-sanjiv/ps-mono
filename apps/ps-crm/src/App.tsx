@@ -36,6 +36,15 @@ import {
 } from "@pride-spaces/types/crm.ts";
 import AddLeadModal from "./components/AddLeadModal";
 import EditLeadModal from "./components/EditLeadModal";
+const getAdminUrl = (): string => {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:3000";
+    }
+  }
+  return import.meta.env.VITE_ADMIN_URL || "https://panel.pridespaces.com";
+};
 
 export default function App() {
   const [backendStatus, setBackendStatus] = useState<
@@ -145,7 +154,10 @@ export default function App() {
   });
 
   const calculateTotalPipelineValue = () => {
-    return leads.reduce((sum, l) => sum + (l.dealValue || 0), 0);
+    return leads.reduce(
+      (sum, l) => sum + (l.maxDealValue || l.minDealValue || l.dealValue || 0),
+      0,
+    );
   };
 
   return (
@@ -255,7 +267,7 @@ export default function App() {
             </button>
 
             <a
-              href="http://localhost:3000"
+              href={getAdminUrl()}
               target="_blank"
               rel="noreferrer"
               style={{
@@ -317,7 +329,7 @@ export default function App() {
           <MetricCard
             icon={<TrendingUp style={{ color: "#ec4899" }} />}
             title="Pipeline Valuation"
-            value={`₹${calculateTotalPipelineValue().toLocaleString("en-IN")}`}
+            value={`₹${calculateTotalPipelineValue().toLocaleString("en-US")}`}
             change="Estimated Value"
             positive
           />
@@ -955,7 +967,7 @@ export default function App() {
             >
               {selectedLogsModal.type === "activity" ? (
                 selectedLogsModal.activities &&
-                selectedLogsModal.activities.length > 0 ? (
+                  selectedLogsModal.activities.length > 0 ? (
                   selectedLogsModal.activities.map((act, i) => (
                     <div
                       key={i}

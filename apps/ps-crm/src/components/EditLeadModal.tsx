@@ -165,6 +165,8 @@ export default function EditLeadModal({
       setFormData({
         ...lead,
         priority: lead.priority || "Warm",
+        minDealValue: lead.minDealValue || 0,
+        maxDealValue: lead.maxDealValue || lead.dealValue || 0,
         dealValue: lead.dealValue || 0,
         leadStatus: lead.leadStatus || "Active",
         subStatus: lead.subStatus || "Contacted",
@@ -179,6 +181,21 @@ export default function EditLeadModal({
 
   if (!isOpen || !lead) return null;
 
+  const formatNumberValue = (val?: number): string => {
+    if (!val || isNaN(val)) return "";
+    return val.toLocaleString("en-US");
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const cleanDigits = value.replace(/[^0-9]/g, "");
+    const numericVal = cleanDigits ? Number(cleanDigits) : 0;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: numericVal,
+    }));
+  };
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -189,7 +206,14 @@ export default function EditLeadModal({
     setFormData((prev) => {
       const updated = {
         ...prev,
-        [name]: name === "dealValue" ? (value ? Number(value) : 0) : value,
+        [name]:
+          name === "dealValue" ||
+          name === "minDealValue" ||
+          name === "maxDealValue"
+            ? value
+              ? Number(value)
+              : 0
+            : value,
       };
 
       // Reset default sub-status if main lead status changes
@@ -218,29 +242,24 @@ export default function EditLeadModal({
   };
 
   const handleAddProgressNote = () => {
-    if (!newNoteText.trim()) {
-      setErrorMsg("Note text cannot be empty.");
-      return;
-    }
-    if (!newFollowUpDate) {
-      setErrorMsg("Follow-up Date is mandatory after adding a note.");
+    if (!newNoteText.trim() || !newFollowUpDate) {
+      setErrorMsg("Please enter both Progress Note and Follow-up Date");
       return;
     }
 
-    const newNoteObj = {
-      note: newNoteText,
+    const newNote = {
+      note: newNoteText.trim(),
       followUpDate: newFollowUpDate,
       createdAt: new Date().toISOString(),
     };
 
     setFormData((prev) => ({
       ...prev,
+      progressNotes: [...(prev.progressNotes || []), newNote],
       followUpDate: newFollowUpDate,
-      progressNotes: [...(prev.progressNotes || []), newNoteObj],
     }));
 
     setNewNoteText("");
-    setErrorMsg("");
     setSuccessMsg(
       'Progress note added to queue. Click "Save Changes" to persist.',
     );
@@ -252,6 +271,11 @@ export default function EditLeadModal({
     setErrorMsg("");
     setSuccessMsg("");
 
+    const payload = {
+      ...formData,
+      dealValue: formData.maxDealValue || formData.minDealValue || formData.dealValue || 0,
+    };
+
     try {
       let response = await fetch(
         `${backendUrl}/crm/leads/${lead._id || lead.id}`,
@@ -260,7 +284,7 @@ export default function EditLeadModal({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         },
       );
 
@@ -272,7 +296,7 @@ export default function EditLeadModal({
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(formData),
+            body: JSON.stringify(payload),
           },
         );
       }
@@ -818,15 +842,74 @@ export default function EditLeadModal({
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}>Deal Value^ (₹)</label>
-                    <input
-                      type="number"
-                      name="dealValue"
-                      value={formData.dealValue || ""}
-                      onChange={handleChange}
-                      placeholder="e.g. 750000"
-                      style={inputStyle}
-                    />
+                    <label style={labelStyle}>Min Deal Value</label>
+                    <div
+                      style={{
+                        position: "relative",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: "absolute",
+                          left: "0.85rem",
+                          color: "#94a3b8",
+                          fontSize: "0.85rem",
+                          fontWeight: 500,
+                          pointerEvents: "none",
+                        }}
+                      >
+                        ₹
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        name="minDealValue"
+                        value={formatNumberValue(formData.minDealValue)}
+                        onChange={handleCurrencyChange}
+                        placeholder="e.g. 500,000"
+                        style={{
+                          ...inputStyle,
+                          paddingLeft: "2rem",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Max Deal Value</label>
+                    <div
+                      style={{
+                        position: "relative",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: "absolute",
+                          left: "0.85rem",
+                          color: "#94a3b8",
+                          fontSize: "0.85rem",
+                          fontWeight: 500,
+                          pointerEvents: "none",
+                        }}
+                      >
+                        ₹
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        name="maxDealValue"
+                        value={formatNumberValue(formData.maxDealValue)}
+                        onChange={handleCurrencyChange}
+                        placeholder="e.g. 1,000,000"
+                        style={{
+                          ...inputStyle,
+                          paddingLeft: "2rem",
+                        }}
+                      />
+                    </div>
                   </div>
                   <div>
                     <label style={labelStyle}>

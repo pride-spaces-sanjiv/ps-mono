@@ -19,6 +19,8 @@ const STL_DIGITAL_SAMPLE = {
   coManager: "Rehan",
   spaceType: "Managed",
   priority: "Hot",
+  minDealValue: 1000000,
+  maxDealValue: 1500000,
   dealValue: 1250000,
   qualifyStatus: "Qualified",
   leadStatus: "Active",
