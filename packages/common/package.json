@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     "./*": {
-      "development": "./src/*",
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "require": "./dist/*.js",
       "default": "./dist/*"
     }
   },

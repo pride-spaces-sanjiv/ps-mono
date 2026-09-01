@@ -10,7 +10,10 @@ import { useAmenities } from "@/services/hooks/useAmenities";
 import { createSpace as createAdminSpace } from "@/services/apis/admin/spaces";
 import { createSpace as createOperatorSpace } from "@/services/apis/operator/spaces";
 import { useUser } from "@/services/hooks/use-user";
-import { spaceSchema, type SpaceSchema } from "@/utils/schemas/spaces";
+import {
+  spaceSchema,
+  type SpaceSchema,
+} from "@pride-spaces/common/utils/schemas/space";
 import { generateSlug } from "@/utils/string/slug";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
@@ -18,7 +21,11 @@ import { spaceCategories } from "@/utils/data/category";
 import {
   labelledSpaceGrades,
   labelledSpaceTypes,
-} from "@/utils/data/spaceTypes";
+} from "@pride-spaces/common/utils/data/spaceTypes";
+import {
+  certificates,
+  type Certificate,
+} from "@pride-spaces/common/utils/data/certificates";
 import {
   labelledWorkingSizes,
   workingSizes,
@@ -528,16 +535,22 @@ const SpaceCreatePage = () => {
                   });
                   const closeVal = watch("timing.closingDay") || "Saturday";
                   const startIdx = days.indexOf(val as (typeof days)[number]);
-                  const endIdx = days.indexOf(closeVal as (typeof days)[number]);
+                  const endIdx = days.indexOf(
+                    closeVal as (typeof days)[number],
+                  );
                   if (startIdx !== -1 && endIdx !== -1) {
                     const range: number[] = [];
                     if (startIdx <= endIdx) {
-                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                      for (let i = startIdx; i <= endIdx; i++)
+                        range.push(i + 1);
                     } else {
-                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = startIdx; i < days.length; i++)
+                        range.push(i + 1);
                       for (let i = 0; i <= endIdx; i++) range.push(i + 1);
                     }
-                    setValue("timing.openDays", range, { shouldValidate: true });
+                    setValue("timing.openDays", range, {
+                      shouldValidate: true,
+                    });
                   }
                 },
               },
@@ -560,17 +573,23 @@ const SpaceCreatePage = () => {
                     shouldValidate: true,
                   });
                   const openVal = watch("timing.openingDay") || "Monday";
-                  const startIdx = days.indexOf(openVal as (typeof days)[number]);
+                  const startIdx = days.indexOf(
+                    openVal as (typeof days)[number],
+                  );
                   const endIdx = days.indexOf(val as (typeof days)[number]);
                   if (startIdx !== -1 && endIdx !== -1) {
                     const range: number[] = [];
                     if (startIdx <= endIdx) {
-                      for (let i = startIdx; i <= endIdx; i++) range.push(i + 1);
+                      for (let i = startIdx; i <= endIdx; i++)
+                        range.push(i + 1);
                     } else {
-                      for (let i = startIdx; i < days.length; i++) range.push(i + 1);
+                      for (let i = startIdx; i < days.length; i++)
+                        range.push(i + 1);
                       for (let i = 0; i <= endIdx; i++) range.push(i + 1);
                     }
-                    setValue("timing.openDays", range, { shouldValidate: true });
+                    setValue("timing.openDays", range, {
+                      shouldValidate: true,
+                    });
                   }
                 },
               },
@@ -724,6 +743,59 @@ const SpaceCreatePage = () => {
                     shouldValidate: true,
                   },
                 );
+              }}
+            />
+          </FormField>
+
+          {/* Certificates */}
+          <FormField
+            label="Certifications"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.specs?.certificates?.[0]?.message ||
+                errors?.specs?.certificates?.message,
+              type:
+                errors.specs?.certificates?.[0]?.type ||
+                errors?.specs?.certificates?.type ||
+                "validate",
+            }}
+          >
+            <GroupedSearchSelect
+              key={`certificates-${defaultValues?.specs?.certificates?.length}`}
+              type="multiple"
+              showSearch={false}
+              defaultSelected={defaultValues?.specs?.certificates}
+              items={certificates.map((crt) => ({ label: crt, value: crt }))}
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"outline"}
+                    className={
+                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                    }
+                  >
+                    {(watch("specs.certificates", [])?.length || 0) > 0 ? (
+                      <ChippedElements
+                        elements={watch("specs.certificates", [])}
+                      />
+                    ) : (
+                      "Select Certifications"
+                    )}
+                  </ActionButton>
+                ),
+              }}
+              contentProps={{ className: "max-h-[300px]" }}
+              onSelect={(items) => {
+                setValue(
+                  "specs.certificates",
+                  items.filter(
+                    (val) => typeof val === "string",
+                  ) as Certificate[],
+                  { shouldValidate: true },
+                );
+                // autoSave();
               }}
             />
           </FormField>
@@ -901,10 +973,12 @@ const SpaceCreatePage = () => {
                 />
                 <div className="flex justify-end text-xs text-muted-foreground px-1">
                   <span>
-                    {(watch("pricing.eventSpaceBrief") || "")
-                      .trim()
-                      .split(/\s+/)
-                      .filter(Boolean).length}
+                    {
+                      (watch("pricing.eventSpaceBrief") || "")
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean).length
+                    }
                     /200 words
                   </span>
                 </div>

@@ -6,8 +6,8 @@ import {
 import * as yup from "yup";
 import { z } from "zod";
 import { queryToString } from "./query";
-import { isPlainObject } from "@pride-spaces/common/utils/object/plain.js";
-import { findPathsMatchingValues } from "@pride-spaces/common/utils/object/path.js";
+import { isPlainObject } from "@pride-spaces/common/utils/object/plain";
+import { findPathsMatchingValues } from "@pride-spaces/common/utils/object/path";
 
 type HandleParams<
   T extends Record<string, any> | FormData = Record<string, any>,

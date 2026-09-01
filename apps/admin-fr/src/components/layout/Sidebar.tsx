@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import {
   ADMIN_PERMISSIONS,
   defaultSidebarPermissions,
-} from "@pride-spaces/common/utils/data/user.js";
+} from "@pride-spaces/common/utils/data/user";
 import * as secureStorage from "@secure-storage/common";
 import {
   Sidebar,
@@ -228,7 +228,9 @@ export function AppSidebar() {
         {/* Main Navigation */}
         <SidebarGroup className="gap-2 h-full bg-sidebar">
           <SidebarGroupLabel className="text-xl self-center font-extrabold text-foreground flex items-center gap-2 py-4">
-            <span className="tracking-tight text-foreground font-bold">Pride Spaces</span>
+            <span className="tracking-tight text-foreground font-bold">
+              Pride Spaces
+            </span>
           </SidebarGroupLabel>
           <SidebarGroupContent className="py-2">
             <SidebarMenu className="gap-1">
@@ -267,7 +269,9 @@ export function AppSidebar() {
                         <item.icon
                           className={cn(
                             "h-4 w-4",
-                            isItemActive(item) ? "text-primary" : "text-slate-600",
+                            isItemActive(item)
+                              ? "text-primary"
+                              : "text-slate-600",
                           )}
                         />
                         <span className="min-w-0 flex-1 truncate">

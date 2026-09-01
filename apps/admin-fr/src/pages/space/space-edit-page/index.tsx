@@ -20,8 +20,13 @@ import {
 import {
   spaceSchema,
   type SpaceSchema,
-} from "@pride-spaces/common/utils/schemas/space.js";
-import { datifyObjectValues } from "@pride-spaces/common/utils/object/datify.js";
+} from "@pride-spaces/common/utils/schemas/space";
+import { datifyObjectValues } from "@pride-spaces/common/utils/object/datify";
+import {
+  certificates,
+  type Certificate,
+} from "@pride-spaces/common/utils/data/certificates";
+import { operatorSchema } from "@/utils/schemas/operators";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
 import { spaceCategories } from "@/utils/data/category";
@@ -53,11 +58,11 @@ import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
 import { uploadImageFile, uploadLayoutFile } from "@/services/apis/admin/file";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
-import { mediaTypes } from "@pride-spaces/common/utils/data/media.js";
-import { type MediaType } from "@pride-spaces/common/utils/data/media.js";
+import { mediaTypes } from "@pride-spaces/common/utils/data/media";
+import { type MediaType } from "@pride-spaces/common/utils/data/media";
 import { useMappedFilesState } from "@/services/hooks/use-file";
 import FilePreview from "@/components/file/preview";
-import { sleep } from "@pride-spaces/common/utils/time.js";
+import { sleep } from "@pride-spaces/common/utils/time";
 import SpaceImagesUploadSection from "@/containers/space/section/image-upload";
 import SpaceLayoutsUploadSection from "@/containers/space/section/layout-upload";
 
@@ -1211,6 +1216,60 @@ const SpaceEditPage = () => {
                   { shouldValidate: true },
                 );
                 autoSave();
+              }}
+            />
+          </FormField>
+
+          {/* Certificates */}
+          <FormField
+            label="Certifications"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.specs?.certificates?.[0]?.message ||
+                errors?.specs?.certificates?.message,
+              type:
+                errors.specs?.certificates?.[0]?.type ||
+                errors?.specs?.certificates?.type ||
+                "validate",
+            }}
+            {...changedFieldProps(mainChanges?.allData, "certificates")}
+          >
+            <GroupedSearchSelect
+              key={`certificates-${defaultValues?.specs?.certificates?.length}`}
+              type="multiple"
+              showSearch={false}
+              defaultSelected={defaultValues?.specs?.certificates}
+              items={certificates.map((crt) => ({ label: crt, value: crt }))}
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"outline"}
+                    className={
+                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                    }
+                  >
+                    {(watch("specs.certificates", [])?.length || 0) > 0 ? (
+                      <ChippedElements
+                        elements={watch("specs.certificates", [])}
+                      />
+                    ) : (
+                      "Select Certifications"
+                    )}
+                  </ActionButton>
+                ),
+              }}
+              contentProps={{ className: "max-h-[300px]" }}
+              onSelect={(items) => {
+                setValue(
+                  "specs.certificates",
+                  items.filter(
+                    (val) => typeof val === "string",
+                  ) as Certificate[],
+                  { shouldValidate: true },
+                );
+                // autoSave();
               }}
             />
           </FormField>
