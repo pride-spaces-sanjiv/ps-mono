@@ -13,6 +13,7 @@ import { workingSizes } from "@pride-spaces/common/utils/data/workingSizes.js";
 import { FilesSchema } from "./schemas/files.js";
 import { LocationSchema } from "./schemas/location.js";
 import { spaceCategories } from "@pride-spaces/common/utils/data/category.js";
+import { certificates } from "@pride-spaces/common/utils/data/certificates.js";
 
 const PersonSchema = new Conn.Schema(
   {
@@ -46,6 +47,7 @@ const SpecsSchema = new Conn.Schema(
     grade: { type: String, enum: spaceGrades, default: "B" },
     area: { type: Number },
     workingSizes: { type: [{ type: String, enum: workingSizes }], default: [] },
+    certificates: { type: [{ type: String, enum: certificates }], default: [] },
   },
   { _id: false },
 );

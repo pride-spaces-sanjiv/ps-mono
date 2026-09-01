@@ -6,17 +6,15 @@ import {
   getSlugSchema,
   getPhoneSchema,
 } from "./string.js";
-import { facilities } from "@pride-spaces/common/utils/data/facilities.js";
-import { spaceCategories } from "@pride-spaces/common/utils/data/category.js";
+import { facilities } from "@/utils/data/facilities.js";
+import { spaceCategories } from "@/utils/data/category.js";
 import { approvalSchema } from "./dump.js";
 import { personSchema } from "./person.js";
-import {
-  spaceGrades,
-  spaceTypes,
-} from "@pride-spaces/common/utils/data/spaceTypes.js";
-import { workingSizes } from "@pride-spaces/common/utils/data/workingSizes.js";
+import { spaceGrades, spaceTypes } from "@/utils/data/spaceTypes.js";
+import { workingSizes } from "@/utils/data/workingSizes.js";
 import { filesSchema } from "./files.js";
 import { locationSchema } from "./location.js";
+import { certificates } from "@/utils/data/certificates.js";
 
 // --- Location Schema ---
 // Specs
@@ -26,6 +24,7 @@ const specsSchema = z.object({
   grade: z.enum(spaceGrades).default("B"),
   area: z.number().min(0, "Area must be a positive number").optional(),
   workingSizes: z.array(z.enum(workingSizes)).default([]),
+  certificates: z.array(z.enum(certificates)).default([]),
 });
 
 // Timing
