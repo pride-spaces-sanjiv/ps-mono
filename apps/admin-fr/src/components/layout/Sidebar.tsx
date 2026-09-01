@@ -59,6 +59,16 @@ type SidebarSubItem = {
 };
 
 const sidebarPermissions = defaultSidebarPermissions;
+const getCrmUrl = (): string => {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:3001";
+    }
+  }
+  return import.meta.env.VITE_CRM_URL || "https://crm.pridespaces.com";
+};
+
 // Menu items with icons and routes
 const items: SidebarItem[] = [
   {
@@ -144,7 +154,7 @@ const items: SidebarItem[] = [
   {
     id: "crm",
     title: "CRM Portal",
-    url: import.meta.env.VITE_CRM_URL || "http://localhost:3001",
+    url: getCrmUrl(),
     icon: ArrowUpRight,
     isExternal: true,
   },
@@ -227,7 +237,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     {item.isExternal ? (
                       <a
-                        href={item.url}
+                        href={item.id === "crm" ? getCrmUrl() : item.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-800 font-medium transition-all hover:bg-slate-100 hover:text-black"

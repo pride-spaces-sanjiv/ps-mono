@@ -118,6 +118,8 @@ export interface CreateLeadPayload {
   unqualifiedReason?: string;
   priority?: LeadPriority;
   dealValue?: number;
+  minDealValue?: number;
+  maxDealValue?: number;
   leadStatus?: LeadMainStatus;
   subStatus?: string;
   expectedClosureDate?: string;

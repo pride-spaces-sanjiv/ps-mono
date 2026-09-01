@@ -116,6 +116,8 @@ export default function AddLeadModal({
     qualifyStatus: "Qualified",
     unqualifiedReason: "",
     priority: "Warm",
+    minDealValue: 0,
+    maxDealValue: 0,
     dealValue: 0,
     expectedClosureDate: "",
   });
@@ -125,6 +127,21 @@ export default function AddLeadModal({
 
   if (!isOpen) return null;
 
+  const formatNumberValue = (val?: number): string => {
+    if (!val || isNaN(val)) return "";
+    return val.toLocaleString("en-US");
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const cleanDigits = value.replace(/[^0-9]/g, "");
+    const numericVal = cleanDigits ? Number(cleanDigits) : 0;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: numericVal,
+    }));
+  };
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -133,7 +150,14 @@ export default function AddLeadModal({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "dealValue" ? (value ? Number(value) : 0) : value,
+      [name]:
+        name === "dealValue" ||
+        name === "minDealValue" ||
+        name === "maxDealValue"
+          ? value
+            ? Number(value)
+            : 0
+          : value,
     }));
   };
 
@@ -142,13 +166,18 @@ export default function AddLeadModal({
     setLoading(true);
     setErrorMsg("");
 
+    const payload = {
+      ...formData,
+      dealValue: formData.maxDealValue || formData.minDealValue || formData.dealValue || 0,
+    };
+
     try {
       let response = await fetch(`${backendUrl}/crm/leads`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok && backendUrl !== "http://localhost:5011") {
@@ -157,7 +186,7 @@ export default function AddLeadModal({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
       }
 
@@ -527,15 +556,74 @@ export default function AddLeadModal({
                 </select>
               </div>
               <div>
-                <label style={labelStyle}>Deal Value (₹)</label>
-                <input
-                  type="number"
-                  name="dealValue"
-                  value={formData.dealValue || ""}
-                  onChange={handleChange}
-                  placeholder="e.g. 500000"
-                  style={inputStyle}
-                />
+                <label style={labelStyle}>Min Deal Value</label>
+                <div
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: "0.85rem",
+                      color: "#94a3b8",
+                      fontSize: "0.85rem",
+                      fontWeight: 500,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    ₹
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    name="minDealValue"
+                    value={formatNumberValue(formData.minDealValue)}
+                    onChange={handleCurrencyChange}
+                    placeholder="e.g. 500,000"
+                    style={{
+                      ...inputStyle,
+                      paddingLeft: "2rem",
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Max Deal Value</label>
+                <div
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: "0.85rem",
+                      color: "#94a3b8",
+                      fontSize: "0.85rem",
+                      fontWeight: 500,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    ₹
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    name="maxDealValue"
+                    value={formatNumberValue(formData.maxDealValue)}
+                    onChange={handleCurrencyChange}
+                    placeholder="e.g. 1,000,000"
+                    style={{
+                      ...inputStyle,
+                      paddingLeft: "2rem",
+                    }}
+                  />
+                </div>
               </div>
               <div>
                 <label style={labelStyle}>Expected Closure Date</label>

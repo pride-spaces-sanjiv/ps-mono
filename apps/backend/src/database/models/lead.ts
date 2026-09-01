@@ -69,6 +69,8 @@ const LeadSchema = new Conn.Schema(
       default: "Warm",
     },
     dealValue: { type: Number, default: 0 },
+    minDealValue: { type: Number, default: 0 },
+    maxDealValue: { type: Number, default: 0 },
     leadStatus: {
       type: String,
       enum: ["Active", "Won", "Lost", "Hold"],
