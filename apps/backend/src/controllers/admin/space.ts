@@ -111,6 +111,7 @@ export const updateSpace = async (
 
     await generalControllers.updateSpace(req, res, {
       onlyDump: false,
+      preOptions: { new: true },
       dumpArgs: {
         dump: {
           status:
