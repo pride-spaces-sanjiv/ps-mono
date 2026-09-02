@@ -77,15 +77,6 @@ export const updateSpace = async (
       dumpArgs: { dump: { status: dumpStatuses.PENDING } },
     });
   } catch (err: any) {
-    const errorData = handleMongooseError(err, res, {
-      uniqueError: {
-        errorType: "space-unique-error",
-        msgPre: "Space",
-      },
-    });
-    if (errorData.handled) {
-      return;
-    }
     ResponseHandler.handleError(res, {
       errorType: "update-space-error-failure",
       message: "Failed to update space details",
