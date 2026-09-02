@@ -13,7 +13,7 @@ import { useUser } from "@/services/hooks/use-user";
 import {
   spaceSchema,
   type SpaceSchema,
-} from "@pride-spaces/common/utils/schemas/space";
+} from "@pride-spaces/common/utils/schemas/space.js";
 import { generateSlug } from "@/utils/string/slug";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
@@ -21,11 +21,11 @@ import { spaceCategories } from "@/utils/data/category";
 import {
   labelledSpaceGrades,
   labelledSpaceTypes,
-} from "@pride-spaces/common/utils/data/spaceTypes";
+} from "@pride-spaces/common/utils/data/spaceTypes.js";
 import {
   certificates,
   type Certificate,
-} from "@pride-spaces/common/utils/data/certificates";
+} from "@pride-spaces/common/utils/data/certificates.js";
 import {
   labelledWorkingSizes,
   workingSizes,

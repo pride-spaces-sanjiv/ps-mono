@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import {
   ADMIN_PERMISSIONS,
   defaultSidebarPermissions,
-} from "@pride-spaces/common/utils/data/user";
+} from "@pride-spaces/common/utils/data/user.js";
 import * as secureStorage from "@secure-storage/common";
 import {
   Sidebar,

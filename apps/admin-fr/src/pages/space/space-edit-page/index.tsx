@@ -20,12 +20,12 @@ import {
 import {
   spaceSchema,
   type SpaceSchema,
-} from "@pride-spaces/common/utils/schemas/space";
-import { datifyObjectValues } from "@pride-spaces/common/utils/object/datify";
+} from "@pride-spaces/common/utils/schemas/space.js";
+import { datifyObjectValues } from "@pride-spaces/common/utils/object/datify.js";
 import {
   certificates,
   type Certificate,
-} from "@pride-spaces/common/utils/data/certificates";
+} from "@pride-spaces/common/utils/data/certificates.js";
 import { operatorSchema } from "@/utils/schemas/operators";
 import { queryKeys } from "@/utils/query-keys";
 import { days, shortDays } from "@/utils/data/days";
@@ -58,11 +58,11 @@ import { deleteDump, recorrectDump } from "@/services/apis/admin/dump";
 import { uploadImageFile, uploadLayoutFile } from "@/services/apis/admin/file";
 import { highlightFieldClassName } from "@/utils/string/field-change-classname";
 import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
-import { mediaTypes } from "@pride-spaces/common/utils/data/media";
-import { type MediaType } from "@pride-spaces/common/utils/data/media";
+import { mediaTypes } from "@pride-spaces/common/utils/data/media.js";
+import { type MediaType } from "@pride-spaces/common/utils/data/media.js";
 import { useMappedFilesState } from "@/services/hooks/use-file";
 import FilePreview from "@/components/file/preview";
-import { sleep } from "@pride-spaces/common/utils/time";
+import { sleep } from "@pride-spaces/common/utils/time.js";
 import SpaceImagesUploadSection from "@/containers/space/section/image-upload";
 import SpaceLayoutsUploadSection from "@/containers/space/section/layout-upload";
 

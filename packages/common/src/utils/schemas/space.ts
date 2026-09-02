@@ -6,14 +6,14 @@ import {
   getSlugSchema,
   getPhoneSchema,
 } from "./string.js";
-import { facilities } from "@/utils/data/facilities.js";
-import { spaceCategories } from "@/utils/data/category.js";
-import { approvalSchema } from "./dump.js";
-import { personSchema } from "./person.js";
-import { spaceGrades, spaceTypes } from "@/utils/data/spaceTypes.js";
-import { workingSizes } from "@/utils/data/workingSizes.js";
 import { filesSchema } from "./files.js";
 import { locationSchema } from "./location.js";
+import { approvalSchema } from "./dump.js";
+import { personSchema } from "./person.js";
+import { facilities } from "@/utils/data/facilities.js";
+import { spaceCategories } from "@/utils/data/category.js";
+import { spaceGrades, spaceTypes } from "@/utils/data/spaceTypes.js";
+import { workingSizes } from "@/utils/data/workingSizes.js";
 import { certificates } from "@/utils/data/certificates.js";
 
 // --- Location Schema ---
