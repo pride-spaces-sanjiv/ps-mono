@@ -21,7 +21,7 @@ import type {
   ManagedRequest,
   ManagedResponse,
 } from "@pride-spaces/backend/types/request.js";
-import { SpaceSchema } from "@pride-spaces/backend/database/schemas/space.js";
+import { SpaceSchema } from "@pride-spaces/common/utils/schemas/space.js";
 import { Types } from "mongoose";
 import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
 import { dumpUserAction } from "@pride-spaces/backend/utils/data/dumpAction.js";

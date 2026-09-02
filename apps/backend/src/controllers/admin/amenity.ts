@@ -18,7 +18,7 @@ import type {
   ManagedRequest,
   ManagedResponse,
 } from "@pride-spaces/backend/types/request.js";
-import { AmenitySchema } from "@pride-spaces/backend/database/schemas/amenity.js";
+import { AmenitySchema } from "@pride-spaces/common/utils/schemas/amenity.js";
 
 export const getAmenities = async (
   req: ManagedRequest<any>,

@@ -18,7 +18,7 @@ import type {
   ManagedRequest,
   ManagedResponse,
 } from "@pride-spaces/backend/types/request.js";
-import { AmenitySchema } from "@pride-spaces/backend/database/schemas/amenity.js";
+import { AmenitySchema } from "@pride-spaces/common/utils/schemas/amenity.js";
 import { pipelineDBs } from "@pride-spaces/backend/utils/services/pipeline/db.js";
 import { GeneralizedControllers } from "@pride-spaces/backend/types/data/general-controllers.js";
 

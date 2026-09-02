@@ -7,7 +7,7 @@ import { Space } from "@pride-spaces/backend/database/models/space.js";
 import {
   type SpaceSchema,
   spaceSchema,
-} from "@pride-spaces/backend/database/schemas/space.js";
+} from "@pride-spaces/common/utils/schemas/space.js";
 // Controllers
 import {
   getSpace,
@@ -16,7 +16,7 @@ import {
   updateSpace,
   deleteSpace,
 } from "@/controllers/operator/space.js";
-import { getIdSchema } from "@pride-spaces/backend/database/schemas/string.js";
+import { getIdSchema } from "@pride-spaces/common/utils/schemas/string.js";
 
 const router = Router();
 

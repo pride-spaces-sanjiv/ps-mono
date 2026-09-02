@@ -8,7 +8,7 @@ import {
   decodeJWTwithCrypto,
   signJWTwithCrypto,
 } from "@pride-spaces/common/utils/jwt.js";
-import { type AdminSchema } from "@pride-spaces/backend/database/schemas/user.js";
+import { type AdminSchema } from "@pride-spaces/common/utils/schemas/user.js";
 import type {
   ManagedRequest,
   ManagedResponse,

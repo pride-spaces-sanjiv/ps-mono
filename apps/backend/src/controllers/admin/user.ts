@@ -15,7 +15,7 @@ import type {
   ManagedRequest,
   ManagedResponse,
 } from "@pride-spaces/backend/types/request.js";
-import { UserSchema } from "@pride-spaces/backend/database/schemas/user.js";
+import { UserSchema } from "@pride-spaces/common/utils/schemas/user.js";
 
 export const getUsers = async (
   req: ManagedRequest<any, { [k: string]: any }>,

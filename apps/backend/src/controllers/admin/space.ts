@@ -26,7 +26,7 @@ import type {
   ManagedRequest,
   ManagedResponse,
 } from "@pride-spaces/backend/types/request.js";
-import { SpaceSchema } from "@pride-spaces/backend/database/schemas/space.js";
+import { SpaceSchema } from "@pride-spaces/common/utils/schemas/space.js";
 import { ModelToDocument } from "@pride-spaces/backend/types/mongoose/document.js";
 import { dumpStatuses } from "@pride-spaces/common/utils/data/dump.js";
 import { dumpAdminAction } from "@pride-spaces/backend/utils/data/dumpAction.js";

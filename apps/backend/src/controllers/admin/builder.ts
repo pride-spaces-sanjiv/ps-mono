@@ -36,7 +36,7 @@ import type {
   ManagedResponse,
 } from "@pride-spaces/backend/types/request.js";
 import { Types } from "mongoose";
-import { BuilderSchema } from "@pride-spaces/backend/database/schemas/builder.js";
+import { BuilderSchema } from "@pride-spaces/common/utils/schemas/builder.js";
 
 export const getBuilders = async (
   req: ManagedRequest<any, { [k: string]: any }>,

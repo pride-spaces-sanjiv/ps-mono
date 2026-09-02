@@ -15,7 +15,7 @@ import type {
   ManagedRequest,
   ManagedResponse,
 } from "@pride-spaces/backend/types/request.js";
-import { BranchSchema } from "@pride-spaces/backend/database/schemas/branch.js";
+import { BranchSchema } from "@pride-spaces/common/utils/schemas/branch.js";
 
 export const getBranches = async (
   req: ManagedRequest<

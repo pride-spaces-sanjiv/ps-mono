@@ -15,7 +15,7 @@ import {
   AdminLevel,
   getAdminLowerLevels,
 } from "@pride-spaces/common/utils/data/admin.js";
-import { type AdminSchema } from "@pride-spaces/backend/database/schemas/user.js";
+import { type AdminSchema } from "@pride-spaces/common/utils/schemas/user.js";
 import type {
   ManagedRequest,
   ManagedResponse,

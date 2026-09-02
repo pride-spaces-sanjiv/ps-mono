@@ -7,7 +7,7 @@ import type {
   ManagedRequest,
   ManagedResponse,
 } from "@pride-spaces/backend/types/request.js";
-import { OperatorSchema } from "@pride-spaces/backend/database/schemas/operator.js";
+import { OperatorSchema } from "@pride-spaces/common/utils/schemas/operator.js";
 import { dumpStatuses } from "@pride-spaces/common/utils/data/dump.js";
 import { operatorNonPassFields } from "@pride-spaces/backend/database/models/operator.js";
 
