@@ -527,7 +527,7 @@ const SpaceEditPage = () => {
         if (navigateOnSuccess) {
           navigate(isDump ? "/notifications" : homeRoute);
         } else {
-          refetch();
+          // refetch();
         }
         return;
       }
