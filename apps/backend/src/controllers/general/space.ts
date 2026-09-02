@@ -185,6 +185,7 @@ export const getSpaces = async (
       },
     });
   } catch (err) {
+    console.error("Error getting spaces :", err);
     throw err;
     // ResponseHandler.handleError(res, {
     //   errorType: "get-spaces-error-failure",
@@ -245,6 +246,7 @@ export const getSpace = async (
       },
     });
   } catch (err) {
+    console.error("Error getting space :", err);
     throw err;
     // ResponseHandler.handleError(res, {
     //   errorType: "get-space-error-failure",
@@ -369,6 +371,7 @@ export const createSpace = async (
     if (errorData.handled) {
       return;
     }
+    console.error("Error creating space :", err);
     throw err;
     // ResponseHandler.handleError(res, {
     //   errorType: "create-user-error-failure",
@@ -535,6 +538,7 @@ export const updateSpace = async (
     if (errorData.handled) {
       return;
     }
+    console.error("Error updating space :", err);
     throw err;
     // ResponseHandler.handleError(res, {
     //   errorType: "update-space-error-failure",
@@ -648,6 +652,7 @@ export const deleteSpace = async (
       data: { ...responseOpts?.success?.data, ...data },
     });
   } catch (err) {
+    console.error("Error deleting space :", err);
     throw err;
     // ResponseHandler.handleError(res, {
     //   errorType: "delete-space-error-failure",
