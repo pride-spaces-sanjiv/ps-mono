@@ -1,5 +1,5 @@
 import axios from "axios";
-import { locationSchema } from "@/database/schemas/location.js";
+import { locationSchema } from "@pride-spaces/common/utils/schemas/location.js";
 
 export const getLatLngFromMapsURL = async (url: string) => {
   try {

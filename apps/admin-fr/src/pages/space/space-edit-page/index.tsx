@@ -76,6 +76,7 @@ const SpaceEditPage = () => {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const isConfirmedRef = useRef(false);
   const seatsHasPressedEnter = useRef(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
   const [pendingFormData, setPendingFormData] = useState<SpaceSchema | null>(
     null,
   );
@@ -610,8 +611,8 @@ const SpaceEditPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="container mx-auto p-6 relative">
+      <div className="max-w-4xl pt-3 mx-auto sticky top-0 bg-background z-50">
         {isOperatorPortal && (
           <ActionButton
             type="button"
@@ -623,11 +624,54 @@ const SpaceEditPage = () => {
             Back to Portal
           </ActionButton>
         )}
-        <div className="flex justify-between items-center my-4">
-          <h1 className="text-2xl font-bold  w-full">
+        <div className="flex justify-between items-center my-4 gap-3">
+          <h1 className="text-2xl font-bold">
             Edit Centre: {watch("name", "")}
           </h1>
+
+          {/* Toggles */}
+          <div className="flex gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-muted-foreground text-sm">Active</label>
+              <Switch
+                key={watch("flags.isActive") ? "active" : "inactive"}
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+                checked={!!watch("flags.isActive")}
+                onCheckedChange={(checked) => {
+                  setValue("flags.isActive", checked, { shouldValidate: true });
+                }}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-muted-foreground text-sm">Verified</label>
+              <Switch
+                key={watch("flags.isVerified") ? "verified" : "unverified"}
+                checked={!!watch("flags.isVerified")}
+                onCheckedChange={(checked) => {
+                  setValue("flags.isVerified", checked, {
+                    shouldValidate: true,
+                  });
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Submit */}
+
+          <ActionButton
+            className="justify-end"
+            loading={updateLoading}
+            onClick={() => {
+              formRef?.current?.requestSubmit?.();
+            }}
+          >
+            <div className="flex items-center gap-2">
+              Save Changes <Save />
+            </div>
+          </ActionButton>
         </div>
+        <div className="flex-1 pt-4 border-b border-muted-foreground/20"></div>
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
@@ -642,6 +686,7 @@ const SpaceEditPage = () => {
         )}
 
         <form
+          ref={formRef}
           onSubmit={handleSubmit(
             (data) => {
               console.log("Centre form data valid :", data);
@@ -651,32 +696,32 @@ const SpaceEditPage = () => {
               console.log("Centre form data invalid :", errors, watch());
             },
           )}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              const target = e.target as HTMLElement;
-              if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
-                const input = target as HTMLInputElement;
-                const fieldName = input.name;
-                if (input.id === "availableSeats") {
-                  return;
-                }
-                e.preventDefault();
-                e.stopPropagation();
-                if (fieldName) {
-                  activeInputHasPressedEnter.current[fieldName] = true;
-                }
-                input.blur();
-              }
-            } else if (e.key === "Escape") {
-              const target = e.target as HTMLElement;
-              if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
-                const input = target as HTMLInputElement;
-                e.preventDefault();
-                e.stopPropagation();
-                input.blur();
-              }
-            }
-          }}
+          // onKeyDown={(e) => {
+          //   if (e.key === "Enter") {
+          //     const target = e.target as HTMLElement;
+          //     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+          //       const input = target as HTMLInputElement;
+          //       const fieldName = input.name;
+          //       if (input.id === "availableSeats") {
+          //         return;
+          //       }
+          //       e.preventDefault();
+          //       e.stopPropagation();
+          //       if (fieldName) {
+          //         activeInputHasPressedEnter.current[fieldName] = true;
+          //       }
+          //       input.blur();
+          //     }
+          //   } else if (e.key === "Escape") {
+          //     const target = e.target as HTMLElement;
+          //     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+          //       const input = target as HTMLInputElement;
+          //       e.preventDefault();
+          //       e.stopPropagation();
+          //       input.blur();
+          //     }
+          //   }
+          // }}
           className="auto-form-grid"
         >
           {/* SECTION: Centre Details */}
@@ -1280,9 +1325,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             placeholder="2024"
             type="number"
-            {...registerWithAutoSave("timing.operationalSince", {
-              valueAsNumber: true,
-            })}
+            {...registerWithAutoSave("timing.operationalSince")}
             error={errors.timing?.operationalSince}
             {...changedFieldProps(mainChanges?.allData, "operationalSince")}
           />
@@ -1665,6 +1708,20 @@ const SpaceEditPage = () => {
 
           <FormSectionTitle>Point of Contact Details</FormSectionTitle>
 
+          <div className="flex items-center gap-2 col-span-full">
+            <label className="text-muted-foreground text-sm">
+              Same As Operator
+            </label>
+            <Switch
+              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+              checked={POCSameAsOperator}
+              onCheckedChange={(checked) => {
+                setPOCSameAsOperator(checked);
+                autoSave();
+              }}
+            />
+          </div>
+
           <FormField
             label="Name"
             labelPosition="embedded"
@@ -1730,75 +1787,6 @@ const SpaceEditPage = () => {
             {...changedFieldProps(personChanges?.allData, "role")}
           />
 
-          {/* Status */}
-          <div className="col-span-full flex gap-8">
-            <div className="flex items-center gap-4">
-              <label className="text-muted-foreground text-sm">Active</label>
-              <Switch
-                key={watch("flags.isActive") ? "active" : "inactive"}
-                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-                checked={!!watch("flags.isActive")}
-                onCheckedChange={(checked) => {
-                  setValue("flags.isActive", checked, { shouldValidate: true });
-                  autoSave();
-                }}
-              />
-            </div>
-
-            <div className="flex items-center  gap-4">
-              <label className="text-muted-foreground text-sm">Verified</label>
-              <Switch
-                key={watch("flags.isVerified") ? "verified" : "unverified"}
-                checked={!!watch("flags.isVerified")}
-                onCheckedChange={(checked) => {
-                  setValue("flags.isVerified", checked, {
-                    shouldValidate: true,
-                  });
-                  autoSave();
-                }}
-              />
-            </div>
-            {selectedGrade === "B" && (
-              <div className="flex items-center gap-4">
-                <label className="text-muted-foreground text-sm">OC</label>
-                <Switch
-                  key={watch("flags.isOc") ? "oc" : "non-oc"}
-                  checked={!!watch("flags.isOc")}
-                  onCheckedChange={(checked) => {
-                    setValue("flags.isOc", checked, { shouldValidate: true });
-                    autoSave();
-                  }}
-                />
-              </div>
-            )}
-
-            {(selectedGrade === "A" || selectedGrade === "A+") && (
-              <div className="flex items-center gap-4">
-                <label className="text-muted-foreground text-sm">SEZ</label>
-                <Switch
-                  key={watch("flags.isSez") ? "sez" : "non-sez"}
-                  checked={!!watch("flags.isSez")}
-                  onCheckedChange={(checked) => {
-                    setValue("flags.isSez", checked, { shouldValidate: true });
-                    autoSave();
-                  }}
-                />
-              </div>
-            )}
-            <div className="flex items-center gap-4">
-              <label className="text-muted-foreground text-sm">
-                Same As Operator
-              </label>
-              <Switch
-                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-                checked={POCSameAsOperator}
-                onCheckedChange={(checked) => {
-                  setPOCSameAsOperator(checked);
-                  autoSave();
-                }}
-              />
-            </div>
-          </div>
           {/* Submit */}
           <div className="col-span-full flex justify-end">
             <div className="flex flex-wrap items-center justify-end gap-2">
@@ -1870,13 +1858,13 @@ const SpaceEditPage = () => {
           </div>
 
           {/* Save Action */}
-          <div className="col-span-full flex justify-end pt-4 gap-2">
+          {/* <div className="col-span-full flex justify-end pt-4 gap-2">
             <ActionButton loading={updateLoading} type="submit">
               <div className="flex items-center gap-2">
                 Save Changes <Save />
               </div>
             </ActionButton>
-          </div>
+          </div> */}
 
           <DialogModal
             open={isConfirmDialogOpen}
