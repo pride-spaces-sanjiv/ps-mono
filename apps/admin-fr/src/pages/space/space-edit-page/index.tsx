@@ -17,6 +17,7 @@ import {
   getSpaceData as getOperatorSpaceById,
   updateSpace as updateOperatorSpace,
 } from "@/services/apis/operator/spaces";
+import { getMapsURLPos } from "@/services/apis/general/location";
 import {
   spaceSchema,
   type SpaceSchema,
@@ -65,6 +66,7 @@ import FilePreview from "@/components/file/preview";
 import { sleep } from "@pride-spaces/common/utils/time.js";
 import SpaceImagesUploadSection from "@/containers/space/section/image-upload";
 import SpaceLayoutsUploadSection from "@/containers/space/section/layout-upload";
+import { useDebouncer } from "@/services/hooks/use-debouncer";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -422,6 +424,29 @@ const SpaceEditPage = () => {
       mutationKey: [queryKeys.DUMPS, id, "recorrect"],
       mutationFn: recorrectDump,
     });
+
+  const { mutateAsync: mapsURLPosMutater, isPending: mapsLoading } =
+    useMutation({
+      mutationFn: (param: Parameters<typeof getMapsURLPos>[0]) =>
+        getMapsURLPos(param),
+    });
+
+  // 2 secs debounced maps url set
+  useDebouncer(watch("location.url"), 2000, async (url) => {
+    try {
+      if (
+        url?.trim() &&
+        spaceSchema.shape.location.shape.url.safeParse(url).success
+      ) {
+        const res = await mapsURLPosMutater({ url: url });
+        const data = res.data?.data;
+        if (data.lat && data.lng) {
+          setValue("location.lat", data.lat);
+          setValue("location.lng", data.lng);
+        }
+      }
+    } catch (err) {}
+  });
 
   const activeInputHasPressedEnter = useRef<Record<string, boolean>>({});
 
@@ -1545,121 +1570,114 @@ const SpaceEditPage = () => {
             error={errors.terms?.securityDeposit}
           />
 
-          {/* Location */}
+          {/* Location Section */}
           <FormSectionTitle>Location Details</FormSectionTitle>
 
-          <FormField
-            label="Location URL"
-            labelPosition="embedded"
-            placeholder="https://maps.app.goo.gl/..."
-            {...registerWithAutoSave("location.url")}
-            error={errors.location?.url}
-            {...changedFieldProps(locationChanges?.allData, "url")}
-          />
+          <div className="flex gap-2 w-full col-span-full">
+            {/* Details */}
+            <div className="flex flex-col gap-2 w-full">
+              <FormField
+                label="Country"
+                labelPosition="embedded"
+                placeholder="India"
+                {...register("location.country")}
+                error={errors.location?.country}
+                {...changedFieldProps(locationChanges?.allData, "country")}
+              />
 
-          <FormField
-            label="City"
-            labelPosition="embedded"
-            placeholder="Mumbai"
-            {...registerWithAutoSave("location.city")}
-            error={errors.location?.city}
-            {...changedFieldProps(locationChanges?.allData, "city")}
-          />
+              <FormField
+                label="Location URL"
+                labelPosition="embedded"
+                placeholder="https://maps.app.goo.gl/..."
+                {...register("location.url")}
+                error={errors.location?.url}
+                {...changedFieldProps(locationChanges?.allData, "url")}
+              />
 
-          <FormField
-            label="State"
-            labelPosition="embedded"
-            placeholder="Maharashtra"
-            {...registerWithAutoSave("location.state")}
-            error={errors.location?.state}
-            {...changedFieldProps(locationChanges?.allData, "state")}
-          />
+              <FormField
+                label="State"
+                labelPosition="embedded"
+                placeholder="Maharashtra"
+                {...register("location.state")}
+                error={errors.location?.state}
+                {...changedFieldProps(locationChanges?.allData, "state")}
+              />
+              <FormField
+                label="City"
+                labelPosition="embedded"
+                placeholder="Mumbai"
+                {...register("location.city")}
+                error={errors.location?.city}
+                {...changedFieldProps(locationChanges?.allData, "city")}
+              />
 
-          <FormField
-            label="Country"
-            labelPosition="embedded"
-            placeholder="India"
-            {...registerWithAutoSave("location.country")}
-            error={errors.location?.country}
-            {...changedFieldProps(locationChanges?.allData, "country")}
-          />
+              <FormField
+                label="Area - Micro Market"
+                labelPosition="embedded"
+                placeholder="Panvel"
+                {...register("location.area")}
+                error={errors.location?.area}
+                {...changedFieldProps(locationChanges?.allData, "area")}
+              />
 
-          <FormField
-            label="Area - Micro Market"
-            labelPosition="embedded"
-            placeholder="Panvel"
-            {...registerWithAutoSave("location.area")}
-            error={errors.location?.area}
-            {...changedFieldProps(locationChanges?.allData, "area")}
-          />
+              <FormField
+                label="Zip Code"
+                labelPosition="embedded"
+                placeholder="349203"
+                {...register("location.postalCode")}
+                error={errors.location?.postalCode}
+                {...changedFieldProps(locationChanges?.allData, "postalCode")}
+              />
 
-          <FormField
-            label="Zip Code"
-            labelPosition="embedded"
-            placeholder="349203"
-            {...registerWithAutoSave("location.postalCode")}
-            error={errors.location?.postalCode}
-            {...changedFieldProps(locationChanges?.allData, "postalCode")}
-          />
-
-          <FormField
-            label="Latitude"
-            labelPosition="embedded"
-            type="number"
-            step="any"
-            {...registerWithAutoSave("location.lat")}
-            error={errors.location?.lat}
-            {...changedFieldProps(locationChanges?.allData, "lat")}
-          />
-
-          <FormField
-            label="Longitude"
-            labelPosition="embedded"
-            type="number"
-            step="any"
-            {...registerWithAutoSave("location.lng")}
-            error={errors.location?.lng}
-            {...changedFieldProps(locationChanges?.allData, "lng")}
-          />
-
-          {/* Maps */}
-          <MapsField
-            wrapperProps={{ className: "col-span-full flex flex-col gap-4" }}
-            mapProps={{ mapContainerClassName: "min-h-[300px] w-full" }}
-            buttonProps={{ className: "w-fit" }}
-            onGeocodeLatLng={(res, coords) => {
-              console.log(res);
-              const oldData = watch("location");
-              const data: SpaceSchema["location"] = {
-                address: res.address || oldData.address,
-                city: res.city || oldData.city,
-                state: res.state || oldData.state,
-                postalCode: res.postalCode || oldData.postalCode,
-                country: res.country || oldData.country,
-                area: res.area || oldData.area,
-                lat: coords.lat || oldData.lat,
-                lng: coords.lng || oldData.lng,
-              };
-              setValue("location", data, { shouldValidate: true });
-              autoSave();
-            }}
-            onLatLngFromURL={(stats) => {
-              // console.log("Stats from maps url to pos :", stats);
-              setValue("location.lat", stats.lat);
-              setValue("location.lng", stats.lng);
-              setValue("location.url", stats.url, { shouldValidate: true });
-              autoSave();
-            }}
-          />
-
-          <FormField
-            label="Address"
-            labelPosition="embedded"
-            inputType="textarea"
-            {...registerWithAutoSave("location.address")}
-            error={errors.location?.address}
-            {...changedFieldProps(locationChanges?.allData, "address")}
-          />
+              <FormField
+                label="Address"
+                labelPosition="embedded"
+                inputType="textarea"
+                {...register("location.address")}
+                error={errors.location?.address}
+                {...changedFieldProps(locationChanges?.allData, "address")}
+              />
+            </div>
+            {/* Maps Preview */}
+            <MapsField
+              wrapperProps={{
+                className: "flex flex-col gap-4 w-[300px] shrink-0",
+              }}
+              mapProps={{ mapContainerClassName: "min-h-[200px] w-full" }}
+              buttonProps={{ className: "w-fit" }}
+              defaultCoords={
+                (!!watch("location.lat") &&
+                  !!watch("location.lng") && {
+                    lat: watch("location.lat"),
+                    lng: watch("location.lng"),
+                  }) ||
+                undefined
+              }
+              // onGeocodeLatLng={(res, coords) => {
+              //   console.log(res);
+              //   const oldData = watch("location");
+              //   const data: SpaceSchema["location"] = {
+              //     address: res.address || oldData.address,
+              //     city: res.city || oldData.city,
+              //     state: res.state || oldData.state,
+              //     postalCode: res.postalCode || oldData.postalCode,
+              //     country: res.country || oldData.country,
+              //     area: res.area || oldData.area,
+              //     lat: coords.lat || oldData.lat,
+              //     lng: coords.lng || oldData.lng,
+              //   };
+              //   setValue("location", data, { shouldValidate: true });
+              //   autoSave();
+              // }}
+              // onLatLngFromURL={(stats) => {
+              //   // console.log("Stats from maps url to pos :", stats);
+              //   setValue("location.lat", stats.lat);
+              //   setValue("location.lng", stats.lng);
+              //   setValue("location.url", stats.url, { shouldValidate: true });
+              //   autoSave();
+              // }}
+            />
+          </div>
 
           {/* Images */}
           <SpaceImagesUploadSection

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
 import {
   GoogleMap,
   useJsApiLoader,
@@ -63,6 +69,7 @@ export default function MapsField({
   });
 
   const inputRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const memDefaultCords = useMemo(() => defaultCoords, [defaultCoords]);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [center, setCenter] = useState<{ lat: number; lng: number }>(
     defaultCoords,
@@ -160,11 +167,18 @@ export default function MapsField({
   };
 
   useEffect(() => {
-    !defaultCoords && updateToCurrentLocation?.();
+    // !defaultCoords && updateToCurrentLocation?.();
     return () => {};
   }, []);
 
-  useEffect(() => {});
+  useEffect(() => {
+    memDefaultCords
+      ? setCoords(memDefaultCords)
+      : setCoords({ lat: 19.311143355064655, lng: 77.34375000000001 });
+    memDefaultCords
+      ? setCenter(memDefaultCords)
+      : setCenter({ lat: 19.311143355064655, lng: 77.34375000000001 });
+  }, [memDefaultCords]);
 
   return (
     <div className={cn("", wrapperProps?.className)}>
@@ -195,7 +209,7 @@ export default function MapsField({
                 };
                 // setCoords(location);
                 onCoordsChange?.(location);
-                setCoords(location);
+                // setCoords(location);
               }
               mapProps?.onCenterChanged?.();
             }}
@@ -220,7 +234,7 @@ export default function MapsField({
             )}
           </GoogleMap>
           {/* <p className="err">{error || ""}</p> */}
-          <div className="flex gap-2 justify-end">
+          {/* <div className="flex gap-2 justify-end">
             <ActionButton
               type="button"
               variant={"secondary"}
@@ -246,71 +260,7 @@ export default function MapsField({
                 <MapPin /> Current Location
               </div>
             </ActionButton>
-          </div>
-
-          {/* Inputs */}
-          <div className={`map-inputs-wrap flex flex-wrap gap-4`}>
-            <Autocomplete
-              className={`search-map-wrap w-full`}
-              onLoad={(e) => {
-                inputRef.current = e;
-              }}
-              onPlaceChanged={() => {
-                const loc =
-                  inputRef.current?.getPlace().geometry?.location || null;
-                const lat = loc?.lat();
-                const lng = loc?.lng();
-                if (lat && lng) {
-                  const pos = { lat, lng };
-                  //   setCoords(pos);
-                  setCenter(pos);
-                  setCoords(pos);
-                }
-              }}
-            >
-              <Input
-                type="text"
-                placeholder={"Search any Location"}
-                {...searchInputProps}
-                className={cn("w-full", searchInputProps?.className)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                  }
-                  searchInputProps?.onKeyDown?.(e);
-                }}
-              />
-            </Autocomplete>
-            <div className="font-bold text-lg text-center w-full"> OR </div>
-
-            {/* Maps url */}
-            <div className="w-full flex gap-4">
-              <FormField
-                labelProps={{ className: "absolute hidden" }}
-                wrapperProps={{ className: "w-full" }}
-                className="w-full"
-                placeholder="Enter maps url"
-                type="url"
-                onChange={(e) => {
-                  const val = e.currentTarget.value.trim();
-                  setUrl(val);
-                }}
-              />
-              <ActionButton
-                type="button"
-                loading={isMapsURLPosLoading}
-                onClick={async () => {
-                  onMapsShareURL?.(url);
-                  handleMapsURLGeocode(url);
-                }}
-              >
-                <div className="flex gap-2 items-center">
-                  <NotebookPenIcon />
-                  Fill From URL
-                </div>
-              </ActionButton>
-            </div>
-          </div>
+          </div> */}
         </>
       )}
     </div>
