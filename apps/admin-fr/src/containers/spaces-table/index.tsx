@@ -461,27 +461,27 @@ const SpacesTabledResults = ({
           ),
         },
         // 5. Location URL
-        {
-          accessorKey: "location.url",
-          header: ({ column }) => (
-            <SortableHeader column={column}>Location URL</SortableHeader>
-          ),
-          cell: ({ row }) => {
-            const url = row.original?.location?.url;
-            return url ? (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline max-w-[220px] truncate block"
-              >
-                {url}
-              </a>
-            ) : (
-              <EmptyValue />
-            );
-          },
-        },
+        // {
+        //   accessorKey: "location.url",
+        //   header: ({ column }) => (
+        //     <SortableHeader column={column}>Location URL</SortableHeader>
+        //   ),
+        //   cell: ({ row }) => {
+        //     const url = row.original?.location?.url;
+        //     return url ? (
+        //       <a
+        //         href={url}
+        //         target="_blank"
+        //         rel="noopener noreferrer"
+        //         className="text-blue-500 hover:underline max-w-[220px] truncate block"
+        //       >
+        //         {url}
+        //       </a>
+        //     ) : (
+        //       <EmptyValue />
+        //     );
+        //   },
+        // },
         // 6. Area - Micro Market
         {
           accessorKey: "location.area",
@@ -510,15 +510,23 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>OC/NON-OC</SortableHeader>
           ),
-          cell: ({ row }) => (
-            <TextCell>
-              {row.original?.flags?.isOc === true
-                ? "OC"
-                : row.original?.flags?.isOc === false
-                ? "Non-OC"
-                : "-"}
-            </TextCell>
-          ),
+          cell: ({ row }) => {
+            const val = row.original?.flags?.isOc;
+            return (
+              <TextCell>
+                {val === true ||
+                (typeof val === "string" && val.toUpperCase() === "OC")
+                  ? "OC"
+                  : val === false ||
+                    (typeof val === "string" &&
+                      val.toUpperCase().includes("NON"))
+                  ? "NON OC"
+                  : val === "!"
+                  ? "!"
+                  : (val as string) || "-"}
+              </TextCell>
+            );
+          },
         },
         // 9. SEZ/Non-SEZ
         {
@@ -526,15 +534,23 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>SEZ/Non-SEZ</SortableHeader>
           ),
-          cell: ({ row }) => (
-            <TextCell>
-              {row.original?.flags?.isSez === true
-                ? "SEZ"
-                : row.original?.flags?.isSez === false
-                ? "Non-SEZ"
-                : "-"}
-            </TextCell>
-          ),
+          cell: ({ row }) => {
+            const val = row.original?.flags?.isSez;
+            return (
+              <TextCell>
+                {val === true ||
+                (typeof val === "string" && val.toUpperCase() === "SEZ")
+                  ? "SEZ"
+                  : val === false ||
+                    (typeof val === "string" &&
+                      val.toUpperCase().includes("NON"))
+                  ? "NON SEZ"
+                  : val === "!"
+                  ? "!"
+                  : (val as string) || "-"}
+              </TextCell>
+            );
+          },
         },
         // 10. Operational Since (year)
         {
@@ -947,11 +963,11 @@ const SpacesTabledResults = ({
             return <TextCell>{val}</TextCell>;
           },
         },
-        // 34. VO Price Per month
+        // 34. VO P/M
         {
           accessorKey: "pricing.vo",
           header: ({ column }) => (
-            <SortableHeader column={column}>VO Price Per month</SortableHeader>
+            <SortableHeader column={column}>VO P/M</SortableHeader>
           ),
           cell: ({ row }) => {
             const isVo =

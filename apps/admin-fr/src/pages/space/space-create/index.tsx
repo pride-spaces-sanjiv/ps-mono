@@ -46,6 +46,18 @@ import { getOperators } from "@/services/apis/admin/operators";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
+const ocStatusOptions = [
+  { label: "OC", value: "OC" },
+  { label: "NON OC", value: "NON OC" },
+  { label: "!", value: "!" },
+];
+
+const sezStatusOptions = [
+  { label: "SEZ", value: "SEZ" },
+  { label: "NON SEZ", value: "NON SEZ" },
+  { label: "!", value: "!" },
+];
+
 type LocState = {
   operatorData: Operator | null;
 };
@@ -128,8 +140,8 @@ const SpaceCreatePage = () => {
       flags: {
         isActive: true,
         isVerified: false,
-        isOc: false,
-        isSez: false,
+        isOc: "!",
+        isSez: "!",
         isVoService: false,
         isEventSpace: false,
       },
@@ -221,17 +233,7 @@ const SpaceCreatePage = () => {
     });
   }, [POCSameAsOperator, operatorData]);
 
-  useEffect(() => {
-    if (!selectedGrade) return;
 
-    if (selectedGrade === "A+" || selectedGrade === "A") {
-      setValue("flags.isOc", true);
-    }
-
-    if (selectedGrade === "B") {
-      setValue("flags.isSez", false);
-    }
-  }, [selectedGrade, setValue]);
 
   const createSpaceApi = isOperatorPortal
     ? createOperatorSpace
@@ -405,28 +407,6 @@ const SpaceCreatePage = () => {
             error={errors.specs?.spaceType}
           />
 
-          <FormField
-            key={`space-grade-${defaultValues?.specs?.grade}`}
-            label="Building Type"
-            labelPosition="embedded"
-            inputType="select"
-            items={labelledSpaceGrades}
-            error={errors.specs?.grade}
-            pickerProps={{
-              wrapperProps: {
-                defaultValue: defaultValues?.specs?.grade,
-                onValueChange: (val) =>
-                  setValue(
-                    "specs.grade",
-                    val as SpaceSchema["specs"]["grade"],
-                    {
-                      shouldValidate: true,
-                    },
-                  ),
-              },
-            }}
-          />
-
           {/* Operating Hours (Unified Open & Close Time) */}
           <FormField
             label="Operating Hours"
@@ -508,12 +488,12 @@ const SpaceCreatePage = () => {
             label="Occupancy (%)"
             labelPosition="embedded"
             value={`${(watch("seats.total") || 0) > 0
-                ? (
-                  ((watch("seats.booked") || 0) /
-                    (watch("seats.total") || 1)) *
-                  100
-                ).toFixed(2)
-                : "0.00"
+              ? (
+                ((watch("seats.booked") || 0) /
+                  (watch("seats.total") || 1)) *
+                100
+              ).toFixed(2)
+              : "0.00"
               }%`}
             readOnly
             disabled
@@ -708,58 +688,7 @@ const SpaceCreatePage = () => {
             />
           </FormField>
 
-          {/* Certificates */}
-          <FormField
-            label="Certifications"
-            labelPosition="embedded"
-            error={{
-              message:
-                errors.specs?.certificates?.[0]?.message ||
-                errors?.specs?.certificates?.message,
-              type:
-                errors.specs?.certificates?.[0]?.type ||
-                errors?.specs?.certificates?.type ||
-                "validate",
-            }}
-          >
-            <GroupedSearchSelect
-              key={`certificates-${defaultValues?.specs?.certificates?.length}`}
-              type="multiple"
-              showSearch={false}
-              defaultSelected={defaultValues?.specs?.certificates}
-              items={certificates.map((crt) => ({ label: crt, value: crt }))}
-              triggerProps={{
-                children: (
-                  <ActionButton
-                    type="button"
-                    variant={"outline"}
-                    className={
-                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
-                    }
-                  >
-                    {(watch("specs.certificates", [])?.length || 0) > 0 ? (
-                      <ChippedElements
-                        elements={watch("specs.certificates", [])}
-                      />
-                    ) : (
-                      "Select Certifications"
-                    )}
-                  </ActionButton>
-                ),
-              }}
-              contentProps={{ className: "max-h-[300px]" }}
-              onSelect={(items) => {
-                setValue(
-                  "specs.certificates",
-                  items.filter(
-                    (val) => typeof val === "string",
-                  ) as Certificate[],
-                  { shouldValidate: true },
-                );
-                // autoSave();
-              }}
-            />
-          </FormField>
+
 
           {/* Operational Since (year) */}
           <FormField
@@ -852,6 +781,122 @@ const SpaceCreatePage = () => {
             {...register("person.role")}
             error={errors.person?.role}
           />
+
+          {/* SECTION: Certifications */}
+          <FormSectionTitle>Certifications</FormSectionTitle>
+
+          {/* Building Type */}
+          <FormField
+            key={`space-grade-${defaultValues?.specs?.grade}`}
+            label="Building Type"
+            labelPosition="embedded"
+            inputType="select"
+            items={labelledSpaceGrades}
+            error={errors.specs?.grade}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.specs?.grade,
+                onValueChange: (val) =>
+                  setValue(
+                    "specs.grade",
+                    val as SpaceSchema["specs"]["grade"],
+                    {
+                      shouldValidate: true,
+                    },
+                  ),
+              },
+            }}
+          />
+
+          {/* OC Status */}
+          <FormField
+            key={`oc-status-${watch("flags.isOc")}`}
+            label="OC Status"
+            labelPosition="embedded"
+            inputType="select"
+            items={ocStatusOptions}
+            error={errors.flags?.isOc}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.flags?.isOc || "!",
+                onValueChange: (val) =>
+                  setValue("flags.isOc", val as string, {
+                    shouldValidate: true,
+                  }),
+              },
+            }}
+          />
+
+          {/* SEZ Status */}
+          <FormField
+            key={`sez-status-${watch("flags.isSez")}`}
+            label="SEZ Status"
+            labelPosition="embedded"
+            inputType="select"
+            items={sezStatusOptions}
+            error={errors.flags?.isSez}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.flags?.isSez || "!",
+                onValueChange: (val) =>
+                  setValue("flags.isSez", val as string, {
+                    shouldValidate: true,
+                  }),
+              },
+            }}
+          />
+
+          {/* Other Certifications */}
+          <FormField
+            label="Other Certifications"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.specs?.certificates?.[0]?.message ||
+                errors?.specs?.certificates?.message,
+              type:
+                errors.specs?.certificates?.[0]?.type ||
+                errors?.specs?.certificates?.type ||
+                "validate",
+            }}
+          >
+            <GroupedSearchSelect
+              key={`certificates-${defaultValues?.specs?.certificates?.length}`}
+              type="multiple"
+              showSearch={false}
+              defaultSelected={defaultValues?.specs?.certificates}
+              items={certificates.map((crt) => ({ label: crt, value: crt }))}
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"outline"}
+                    className={
+                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                    }
+                  >
+                    {(watch("specs.certificates", [])?.length || 0) > 0 ? (
+                      <ChippedElements
+                        elements={watch("specs.certificates", [])}
+                      />
+                    ) : (
+                      "Select Certifications"
+                    )}
+                  </ActionButton>
+                ),
+              }}
+              contentProps={{ className: "max-h-[300px]" }}
+              onSelect={(items) => {
+                setValue(
+                  "specs.certificates",
+                  items.filter(
+                    (val) => typeof val === "string",
+                  ) as Certificate[],
+                  { shouldValidate: true },
+                );
+              }}
+            />
+          </FormField>
 
           {/* SECTION: Amenities & Event Space Details */}
           <FormSectionTitle>Amenities & Event Space Details</FormSectionTitle>
@@ -1069,7 +1114,7 @@ const SpaceCreatePage = () => {
 
           {watch("flags.isVoService") && (
             <FormField
-              label="VO Price Per month"
+              label="VO P/M"
               labelPosition="embedded"
               placeholder="3000"
               type="number"
@@ -1207,27 +1252,7 @@ const SpaceCreatePage = () => {
               />
             </div>
 
-            {selectedGrade === "B" && (
-              <div className="flex items-center gap-4">
-                <label className="text-muted-foreground text-sm">OC</label>
-                <Switch
-                  key={defaultValues?.flags?.isOc ? "oc" : "non-oc"}
-                  defaultChecked={!!defaultValues?.flags?.isOc}
-                  {...register("flags.isOc")}
-                />
-              </div>
-            )}
 
-            {(selectedGrade === "A" || selectedGrade === "A+") && (
-              <div className="flex items-center gap-4">
-                <label className="text-muted-foreground text-sm">SEZ</label>
-                <Switch
-                  key={defaultValues?.flags?.isSez ? "sez" : "non-sez"}
-                  defaultChecked={!!defaultValues?.flags?.isSez}
-                  {...register("flags.isSez")}
-                />
-              </div>
-            )}
           </div>
 
           {/* Submit */}

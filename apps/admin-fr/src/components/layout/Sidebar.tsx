@@ -242,9 +242,9 @@ export function AppSidebar() {
                         href={item.id === "crm" ? getCrmUrl() : item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-slate-800 font-medium transition-all hover:bg-slate-100 hover:text-black"
+                        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sidebar-foreground font-medium transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       >
-                        <item.icon className="h-4 w-4 text-slate-600" />
+                        <item.icon className="h-4 w-4 text-sidebar-foreground/70" />
                         <span className="min-w-0 flex-1 truncate">
                           {item.title}
                         </span>
@@ -261,8 +261,8 @@ export function AppSidebar() {
                         className={({ isActive }) =>
                           `flex items-center gap-2.5 rounded-lg px-3 py-2 transition-all ${
                             isActive || isItemActive(item)
-                              ? "bg-slate-100 text-slate-950 font-semibold border border-slate-200/80 shadow-2xs"
-                              : "text-slate-800 font-medium hover:bg-slate-100 hover:text-black"
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold border border-sidebar-border/80 shadow-2xs"
+                              : "text-sidebar-foreground font-medium hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
                           }`
                         }
                       >
@@ -271,7 +271,7 @@ export function AppSidebar() {
                             "h-4 w-4",
                             isItemActive(item)
                               ? "text-primary"
-                              : "text-slate-600",
+                              : "text-sidebar-foreground/70",
                           )}
                         />
                         <span className="min-w-0 flex-1 truncate">
@@ -280,7 +280,7 @@ export function AppSidebar() {
                         {item.tabs?.length ? (
                           <ChevronDown
                             className={cn(
-                              "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                              "h-4 w-4 shrink-0 text-sidebar-foreground/60 transition-transform",
                               openSubtabs[item.title] ? "rotate-180" : "",
                             )}
                           />
@@ -301,8 +301,8 @@ export function AppSidebar() {
                             className={() =>
                               `group flex min-h-8 items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-sm transition-all ${
                                 isItemActive(tab)
-                                  ? "bg-slate-100 text-slate-950 font-semibold"
-                                  : "text-slate-700 font-medium hover:bg-slate-100 hover:text-black"
+                                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
+                                  : "text-sidebar-foreground/80 font-medium hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
                               }`
                             }
                           >
@@ -311,7 +311,7 @@ export function AppSidebar() {
                                 "h-1.5 w-1.5 shrink-0 rounded-full transition-colors",
                                 isItemActive(tab)
                                   ? "bg-primary"
-                                  : "bg-slate-400 group-hover:bg-slate-700",
+                                  : "bg-sidebar-foreground/40 group-hover:bg-sidebar-foreground",
                               )}
                             />
                             <span>{tab.title}</span>

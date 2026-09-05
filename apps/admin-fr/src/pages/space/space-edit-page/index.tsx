@@ -70,6 +70,18 @@ import { useDebouncer } from "@/services/hooks/use-debouncer";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
+const ocStatusOptions = [
+  { label: "OC", value: "OC" },
+  { label: "NON OC", value: "NON OC" },
+  { label: "!", value: "!" },
+];
+
+const sezStatusOptions = [
+  { label: "SEZ", value: "SEZ" },
+  { label: "NON SEZ", value: "NON SEZ" },
+  { label: "!", value: "!" },
+];
+
 const SpaceEditPage = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -247,8 +259,8 @@ const SpaceEditPage = () => {
       flags: {
         isActive: true,
         isVerified: false,
-        isOc: false,
-        isSez: false,
+        isOc: "!",
+        isSez: "!",
         isVoService: false,
       },
 
@@ -330,19 +342,6 @@ const SpaceEditPage = () => {
   //   }
   // }, [data]);
   useEffect(() => {
-    if (!selectedGrade) return;
-    if (selectedGrade === "A+" || selectedGrade === "A") {
-      // Grade A+/A => Always OC
-      setValue("flags.isOc", true);
-
-      // Optional: reset SEZ if needed
-      // setValue("flags.isSez", false);
-    }
-
-    if (selectedGrade === "B") {
-      // Grade B => Not SEZ
-      setValue("flags.isSez", false);
-    }
     if (res?.data?.data) {
       const modified = datifyObjectValues(
         { ...res?.data?.data, ...(isDump ? allUpdatedData : {}) },
@@ -375,6 +374,32 @@ const SpaceEditPage = () => {
 
         flags: {
           ...modified?.flags,
+          isOc:
+            modified?.flags?.isOc === true
+              ? "OC"
+              : modified?.flags?.isOc === false
+                ? "NON OC"
+                : typeof modified?.flags?.isOc === "string" &&
+                  (modified?.flags?.isOc?.toUpperCase() === "NON OC" ||
+                    modified?.flags?.isOc?.toUpperCase() === "NON-OC")
+                  ? "NON OC"
+                  : typeof modified?.flags?.isOc === "string" &&
+                    modified?.flags?.isOc?.toUpperCase() === "OC"
+                    ? "OC"
+                    : modified?.flags?.isOc || "!",
+          isSez:
+            modified?.flags?.isSez === true
+              ? "SEZ"
+              : modified?.flags?.isSez === false
+                ? "NON SEZ"
+                : typeof modified?.flags?.isSez === "string" &&
+                  (modified?.flags?.isSez?.toUpperCase() === "NON SEZ" ||
+                    modified?.flags?.isSez?.toUpperCase() === "NON-SEZ")
+                  ? "NON SEZ"
+                  : typeof modified?.flags?.isSez === "string" &&
+                    modified?.flags?.isSez?.toUpperCase() === "SEZ"
+                    ? "SEZ"
+                    : modified?.flags?.isSez || "!",
           isVoService:
             modified?.flags?.isVoService ??
             Boolean(modified?.pricing?.vo && modified?.pricing?.vo > 0),
@@ -480,6 +505,32 @@ const SpaceEditPage = () => {
         },
         flags: {
           ...modified?.flags,
+          isOc:
+            modified?.flags?.isOc === true
+              ? "OC"
+              : modified?.flags?.isOc === false
+                ? "NON OC"
+                : typeof modified?.flags?.isOc === "string" &&
+                  (modified?.flags?.isOc?.toUpperCase() === "NON OC" ||
+                    modified?.flags?.isOc?.toUpperCase() === "NON-OC")
+                  ? "NON OC"
+                  : typeof modified?.flags?.isOc === "string" &&
+                    modified?.flags?.isOc?.toUpperCase() === "OC"
+                    ? "OC"
+                    : modified?.flags?.isOc || "!",
+          isSez:
+            modified?.flags?.isSez === true
+              ? "SEZ"
+              : modified?.flags?.isSez === false
+                ? "NON SEZ"
+                : typeof modified?.flags?.isSez === "string" &&
+                  (modified?.flags?.isSez?.toUpperCase() === "NON SEZ" ||
+                    modified?.flags?.isSez?.toUpperCase() === "NON-SEZ")
+                  ? "NON SEZ"
+                  : typeof modified?.flags?.isSez === "string" &&
+                    modified?.flags?.isSez?.toUpperCase() === "SEZ"
+                    ? "SEZ"
+                    : modified?.flags?.isSez || "!",
           isVoService:
             modified?.flags?.isVoService ??
             Boolean(modified?.pricing?.vo && modified?.pricing?.vo > 0),
@@ -833,90 +884,6 @@ const SpaceEditPage = () => {
             {...changedFieldProps(mainChanges?.allData, "spaceType")}
           />
 
-          <FormField
-            key={`space-grade-${defaultValues?.specs?.grade}`}
-            label="Building Type"
-            labelPosition="embedded"
-            inputType="select"
-            items={labelledSpaceGrades}
-            error={errors.specs?.grade}
-            pickerProps={{
-              wrapperProps: {
-                defaultValue: defaultValues?.specs?.grade,
-                onValueChange: (val) => {
-                  setValue(
-                    "specs.grade",
-                    val as SpaceSchema["specs"]["grade"],
-                    {
-                      shouldValidate: true,
-                    },
-                  );
-                  autoSave();
-                },
-              },
-            }}
-            {...changedFieldProps(mainChanges?.allData, "grade")}
-          />
-
-          {/* Sez or Oc based on grade */}
-          {watch("specs.grade", "B") === "B" ? (
-            <FormField
-              key={`oc-status-${defaultValues?.flags?.isOc}`}
-              label="OC / Non-OC"
-              labelPosition="embedded"
-              inputType="select"
-              items={[true, false].map((v) => ({
-                label: v ? "OC" : "Non-OC",
-                value: v,
-              }))}
-              error={errors?.flags?.isOc}
-              pickerProps={{
-                wrapperProps: {
-                  // @ts-ignore
-                  defaultValue: defaultValues?.flags?.isOc || false,
-                  onValueChange: (val) => {
-                    setValue("flags.isOc", String(val) === "true", {
-                      shouldValidate: true,
-                    });
-                    setValue("flags.isSez", false, {
-                      shouldValidate: true,
-                    });
-                    autoSave();
-                  },
-                },
-              }}
-              {...changedFieldProps(mainChanges?.allData, "grade")}
-            />
-          ) : (
-            <FormField
-              key={`sez-status-${defaultValues?.flags?.isSez}`}
-              label="Sez / Non-Sez"
-              labelPosition="embedded"
-              inputType="select"
-              items={[true, false].map((v) => ({
-                label: v ? "Sez" : "Non-Sez",
-                value: v,
-              }))}
-              error={errors?.flags?.isOc}
-              pickerProps={{
-                wrapperProps: {
-                  // @ts-ignore
-                  defaultValue: defaultValues?.flags?.isSez || false,
-                  onValueChange: (val) => {
-                    setValue("flags.isSez", String(val) === "true", {
-                      shouldValidate: true,
-                    });
-                    setValue("flags.isOc", true, {
-                      shouldValidate: true,
-                    });
-                    autoSave();
-                  },
-                },
-              }}
-              {...changedFieldProps(mainChanges?.allData, "grade")}
-            />
-          )}
-
           {/* Opening Day */}
           {/* <FormField
             key={`opening-day-${watch("timing.openingDay")}`}
@@ -1180,12 +1147,12 @@ const SpaceEditPage = () => {
             label="Occupancy (%)"
             labelPosition="embedded"
             value={`${(watch("seats.total") || 0) > 0
-                ? (
-                  ((watch("seats.booked") || 0) /
-                    (watch("seats.total") || 1)) *
-                  100
-                ).toFixed(2)
-                : "0.00"
+              ? (
+                ((watch("seats.booked") || 0) /
+                  (watch("seats.total") || 1)) *
+                100
+              ).toFixed(2)
+              : "0.00"
               }%`}
             readOnly
             disabled
@@ -1248,59 +1215,7 @@ const SpaceEditPage = () => {
             />
           </FormField>
 
-          {/* Certificates */}
-          <FormField
-            label="Certifications"
-            labelPosition="embedded"
-            error={{
-              message:
-                errors.specs?.certificates?.[0]?.message ||
-                errors?.specs?.certificates?.message,
-              type:
-                errors.specs?.certificates?.[0]?.type ||
-                errors?.specs?.certificates?.type ||
-                "validate",
-            }}
-            {...changedFieldProps(mainChanges?.allData, "certificates")}
-          >
-            <GroupedSearchSelect
-              key={`certificates-${defaultValues?.specs?.certificates?.length}`}
-              type="multiple"
-              showSearch={false}
-              defaultSelected={defaultValues?.specs?.certificates}
-              items={certificates.map((crt) => ({ label: crt, value: crt }))}
-              triggerProps={{
-                children: (
-                  <ActionButton
-                    type="button"
-                    variant={"outline"}
-                    className={
-                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
-                    }
-                  >
-                    {(watch("specs.certificates", [])?.length || 0) > 0 ? (
-                      <ChippedElements
-                        elements={watch("specs.certificates", [])}
-                      />
-                    ) : (
-                      "Select Certifications"
-                    )}
-                  </ActionButton>
-                ),
-              }}
-              contentProps={{ className: "max-h-[300px]" }}
-              onSelect={(items) => {
-                setValue(
-                  "specs.certificates",
-                  items.filter(
-                    (val) => typeof val === "string",
-                  ) as Certificate[],
-                  { shouldValidate: true },
-                );
-                // autoSave();
-              }}
-            />
-          </FormField>
+
 
           {/* Operational Since (year) */}
           <FormField
@@ -1408,6 +1323,133 @@ const SpaceEditPage = () => {
             error={errors?.person?.role}
             {...changedFieldProps(personChanges?.allData, "role")}
           />
+
+          {/* SECTION: Certifications */}
+          <FormSectionTitle>Certifications</FormSectionTitle>
+
+          {/* Building Type */}
+          <FormField
+            key={`space-grade-${defaultValues?.specs?.grade}`}
+            label="Building Type"
+            labelPosition="embedded"
+            inputType="select"
+            items={labelledSpaceGrades}
+            error={errors.specs?.grade}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.specs?.grade,
+                onValueChange: (val) => {
+                  setValue(
+                    "specs.grade",
+                    val as SpaceSchema["specs"]["grade"],
+                    {
+                      shouldValidate: true,
+                    },
+                  );
+                  autoSave();
+                },
+              },
+            }}
+            {...changedFieldProps(mainChanges?.allData, "grade")}
+          />
+
+          {/* OC Status */}
+          <FormField
+            key={`oc-status-${watch("flags.isOc")}`}
+            label="OC Status"
+            labelPosition="embedded"
+            inputType="select"
+            items={ocStatusOptions}
+            error={errors?.flags?.isOc}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.flags?.isOc || "!",
+                onValueChange: (val) => {
+                  setValue("flags.isOc", val as string, {
+                    shouldValidate: true,
+                  });
+                  autoSave();
+                },
+              },
+            }}
+            {...changedFieldProps(mainChanges?.allData, "isOc")}
+          />
+
+          {/* SEZ Status */}
+          <FormField
+            key={`sez-status-${watch("flags.isSez")}`}
+            label="SEZ Status"
+            labelPosition="embedded"
+            inputType="select"
+            items={sezStatusOptions}
+            error={errors?.flags?.isSez}
+            pickerProps={{
+              wrapperProps: {
+                defaultValue: defaultValues?.flags?.isSez || "!",
+                onValueChange: (val) => {
+                  setValue("flags.isSez", val as string, {
+                    shouldValidate: true,
+                  });
+                  autoSave();
+                },
+              },
+            }}
+            {...changedFieldProps(mainChanges?.allData, "isSez")}
+          />
+
+          {/* Other Certifications */}
+          <FormField
+            label="Other Certifications"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.specs?.certificates?.[0]?.message ||
+                errors?.specs?.certificates?.message,
+              type:
+                errors.specs?.certificates?.[0]?.type ||
+                errors?.specs?.certificates?.type ||
+                "validate",
+            }}
+            {...changedFieldProps(mainChanges?.allData, "certificates")}
+          >
+            <GroupedSearchSelect
+              key={`certificates-${defaultValues?.specs?.certificates?.length}`}
+              type="multiple"
+              showSearch={false}
+              defaultSelected={defaultValues?.specs?.certificates}
+              items={certificates.map((crt) => ({ label: crt, value: crt }))}
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant={"outline"}
+                    className={
+                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                    }
+                  >
+                    {(watch("specs.certificates", [])?.length || 0) > 0 ? (
+                      <ChippedElements
+                        elements={watch("specs.certificates", [])}
+                      />
+                    ) : (
+                      "Select Certifications"
+                    )}
+                  </ActionButton>
+                ),
+              }}
+              contentProps={{ className: "max-h-[300px]" }}
+              onSelect={(items) => {
+                setValue(
+                  "specs.certificates",
+                  items.filter(
+                    (val) => typeof val === "string",
+                  ) as Certificate[],
+                  { shouldValidate: true },
+                );
+                autoSave();
+              }}
+            />
+          </FormField>
 
           {/* SECTION: Amenities & Event Space Details */}
           <FormSectionTitle>Amenities & Event Space Details</FormSectionTitle>
@@ -1638,7 +1680,7 @@ const SpaceEditPage = () => {
           />
           {watch("flags.isVoService") && (
             <FormField
-              label="VO Price Per month"
+              label="VO P/M"
               labelPosition="embedded"
               placeholder="3000"
               type="number"

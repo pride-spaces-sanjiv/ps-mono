@@ -69,8 +69,8 @@ const SeatsSchema = new Conn.Schema(
 
 const FlagsSchema = new Conn.Schema(
   {
-    isOc: { type: Boolean, default: false },
-    isSez: { type: Boolean, default: false },
+    isOc: { type: String, default: "!" },
+    isSez: { type: String, default: "!" },
     isVerified: { type: Boolean },
     isActive: { type: Boolean },
     isVoService: { type: Boolean, default: false },

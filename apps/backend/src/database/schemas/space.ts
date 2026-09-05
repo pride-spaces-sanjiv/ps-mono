@@ -70,8 +70,36 @@ const seatsSchema = z.object({
 
 // Flags
 const flagsSchema = z.object({
-  isOc: z.boolean().default(false).optional(),
-  isSez: z.boolean().default(false).optional(),
+  isOc: z
+    .union([z.string(), z.boolean()])
+    .transform((val) => {
+      if (typeof val === "boolean") return val ? "OC" : "NON OC";
+      if (typeof val === "string") {
+        const upper = val.trim().toUpperCase();
+        if (upper === "OC") return "OC";
+        if (upper === "NON OC" || upper === "NON-OC" || upper === "NONOC")
+          return "NON OC";
+        if (upper === "!") return "!";
+      }
+      return val || "!";
+    })
+    .default("!")
+    .optional(),
+  isSez: z
+    .union([z.string(), z.boolean()])
+    .transform((val) => {
+      if (typeof val === "boolean") return val ? "SEZ" : "NON SEZ";
+      if (typeof val === "string") {
+        const upper = val.trim().toUpperCase();
+        if (upper === "SEZ") return "SEZ";
+        if (upper === "NON SEZ" || upper === "NON-SEZ" || upper === "NONSEZ")
+          return "NON SEZ";
+        if (upper === "!") return "!";
+      }
+      return val || "!";
+    })
+    .default("!")
+    .optional(),
   isVerified: z.boolean().default(false).optional(),
   isActive: z.boolean().default(false).optional(),
   isVoService: z.boolean().default(false).optional(),
