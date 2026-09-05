@@ -110,6 +110,7 @@ export const pricingSchema = z.object({
   voService: z.string().optional(),
   eventSpaceBrief: z.string().optional(),
   eventSpaceCharges: z.string().optional(),
+  eventSpaceCapacity: z.number().optional(),
 });
 
 // --- Space Schema ---

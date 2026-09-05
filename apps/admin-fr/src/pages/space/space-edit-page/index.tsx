@@ -129,30 +129,30 @@ const SpaceEditPage = () => {
       return !notificationData
         ? {}
         : {
-            mainChanges: compareFields(currentData, notificationData, {
-              excludeFields: [
-                "id",
-                "createdAt",
-                "updatedAt",
-                "references",
-                "location",
-                "person",
-                "pricing",
-              ],
-            }),
-            locationChanges: compareFields(
-              currentData?.location,
-              notificationData?.location,
-            ),
-            personChanges: compareFields(
-              currentData?.person,
-              notificationData?.person,
-            ),
-            pricingChanges: compareFields(
-              currentData?.pricing,
-              notificationData?.pricing,
-            ),
-          };
+          mainChanges: compareFields(currentData, notificationData, {
+            excludeFields: [
+              "id",
+              "createdAt",
+              "updatedAt",
+              "references",
+              "location",
+              "person",
+              "pricing",
+            ],
+          }),
+          locationChanges: compareFields(
+            currentData?.location,
+            notificationData?.location,
+          ),
+          personChanges: compareFields(
+            currentData?.person,
+            notificationData?.person,
+          ),
+          pricingChanges: compareFields(
+            currentData?.pricing,
+            notificationData?.pricing,
+          ),
+        };
     }, [res?.data, locData?.data, fromRoute]);
 
   const allUpdatedData = useMemo(() => {
@@ -160,27 +160,27 @@ const SpaceEditPage = () => {
       ...mainChanges?.allData,
       ...(locationChanges?.allFields.length
         ? {
-            location: {
-              ...res?.data?.data?.location,
-              ...locationChanges?.allData,
-            },
-          }
+          location: {
+            ...res?.data?.data?.location,
+            ...locationChanges?.allData,
+          },
+        }
         : {}),
       ...(personChanges?.allFields.length
         ? {
-            person: {
-              ...res?.data?.data?.person,
-              ...personChanges?.allData,
-            },
-          }
+          person: {
+            ...res?.data?.data?.person,
+            ...personChanges?.allData,
+          },
+        }
         : {}),
       ...(pricingChanges?.allFields.length
         ? {
-            pricing: {
-              ...res?.data?.data?.pricing,
-              ...pricingChanges?.allData,
-            },
-          }
+          pricing: {
+            ...res?.data?.data?.pricing,
+            ...pricingChanges?.allData,
+          },
+        }
         : {}),
     };
   }, [
@@ -366,10 +366,10 @@ const SpaceEditPage = () => {
             modified?.timing?.closingDay ||
             (modified?.timing?.openDays?.length
               ? days[
-                  modified.timing.openDays[
-                    modified.timing.openDays.length - 1
-                  ] - 1
-                ]
+              modified.timing.openDays[
+              modified.timing.openDays.length - 1
+              ] - 1
+              ]
               : "Saturday"),
         },
 
@@ -445,7 +445,7 @@ const SpaceEditPage = () => {
           setValue("location.lng", data.lng);
         }
       }
-    } catch (err) {}
+    } catch (err) { }
   });
 
   const activeInputHasPressedEnter = useRef<Record<string, boolean>>({});
@@ -472,10 +472,10 @@ const SpaceEditPage = () => {
             modified?.timing?.closingDay ||
             (modified?.timing?.openDays?.length
               ? days[
-                  modified.timing.openDays[
-                    modified.timing.openDays.length - 1
-                  ] - 1
-                ]
+              modified.timing.openDays[
+              modified.timing.openDays.length - 1
+              ] - 1
+              ]
               : "Saturday"),
         },
         flags: {
@@ -1179,59 +1179,17 @@ const SpaceEditPage = () => {
           <FormField
             label="Occupancy (%)"
             labelPosition="embedded"
-            value={`${
-              (watch("seats.total") || 0) > 0
+            value={`${(watch("seats.total") || 0) > 0
                 ? (
-                    ((watch("seats.booked") || 0) /
-                      (watch("seats.total") || 1)) *
-                    100
-                  ).toFixed(2)
+                  ((watch("seats.booked") || 0) /
+                    (watch("seats.total") || 1)) *
+                  100
+                ).toFixed(2)
                 : "0.00"
-            }%`}
+              }%`}
             readOnly
             disabled
           />
-
-          {/* Amenities */}
-          <FormField
-            label="Amenities"
-            labelPosition="embedded"
-            error={{
-              message:
-                errors.facilities?.[0]?.message || errors?.facilities?.message,
-              type:
-                errors.facilities?.[0]?.type ||
-                errors?.facilities?.type ||
-                "validate",
-            }}
-            {...changedFieldProps(mainChanges?.allData, "facilities")}
-          >
-            <SelectAmenities
-              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto justify-start"
-              defaultAmenities={watch("facilities", [])}
-              onSelect={(amenities) => {
-                console.log(amenities);
-                setValue(
-                  "facilities",
-                  // @ts-ignore
-                  amenities.map((a) => a.id),
-                  { shouldValidate: true },
-                );
-                autoSave();
-              }}
-            >
-              {(watch("facilities", [])?.length || 0) > 0 ? (
-                <ChippedElements
-                  className=""
-                  elements={amenitiesData
-                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
-                    .map((dt) => dt.name)}
-                />
-              ) : (
-                "Select Amenities"
-              )}
-            </SelectAmenities>
-          </FormField>
 
           {/* Working Sizes */}
           <FormField
@@ -1368,6 +1326,137 @@ const SpaceEditPage = () => {
             {...changedFieldProps(mainChanges?.allData, "area")}
           />
 
+          {/* SECTION: Amenities & Event Space Details */}
+          <FormSectionTitle>Amenities & Event Space Details</FormSectionTitle>
+
+          {/* Amenities */}
+          <FormField
+            label="Amenities"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.facilities?.[0]?.message || errors?.facilities?.message,
+              type:
+                errors.facilities?.[0]?.type ||
+                errors?.facilities?.type ||
+                "validate",
+            }}
+            {...changedFieldProps(mainChanges?.allData, "facilities")}
+          >
+            <SelectAmenities
+              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto justify-start"
+              defaultAmenities={watch("facilities", [])}
+              onSelect={(amenities) => {
+                console.log(amenities);
+                setValue(
+                  "facilities",
+                  // @ts-ignore
+                  amenities.map((a) => a.id),
+                  { shouldValidate: true },
+                );
+                autoSave();
+              }}
+            >
+              {(watch("facilities", [])?.length || 0) > 0 ? (
+                <ChippedElements
+                  className=""
+                  elements={amenitiesData
+                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
+                    .map((dt) => dt.name)}
+                />
+              ) : (
+                "Select Amenities"
+              )}
+            </SelectAmenities>
+          </FormField>
+
+          <FormField
+            key={`event-space-${watch("flags.isEventSpace")}`}
+            label="Event Space"
+            labelPosition="embedded"
+            inputType="select"
+            items={[
+              { label: "YES", value: "true" },
+              { label: "NO", value: "false" },
+            ]}
+            error={errors?.flags?.isEventSpace}
+            pickerProps={{
+              wrapperProps: {
+                value: watch("flags.isEventSpace") ? "true" : "false",
+                onValueChange: (val) => {
+                  const isYes = val === "true";
+                  setValue("flags.isEventSpace", isYes, {
+                    shouldValidate: true,
+                  });
+                  if (!isYes) {
+                    setValue("pricing.eventSpaceBrief", "", {
+                      shouldValidate: true,
+                    });
+                    setValue("pricing.eventSpaceCharges", "", {
+                      shouldValidate: true,
+                    });
+                    setValue("pricing.eventSpaceCapacity", undefined, {
+                      shouldValidate: true,
+                    });
+                  }
+                  autoSave();
+                },
+              },
+            }}
+          />
+
+          {watch("flags.isEventSpace") && (
+            <>
+              <div className="col-span-full flex flex-col gap-1">
+                <FormField
+                  label="Event Space Brief"
+                  labelPosition="embedded"
+                  placeholder="Brief description of the event space..."
+                  inputType="textarea"
+                  required
+                  {...register("pricing.eventSpaceBrief")}
+                  error={errors.pricing?.eventSpaceBrief}
+                />
+                <div className="flex justify-end text-xs text-muted-foreground px-1">
+                  <span>
+                    {
+                      (watch("pricing.eventSpaceBrief") || "")
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean).length
+                    }
+                    /200 words
+                  </span>
+                </div>
+              </div>
+              <FormField
+                label="Event Space Capacity"
+                labelPosition="embedded"
+                placeholder="e.g. 50"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                required
+                {...registerWithAutoSave("pricing.eventSpaceCapacity", {
+                  valueAsNumber: true,
+                })}
+                error={errors.pricing?.eventSpaceCapacity}
+                {...changedFieldProps(
+                  pricingChanges?.allData,
+                  "eventSpaceCapacity",
+                )}
+              />
+              <FormField
+                label="Event Space Charges"
+                labelPosition="embedded"
+                placeholder="e.g. ₹5,000 / hour"
+                required
+                {...register("pricing.eventSpaceCharges")}
+                error={errors.pricing?.eventSpaceCharges}
+              />
+            </>
+          )}
+
           {/* Pricing Details */}
           <FormSectionTitle>Pricing Details</FormSectionTitle>
           <FormField
@@ -1478,74 +1567,6 @@ const SpaceEditPage = () => {
             />
           )}
 
-          <FormField
-            key={`event-space-${watch("flags.isEventSpace")}`}
-            label="Event Space"
-            labelPosition="embedded"
-            inputType="select"
-            items={[
-              { label: "YES", value: "true" },
-              { label: "NO", value: "false" },
-            ]}
-            error={errors?.flags?.isEventSpace}
-            pickerProps={{
-              wrapperProps: {
-                value: watch("flags.isEventSpace") ? "true" : "false",
-                onValueChange: (val) => {
-                  const isYes = val === "true";
-                  setValue("flags.isEventSpace", isYes, {
-                    shouldValidate: true,
-                  });
-                  if (!isYes) {
-                    setValue("pricing.eventSpaceBrief", "", {
-                      shouldValidate: true,
-                    });
-                    setValue("pricing.eventSpaceCharges", "", {
-                      shouldValidate: true,
-                    });
-                  }
-                  autoSave();
-                },
-              },
-            }}
-          />
-
-          {watch("flags.isEventSpace") && (
-            <>
-              <div className="col-span-full flex flex-col gap-1">
-                <FormField
-                  label="Event Space Brief"
-                  labelPosition="embedded"
-                  placeholder="Brief description of the event space..."
-                  inputType="textarea"
-                  required
-                  {...register("pricing.eventSpaceBrief")}
-                  error={errors.pricing?.eventSpaceBrief}
-                />
-                <div className="flex justify-end text-xs text-muted-foreground px-1">
-                  <span>
-                    {
-                      (watch("pricing.eventSpaceBrief") || "")
-                        .trim()
-                        .split(/\s+/)
-                        .filter(Boolean).length
-                    }
-                    /200 words
-                  </span>
-                </div>
-              </div>
-              <FormField
-                label="Event Space Charges"
-                labelPosition="embedded"
-                placeholder="e.g. ₹5,000 / hour"
-                required
-                {...register("pricing.eventSpaceCharges")}
-                error={errors.pricing?.eventSpaceCharges}
-                wrapperProps={{ className: "col-span-full" }}
-              />
-            </>
-          )}
-
           {/* Terms & Conditions */}
           <FormSectionTitle>Terms & Conditions</FormSectionTitle>
           <FormField
@@ -1648,34 +1669,34 @@ const SpaceEditPage = () => {
               defaultCoords={
                 (!!watch("location.lat") &&
                   !!watch("location.lng") && {
-                    lat: watch("location.lat"),
-                    lng: watch("location.lng"),
-                  }) ||
+                  lat: watch("location.lat"),
+                  lng: watch("location.lng"),
+                }) ||
                 undefined
               }
-              // onGeocodeLatLng={(res, coords) => {
-              //   console.log(res);
-              //   const oldData = watch("location");
-              //   const data: SpaceSchema["location"] = {
-              //     address: res.address || oldData.address,
-              //     city: res.city || oldData.city,
-              //     state: res.state || oldData.state,
-              //     postalCode: res.postalCode || oldData.postalCode,
-              //     country: res.country || oldData.country,
-              //     area: res.area || oldData.area,
-              //     lat: coords.lat || oldData.lat,
-              //     lng: coords.lng || oldData.lng,
-              //   };
-              //   setValue("location", data, { shouldValidate: true });
-              //   autoSave();
-              // }}
-              // onLatLngFromURL={(stats) => {
-              //   // console.log("Stats from maps url to pos :", stats);
-              //   setValue("location.lat", stats.lat);
-              //   setValue("location.lng", stats.lng);
-              //   setValue("location.url", stats.url, { shouldValidate: true });
-              //   autoSave();
-              // }}
+            // onGeocodeLatLng={(res, coords) => {
+            //   console.log(res);
+            //   const oldData = watch("location");
+            //   const data: SpaceSchema["location"] = {
+            //     address: res.address || oldData.address,
+            //     city: res.city || oldData.city,
+            //     state: res.state || oldData.state,
+            //     postalCode: res.postalCode || oldData.postalCode,
+            //     country: res.country || oldData.country,
+            //     area: res.area || oldData.area,
+            //     lat: coords.lat || oldData.lat,
+            //     lng: coords.lng || oldData.lng,
+            //   };
+            //   setValue("location", data, { shouldValidate: true });
+            //   autoSave();
+            // }}
+            // onLatLngFromURL={(stats) => {
+            //   // console.log("Stats from maps url to pos :", stats);
+            //   setValue("location.lat", stats.lat);
+            //   setValue("location.lng", stats.lng);
+            //   setValue("location.url", stats.url, { shouldValidate: true });
+            //   autoSave();
+            // }}
             />
           </div>
 

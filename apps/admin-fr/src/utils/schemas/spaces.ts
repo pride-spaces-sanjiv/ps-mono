@@ -123,6 +123,7 @@ export const pricingSchema = z.object({
   voService: z.string().optional(),
   eventSpaceBrief: z.string().optional(),
   eventSpaceCharges: z.string().optional(),
+  eventSpaceCapacity: z.number().optional(),
 });
 
 // --- Space Schema ---
@@ -189,6 +190,17 @@ export const spaceSchema = baseSpaceSchema.superRefine((data, ctx) => {
         code: z.ZodIssueCode.custom,
         message: "Event Space Charges are required",
         path: ["pricing", "eventSpaceCharges"],
+      });
+    }
+    if (
+      data.pricing?.eventSpaceCapacity === undefined ||
+      data.pricing?.eventSpaceCapacity === null ||
+      isNaN(data.pricing.eventSpaceCapacity)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Event Space Capacity is required",
+        path: ["pricing", "eventSpaceCapacity"],
       });
     }
   }

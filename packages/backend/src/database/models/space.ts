@@ -36,6 +36,7 @@ const PricingSchema = new Conn.Schema(
     voService: { type: String },
     eventSpaceBrief: { type: String },
     eventSpaceCharges: { type: String },
+    eventSpaceCapacity: { type: Number },
   },
   { _id: false },
 );

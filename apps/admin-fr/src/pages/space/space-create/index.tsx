@@ -150,6 +150,7 @@ const SpaceCreatePage = () => {
         vo: 0,
         eventSpaceBrief: "",
         eventSpaceCharges: "",
+        eventSpaceCapacity: undefined,
       },
     },
   });
@@ -207,11 +208,11 @@ const SpaceCreatePage = () => {
 
       slug: operatorData?.slug
         ? generateSlug(
-            operatorData.slug,
-            validateNumber(operatorData.totalSpaces, {
-              invalidValue: -1,
-            }) + 1,
-          )
+          operatorData.slug,
+          validateNumber(operatorData.totalSpaces, {
+            invalidValue: -1,
+          }) + 1,
+        )
         : defaultValues?.slug,
 
       person: {
@@ -506,15 +507,14 @@ const SpaceCreatePage = () => {
           <FormField
             label="Occupancy (%)"
             labelPosition="embedded"
-            value={`${
-              (watch("seats.total") || 0) > 0
+            value={`${(watch("seats.total") || 0) > 0
                 ? (
-                    ((watch("seats.booked") || 0) /
-                      (watch("seats.total") || 1)) *
-                    100
-                  ).toFixed(2)
+                  ((watch("seats.booked") || 0) /
+                    (watch("seats.total") || 1)) *
+                  100
+                ).toFixed(2)
                 : "0.00"
-            }%`}
+              }%`}
             readOnly
             disabled
           />
@@ -654,45 +654,6 @@ const SpaceCreatePage = () => {
             </FormField>
           )}
 
-          {/* Amenities */}
-          <FormField
-            label="Amenities"
-            labelPosition="embedded"
-            error={{
-              message:
-                errors.facilities?.[0]?.message || errors.facilities?.message,
-              type:
-                errors.facilities?.[0]?.type ||
-                errors.facilities?.type ||
-                "validate",
-            }}
-          >
-            <SelectAmenities
-              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
-              defaultAmenities={watch("facilities", [])}
-              onSelect={(amenities) => {
-                setValue(
-                  "facilities",
-                  // @ts-ignore
-                  amenities.map((a) => a.id),
-                  {
-                    shouldValidate: true,
-                  },
-                );
-              }}
-            >
-              {(watch("facilities", [])?.length || 0) > 0 ? (
-                <ChippedElements
-                  elements={amenitiesData
-                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
-                    .map((dt) => dt.name)}
-                />
-              ) : (
-                "Select Amenities"
-              )}
-            </SelectAmenities>
-          </FormField>
-
           {/* Working Sizes */}
           <FormField
             label="Work Station Sizes"
@@ -824,6 +785,131 @@ const SpaceCreatePage = () => {
             error={errors.specs?.area}
           />
 
+          {/* SECTION: Amenities & Event Space Details */}
+          <FormSectionTitle>Amenities & Event Space Details</FormSectionTitle>
+
+          {/* Amenities */}
+          <FormField
+            label="Amenities"
+            labelPosition="embedded"
+            error={{
+              message:
+                errors.facilities?.[0]?.message || errors.facilities?.message,
+              type:
+                errors.facilities?.[0]?.type ||
+                errors.facilities?.type ||
+                "validate",
+            }}
+          >
+            <SelectAmenities
+              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
+              defaultAmenities={watch("facilities", [])}
+              onSelect={(amenities) => {
+                setValue(
+                  "facilities",
+                  // @ts-ignore
+                  amenities.map((a) => a.id),
+                  {
+                    shouldValidate: true,
+                  },
+                );
+              }}
+            >
+              {(watch("facilities", [])?.length || 0) > 0 ? (
+                <ChippedElements
+                  elements={amenitiesData
+                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
+                    .map((dt) => dt.name)}
+                />
+              ) : (
+                "Select Amenities"
+              )}
+            </SelectAmenities>
+          </FormField>
+
+          <FormField
+            key={`event-space-${watch("flags.isEventSpace")}`}
+            label="Event Space"
+            labelPosition="embedded"
+            inputType="select"
+            items={[
+              { label: "YES", value: "true" },
+              { label: "NO", value: "false" },
+            ]}
+            error={errors?.flags?.isEventSpace}
+            pickerProps={{
+              wrapperProps: {
+                value: watch("flags.isEventSpace") ? "true" : "false",
+                onValueChange: (val) => {
+                  const isYes = val === "true";
+                  setValue("flags.isEventSpace", isYes, {
+                    shouldValidate: true,
+                  });
+                  if (!isYes) {
+                    setValue("pricing.eventSpaceBrief", "", {
+                      shouldValidate: true,
+                    });
+                    setValue("pricing.eventSpaceCharges", "", {
+                      shouldValidate: true,
+                    });
+                    setValue("pricing.eventSpaceCapacity", undefined, {
+                      shouldValidate: true,
+                    });
+                  }
+                },
+              },
+            }}
+          />
+
+          {watch("flags.isEventSpace") && (
+            <>
+              <div className="col-span-full flex flex-col gap-1">
+                <FormField
+                  label="Event Space Brief"
+                  labelPosition="embedded"
+                  placeholder="Brief description of the event space..."
+                  inputType="textarea"
+                  rows={2}
+                  required
+                  {...register("pricing.eventSpaceBrief")}
+                  error={errors.pricing?.eventSpaceBrief}
+                />
+                <div className="flex justify-end text-xs text-muted-foreground px-1">
+                  <span>
+                    {
+                      (watch("pricing.eventSpaceBrief") || "")
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean).length
+                    }
+                    /200 words
+                  </span>
+                </div>
+              </div>
+              <FormField
+                label="Event Space Capacity"
+                labelPosition="embedded"
+                placeholder="e.g. 50"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                required
+                {...register("pricing.eventSpaceCapacity", {
+                  valueAsNumber: true,
+                })}
+                error={errors.pricing?.eventSpaceCapacity}
+              />
+              <FormField
+                label="Event Space Charges"
+                labelPosition="embedded"
+                placeholder="e.g. ₹5,000 / hour"
+                required
+                {...register("pricing.eventSpaceCharges")}
+                error={errors.pricing?.eventSpaceCharges}
+              />
+            </>
+          )}
+
           {/* Pricing Details */}
           <FormSectionTitle>Pricing Details</FormSectionTitle>
 
@@ -925,74 +1011,6 @@ const SpaceCreatePage = () => {
               {...register("pricing.vo", { valueAsNumber: true })}
               error={errors.pricing?.vo}
             />
-          )}
-
-          <FormField
-            key={`event-space-${watch("flags.isEventSpace")}`}
-            label="Event Space"
-            labelPosition="embedded"
-            inputType="select"
-            items={[
-              { label: "YES", value: "true" },
-              { label: "NO", value: "false" },
-            ]}
-            error={errors?.flags?.isEventSpace}
-            pickerProps={{
-              wrapperProps: {
-                value: watch("flags.isEventSpace") ? "true" : "false",
-                onValueChange: (val) => {
-                  const isYes = val === "true";
-                  setValue("flags.isEventSpace", isYes, {
-                    shouldValidate: true,
-                  });
-                  if (!isYes) {
-                    setValue("pricing.eventSpaceBrief", "", {
-                      shouldValidate: true,
-                    });
-                    setValue("pricing.eventSpaceCharges", "", {
-                      shouldValidate: true,
-                    });
-                  }
-                },
-              },
-            }}
-          />
-
-          {watch("flags.isEventSpace") && (
-            <>
-              <div className="col-span-full flex flex-col gap-1">
-                <FormField
-                  label="Event Space Brief"
-                  labelPosition="embedded"
-                  placeholder="Brief description of the event space..."
-                  inputType="textarea"
-                  rows={2}
-                  required
-                  {...register("pricing.eventSpaceBrief")}
-                  error={errors.pricing?.eventSpaceBrief}
-                />
-                <div className="flex justify-end text-xs text-muted-foreground px-1">
-                  <span>
-                    {
-                      (watch("pricing.eventSpaceBrief") || "")
-                        .trim()
-                        .split(/\s+/)
-                        .filter(Boolean).length
-                    }
-                    /200 words
-                  </span>
-                </div>
-              </div>
-              <FormField
-                label="Event Space Charges"
-                labelPosition="embedded"
-                placeholder="e.g. ₹5,000 / hour"
-                required
-                {...register("pricing.eventSpaceCharges")}
-                error={errors.pricing?.eventSpaceCharges}
-                wrapperProps={{ className: "col-span-full" }}
-              />
-            </>
           )}
 
           {/* Terms & Conditions */}
