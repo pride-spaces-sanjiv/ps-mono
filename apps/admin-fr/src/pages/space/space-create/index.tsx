@@ -785,6 +785,74 @@ const SpaceCreatePage = () => {
             error={errors.specs?.area}
           />
 
+          {/* SECTION: Centre Point of Contact */}
+
+          <FormSectionTitle>Point of Contact Details</FormSectionTitle>
+
+          <div className="flex items-center gap-2 col-span-full">
+            <label className="text-muted-foreground text-sm">
+              Same As Operator
+            </label>
+            <Switch
+              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+              checked={POCSameAsOperator}
+              onCheckedChange={(checked) => {
+                setPOCSameAsOperator(checked);
+              }}
+            />
+          </div>
+
+          <FormField
+            label="Name"
+            labelPosition="embedded"
+            placeholder="John Doe"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            {...register("person.name")}
+            error={errors.person?.name}
+          />
+
+          <FormField
+            label="Email"
+            labelPosition="embedded"
+            type="email"
+            placeholder="john.doe@example.com"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            {...register("person.email")}
+            error={errors.person?.email}
+          />
+
+          <FormField
+            key={`poc-same-${POCSameAsOperator}-${defaultValues?.person?.contactNo}`}
+            label="Telephone"
+            labelPosition="embedded"
+            type="tel"
+            inputMode="tel"
+            inputType="phone"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            defaultValue={defaultValues?.person?.contactNo}
+            value={watch("person.contactNo")}
+            placeholder="+1-123-456-7890"
+            onChange={(val) =>
+              setValue("person.contactNo", val?.toString() || "", {
+                shouldValidate: true,
+              })
+            }
+            error={errors.person?.contactNo}
+          />
+
+          <FormField
+            label="Designation"
+            placeholder="Centre Manager"
+            labelPosition="embedded"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            {...register("person.role")}
+            error={errors.person?.role}
+          />
+
           {/* SECTION: Amenities & Event Space Details */}
           <FormSectionTitle>Amenities & Event Space Details</FormSectionTitle>
 
@@ -914,15 +982,15 @@ const SpaceCreatePage = () => {
           <FormSectionTitle>Pricing Details</FormSectionTitle>
 
           <FormField
-            label="Day Pass"
+            label="Per Seat"
             labelPosition="embedded"
             placeholder="300"
             type="number"
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.dayPass", { valueAsNumber: true })}
-            error={errors.pricing?.dayPass}
+            {...register("pricing.perSeat", { valueAsNumber: true })}
+            error={errors.pricing?.perSeat}
           />
 
           <FormField
@@ -950,6 +1018,18 @@ const SpaceCreatePage = () => {
           />
 
           <FormField
+            label="Day Pass"
+            labelPosition="embedded"
+            placeholder="300"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={99999}
+            {...register("pricing.dayPass", { valueAsNumber: true })}
+            error={errors.pricing?.dayPass}
+          />
+
+          <FormField
             label="Flexi/Hot Desk"
             labelPosition="embedded"
             placeholder="3000"
@@ -959,18 +1039,6 @@ const SpaceCreatePage = () => {
             max={99999}
             {...register("pricing.flexiDesk", { valueAsNumber: true })}
             error={errors.pricing?.flexiDesk}
-          />
-
-          <FormField
-            label="Per Seat"
-            labelPosition="embedded"
-            placeholder="300"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={99999}
-            {...register("pricing.perSeat", { valueAsNumber: true })}
-            error={errors.pricing?.perSeat}
           />
 
           <FormField
@@ -1012,30 +1080,6 @@ const SpaceCreatePage = () => {
               error={errors.pricing?.vo}
             />
           )}
-
-          {/* Terms & Conditions */}
-          <FormSectionTitle>Terms & Conditions</FormSectionTitle>
-          <FormField
-            label="Lock In"
-            labelPosition="embedded"
-            placeholder="e.g. 1 Year / 6 Months"
-            {...register("terms.lockIn")}
-            error={errors.terms?.lockIn}
-          />
-          <FormField
-            label="Notice Period"
-            labelPosition="embedded"
-            placeholder="e.g. 3 Months"
-            {...register("terms.noticePeriod")}
-            error={errors.terms?.noticePeriod}
-          />
-          <FormField
-            label="Security Deposit"
-            labelPosition="embedded"
-            placeholder="e.g. 3 Months Rent"
-            {...register("terms.securityDeposit")}
-            error={errors.terms?.securityDeposit}
-          />
 
           {/* Location */}
           <FormSectionTitle>Location Details</FormSectionTitle>
@@ -1139,61 +1183,6 @@ const SpaceCreatePage = () => {
             error={errors.location?.address}
           />
 
-          {/* SECTION: Centre Point of Contact */}
-
-          <FormSectionTitle>Point of Contact Details</FormSectionTitle>
-
-          <FormField
-            label="Name"
-            labelPosition="embedded"
-            placeholder="John Doe"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            {...register("person.name")}
-            error={errors.person?.name}
-          />
-
-          <FormField
-            label="Email"
-            labelPosition="embedded"
-            type="email"
-            placeholder="john.doe@example.com"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            {...register("person.email")}
-            error={errors.person?.email}
-          />
-
-          <FormField
-            key={`poc-same-${POCSameAsOperator}-${defaultValues?.person?.contactNo}`}
-            label="Telephone"
-            labelPosition="embedded"
-            type="tel"
-            inputMode="tel"
-            inputType="phone"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            defaultValue={defaultValues?.person?.contactNo}
-            value={watch("person.contactNo")}
-            placeholder="+1-123-456-7890"
-            onChange={(val) =>
-              setValue("person.contactNo", val?.toString() || "", {
-                shouldValidate: true,
-              })
-            }
-            error={errors.person?.contactNo}
-          />
-
-          <FormField
-            label="Designation"
-            placeholder="Centre Manager"
-            labelPosition="embedded"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            {...register("person.role")}
-            error={errors.person?.role}
-          />
-
           {/* Status */}
 
           <div className="col-span-full flex gap-8 flex-wrap">
@@ -1239,18 +1228,6 @@ const SpaceCreatePage = () => {
                 />
               </div>
             )}
-
-            <div className="flex items-center gap-4">
-              <label className="text-muted-foreground text-sm">
-                Same As Operator
-              </label>
-              <Switch
-                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-                onCheckedChange={(checked) => {
-                  setPOCSameAsOperator(checked);
-                }}
-              />
-            </div>
           </div>
 
           {/* Submit */}

@@ -1326,6 +1326,89 @@ const SpaceEditPage = () => {
             {...changedFieldProps(mainChanges?.allData, "area")}
           />
 
+          {/* SECTION: Centre Point of Contact */}
+
+          <FormSectionTitle>Point of Contact Details</FormSectionTitle>
+
+          <div className="flex items-center gap-2 col-span-full">
+            <label className="text-muted-foreground text-sm">
+              Same As Operator
+            </label>
+            <Switch
+              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+              checked={POCSameAsOperator}
+              onCheckedChange={(checked) => {
+                setPOCSameAsOperator(checked);
+                autoSave();
+              }}
+            />
+          </div>
+
+          <FormField
+            label="Name"
+            labelPosition="embedded"
+            placeholder="John Doe"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            {...registerWithAutoSave("person.name")}
+            error={errors?.person?.name}
+            {...changedFieldProps(personChanges?.allData, "name")}
+          />
+
+          <FormField
+            label="Email"
+            labelPosition="embedded"
+            type="email"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            placeholder="john.doe@example.com"
+            {...registerWithAutoSave("person.email")}
+            error={errors?.person?.email}
+            {...changedFieldProps(personChanges?.allData, "email")}
+          />
+
+          <FormField
+            name="person.contactNo"
+            key={`poc-same-${POCSameAsOperator}-${defaultValues?.person?.contactNo}`}
+            label="Telephone"
+            labelPosition="embedded"
+            type="tel"
+            inputMode="tel"
+            inputType="phone"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            defaultValue={defaultValues?.person?.contactNo}
+            value={watch("person.contactNo")}
+            {...changedFieldProps(personChanges?.allData, "contactNo")}
+            placeholder="+1-123-456-7890"
+            onChange={(val) => {
+              console.log("POC contact number:", val);
+              setValue("person.contactNo", val?.toString() || "", {
+                shouldValidate: true,
+              });
+            }}
+            onBlur={() => {
+              if (activeInputHasPressedEnter.current["person.contactNo"]) {
+                autoSave();
+              } else {
+                revertAllFormFields();
+              }
+              activeInputHasPressedEnter.current["person.contactNo"] = false;
+            }}
+            error={errors?.person?.contactNo}
+          />
+
+          <FormField
+            label="Designation"
+            placeholder="Centre Manager"
+            labelPosition="embedded"
+            readOnly={POCSameAsOperator}
+            disabled={POCSameAsOperator}
+            {...registerWithAutoSave("person.role")}
+            error={errors?.person?.role}
+            {...changedFieldProps(personChanges?.allData, "role")}
+          />
+
           {/* SECTION: Amenities & Event Space Details */}
           <FormSectionTitle>Amenities & Event Space Details</FormSectionTitle>
 
@@ -1460,18 +1543,18 @@ const SpaceEditPage = () => {
           {/* Pricing Details */}
           <FormSectionTitle>Pricing Details</FormSectionTitle>
           <FormField
-            label="Day Pass"
+            label="Per Seat"
             labelPosition="embedded"
             placeholder="300"
             type="number"
             inputMode="decimal"
             min={0}
             max={99999}
-            {...registerWithAutoSave("pricing.dayPass", {
+            {...registerWithAutoSave("pricing.perSeat", {
               valueAsNumber: true,
             })}
-            error={errors.pricing?.dayPass}
-            {...changedFieldProps(pricingChanges?.allData, "dayPass")}
+            error={errors.pricing?.perSeat}
+            {...changedFieldProps(pricingChanges?.allData, "perSeat")}
           />
           <FormField
             label="Meeting Room"
@@ -1501,6 +1584,20 @@ const SpaceEditPage = () => {
             {...changedFieldProps(pricingChanges?.allData, "dedicatedDesk")}
           />
           <FormField
+            label="Day Pass"
+            labelPosition="embedded"
+            placeholder="300"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={99999}
+            {...registerWithAutoSave("pricing.dayPass", {
+              valueAsNumber: true,
+            })}
+            error={errors.pricing?.dayPass}
+            {...changedFieldProps(pricingChanges?.allData, "dayPass")}
+          />
+          <FormField
             label="Flexi/Hot Desk"
             labelPosition="embedded"
             placeholder="3000"
@@ -1512,20 +1609,6 @@ const SpaceEditPage = () => {
               valueAsNumber: true,
             })}
             error={errors.pricing?.flexiDesk}
-          />
-          <FormField
-            label="Per Seat"
-            labelPosition="embedded"
-            placeholder="300"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={99999}
-            {...registerWithAutoSave("pricing.perSeat", {
-              valueAsNumber: true,
-            })}
-            error={errors.pricing?.perSeat}
-            {...changedFieldProps(pricingChanges?.allData, "perSeat")}
           />
           <FormField
             key={`vo-service-${watch("flags.isVoService")}`}
@@ -1566,30 +1649,6 @@ const SpaceEditPage = () => {
               error={errors.pricing?.vo}
             />
           )}
-
-          {/* Terms & Conditions */}
-          <FormSectionTitle>Terms & Conditions</FormSectionTitle>
-          <FormField
-            label="Lock In"
-            labelPosition="embedded"
-            placeholder="e.g. 1 Year / 6 Months"
-            {...registerWithAutoSave("terms.lockIn")}
-            error={errors.terms?.lockIn}
-          />
-          <FormField
-            label="Notice Period"
-            labelPosition="embedded"
-            placeholder="e.g. 3 Months"
-            {...registerWithAutoSave("terms.noticePeriod")}
-            error={errors.terms?.noticePeriod}
-          />
-          <FormField
-            label="Security Deposit"
-            labelPosition="embedded"
-            placeholder="e.g. 3 Months Rent"
-            {...registerWithAutoSave("terms.securityDeposit")}
-            error={errors.terms?.securityDeposit}
-          />
 
           {/* Location Section */}
           <FormSectionTitle>Location Details</FormSectionTitle>
@@ -1741,89 +1800,6 @@ const SpaceEditPage = () => {
                 return { status: "error" };
               }
             }}
-          />
-
-          {/* SECTION: Centre Point of Contact */}
-
-          <FormSectionTitle>Point of Contact Details</FormSectionTitle>
-
-          <div className="flex items-center gap-2 col-span-full">
-            <label className="text-muted-foreground text-sm">
-              Same As Operator
-            </label>
-            <Switch
-              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-              checked={POCSameAsOperator}
-              onCheckedChange={(checked) => {
-                setPOCSameAsOperator(checked);
-                autoSave();
-              }}
-            />
-          </div>
-
-          <FormField
-            label="Name"
-            labelPosition="embedded"
-            placeholder="John Doe"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            {...registerWithAutoSave("person.name")}
-            error={errors?.person?.name}
-            {...changedFieldProps(personChanges?.allData, "name")}
-          />
-
-          <FormField
-            label="Email"
-            labelPosition="embedded"
-            type="email"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            placeholder="john.doe@example.com"
-            {...registerWithAutoSave("person.email")}
-            error={errors?.person?.email}
-            {...changedFieldProps(personChanges?.allData, "email")}
-          />
-
-          <FormField
-            name="person.contactNo"
-            key={`poc-same-${POCSameAsOperator}-${defaultValues?.person?.contactNo}`}
-            label="Telephone"
-            labelPosition="embedded"
-            type="tel"
-            inputMode="tel"
-            inputType="phone"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            defaultValue={defaultValues?.person?.contactNo}
-            value={watch("person.contactNo")}
-            {...changedFieldProps(personChanges?.allData, "contactNo")}
-            placeholder="+1-123-456-7890"
-            onChange={(val) => {
-              console.log("POC contact number:", val);
-              setValue("person.contactNo", val?.toString() || "", {
-                shouldValidate: true,
-              });
-            }}
-            onBlur={() => {
-              if (activeInputHasPressedEnter.current["person.contactNo"]) {
-                autoSave();
-              } else {
-                revertAllFormFields();
-              }
-              activeInputHasPressedEnter.current["person.contactNo"] = false;
-            }}
-            error={errors?.person?.contactNo}
-          />
-
-          <FormField
-            label="Designation"
-            placeholder="Centre Manager"
-            labelPosition="embedded"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            {...registerWithAutoSave("person.role")}
-            error={errors?.person?.role}
-            {...changedFieldProps(personChanges?.allData, "role")}
           />
 
           {/* Submit */}
