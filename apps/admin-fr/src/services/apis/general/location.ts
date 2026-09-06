@@ -1,14 +1,14 @@
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { GENERAL_LOCATION } from "../config";
 import type { GeneralResponseWithError } from "@/types/axios/response";
-import { locationSchema } from "@/utils/schemas/location";
+import { locationSchema } from "@pride-spaces/common/utils/schemas/location.js";
 
 export type MapsURLPosRes = GeneralResponseWithError<
   Partial<{ lat: number; lng: number; url: string; redirectUrl: string }>
 >;
 
 export const getMapsURLPos = APIBodyValidationWrapper({
-  schema: locationSchema.pick({ url: true }).partial(),
+  schema: locationSchema.pick({ url: true }),
   handle: async (param, config) => {
     const res = await GENERAL_LOCATION.post<MapsURLPosRes>(
       "/maps-url/position",

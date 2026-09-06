@@ -10,6 +10,7 @@ import {
   useJsApiLoader,
   Autocomplete,
   type Libraries,
+  Marker,
 } from "@react-google-maps/api";
 import { MapPin, NotebookPenIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -186,7 +187,7 @@ export default function MapsField({
         <>
           <GoogleMap
             id="map-container"
-            center={center}
+            center={coords}
             zoom={zoom || 15}
             onMouseMove={(e) => {
               // console.log({ lat: e.latLng.lat(), lng: e.latLng.lng() });
@@ -218,20 +219,20 @@ export default function MapsField({
               mapProps?.onLoad?.(map);
             }}
           >
-            {/* <Marker
+            <Marker
               position={{
-                lat: map?.getCenter().lat() || coords.lat,
-                lng: map?.getCenter().lng() || coords.lng,
+                lat: coords.lat,
+                lng: coords.lng,
               }}
               onClick={() => {
                 // setDrag(true);
               }}
-            /> */}
-            {map && (
+            />
+            {/* {map && (
               <div className="absolute top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2">
                 <MapPin className="text-primary size-[30px]" />
               </div>
-            )}
+            )} */}
           </GoogleMap>
           {/* <p className="err">{error || ""}</p> */}
           {/* <div className="flex gap-2 justify-end">

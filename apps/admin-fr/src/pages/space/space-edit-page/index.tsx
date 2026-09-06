@@ -452,8 +452,9 @@ const SpaceEditPage = () => {
 
   const { mutateAsync: mapsURLPosMutater, isPending: mapsLoading } =
     useMutation({
-      mutationFn: (param: Parameters<typeof getMapsURLPos>[0]) =>
-        getMapsURLPos(param),
+      mutationFn: (
+        body: (Required<Parameters<typeof getMapsURLPos>[0]> & {})["body"],
+      ) => getMapsURLPos({ body }),
     });
 
   // 2 secs debounced maps url set
@@ -464,7 +465,7 @@ const SpaceEditPage = () => {
         url?.trim() &&
         spaceSchema.shape.location.shape.url.safeParse(url).success
       ) {
-        const res = await mapsURLPosMutater({ url: url });
+        const res = await mapsURLPosMutater({ url });
         const data = res.data?.data;
         if (data.lat && data.lng) {
           setValue("location.lat", data.lat);
