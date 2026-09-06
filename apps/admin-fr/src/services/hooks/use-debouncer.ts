@@ -5,7 +5,7 @@ export function useDebouncer<T>(
   timer = 500,
   onUpdate = (val: T) => {
     val;
-  }
+  },
 ) {
   const [value, setValue] = useState(val);
 

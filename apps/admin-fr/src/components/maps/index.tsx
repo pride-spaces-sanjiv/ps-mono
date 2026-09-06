@@ -178,7 +178,7 @@ export default function MapsField({
     memDefaultCords
       ? setCenter(memDefaultCords)
       : setCenter({ lat: 19.311143355064655, lng: 77.34375000000001 });
-  }, [memDefaultCords]);
+  }, [memDefaultCords?.lat, memDefaultCords?.lng]);
 
   return (
     <div className={cn("", wrapperProps?.className)}>

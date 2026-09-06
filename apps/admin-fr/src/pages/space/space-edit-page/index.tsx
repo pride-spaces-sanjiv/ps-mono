@@ -141,30 +141,30 @@ const SpaceEditPage = () => {
       return !notificationData
         ? {}
         : {
-          mainChanges: compareFields(currentData, notificationData, {
-            excludeFields: [
-              "id",
-              "createdAt",
-              "updatedAt",
-              "references",
-              "location",
-              "person",
-              "pricing",
-            ],
-          }),
-          locationChanges: compareFields(
-            currentData?.location,
-            notificationData?.location,
-          ),
-          personChanges: compareFields(
-            currentData?.person,
-            notificationData?.person,
-          ),
-          pricingChanges: compareFields(
-            currentData?.pricing,
-            notificationData?.pricing,
-          ),
-        };
+            mainChanges: compareFields(currentData, notificationData, {
+              excludeFields: [
+                "id",
+                "createdAt",
+                "updatedAt",
+                "references",
+                "location",
+                "person",
+                "pricing",
+              ],
+            }),
+            locationChanges: compareFields(
+              currentData?.location,
+              notificationData?.location,
+            ),
+            personChanges: compareFields(
+              currentData?.person,
+              notificationData?.person,
+            ),
+            pricingChanges: compareFields(
+              currentData?.pricing,
+              notificationData?.pricing,
+            ),
+          };
     }, [res?.data, locData?.data, fromRoute]);
 
   const allUpdatedData = useMemo(() => {
@@ -172,27 +172,27 @@ const SpaceEditPage = () => {
       ...mainChanges?.allData,
       ...(locationChanges?.allFields.length
         ? {
-          location: {
-            ...res?.data?.data?.location,
-            ...locationChanges?.allData,
-          },
-        }
+            location: {
+              ...res?.data?.data?.location,
+              ...locationChanges?.allData,
+            },
+          }
         : {}),
       ...(personChanges?.allFields.length
         ? {
-          person: {
-            ...res?.data?.data?.person,
-            ...personChanges?.allData,
-          },
-        }
+            person: {
+              ...res?.data?.data?.person,
+              ...personChanges?.allData,
+            },
+          }
         : {}),
       ...(pricingChanges?.allFields.length
         ? {
-          pricing: {
-            ...res?.data?.data?.pricing,
-            ...pricingChanges?.allData,
-          },
-        }
+            pricing: {
+              ...res?.data?.data?.pricing,
+              ...pricingChanges?.allData,
+            },
+          }
         : {}),
     };
   }, [
@@ -365,10 +365,10 @@ const SpaceEditPage = () => {
             modified?.timing?.closingDay ||
             (modified?.timing?.openDays?.length
               ? days[
-              modified.timing.openDays[
-              modified.timing.openDays.length - 1
-              ] - 1
-              ]
+                  modified.timing.openDays[
+                    modified.timing.openDays.length - 1
+                  ] - 1
+                ]
               : "Saturday"),
         },
 
@@ -380,11 +380,11 @@ const SpaceEditPage = () => {
               : modified?.flags?.isOc === false
                 ? "NON OC"
                 : typeof modified?.flags?.isOc === "string" &&
-                  (modified?.flags?.isOc?.toUpperCase() === "NON OC" ||
-                    modified?.flags?.isOc?.toUpperCase() === "NON-OC")
+                    (modified?.flags?.isOc?.toUpperCase() === "NON OC" ||
+                      modified?.flags?.isOc?.toUpperCase() === "NON-OC")
                   ? "NON OC"
                   : typeof modified?.flags?.isOc === "string" &&
-                    modified?.flags?.isOc?.toUpperCase() === "OC"
+                      modified?.flags?.isOc?.toUpperCase() === "OC"
                     ? "OC"
                     : modified?.flags?.isOc || "!",
           isSez:
@@ -393,11 +393,11 @@ const SpaceEditPage = () => {
               : modified?.flags?.isSez === false
                 ? "NON SEZ"
                 : typeof modified?.flags?.isSez === "string" &&
-                  (modified?.flags?.isSez?.toUpperCase() === "NON SEZ" ||
-                    modified?.flags?.isSez?.toUpperCase() === "NON-SEZ")
+                    (modified?.flags?.isSez?.toUpperCase() === "NON SEZ" ||
+                      modified?.flags?.isSez?.toUpperCase() === "NON-SEZ")
                   ? "NON SEZ"
                   : typeof modified?.flags?.isSez === "string" &&
-                    modified?.flags?.isSez?.toUpperCase() === "SEZ"
+                      modified?.flags?.isSez?.toUpperCase() === "SEZ"
                     ? "SEZ"
                     : modified?.flags?.isSez || "!",
           isVoService:
@@ -459,6 +459,7 @@ const SpaceEditPage = () => {
   // 2 secs debounced maps url set
   useDebouncer(watch("location.url"), 2000, async (url) => {
     try {
+      console.log("Location url debounced :", url);
       if (
         url?.trim() &&
         spaceSchema.shape.location.shape.url.safeParse(url).success
@@ -470,7 +471,9 @@ const SpaceEditPage = () => {
           setValue("location.lng", data.lng);
         }
       }
-    } catch (err) { }
+    } catch (err) {
+      console.error("Error location url debouncer :", err);
+    }
   });
 
   const activeInputHasPressedEnter = useRef<Record<string, boolean>>({});
@@ -497,10 +500,10 @@ const SpaceEditPage = () => {
             modified?.timing?.closingDay ||
             (modified?.timing?.openDays?.length
               ? days[
-              modified.timing.openDays[
-              modified.timing.openDays.length - 1
-              ] - 1
-              ]
+                  modified.timing.openDays[
+                    modified.timing.openDays.length - 1
+                  ] - 1
+                ]
               : "Saturday"),
         },
         flags: {
@@ -511,11 +514,11 @@ const SpaceEditPage = () => {
               : modified?.flags?.isOc === false
                 ? "NON OC"
                 : typeof modified?.flags?.isOc === "string" &&
-                  (modified?.flags?.isOc?.toUpperCase() === "NON OC" ||
-                    modified?.flags?.isOc?.toUpperCase() === "NON-OC")
+                    (modified?.flags?.isOc?.toUpperCase() === "NON OC" ||
+                      modified?.flags?.isOc?.toUpperCase() === "NON-OC")
                   ? "NON OC"
                   : typeof modified?.flags?.isOc === "string" &&
-                    modified?.flags?.isOc?.toUpperCase() === "OC"
+                      modified?.flags?.isOc?.toUpperCase() === "OC"
                     ? "OC"
                     : modified?.flags?.isOc || "!",
           isSez:
@@ -524,11 +527,11 @@ const SpaceEditPage = () => {
               : modified?.flags?.isSez === false
                 ? "NON SEZ"
                 : typeof modified?.flags?.isSez === "string" &&
-                  (modified?.flags?.isSez?.toUpperCase() === "NON SEZ" ||
-                    modified?.flags?.isSez?.toUpperCase() === "NON-SEZ")
+                    (modified?.flags?.isSez?.toUpperCase() === "NON SEZ" ||
+                      modified?.flags?.isSez?.toUpperCase() === "NON-SEZ")
                   ? "NON SEZ"
                   : typeof modified?.flags?.isSez === "string" &&
-                    modified?.flags?.isSez?.toUpperCase() === "SEZ"
+                      modified?.flags?.isSez?.toUpperCase() === "SEZ"
                     ? "SEZ"
                     : modified?.flags?.isSez || "!",
           isVoService:
@@ -546,6 +549,7 @@ const SpaceEditPage = () => {
   };
 
   const autoSave = async () => {
+    return;
     handleSubmit(async (data) => {
       try {
         console.log("Auto-saving space...", data);
@@ -1146,14 +1150,15 @@ const SpaceEditPage = () => {
           <FormField
             label="Occupancy (%)"
             labelPosition="embedded"
-            value={`${(watch("seats.total") || 0) > 0
-              ? (
-                ((watch("seats.booked") || 0) /
-                  (watch("seats.total") || 1)) *
-                100
-              ).toFixed(2)
-              : "0.00"
-              }%`}
+            value={`${
+              (watch("seats.total") || 0) > 0
+                ? (
+                    ((watch("seats.booked") || 0) /
+                      (watch("seats.total") || 1)) *
+                    100
+                  ).toFixed(2)
+                : "0.00"
+            }%`}
             readOnly
             disabled
           />
@@ -1214,8 +1219,6 @@ const SpaceEditPage = () => {
               }}
             />
           </FormField>
-
-
 
           {/* Operational Since (year) */}
           <FormField
@@ -1711,7 +1714,12 @@ const SpaceEditPage = () => {
                 label="Location URL"
                 labelPosition="embedded"
                 placeholder="https://maps.app.goo.gl/..."
-                {...register("location.url")}
+                // {...register("location.url")}
+                defaultValue={defaultValues?.location?.url || undefined}
+                onChange={(e) => {
+                  const val = e.currentTarget.value;
+                  setValue("location.url", val, { shouldValidate: true });
+                }}
                 error={errors.location?.url}
                 {...changedFieldProps(locationChanges?.allData, "url")}
               />
@@ -1770,34 +1778,34 @@ const SpaceEditPage = () => {
               defaultCoords={
                 (!!watch("location.lat") &&
                   !!watch("location.lng") && {
-                  lat: watch("location.lat"),
-                  lng: watch("location.lng"),
-                }) ||
+                    lat: watch("location.lat"),
+                    lng: watch("location.lng"),
+                  }) ||
                 undefined
               }
-            // onGeocodeLatLng={(res, coords) => {
-            //   console.log(res);
-            //   const oldData = watch("location");
-            //   const data: SpaceSchema["location"] = {
-            //     address: res.address || oldData.address,
-            //     city: res.city || oldData.city,
-            //     state: res.state || oldData.state,
-            //     postalCode: res.postalCode || oldData.postalCode,
-            //     country: res.country || oldData.country,
-            //     area: res.area || oldData.area,
-            //     lat: coords.lat || oldData.lat,
-            //     lng: coords.lng || oldData.lng,
-            //   };
-            //   setValue("location", data, { shouldValidate: true });
-            //   autoSave();
-            // }}
-            // onLatLngFromURL={(stats) => {
-            //   // console.log("Stats from maps url to pos :", stats);
-            //   setValue("location.lat", stats.lat);
-            //   setValue("location.lng", stats.lng);
-            //   setValue("location.url", stats.url, { shouldValidate: true });
-            //   autoSave();
-            // }}
+              // onGeocodeLatLng={(res, coords) => {
+              //   console.log(res);
+              //   const oldData = watch("location");
+              //   const data: SpaceSchema["location"] = {
+              //     address: res.address || oldData.address,
+              //     city: res.city || oldData.city,
+              //     state: res.state || oldData.state,
+              //     postalCode: res.postalCode || oldData.postalCode,
+              //     country: res.country || oldData.country,
+              //     area: res.area || oldData.area,
+              //     lat: coords.lat || oldData.lat,
+              //     lng: coords.lng || oldData.lng,
+              //   };
+              //   setValue("location", data, { shouldValidate: true });
+              //   autoSave();
+              // }}
+              // onLatLngFromURL={(stats) => {
+              //   // console.log("Stats from maps url to pos :", stats);
+              //   setValue("location.lat", stats.lat);
+              //   setValue("location.lng", stats.lng);
+              //   setValue("location.url", stats.url, { shouldValidate: true });
+              //   autoSave();
+              // }}
             />
           </div>
 
