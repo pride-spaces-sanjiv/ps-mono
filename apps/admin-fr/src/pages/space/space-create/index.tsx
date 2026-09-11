@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,11 +38,21 @@ import { SelectPicker } from "@/components/select";
 import { GroupedSearchSelect } from "@/components/search-select";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import type { Operator } from "@/types/data/operators";
 import { validateNumber } from "@/utils/number";
 import { getOperators } from "@/services/apis/admin/operators";
+import { useDebouncer } from "@/services/hooks/use-debouncer";
+import { getMapsURLPos } from "@/services/apis/general/location";
+import { uploadImageFile, uploadLayoutFile } from "@/services/apis/admin/file";
+import type { UploadedFile } from "@/components/form/file-upload";
+import {
+  mediaTypes,
+  type MediaType,
+} from "@pride-spaces/common/utils/data/media.js";
+import SpaceImagesUploadSection from "@/containers/space/section/image-upload";
+import SpaceLayoutsUploadSection from "@/containers/space/section/layout-upload";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -66,6 +76,8 @@ const SpaceCreatePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userLevel, userData } = useUser();
+
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   const isOperatorPortal = userLevel === "operator";
   const loggedInOperator = isOperatorPortal
@@ -117,8 +129,6 @@ const SpaceCreatePage = () => {
     defaultValues: {
       timing: {
         openDays: days.map((_, i) => i + 1).filter((_, i) => i < 6),
-        openingDay: "Monday",
-        closingDay: "Saturday",
         openTime: defaultTime,
         closeTime: defaultTime,
         operationalSince: undefined,
@@ -220,11 +230,11 @@ const SpaceCreatePage = () => {
 
       slug: operatorData?.slug
         ? generateSlug(
-          operatorData.slug,
-          validateNumber(operatorData.totalSpaces, {
-            invalidValue: -1,
-          }) + 1,
-        )
+            operatorData.slug,
+            validateNumber(operatorData.totalSpaces, {
+              invalidValue: -1,
+            }) + 1,
+          )
         : defaultValues?.slug,
 
       person: {
@@ -232,8 +242,6 @@ const SpaceCreatePage = () => {
       },
     });
   }, [POCSameAsOperator, operatorData]);
-
-
 
   const createSpaceApi = isOperatorPortal
     ? createOperatorSpace
@@ -243,6 +251,72 @@ const SpaceCreatePage = () => {
   const { mutateAsync, isPending: createLoading } = useMutation({
     mutationFn: createSpaceApi,
   });
+
+  const { mutateAsync: mapsURLPosMutater, isPending: mapsLoading } =
+    useMutation({
+      mutationFn: (
+        body: (Required<Parameters<typeof getMapsURLPos>[0]> & {})["body"],
+      ) => getMapsURLPos({ body }),
+    });
+
+  // 2 secs debounced maps url set
+  useDebouncer(watch("location.url"), 2000, async (url) => {
+    try {
+      console.log("Location url debounced :", url);
+      if (
+        url?.trim() &&
+        spaceSchema.shape.location.shape.url.safeParse(url).success
+      ) {
+        const res = await mapsURLPosMutater({ url });
+        const data = res.data?.data;
+        if (data.lat && data.lng) {
+          setValue("location.lat", data.lat);
+          setValue("location.lng", data.lng);
+        }
+      }
+    } catch (err) {
+      console.error("Error location url debouncer :", err);
+    }
+  });
+
+  // File Upload
+  const handleFileUpload = async (
+    file: UploadedFile,
+    fileType = "image" as MediaType,
+  ) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file.file);
+      formData.append("name", file.file.name);
+      formData.append("id", file.id);
+      formData.append("contentType", file.file.type);
+      formData.append("fileType", fileType);
+      const res = await (fileType === "image"
+        ? uploadImageFile({ body: formData })
+        : uploadLayoutFile({ body: formData }));
+      if (res.status === 201 && res?.data?.data?.files) {
+        const resFile = res.data?.data?.files[0];
+        const oldAllFiles = watch("files", {});
+        const currentFiles = new Set([
+          ...(oldAllFiles?.[`${fileType}s` as keyof typeof oldAllFiles] || []),
+          resFile.filename,
+        ]);
+        setValue("files", {
+          ...oldAllFiles,
+          [`${fileType}s`]: Array.from(currentFiles),
+        });
+        toast.success(
+          `File uploaded successfully: ${fileType} ${file.file.name}`,
+        );
+        return res;
+      }
+      throw new Error("Invalid response");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast.error(`Failed to upload ${fileType} : ${file.file.name}`);
+      throw error;
+    }
+  };
 
   const onSubmit = async (body: SpaceSchema) => {
     try {
@@ -266,7 +340,7 @@ const SpaceCreatePage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl pt-3 mx-auto sticky top-0 bg-background z-50">
         {isOperatorPortal && (
           <ActionButton
             type="button"
@@ -278,15 +352,59 @@ const SpaceCreatePage = () => {
             Back to Portal
           </ActionButton>
         )}
-        <div className="flex justify-between items-center my-4">
-          <h1 className="text-2xl font-bold  w-full">
+        <div className="flex justify-between items-center my-4 gap-3">
+          <h1 className="text-2xl font-bold">
             Add Centre: {watch("name", "")}
           </h1>
+
+          {/* Toggles */}
+          <div className="flex gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-muted-foreground text-sm">Active</label>
+              <Switch
+                key={watch("flags.isActive") ? "active" : "inactive"}
+                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
+                checked={!!watch("flags.isActive")}
+                onCheckedChange={(checked) => {
+                  setValue("flags.isActive", checked, { shouldValidate: true });
+                }}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-muted-foreground text-sm">Verified</label>
+              <Switch
+                key={watch("flags.isVerified") ? "verified" : "unverified"}
+                checked={!!watch("flags.isVerified")}
+                onCheckedChange={(checked) => {
+                  setValue("flags.isVerified", checked, {
+                    shouldValidate: true,
+                  });
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Submit */}
+
+          <ActionButton
+            className="justify-end"
+            loading={createLoading}
+            onClick={() => {
+              formRef?.current?.requestSubmit?.();
+            }}
+          >
+            <div className="flex items-center gap-2">
+              Save Changes <Save />
+            </div>
+          </ActionButton>
         </div>
+        <div className="flex-1 pt-4 border-b border-muted-foreground/20"></div>
       </div>
 
       <div className="w-full max-w-4xl mx-auto py-8">
         <form
+          ref={formRef}
           onSubmit={handleSubmit(onSubmit, (errors) => {
             console.log("Space edit form error", errors);
           })}
@@ -487,152 +605,73 @@ const SpaceCreatePage = () => {
           <FormField
             label="Occupancy (%)"
             labelPosition="embedded"
-            value={`${(watch("seats.total") || 0) > 0
-              ? (
-                ((watch("seats.booked") || 0) /
-                  (watch("seats.total") || 1)) *
-                100
-              ).toFixed(2)
-              : "0.00"
-              }%`}
+            value={`${
+              (watch("seats.total") || 0) > 0
+                ? (
+                    ((watch("seats.booked") || 0) /
+                      (watch("seats.total") || 1)) *
+                    100
+                  ).toFixed(2)
+                : "0.00"
+            }%`}
             readOnly
             disabled
           />
-          {/* Opening Day */}
-          <FormField
-            key={`opening-day-${watch("timing.openingDay")}`}
-            label="Opening Day"
-            labelPosition="embedded"
-            inputType="select"
-            items={days.map((d) => ({ label: d, value: d }))}
-            error={errors.timing?.openingDay}
-            pickerProps={{
-              wrapperProps: {
-                defaultValue: watch("timing.openingDay") || "Monday",
-                onValueChange: (val) => {
-                  setValue("timing.openingDay", val, {
-                    shouldValidate: true,
-                  });
-                  const closeVal = watch("timing.closingDay") || "Saturday";
-                  const startIdx = days.indexOf(val as (typeof days)[number]);
-                  const endIdx = days.indexOf(
-                    closeVal as (typeof days)[number],
-                  );
-                  if (startIdx !== -1 && endIdx !== -1) {
-                    const range: number[] = [];
-                    if (startIdx <= endIdx) {
-                      for (let i = startIdx; i <= endIdx; i++)
-                        range.push(i + 1);
-                    } else {
-                      for (let i = startIdx; i < days.length; i++)
-                        range.push(i + 1);
-                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
-                    }
-                    setValue("timing.openDays", range, {
-                      shouldValidate: true,
-                    });
-                  }
-                },
-              },
-            }}
-          />
-
-          {/* Closing Day */}
-          <FormField
-            key={`closing-day-${watch("timing.closingDay")}`}
-            label="Closing Day"
-            labelPosition="embedded"
-            inputType="select"
-            items={days.map((d) => ({ label: d, value: d }))}
-            error={errors.timing?.closingDay}
-            pickerProps={{
-              wrapperProps: {
-                defaultValue: watch("timing.closingDay") || "Saturday",
-                onValueChange: (val) => {
-                  setValue("timing.closingDay", val, {
-                    shouldValidate: true,
-                  });
-                  const openVal = watch("timing.openingDay") || "Monday";
-                  const startIdx = days.indexOf(
-                    openVal as (typeof days)[number],
-                  );
-                  const endIdx = days.indexOf(val as (typeof days)[number]);
-                  if (startIdx !== -1 && endIdx !== -1) {
-                    const range: number[] = [];
-                    if (startIdx <= endIdx) {
-                      for (let i = startIdx; i <= endIdx; i++)
-                        range.push(i + 1);
-                    } else {
-                      for (let i = startIdx; i < days.length; i++)
-                        range.push(i + 1);
-                      for (let i = 0; i <= endIdx; i++) range.push(i + 1);
-                    }
-                    setValue("timing.openDays", range, {
-                      shouldValidate: true,
-                    });
-                  }
-                },
-              },
-            }}
-          />
 
           {/* Open Days */}
-          {watch("specs.spaceType", "Flex") !== "MOS" && (
-            <FormField
-              label="Operational Days"
-              labelPosition="embedded"
-              error={{
-                message: errors.timing?.openDays?.message,
-                type: errors.timing?.openDays?.type || "validate",
+
+          <FormField
+            label="Operational Days"
+            labelPosition="embedded"
+            error={{
+              message: errors.timing?.openDays?.message,
+              type: errors.timing?.openDays?.type || "validate",
+            }}
+          >
+            <GroupedSearchSelect
+              key={`days-${defaultValues?.timing?.openDays?.length}`}
+              type="multiple"
+              showSearch={false}
+              defaultSelected={
+                defaultValues?.timing?.openDays ||
+                days.map((_, i) => i + 1).filter((_, i) => i < 7)
+              }
+              items={days.map((dt, i) => ({
+                label: dt,
+                value: i + 1,
+              }))}
+              triggerProps={{
+                children: (
+                  <ActionButton
+                    type="button"
+                    variant="outline"
+                    className="min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
+                  >
+                    {watch("timing.openDays", []).length > 0 ? (
+                      <ChippedElements
+                        elements={watch("timing.openDays", [])
+                          .sort((a, b) => a - b)
+                          .map((s) => shortDays[s - 1])
+                          .filter(Boolean)}
+                      />
+                    ) : (
+                      "Select Days"
+                    )}
+                  </ActionButton>
+                ),
               }}
-            >
-              <GroupedSearchSelect
-                key={`days-${defaultValues?.timing?.openDays?.length}`}
-                type="multiple"
-                showSearch={false}
-                defaultSelected={
-                  defaultValues?.timing?.openDays ||
-                  days.map((_, i) => i + 1).filter((_, i) => i < 7)
-                }
-                items={days.map((dt, i) => ({
-                  label: dt,
-                  value: i + 1,
-                }))}
-                triggerProps={{
-                  children: (
-                    <ActionButton
-                      type="button"
-                      variant="outline"
-                      className="min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
-                    >
-                      {watch("timing.openDays", []).length > 0 ? (
-                        <ChippedElements
-                          elements={watch("timing.openDays", [])
-                            .sort((a, b) => a - b)
-                            .map((s) => shortDays[s - 1])
-                            .filter(Boolean)}
-                        />
-                      ) : (
-                        "Select Days"
-                      )}
-                    </ActionButton>
-                  ),
-                }}
-                contentProps={{ className: "max-h-[300px]" }}
-                onSelect={(items) => {
-                  setValue(
-                    "timing.openDays",
-                    items.filter(
-                      (val): val is number => typeof val === "number",
-                    ),
-                    {
-                      shouldValidate: true,
-                    },
-                  );
-                }}
-              />
-            </FormField>
-          )}
+              contentProps={{ className: "max-h-[300px]" }}
+              onSelect={(items) => {
+                setValue(
+                  "timing.openDays",
+                  items.filter((val): val is number => typeof val === "number"),
+                  {
+                    shouldValidate: true,
+                  },
+                );
+              }}
+            />
+          </FormField>
 
           {/* Working Sizes */}
           <FormField
@@ -687,8 +726,6 @@ const SpaceCreatePage = () => {
               }}
             />
           </FormField>
-
-
 
           {/* Operational Since (year) */}
           <FormField
@@ -1129,143 +1166,126 @@ const SpaceCreatePage = () => {
           {/* Location */}
           <FormSectionTitle>Location Details</FormSectionTitle>
 
-          <FormField
-            label="Location URL"
-            labelPosition="embedded"
-            placeholder="https://maps.app.goo.gl/..."
-            {...register("location.url")}
-            error={errors.location?.url}
-          />
+          <div className="flex gap-2 w-full col-span-full">
+            {/* Details */}
+            <div className="flex flex-col gap-2 w-full">
+              <FormField
+                label="Country"
+                labelPosition="embedded"
+                placeholder="India"
+                {...register("location.country")}
+                error={errors.location?.country}
+              />
 
-          <FormField
-            label="City"
-            labelPosition="embedded"
-            placeholder="Mumbai"
-            {...register("location.city")}
-            error={errors.location?.city}
-          />
+              <FormField
+                label="Location URL"
+                labelPosition="embedded"
+                placeholder="https://maps.app.goo.gl/..."
+                // {...register("location.url")}
+                defaultValue={defaultValues?.location?.url || undefined}
+                onChange={(e) => {
+                  const val = e.currentTarget.value;
+                  setValue("location.url", val, { shouldValidate: true });
+                }}
+                error={errors.location?.url}
+              />
 
-          <FormField
-            label="State"
-            labelPosition="embedded"
-            placeholder="Maharashtra"
-            {...register("location.state")}
-            error={errors.location?.state}
-          />
+              <FormField
+                label="State"
+                labelPosition="embedded"
+                placeholder="Maharashtra"
+                {...register("location.state")}
+                error={errors.location?.state}
+              />
+              <FormField
+                label="City"
+                labelPosition="embedded"
+                placeholder="Mumbai"
+                {...register("location.city")}
+                error={errors.location?.city}
+              />
 
-          <FormField
-            label="Country"
-            labelPosition="embedded"
-            placeholder="India"
-            {...register("location.country")}
-            error={errors.location?.country}
-          />
+              <FormField
+                label="Area - Micro Market"
+                labelPosition="embedded"
+                placeholder="Panvel"
+                {...register("location.area")}
+                error={errors.location?.area}
+              />
 
-          <FormField
-            label="Area - Micro Market"
-            labelPosition="embedded"
-            placeholder="Panvel"
-            {...register("location.area")}
-            error={errors.location?.area}
-          />
+              <FormField
+                label="Zip Code"
+                labelPosition="embedded"
+                placeholder="349203"
+                {...register("location.postalCode")}
+                error={errors.location?.postalCode}
+              />
 
-          <FormField
-            label="Zip Code"
-            labelPosition="embedded"
-            placeholder="349203"
-            {...register("location.postalCode")}
-            error={errors.location?.postalCode}
-          />
+              <FormField
+                label="Address"
+                labelPosition="embedded"
+                inputType="textarea"
+                {...register("location.address")}
+                error={errors.location?.address}
+              />
+            </div>
+            {/* Maps Preview */}
+            <MapsField
+              wrapperProps={{
+                className: "flex flex-col gap-4 w-[300px] shrink-0",
+              }}
+              mapProps={{ mapContainerClassName: "min-h-[200px] w-full" }}
+              buttonProps={{ className: "w-fit" }}
+              defaultCoords={
+                (!!watch("location.lat") &&
+                  !!watch("location.lng") && {
+                    lat: watch("location.lat"),
+                    lng: watch("location.lng"),
+                  }) ||
+                undefined
+              }
+            />
+          </div>
 
-          <FormField
-            label="Latitude"
-            labelPosition="embedded"
-            type="number"
-            step="any"
-            {...register("location.lat", { valueAsNumber: true })}
-            error={errors.location?.lat}
-          />
-
-          <FormField
-            label="Longitude"
-            labelPosition="embedded"
-            type="number"
-            step="any"
-            {...register("location.lng", { valueAsNumber: true })}
-            error={errors.location?.lng}
-          />
-
-          {/* Maps */}
-          <MapsField
-            wrapperProps={{ className: "col-span-full flex flex-col gap-4" }}
-            mapProps={{ mapContainerClassName: "min-h-[300px] w-full" }}
-            buttonProps={{ className: "w-fit" }}
-            onGeocodeLatLng={(res, coords) => {
-              const oldData = watch("location");
-
-              const data: SpaceSchema["location"] = {
-                address: res.address || oldData.address,
-                city: res.city || oldData.city,
-                state: res.state || oldData.state,
-                postalCode: res.postalCode || oldData.postalCode,
-                country: res.country || oldData.country,
-                area: res.area || oldData.area,
-                lat: coords.lat || oldData.lat,
-                lng: coords.lng || oldData.lng,
-              };
-
-              setValue("location", data, {
-                shouldValidate: true,
-              });
+          {/* Images */}
+          <SpaceImagesUploadSection
+            existingFiles={defaultValues?.files?.images?.filter(
+              (s) => typeof s === "string",
+            )}
+            processUpload={async (file, setter) => {
+              try {
+                const fileRes = await handleFileUpload(file, mediaTypes.IMAGE);
+                if (!fileRes) {
+                  throw new Error("Incomplete");
+                }
+                return {
+                  status: "completed",
+                };
+              } catch (err) {
+                return { status: "error" };
+              }
             }}
           />
 
-          <FormField
-            label="Address"
-            labelPosition="embedded"
-            inputType="textarea"
-            {...register("location.address")}
-            error={errors.location?.address}
-          />
-
-          {/* Status */}
-
-          <div className="col-span-full flex gap-8 flex-wrap">
-            <div className="flex items-center gap-4">
-              <label className="text-muted-foreground text-sm">Active</label>
-              <Switch
-                key={defaultValues?.flags?.isActive ? "active" : "inactive"}
-                className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-                defaultChecked={!!defaultValues?.flags?.isActive}
-                {...register("flags.isActive")}
-              />
-            </div>
-
-            <div className="flex items-center gap-4">
-              <label className="text-muted-foreground text-sm">Verified</label>
-              <Switch
-                key={
-                  defaultValues?.flags?.isVerified ? "verified" : "unverified"
+          {/* Layouts */}
+          <SpaceLayoutsUploadSection
+            existingFiles={defaultValues?.files?.layouts?.filter(
+              (s) => typeof s === "string",
+            )}
+            processUpload={async (file, setter) => {
+              try {
+                const fileRes = await handleFileUpload(file, mediaTypes.LAYOUT);
+                if (!fileRes) {
+                  throw new Error("Incomplete");
                 }
-                defaultChecked={!!defaultValues?.flags?.isVerified}
-                {...register("flags.isVerified")}
-              />
-            </div>
-
-
-          </div>
-
-          {/* Submit */}
-
-          <div className="col-span-full flex justify-end">
-            <ActionButton
-              type="submit"
-              loading={createLoading}
-              className="max-w-fit"
-            >
-              Create Centre
-            </ActionButton>
-          </div>
+                return {
+                  status: "completed",
+                };
+              } catch (err) {
+                return { status: "error" };
+              }
+            }}
+          />
         </form>
       </div>
     </div>
