@@ -469,10 +469,6 @@ const SpaceCreatePage = () => {
                   setValue("operator", selectedOperator?.id || "", {
                     shouldValidate: true,
                   });
-
-                  setValue("branch", primaryBranch?.id || "", {
-                    shouldValidate: true,
-                  });
                 }}
               />
             )}
