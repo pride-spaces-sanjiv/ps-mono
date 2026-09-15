@@ -1772,7 +1772,7 @@ const SpaceEditPage = () => {
               />
 
               <FormField
-                key={`states-${statesData.length}-def-${defaultValues?.location?.state}`}
+                key={`states-${statesData.length}-def-${defaultValues?.location?.state}-op-${operatorData?.slug}`}
                 label="State"
                 labelPosition="embedded"
                 error={errors?.location?.state}
@@ -1781,17 +1781,27 @@ const SpaceEditPage = () => {
                 <GroupedSearchSelect
                   type="single"
                   defaultSelected={{
-                    value: statesData?.find(
-                      (state) => state.name === defaultValues?.location?.state,
-                    )?.name,
+                    value:
+                      statesData?.find(
+                        (state) =>
+                          state.name === defaultValues?.location?.state,
+                      )?.name ||
+                      operatorData?.branches?.find((br) => br.isPrimary)?.name,
                   }}
-                  items={statesData.map((state) => ({
-                    label: state.name,
-                    value: state.name,
-                    searchValue: [state.name, state.code]
-                      .filter(Boolean)
-                      .join(" "),
-                  }))}
+                  items={statesData
+                    .filter((state) =>
+                      operatorData?.branches
+                        ?.map((br) => br.code)
+                        .includes(state.code as string),
+                    )
+                    .map((state) => ({
+                      label: state.name,
+                      value: state.name,
+                      searchValue: [state.name, state.code]
+                        .filter(Boolean)
+                        .join(" "),
+                    }))}
+                  inputProps={{ placeholder: "Select State" }}
                   triggerProps={{
                     children: (
                       <ActionButton type="button" variant="outline">
@@ -1800,20 +1810,56 @@ const SpaceEditPage = () => {
                     ),
                   }}
                   onSelect={(item) => {
-                    setValue("location.state", item.value || "", {
+                    setValue("location.state", item?.value || "", {
                       shouldValidate: true,
                     });
                   }}
                 />
               </FormField>
+
               <FormField
+                key={`state-${watch("location.state", "")}-cities-${citiesData.length}-def-${defaultValues?.location?.city}-op-${operatorData?.slug}`}
                 label="City"
                 labelPosition="embedded"
                 placeholder="Mumbai"
-                {...register("location.city")}
                 error={errors.location?.city}
                 {...changedFieldProps(locationChanges?.allData, "city")}
-              />
+              >
+                <GroupedSearchSelect
+                  type="single"
+                  defaultSelected={{
+                    value: citiesData?.find(
+                      (city) => city.name === defaultValues?.location?.city,
+                    )?.name,
+                  }}
+                  items={citiesData
+                    .filter(
+                      (city) =>
+                        city.state ===
+                        statesData.find(
+                          (s) => s.name === watch("location.state", ""),
+                        )?.code,
+                    )
+                    .map((city) => ({
+                      label: city.name,
+                      value: city.name,
+                      searchValue: city.name,
+                    }))}
+                  inputProps={{ placeholder: "Select City" }}
+                  triggerProps={{
+                    children: (
+                      <ActionButton type="button" variant="outline">
+                        {watch("location.city", "") || "Select City"}
+                      </ActionButton>
+                    ),
+                  }}
+                  onSelect={(item) => {
+                    setValue("location.city", item?.value || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              </FormField>
 
               <FormField
                 label="Area - Micro Market"
