@@ -31,7 +31,7 @@ type Props<T extends any, M extends SelectMode = "single"> = {
   items: Item<T>[];
   groups: { label?: React.ReactNode; value: string }[];
   defaultSelected: M extends "multiple" ? T[] : Item<T>;
-  onSelect: (item: M extends "multiple" ? T[] : Item<T>) => any;
+  onSelect: (item: M extends "multiple" ? T[] : Item<T> | undefined) => any;
   renderItem?: (item: Item<T>) => React.ReactNode;
   labelProps: React.ComponentProps<typeof DropdownMenuLabel>;
   groupLabelProps: React.ComponentProps<typeof DropdownMenuLabel>;
@@ -174,7 +174,9 @@ export function GroupedSearchSelect<
                             ? selected.includes(item.value)
                               ? selected.filter((v) => v !== item.value)
                               : [...selected, item.value]
-                            : item,
+                            : selected?.[0] === item.value
+                              ? undefined
+                              : item,
                         );
                         itemProps?.onSelect?.(e);
                         setSelected((prev) =>
@@ -182,7 +184,9 @@ export function GroupedSearchSelect<
                             ? prev.includes(item.value)
                               ? prev.filter((v) => v !== item.value)
                               : [...prev, item.value]
-                            : [item.value],
+                            : selected?.[0] === item.value
+                              ? []
+                              : [item.value],
                         );
                       }}
                     >
