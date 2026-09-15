@@ -68,6 +68,7 @@ import SpaceImagesUploadSection from "@/containers/space/section/image-upload";
 import SpaceLayoutsUploadSection from "@/containers/space/section/layout-upload";
 import { useDebouncer } from "@/services/hooks/use-debouncer";
 import { cn } from "@/utils/className";
+import { useStatesCities } from "@/services/hooks/use-states-cities";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -118,6 +119,7 @@ const SpaceEditPage = () => {
   const homeRoute = isOperatorPortal ? "/partner" : "/spaces";
 
   const { amenitiesData } = useAmenities();
+  const { groupedCities, citiesData, statesData } = useStatesCities();
 
   // Fetch Data using Centre ID
   const {
@@ -907,11 +909,17 @@ const SpaceEditPage = () => {
                   );
                   if (val === "MOS") {
                     setValue("pricing.dayPass", 0, { shouldValidate: true });
-                    setValue("pricing.meetingRoom", 0, { shouldValidate: true });
-                    setValue("pricing.dedicatedDesk", 0, { shouldValidate: true });
+                    setValue("pricing.meetingRoom", 0, {
+                      shouldValidate: true,
+                    });
+                    setValue("pricing.dedicatedDesk", 0, {
+                      shouldValidate: true,
+                    });
                     setValue("pricing.flexiDesk", 0, { shouldValidate: true });
                     setValue("pricing.vo", 0, { shouldValidate: true });
-                    setValue("flags.isVoService", false, { shouldValidate: true });
+                    setValue("flags.isVoService", false, {
+                      shouldValidate: true,
+                    });
                   }
                   autoSave();
                 },
@@ -1725,7 +1733,9 @@ const SpaceEditPage = () => {
                   inputMode="decimal"
                   min={0}
                   max={99999}
-                  {...registerWithAutoSave("pricing.vo", { valueAsNumber: true })}
+                  {...registerWithAutoSave("pricing.vo", {
+                    valueAsNumber: true,
+                  })}
                   error={errors.pricing?.vo}
                 />
               )}
@@ -1762,13 +1772,40 @@ const SpaceEditPage = () => {
               />
 
               <FormField
+                key={`states-${statesData.length}-def-${defaultValues?.location?.state}`}
                 label="State"
                 labelPosition="embedded"
-                placeholder="Maharashtra"
-                {...register("location.state")}
-                error={errors.location?.state}
+                error={errors?.location?.state}
                 {...changedFieldProps(locationChanges?.allData, "state")}
-              />
+              >
+                <GroupedSearchSelect
+                  type="single"
+                  defaultSelected={{
+                    value: statesData?.find(
+                      (state) => state.name === defaultValues?.location?.state,
+                    )?.name,
+                  }}
+                  items={statesData.map((state) => ({
+                    label: state.name,
+                    value: state.name,
+                    searchValue: [state.name, state.code]
+                      .filter(Boolean)
+                      .join(" "),
+                  }))}
+                  triggerProps={{
+                    children: (
+                      <ActionButton type="button" variant="outline">
+                        {watch("location.state", "") || "Select State"}
+                      </ActionButton>
+                    ),
+                  }}
+                  onSelect={(item) => {
+                    setValue("location.state", item.value || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              </FormField>
               <FormField
                 label="City"
                 labelPosition="embedded"

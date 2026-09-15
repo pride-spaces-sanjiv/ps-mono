@@ -542,11 +542,17 @@ const SpaceCreatePage = () => {
                   );
                   if (val === "MOS") {
                     setValue("pricing.dayPass", 0, { shouldValidate: true });
-                    setValue("pricing.meetingRoom", 0, { shouldValidate: true });
-                    setValue("pricing.dedicatedDesk", 0, { shouldValidate: true });
+                    setValue("pricing.meetingRoom", 0, {
+                      shouldValidate: true,
+                    });
+                    setValue("pricing.dedicatedDesk", 0, {
+                      shouldValidate: true,
+                    });
                     setValue("pricing.flexiDesk", 0, { shouldValidate: true });
                     setValue("pricing.vo", 0, { shouldValidate: true });
-                    setValue("flags.isVoService", false, { shouldValidate: true });
+                    setValue("flags.isVoService", false, {
+                      shouldValidate: true,
+                    });
                   }
                 },
               },
