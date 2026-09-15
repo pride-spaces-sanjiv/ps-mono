@@ -640,7 +640,7 @@ export default function LoginPage() {
                 className="w-full h-11 text-base font-semibold shadow-md bg-primary text-primary-foreground hover:opacity-95 transition-all mt-2"
                 loading={loading}
               >
-                {loginAsParam === "operator" ? "Register Operator" : "Sign In"}
+                Sign In
               </ActionButton>
             </form>
           </div>

@@ -779,6 +779,10 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>Day Pass</SortableHeader>
           ),
           cell: ({ row }) => {
+            const isMos = row.original?.specs?.spaceType === "MOS";
+            if (isMos) {
+              return <div>-</div>;
+            }
             if (userLevel === "operator") {
               return (
                 <InlineCellInput
@@ -814,6 +818,10 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>Meeting Room</SortableHeader>
           ),
           cell: ({ row }) => {
+            const isMos = row.original?.specs?.spaceType === "MOS";
+            if (isMos) {
+              return <div>-</div>;
+            }
             if (userLevel === "operator") {
               return (
                 <InlineCellInput
@@ -849,6 +857,10 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>Dedicated Desk</SortableHeader>
           ),
           cell: ({ row }) => {
+            const isMos = row.original?.specs?.spaceType === "MOS";
+            if (isMos) {
+              return <div>-</div>;
+            }
             if (userLevel === "operator") {
               return (
                 <InlineCellInput
@@ -884,6 +896,10 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>Flexi/Hot Desk</SortableHeader>
           ),
           cell: ({ row }) => {
+            const isMos = row.original?.specs?.spaceType === "MOS";
+            if (isMos) {
+              return <div>-</div>;
+            }
             if (userLevel === "operator") {
               return (
                 <InlineCellInput
@@ -954,6 +970,10 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>VO Service</SortableHeader>
           ),
           cell: ({ row }) => {
+            const isMos = row.original?.specs?.spaceType === "MOS";
+            if (isMos) {
+              return <div>-</div>;
+            }
             const isVo =
               row.original?.flags?.isVoService ??
               (row.original?.pricing?.voService
@@ -970,6 +990,10 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>VO P/M</SortableHeader>
           ),
           cell: ({ row }) => {
+            const isMos = row.original?.specs?.spaceType === "MOS";
+            if (isMos) {
+              return <div>-</div>;
+            }
             const isVo =
               row.original?.flags?.isVoService ??
               (row.original?.pricing?.voService

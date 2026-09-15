@@ -53,6 +53,7 @@ import {
 } from "@pride-spaces/common/utils/data/media.js";
 import SpaceImagesUploadSection from "@/containers/space/section/image-upload";
 import SpaceLayoutsUploadSection from "@/containers/space/section/layout-upload";
+import { cn } from "@/utils/className";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
 
@@ -178,6 +179,8 @@ const SpaceCreatePage = () => {
   });
 
   const selectedGrade = watch("specs.grade");
+  const selectedSpaceType = watch("specs.spaceType");
+  const isMos = selectedSpaceType === "MOS";
 
   const openTimeWatch = watch("timing.openTime");
   const closeTimeWatch = watch("timing.closeTime");
@@ -322,6 +325,20 @@ const SpaceCreatePage = () => {
     try {
       console.log("Centre body", body);
 
+      if (body.specs?.spaceType === "MOS") {
+        body.pricing = {
+          ...body.pricing,
+          dayPass: 0,
+          meetingRoom: 0,
+          dedicatedDesk: 0,
+          flexiDesk: 0,
+          vo: 0,
+        };
+        if (body.flags) {
+          body.flags.isVoService = false;
+        }
+      }
+
       const res = await mutateAsync({
         body,
       });
@@ -340,18 +357,25 @@ const SpaceCreatePage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="max-w-4xl pt-3 mx-auto sticky top-0 bg-background z-50">
-        {isOperatorPortal && (
+      {isOperatorPortal && (
+        <div className="max-w-4xl mx-auto mb-2">
           <ActionButton
             type="button"
             variant="ghost"
-            className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground"
+            className="gap-2 px-0 text-muted-foreground hover:text-foreground"
             onClick={() => navigate(homeRoute)}
           >
             <ArrowLeft className="size-4" />
             Back to Portal
           </ActionButton>
+        </div>
+      )}
+      <div
+        className={cn(
+          "max-w-4xl pt-3 mx-auto sticky bg-background",
+          isOperatorPortal ? "top-16 z-30" : "top-0 z-50",
         )}
+      >
         <div className="flex justify-between items-center my-4 gap-3">
           <h1 className="text-2xl font-bold">
             Add Centre: {watch("name", "")}
@@ -508,14 +532,23 @@ const SpaceCreatePage = () => {
             pickerProps={{
               wrapperProps: {
                 defaultValue: defaultValues?.specs?.spaceType,
-                onValueChange: (val) =>
+                onValueChange: (val) => {
                   setValue(
                     "specs.spaceType",
                     val as SpaceSchema["specs"]["spaceType"],
                     {
                       shouldValidate: true,
                     },
-                  ),
+                  );
+                  if (val === "MOS") {
+                    setValue("pricing.dayPass", 0, { shouldValidate: true });
+                    setValue("pricing.meetingRoom", 0, { shouldValidate: true });
+                    setValue("pricing.dedicatedDesk", 0, { shouldValidate: true });
+                    setValue("pricing.flexiDesk", 0, { shouldValidate: true });
+                    setValue("pricing.vo", 0, { shouldValidate: true });
+                    setValue("flags.isVoService", false, { shouldValidate: true });
+                  }
+                },
               },
             }}
             error={errors.specs?.spaceType}
@@ -1071,92 +1104,96 @@ const SpaceCreatePage = () => {
             error={errors.pricing?.perSeat}
           />
 
-          <FormField
-            label="Meeting Room"
-            labelPosition="embedded"
-            placeholder="3000"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={99999}
-            {...register("pricing.meetingRoom", { valueAsNumber: true })}
-            error={errors.pricing?.meetingRoom}
-          />
+          {!isMos && (
+            <>
+              <FormField
+                label="Meeting Room"
+                labelPosition="embedded"
+                placeholder="3000"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={99999}
+                {...register("pricing.meetingRoom", { valueAsNumber: true })}
+                error={errors.pricing?.meetingRoom}
+              />
 
-          <FormField
-            label="Dedicated Desk"
-            labelPosition="embedded"
-            placeholder="3000"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={99999}
-            {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
-            error={errors.pricing?.dedicatedDesk}
-          />
+              <FormField
+                label="Dedicated Desk"
+                labelPosition="embedded"
+                placeholder="3000"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={99999}
+                {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
+                error={errors.pricing?.dedicatedDesk}
+              />
 
-          <FormField
-            label="Day Pass"
-            labelPosition="embedded"
-            placeholder="300"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={99999}
-            {...register("pricing.dayPass", { valueAsNumber: true })}
-            error={errors.pricing?.dayPass}
-          />
+              <FormField
+                label="Day Pass"
+                labelPosition="embedded"
+                placeholder="300"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={99999}
+                {...register("pricing.dayPass", { valueAsNumber: true })}
+                error={errors.pricing?.dayPass}
+              />
 
-          <FormField
-            label="Flexi/Hot Desk"
-            labelPosition="embedded"
-            placeholder="3000"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={99999}
-            {...register("pricing.flexiDesk", { valueAsNumber: true })}
-            error={errors.pricing?.flexiDesk}
-          />
+              <FormField
+                label="Flexi/Hot Desk"
+                labelPosition="embedded"
+                placeholder="3000"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={99999}
+                {...register("pricing.flexiDesk", { valueAsNumber: true })}
+                error={errors.pricing?.flexiDesk}
+              />
 
-          <FormField
-            key={`vo-service-${watch("flags.isVoService")}`}
-            label="VO Service"
-            labelPosition="embedded"
-            inputType="select"
-            items={[
-              { label: "YES", value: "true" },
-              { label: "NO", value: "false" },
-            ]}
-            error={errors?.flags?.isVoService}
-            pickerProps={{
-              wrapperProps: {
-                value: watch("flags.isVoService") ? "true" : "false",
-                onValueChange: (val) => {
-                  const isYes = val === "true";
-                  setValue("flags.isVoService", isYes, {
-                    shouldValidate: true,
-                  });
-                  if (!isYes) {
-                    setValue("pricing.vo", 0, { shouldValidate: true });
-                  }
-                },
-              },
-            }}
-          />
+              <FormField
+                key={`vo-service-${watch("flags.isVoService")}`}
+                label="VO Service"
+                labelPosition="embedded"
+                inputType="select"
+                items={[
+                  { label: "YES", value: "true" },
+                  { label: "NO", value: "false" },
+                ]}
+                error={errors?.flags?.isVoService}
+                pickerProps={{
+                  wrapperProps: {
+                    value: watch("flags.isVoService") ? "true" : "false",
+                    onValueChange: (val) => {
+                      const isYes = val === "true";
+                      setValue("flags.isVoService", isYes, {
+                        shouldValidate: true,
+                      });
+                      if (!isYes) {
+                        setValue("pricing.vo", 0, { shouldValidate: true });
+                      }
+                    },
+                  },
+                }}
+              />
 
-          {watch("flags.isVoService") && (
-            <FormField
-              label="VO P/M"
-              labelPosition="embedded"
-              placeholder="3000"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={99999}
-              {...register("pricing.vo", { valueAsNumber: true })}
-              error={errors.pricing?.vo}
-            />
+              {watch("flags.isVoService") && (
+                <FormField
+                  label="VO P/M"
+                  labelPosition="embedded"
+                  placeholder="3000"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={99999}
+                  {...register("pricing.vo", { valueAsNumber: true })}
+                  error={errors.pricing?.vo}
+                />
+              )}
+            </>
           )}
 
           {/* Location */}
