@@ -161,10 +161,6 @@ export const spaceSchema = z.object({
   description: z.string().optional(),
   rating: z.number().optional().default(0),
   reviews: z.number().optional().default(0),
-  price: z
-    .number()
-    .min(0, "Price must be a positive number")
-    .int("Price must be a positive integer"),
   pricing: pricingSchema.partial(),
   facilities: z.array(getIdSchema({ keyName: "Facility ID" })).default([]),
   files: filesSchema.partial().optional(),

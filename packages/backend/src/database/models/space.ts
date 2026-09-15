@@ -100,7 +100,6 @@ const SpaceSchema = new Conn.Schema(
     flags: { type: FlagsSchema },
     description: { type: String },
     facilities: { type: [String] },
-    price: { type: Number, default: 0 },
     pricing: { type: PricingSchema, required: true },
     rating: { type: Number },
     reviews: { type: Number },
