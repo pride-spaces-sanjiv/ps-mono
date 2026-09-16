@@ -1267,7 +1267,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             placeholder="2024"
             type="number"
-            {...register("timing.operationalSince")}
+            {...register("timing.operationalSince", { valueAsNumber: true })}
             error={errors.timing?.operationalSince}
             {...changedFieldProps(mainChanges?.allData, "operationalSince")}
           />
