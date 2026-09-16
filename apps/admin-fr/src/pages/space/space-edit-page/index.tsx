@@ -839,7 +839,7 @@ const SpaceEditPage = () => {
             label="Centre Name"
             labelPosition="embedded"
             placeholder="My Centre"
-            {...registerWithAutoSave("name")}
+            {...register("name")}
             error={errors.name}
             {...changedFieldProps(mainChanges?.allData, "name")}
           />
@@ -850,7 +850,7 @@ const SpaceEditPage = () => {
             placeholder="my-centre-slug"
             disabled
             readOnly
-            {...registerWithAutoSave("slug")}
+            {...register("slug")}
             error={errors.slug}
             {...changedFieldProps(mainChanges?.allData, "slug")}
           />
@@ -1125,7 +1125,7 @@ const SpaceEditPage = () => {
             label="Total Seats"
             labelPosition="embedded"
             type="number"
-            {...registerWithAutoSave("seats.total", {
+            {...register("seats.total", {
               valueAsNumber: true,
             })}
             error={errors.seats?.total}
@@ -1267,7 +1267,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             placeholder="2024"
             type="number"
-            {...registerWithAutoSave("timing.operationalSince")}
+            {...register("timing.operationalSince")}
             error={errors.timing?.operationalSince}
             {...changedFieldProps(mainChanges?.allData, "operationalSince")}
           />
@@ -1280,7 +1280,7 @@ const SpaceEditPage = () => {
             type="number"
             inputMode="decimal"
             min={0}
-            {...registerWithAutoSave("specs.area", { valueAsNumber: true })}
+            {...register("specs.area", { valueAsNumber: true })}
             error={errors.specs?.area}
             {...changedFieldProps(mainChanges?.allData, "area")}
           />
@@ -1309,7 +1309,7 @@ const SpaceEditPage = () => {
             placeholder="John Doe"
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
-            {...registerWithAutoSave("person.name")}
+            {...register("person.name")}
             error={errors?.person?.name}
             {...changedFieldProps(personChanges?.allData, "name")}
           />
@@ -1321,7 +1321,7 @@ const SpaceEditPage = () => {
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
             placeholder="john.doe@example.com"
-            {...registerWithAutoSave("person.email")}
+            {...register("person.email")}
             error={errors?.person?.email}
             {...changedFieldProps(personChanges?.allData, "email")}
           />
@@ -1363,7 +1363,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             readOnly={POCSameAsOperator}
             disabled={POCSameAsOperator}
-            {...registerWithAutoSave("person.role")}
+            {...register("person.role")}
             error={errors?.person?.role}
             {...changedFieldProps(personChanges?.allData, "role")}
           />
@@ -1606,7 +1606,7 @@ const SpaceEditPage = () => {
                 inputMode="numeric"
                 min={0}
                 required
-                {...registerWithAutoSave("pricing.eventSpaceCapacity", {
+                {...register("pricing.eventSpaceCapacity", {
                   valueAsNumber: true,
                 })}
                 error={errors.pricing?.eventSpaceCapacity}
