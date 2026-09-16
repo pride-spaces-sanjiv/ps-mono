@@ -1,4 +1,10 @@
-import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import Skeleton, { type SkeletonProps } from "react-loading-skeleton";
 import {
@@ -281,9 +287,6 @@ const SpacesTabledResults = ({
   const navigate = useNavigate();
   const { userLevel } = useUser();
 
-  const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(10);
-
   const [search, setSearch] = useState({ field: "Name", value: "" });
   const debouncedSearch = useDebouncer(search, 500);
   const getSpacesApi =
@@ -294,6 +297,10 @@ const SpacesTabledResults = ({
     data: res,
     isFetching,
     refetch,
+    page,
+    setPage,
+    limit,
+    setLimit,
   } = usePaginatedQuery({
     limit: 20,
     queryKey: [
@@ -416,7 +423,10 @@ const SpacesTabledResults = ({
             );
             return (
               <TextCell>
-                {op?.slug || row.original?.operatorSlug || row.original?.slug || "-"}
+                {op?.slug ||
+                  row.original?.operatorSlug ||
+                  row.original?.slug ||
+                  "-"}
               </TextCell>
             );
           },
@@ -433,7 +443,10 @@ const SpacesTabledResults = ({
             );
             return (
               <TextCell>
-                {op?.brandName || op?.name || row.original?.operatorBrandName || "-"}
+                {op?.brandName ||
+                  op?.name ||
+                  row.original?.operatorBrandName ||
+                  "-"}
               </TextCell>
             );
           },
@@ -445,7 +458,9 @@ const SpacesTabledResults = ({
             <SortableHeader column={column}>Centre Name</SortableHeader>
           ),
           cell: ({ row }) => (
-            <TextCell className="min-w-[220px]">{row.original?.name || "-"}</TextCell>
+            <TextCell className="min-w-[220px]">
+              {row.original?.name || "-"}
+            </TextCell>
           ),
         },
         // 4. Address
@@ -488,7 +503,9 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Area - Micro Market</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.location?.area || "-"}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.location?.area || "-"}</TextCell>
+          ),
         },
         // 7. Building Type
         {
@@ -500,7 +517,9 @@ const SpacesTabledResults = ({
             <TextCell>
               {labelledSpaceGrades.find(
                 (g) => g.value === row.original?.specs?.grade,
-              )?.label ?? row.original?.specs?.grade ?? "-"}
+              )?.label ??
+                row.original?.specs?.grade ??
+                "-"}
             </TextCell>
           ),
         },
@@ -518,12 +537,12 @@ const SpacesTabledResults = ({
                 (typeof val === "string" && val.toUpperCase() === "OC")
                   ? "OC"
                   : val === false ||
-                    (typeof val === "string" &&
-                      val.toUpperCase().includes("NON"))
-                  ? "NON OC"
-                  : val === "!"
-                  ? "!"
-                  : (val as string) || "-"}
+                      (typeof val === "string" &&
+                        val.toUpperCase().includes("NON"))
+                    ? "NON OC"
+                    : val === "!"
+                      ? "!"
+                      : (val as string) || "-"}
               </TextCell>
             );
           },
@@ -542,12 +561,12 @@ const SpacesTabledResults = ({
                 (typeof val === "string" && val.toUpperCase() === "SEZ")
                   ? "SEZ"
                   : val === false ||
-                    (typeof val === "string" &&
-                      val.toUpperCase().includes("NON"))
-                  ? "NON SEZ"
-                  : val === "!"
-                  ? "!"
-                  : (val as string) || "-"}
+                      (typeof val === "string" &&
+                        val.toUpperCase().includes("NON"))
+                    ? "NON SEZ"
+                    : val === "!"
+                      ? "!"
+                      : (val as string) || "-"}
               </TextCell>
             );
           },
@@ -556,7 +575,9 @@ const SpacesTabledResults = ({
         {
           accessorKey: "timing.operationalSince",
           header: ({ column }) => (
-            <SortableHeader column={column}>Operational Since (year)</SortableHeader>
+            <SortableHeader column={column}>
+              Operational Since (year)
+            </SortableHeader>
           ),
           cell: ({ row }) => (
             <div>{row.original?.timing?.operationalSince ?? "-"}</div>
@@ -566,7 +587,9 @@ const SpacesTabledResults = ({
         {
           accessorKey: "specs.area",
           header: ({ column }) => (
-            <SortableHeader column={column}>Centre Area In Sq. Ft. (approx)</SortableHeader>
+            <SortableHeader column={column}>
+              Centre Area In Sq. Ft. (approx)
+            </SortableHeader>
           ),
           cell: ({ row }) => <div>{row.original?.specs?.area ?? "-"}</div>,
         },
@@ -640,7 +663,9 @@ const SpacesTabledResults = ({
             <TextCell>
               {labelledSpaceTypes.find(
                 (t) => t.value === row.original?.specs?.spaceType,
-              )?.label ?? row.original?.specs?.spaceType ?? "-"}
+              )?.label ??
+                row.original?.specs?.spaceType ??
+                "-"}
             </TextCell>
           ),
         },
@@ -650,7 +675,9 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>State</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.location?.state || "-"}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.location?.state || "-"}</TextCell>
+          ),
         },
         // 16. City
         {
@@ -658,7 +685,9 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>City</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.location?.city || "-"}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.location?.city || "-"}</TextCell>
+          ),
         },
         // 17. Center POC Name
         {
@@ -666,7 +695,9 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Center POC Name</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.person?.name || "-"}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.person?.name || "-"}</TextCell>
+          ),
         },
         // 18. Center POC Email
         {
@@ -674,13 +705,17 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Center POC Email</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.person?.email || "-"}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.person?.email || "-"}</TextCell>
+          ),
         },
         // 19. Center POC Contact No.
         {
           accessorKey: "person.contactNo",
           header: ({ column }) => (
-            <SortableHeader column={column}>Center POC Contact No.</SortableHeader>
+            <SortableHeader column={column}>
+              Center POC Contact No.
+            </SortableHeader>
           ),
           cell: ({ row }) => (
             <TextCell>{row.original?.person?.contactNo || "-"}</TextCell>
@@ -743,7 +778,11 @@ const SpacesTabledResults = ({
             const openDays = row.original?.timing?.openDays;
             if (openDays && openDays.length > 0) {
               const sorted = [...openDays].sort((a, b) => a - b);
-              return <TextCell>{days[sorted[sorted.length - 1] - 1] || "-"}</TextCell>;
+              return (
+                <TextCell>
+                  {days[sorted[sorted.length - 1] - 1] || "-"}
+                </TextCell>
+              );
             }
             return <TextCell>-</TextCell>;
           },
@@ -754,7 +793,9 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Opening Time</SortableHeader>
           ),
-          cell: ({ row }) => <div>{formatTime(row.original?.timing?.openTime)}</div>,
+          cell: ({ row }) => (
+            <div>{formatTime(row.original?.timing?.openTime)}</div>
+          ),
         },
         // 26. Closing Time
         {
@@ -762,7 +803,9 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Closing Time</SortableHeader>
           ),
-          cell: ({ row }) => <div>{formatTime(row.original?.timing?.closeTime)}</div>,
+          cell: ({ row }) => (
+            <div>{formatTime(row.original?.timing?.closeTime)}</div>
+          ),
         },
         // 27. Category
         {
@@ -770,7 +813,9 @@ const SpacesTabledResults = ({
           header: ({ column }) => (
             <SortableHeader column={column}>Category</SortableHeader>
           ),
-          cell: ({ row }) => <TextCell>{row.original?.specs?.category || "-"}</TextCell>,
+          cell: ({ row }) => (
+            <TextCell>{row.original?.specs?.category || "-"}</TextCell>
+          ),
         },
         // 28. Day Pass
         {
@@ -1142,7 +1187,8 @@ const SpacesTabledResults = ({
               pageSize: res?.data?.data?.metrics?.count || 10,
             })
           : updater;
-      setPage(newState.pageIndex);
+      console.log("Space tanstack pagination change :", newState);
+      setPage?.(newState.pageIndex);
     },
     state: {
       sorting,
@@ -1155,12 +1201,20 @@ const SpacesTabledResults = ({
       },
     },
     manualPagination: true,
-    rowCount: res?.data?.data?.metrics?.total || 1,
+    rowCount: res?.data?.data?.metrics?.total || 0,
   });
 
   useEffect(() => {
-    setPage(0);
+    setPage?.(0);
   }, [debouncedSearch, setPage]);
+
+  useEffect(() => {
+    console.log(
+      "Spaces table metrics :",
+      table.getRowCount(),
+      table.getPageCount(),
+    );
+  }, [table.getPageCount()]);
 
   return (
     <div {...props} className={cn("", className)}>
@@ -1171,13 +1225,11 @@ const SpacesTabledResults = ({
           // value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           {...inputProps}
           onChange={(e) => {
+            const val = e.currentTarget.value;
             // table.getColumn("name")?.setFilterValue(e.target.value);
             setSearch((prev) => ({
               ...prev,
-              value: e.currentTarget.value
-                .trim()
-                .toLowerCase()
-                .replace(/ +/g, " "),
+              value: val.trim().toLowerCase().replace(/ +/g, " "),
             }));
             inputProps?.onChange?.(e);
           }}
