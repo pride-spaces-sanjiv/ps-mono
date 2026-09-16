@@ -1636,7 +1636,7 @@ const SpaceEditPage = () => {
             inputMode="decimal"
             min={0}
             max={99999}
-            {...registerWithAutoSave("pricing.perSeat", {
+            {...register("pricing.perSeat", {
               valueAsNumber: true,
             })}
             error={errors.pricing?.perSeat}
@@ -1652,7 +1652,7 @@ const SpaceEditPage = () => {
                 inputMode="decimal"
                 min={0}
                 max={99999}
-                {...registerWithAutoSave("pricing.meetingRoom", {
+                {...register("pricing.meetingRoom", {
                   valueAsNumber: true,
                 })}
                 error={errors.pricing?.meetingRoom}
@@ -1665,7 +1665,7 @@ const SpaceEditPage = () => {
                 inputMode="decimal"
                 min={0}
                 max={99999}
-                {...registerWithAutoSave("pricing.dedicatedDesk", {
+                {...register("pricing.dedicatedDesk", {
                   valueAsNumber: true,
                 })}
                 error={errors.pricing?.dedicatedDesk}
@@ -1679,7 +1679,7 @@ const SpaceEditPage = () => {
                 inputMode="decimal"
                 min={0}
                 max={99999}
-                {...registerWithAutoSave("pricing.dayPass", {
+                {...register("pricing.dayPass", {
                   valueAsNumber: true,
                 })}
                 error={errors.pricing?.dayPass}
@@ -1693,7 +1693,7 @@ const SpaceEditPage = () => {
                 inputMode="decimal"
                 min={0}
                 max={99999}
-                {...registerWithAutoSave("pricing.flexiDesk", {
+                {...register("pricing.flexiDesk", {
                   valueAsNumber: true,
                 })}
                 error={errors.pricing?.flexiDesk}
@@ -1733,7 +1733,7 @@ const SpaceEditPage = () => {
                   inputMode="decimal"
                   min={0}
                   max={99999}
-                  {...registerWithAutoSave("pricing.vo", {
+                  {...register("pricing.vo", {
                     valueAsNumber: true,
                   })}
                   error={errors.pricing?.vo}

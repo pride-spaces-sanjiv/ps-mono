@@ -10,6 +10,7 @@ import { useAmenities } from "@/services/hooks/useAmenities";
 import { createSpace as createAdminSpace } from "@/services/apis/admin/spaces";
 import { createSpace as createOperatorSpace } from "@/services/apis/operator/spaces";
 import { useUser } from "@/services/hooks/use-user";
+import { useStatesCities } from "@/services/hooks/use-states-cities";
 import {
   spaceSchema,
   type SpaceSchema,
@@ -77,6 +78,7 @@ const SpaceCreatePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userLevel, userData } = useUser();
+  const { groupedCities, citiesData, statesData } = useStatesCities();
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -1230,19 +1232,92 @@ const SpaceCreatePage = () => {
               />
 
               <FormField
+                key={`states-${statesData.length}-def-${defaultValues?.location?.state}-op-${operatorData?.slug}`}
                 label="State"
                 labelPosition="embedded"
-                placeholder="Maharashtra"
-                {...register("location.state")}
-                error={errors.location?.state}
-              />
+                error={errors?.location?.state}
+              >
+                <GroupedSearchSelect
+                  type="single"
+                  defaultSelected={{
+                    value:
+                      statesData?.find(
+                        (state) =>
+                          state.name === defaultValues?.location?.state,
+                      )?.name ||
+                      operatorData?.branches?.find((br) => br.isPrimary)?.name,
+                  }}
+                  items={statesData
+                    .filter((state) =>
+                      operatorData?.branches
+                        ?.map((br) => br.code)
+                        .includes(state.code as string),
+                    )
+                    .map((state) => ({
+                      label: state.name,
+                      value: state.name,
+                      searchValue: [state.name, state.code]
+                        .filter(Boolean)
+                        .join(" "),
+                    }))}
+                  inputProps={{ placeholder: "Select State" }}
+                  triggerProps={{
+                    children: (
+                      <ActionButton type="button" variant="outline">
+                        {watch("location.state", "") || "Select State"}
+                      </ActionButton>
+                    ),
+                  }}
+                  onSelect={(item) => {
+                    setValue("location.state", item?.value || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              </FormField>
+
               <FormField
+                key={`state-${watch("location.state", "")}-cities-${citiesData.length}-def-${defaultValues?.location?.city}-op-${operatorData?.slug}`}
                 label="City"
                 labelPosition="embedded"
                 placeholder="Mumbai"
-                {...register("location.city")}
                 error={errors.location?.city}
-              />
+              >
+                <GroupedSearchSelect
+                  type="single"
+                  defaultSelected={{
+                    value: citiesData?.find(
+                      (city) => city.name === defaultValues?.location?.city,
+                    )?.name,
+                  }}
+                  items={citiesData
+                    .filter(
+                      (city) =>
+                        city.state ===
+                        statesData.find(
+                          (s) => s.name === watch("location.state", ""),
+                        )?.code,
+                    )
+                    .map((city) => ({
+                      label: city.name,
+                      value: city.name,
+                      searchValue: city.name,
+                    }))}
+                  inputProps={{ placeholder: "Select City" }}
+                  triggerProps={{
+                    children: (
+                      <ActionButton type="button" variant="outline">
+                        {watch("location.city", "") || "Select City"}
+                      </ActionButton>
+                    ),
+                  }}
+                  onSelect={(item) => {
+                    setValue("location.city", item?.value || "", {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              </FormField>
 
               <FormField
                 label="Area - Micro Market"
