@@ -46,7 +46,6 @@ router.post(
     overridePostValidation: true,
     extractOnlyRequiredFields: true,
   }),
-  checkUserExistenceByBodyValue(Space, "email"),
   createSpace,
 );
 router.put(
