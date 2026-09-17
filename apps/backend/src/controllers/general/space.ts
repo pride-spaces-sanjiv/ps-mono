@@ -30,7 +30,11 @@ import {
   dumpStatuses,
 } from "@pride-spaces/common/utils/data/dump.js";
 import { generateSpaceKeyword } from "@pride-spaces/common/utils/data/name-keyword.js";
-import { areasUpdateMQ } from "@pride-spaces/backend/utils/services/rabbitmq/rabbitmq.js";
+import {
+  areasUpdateMQ,
+  emailsMQ,
+  spaceSlugMQ,
+} from "@pride-spaces/backend/utils/services/rabbitmq/rabbitmq.js";
 import { GeneralizedControllers } from "@pride-spaces/backend/types/data/general-controllers.js";
 
 type ModelType = typeof Space;
@@ -38,7 +42,8 @@ type GetOptions = GeneralizedControllers.GetOptions<ModelType>;
 type CreateOptions = GeneralizedControllers.CreateOptions<
   ModelType,
   SpaceSchema
->;
+> &
+  Partial<{ queueSlugGen: boolean }>;
 type UpdateOptions = GeneralizedControllers.UpdateOptions<
   ModelType,
   SpaceSchema
@@ -270,6 +275,7 @@ export const createSpace = async (
       onlyDump = false,
       skipDump = false,
       dumpArgs,
+      queueSlugGen = true,
     } = options;
 
     // Body creation
@@ -277,6 +283,11 @@ export const createSpace = async (
       ...preBody,
       ...req.body,
       fullKeyword: generateSpaceKeyword(req.body?.name || "") || undefined,
+      slug: queueSlugGen
+        ? req.body.slug
+            ?.replace(/\-[0-9]+$/g, "")
+            .concat(`-${new Date().getTime()}`)
+        : req.body.slug,
     } as SpaceSchema;
     if (bodyHandle) {
       body = await bodyHandle(body);
@@ -341,6 +352,13 @@ export const createSpace = async (
         // @ts-ignore
         data: body,
       });
+
+      if (queueSlugGen) {
+        spaceSlugMQ.sendMessage({
+          id: doc.id,
+        });
+      }
+
       const data = convertDataToJSON(doc);
       ResponseHandler.handleSuccess(res, {
         ...responseOpts?.success,

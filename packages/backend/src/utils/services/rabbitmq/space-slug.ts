@@ -33,7 +33,11 @@ const handler = async (data: SpaceSlugMQ) => {
         const totalSpaces = await Space.countDocuments({
           operator: spaceData.operator,
         });
-        const slug = `${operatorData.slug}-${stateCode}-${String(totalSpaces + 1).padStart(4, "0")}`;
+        const slug =
+          `${operatorData.slug}-${stateCode.toLowerCase().trim()}-${String(totalSpaces + 1).padStart(4, "0")}`.replace(
+            /\-+/g,
+            "-",
+          );
         const updatedSpace = await pipelineDBs.SPACE.updateData({
           filter: { id: data.id },
           updateData: { slug },
