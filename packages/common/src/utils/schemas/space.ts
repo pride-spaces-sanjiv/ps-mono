@@ -45,15 +45,18 @@ const timingSchema = z.object({
     .min(0, "Operational hours must be a positive number")
     .max(24, "Operational hours must be at most 24")
     .default(0),
-  operationalSince: z
-    .number("Operational Since must be a valid year")
-    .int("Operational Since must be a valid year")
-    .min(1800, "Operational Since must be a year after 1800")
-    .max(
-      new Date().getFullYear(),
-      `Operational Since must be before or equal to the current year`,
-    )
-    .optional(),
+  operationalSince: z.preprocess(
+    (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
+    z.coerce
+      .number("Operational Since must be a valid year")
+      .int("Operational Since must be a valid year")
+      .min(1800, "Operational Since must be a year after 1800")
+      .max(
+        new Date().getFullYear(),
+        `Operational Since must be before or equal to the current year`,
+      )
+      .optional(),
+  ),
 });
 
 // Seats

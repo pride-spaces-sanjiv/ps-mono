@@ -243,7 +243,6 @@ const SpaceEditPage = () => {
         openDays: days.map((_, i) => i + 1).filter((_, i) => i < 6),
         openTime: defaultTime,
         closeTime: defaultTime,
-        operationalSince: undefined,
       },
 
       specs: {
@@ -1078,13 +1077,13 @@ const SpaceEditPage = () => {
           >
             <div className="flex items-center gap-1.5 px-2 py-1 grow shrink min-w-0 min-h-[40px] flex-nowrap">
               <SelectPicker
-                key={`open-picker-${watch("timing.openTime")}`}
+                key={`open-picker-${defaultValues?.timing?.openTime}-${timeOptions.length}`}
                 className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
                 items={timeOptions}
                 valueProps={{ placeholder: "Start Time" }}
                 wrapperProps={{
-                  value: watch("timing.openTime")
-                    ? moment(watch("timing.openTime")).format("HH:mm")
+                  defaultValue: defaultValues?.timing?.openTime
+                    ? moment(defaultValues.timing.openTime).format("HH:mm")
                     : "09:00",
                   onValueChange: (val) => {
                     setValue(
@@ -1092,7 +1091,7 @@ const SpaceEditPage = () => {
                       moment(val, "HH:mm", true).toDate(),
                       { shouldValidate: true },
                     );
-                    autoSave();
+                    // autoSave();
                   },
                 }}
               />
@@ -1100,13 +1099,13 @@ const SpaceEditPage = () => {
                 to
               </span>
               <SelectPicker
-                key={`close-picker-${watch("timing.closeTime")}`}
+                key={`close-picker-${defaultValues?.timing?.closeTime}-${timeOptions.length}`}
                 className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
                 items={timeOptions}
                 valueProps={{ placeholder: "End Time" }}
                 wrapperProps={{
-                  value: watch("timing.closeTime")
-                    ? moment(watch("timing.closeTime")).format("HH:mm")
+                  defaultValue: defaultValues?.timing?.closeTime
+                    ? moment(defaultValues.timing.closeTime).format("HH:mm")
                     : "18:00",
                   onValueChange: (val) => {
                     setValue(
@@ -1114,7 +1113,7 @@ const SpaceEditPage = () => {
                       moment(val, "HH:mm", true).toDate(),
                       { shouldValidate: true },
                     );
-                    autoSave();
+                    // autoSave();
                   },
                 }}
               />
@@ -1267,7 +1266,7 @@ const SpaceEditPage = () => {
             labelPosition="embedded"
             placeholder="2024"
             type="number"
-            {...register("timing.operationalSince", { valueAsNumber: true })}
+            {...register("timing.operationalSince")}
             error={errors.timing?.operationalSince}
             {...changedFieldProps(mainChanges?.allData, "operationalSince")}
           />
