@@ -48,7 +48,7 @@ export const handleMongooseError = (
         typeof err.keyPattern === "object" &&
         Object.keys(err.keyPattern)[0]) ||
       "";
-    if (res && uniqueError) {
+    if (res && uniqueError && data.cause === "unique") {
       ResponseHandler.handleError(res, {
         ...uniqueError.resOptions,
         errorType:
