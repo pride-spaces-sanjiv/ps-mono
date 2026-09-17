@@ -584,7 +584,6 @@ const SpaceCreatePage = () => {
                       moment(val, "HH:mm", true).toDate(),
                       { shouldValidate: true },
                     );
-                    // autoSave();
                   },
                 }}
               />
@@ -606,7 +605,6 @@ const SpaceCreatePage = () => {
                       moment(val, "HH:mm", true).toDate(),
                       { shouldValidate: true },
                     );
-                    // autoSave();
                   },
                 }}
               />
