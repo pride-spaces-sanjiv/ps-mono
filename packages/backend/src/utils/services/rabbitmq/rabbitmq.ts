@@ -341,6 +341,9 @@ type WaitingMigrationMQ = {
   collection: DumpCollectionName;
   fileId: string;
 };
+export type SpaceSlugMQ = {
+  id: string;
+};
 
 export const emailsMQ = new RabbitMQ<EmailMQ>({
   queue: "emails",
@@ -350,6 +353,9 @@ export const paymentsMQ = new RabbitMQ<PaymentMQ>({
 });
 export const waitingMigrationMQ = new RabbitMQ<WaitingMigrationMQ>({
   queue: "waiting-migrations",
+});
+export const spaceSlugMQ = new RabbitMQ<SpaceSlugMQ>({
+  queue: "space-slugs",
 });
 
 export type AreasUpdateMQ = {
