@@ -94,6 +94,7 @@ export const createSpace = async (
       skipDump: true,
     });
   } catch (err: any) {
+    console.error("Error creating space for admin :", err);
     ResponseHandler.handleError(res, {
       errorType: "create-space-error-failure",
       message: "Failed to create space",
@@ -123,6 +124,7 @@ export const updateSpace = async (
       skipDump: true,
     });
   } catch (err: any) {
+    console.error("Error updating space for admin :", err);
     ResponseHandler.handleError(res, {
       errorType: "update-space-error-failure",
       message: "Failed to update space details",
@@ -150,6 +152,7 @@ export const deleteSpace = async (
       skipDump: true,
     });
   } catch (err) {
+    console.error("Error deleting space for admin :", err);
     ResponseHandler.handleError(res, {
       errorType: "delete-space-error-failure",
       message: "Failed to delete space",
