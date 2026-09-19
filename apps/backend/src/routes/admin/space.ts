@@ -42,7 +42,7 @@ router.post(
   preParseDateFieldsFromBody<SpaceSchema>({
     fields: ["timing.openTime", "timing.closeTime"],
   }),
-  RequestMiddleware.bodyValidator(spaceSchema.omit({ slug: true }), {
+  RequestMiddleware.bodyValidator(spaceSchema, {
     validateOnlyPresent: false,
     overridePostValidation: true,
     extractOnlyRequiredFields: true,
@@ -56,7 +56,7 @@ router.put(
     fields: ["timing.openTime", "timing.closeTime"],
   }),
   RequestMiddleware.bodyValidator(
-    spaceSchema.omit({ branch: true, operator: true }),
+    spaceSchema.omit({ branch: true, operator: true, slug: true }),
     {
       allowEmpty: true,
       validateOnlyPresent: true,

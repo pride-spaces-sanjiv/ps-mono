@@ -103,7 +103,7 @@ export const createSpace = async (
 };
 
 export const updateSpace = async (
-  req: ManagedRequest<Omit<SpaceSchema, "branch" | "operator">>,
+  req: ManagedRequest<Omit<SpaceSchema, "branch" | "operator" | "slug">>,
   res: ManagedResponse,
 ) => {
   try {

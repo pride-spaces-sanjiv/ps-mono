@@ -285,7 +285,7 @@ export const createSpace = async (
       fullKeyword: generateSpaceKeyword(req.body?.name || "") || undefined,
       slug: queueSlugGen
         ? req.body.slug
-            ?.replace(/\-[0-9]+$/g, "")
+            ?.replace(/\-[0-9]*$/g, "")
             .concat(`-${new Date().getTime()}`)
         : req.body.slug,
     } as SpaceSchema;
