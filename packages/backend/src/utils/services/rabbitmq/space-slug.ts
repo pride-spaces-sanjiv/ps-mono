@@ -15,12 +15,12 @@ const handler = async (data: SpaceSlugMQ) => {
 
     // Get data for space
     const spaceData = await pipelineDBs.SPACE.getData({
-      filter: { id: data.id },
+      filter: { _id: data.id },
     });
     if (spaceData) {
       // Get operator data
       const operatorData = await pipelineDBs.OPERATOR.getData({
-        filter: { id: spaceData.operator },
+        filter: { _id: spaceData.operator },
       });
       if (operatorData) {
         // Get state code
