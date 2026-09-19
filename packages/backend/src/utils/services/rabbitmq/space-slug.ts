@@ -39,7 +39,7 @@ const handler = async (data: SpaceSlugMQ) => {
             "-",
           );
         const updatedSpace = await pipelineDBs.SPACE.updateData({
-          filter: { id: data.id },
+          filter: { _id: data.id },
           updateData: { slug },
         });
         return true;
