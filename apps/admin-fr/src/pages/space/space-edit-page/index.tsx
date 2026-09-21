@@ -641,7 +641,7 @@ const SpaceEditPage = () => {
       throw new Error("Invalid response");
     } catch (err) {
       toast.error("Failed to update space");
-      revertAllFormFields();
+      // revertAllFormFields();
     }
   };
 
@@ -901,23 +901,10 @@ const SpaceEditPage = () => {
 
           {/* Images */}
           <SpaceImagesUploadSection
+            formProps={formReturns}
             existingFiles={defaultValues?.files?.images?.filter(
               (s) => typeof s === "string",
             )}
-            processUpload={async (file, setter) => {
-              try {
-                const fileRes = await handleFileUpload(file, mediaTypes.IMAGE);
-                if (!fileRes) {
-                  throw new Error("Incomplete");
-                }
-                // autoSave();
-                return {
-                  status: "completed",
-                };
-              } catch (err) {
-                return { status: "error" };
-              }
-            }}
           />
 
           {/* Layouts */}

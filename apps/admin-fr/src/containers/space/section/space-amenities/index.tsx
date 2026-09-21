@@ -10,12 +10,8 @@ import {
   spaceSchema,
   type SpaceSchema,
 } from "@pride-spaces/common/utils/schemas/space.js";
+import type { SpaceFormProps } from "@/types/form/space";
 
-type SpaceFormProps = UseFormReturn<
-  z.input<typeof spaceSchema>,
-  unknown,
-  SpaceSchema
->;
 type ChangedAllData = Record<string, any> | null | undefined;
 type ChangedFieldPropsFn = (
   data: Record<string, unknown> | null | undefined,
