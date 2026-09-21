@@ -40,3 +40,7 @@ export const adminSchema = z.object({
 });
 
 export type AdminSchema = z.infer<typeof adminSchema>;
+
+// Login
+export const loginSchema = adminSchema.pick({ email: true, password: true });
+export type LoginSchema = z.infer<typeof loginSchema>;

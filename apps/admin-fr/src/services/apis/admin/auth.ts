@@ -1,5 +1,8 @@
 import { ADMIN, ADMIN_AUTH } from "../config";
-import { adminSchema, loginSchema } from "@/utils/schemas/user";
+import {
+  adminSchema,
+  loginSchema,
+} from "@pride-spaces/common/utils/schemas/user.js";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import type { GeneralResponseWithError } from "@/types/axios/response";
 import type { Admin } from "@/types/data/user";

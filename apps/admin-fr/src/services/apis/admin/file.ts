@@ -1,5 +1,5 @@
 import { ADMIN_FILE } from "../config";
-import { spaceSchema } from "@/utils/schemas/spaces";
+import { spaceSchema } from "@pride-spaces/common/utils/schemas/space.js";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
 
