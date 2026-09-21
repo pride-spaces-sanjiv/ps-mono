@@ -38,6 +38,7 @@ type TimeOption = { label: string; value: string };
 type Props = {
   formProps: SpaceFormProps;
   operatorData: Partial<Operator> | null;
+  operators: Operator[];
   timeOptions: TimeOption[];
   mainChangesAllData: ChangedAllData;
   changedFieldProps: ChangedFieldPropsFn;
@@ -48,6 +49,7 @@ type Props = {
   setIsConfirmDialogOpen: (open: boolean) => void;
   currentBookedSeats: number;
   hasLoadedData: boolean;
+  isNew: boolean;
 };
 
 export default function SpaceDetailsSection({
@@ -63,6 +65,8 @@ export default function SpaceDetailsSection({
   setIsConfirmDialogOpen,
   currentBookedSeats = 0,
   hasLoadedData = false,
+  isNew = false,
+  operators = [],
 }: Partial<Props>) {
   const { register, watch, setValue, formState } = useMemo<SpaceFormProps>(
     // @ts-ignore
@@ -104,7 +108,43 @@ export default function SpaceDetailsSection({
         disabled
         error={errors?.operator}
         {...changedFieldProps?.(mainChangesAllData, "operator")}
-      />
+      >
+        {isNew ? (
+          <GroupedSearchSelect
+            type="single"
+            items={operators?.map((operator) => ({
+              label: operator.name || operator.email || operator.id,
+              value: operator.id,
+              searchValue: [operator.name, operator.email, operator.slug]
+                .filter(Boolean)
+                .join(" "),
+            }))}
+            triggerProps={{
+              children: (
+                <ActionButton type="button" variant="outline">
+                  {operatorData?.name || "Select Operator"}
+                </ActionButton>
+              ),
+            }}
+            onSelect={(item) => {
+              const selectedOperator =
+                operators.find((operator) => operator.id === item?.value) ||
+                null;
+
+              const primaryBranch =
+                selectedOperator?.branches?.find(
+                  (branch) => branch.isPrimary,
+                ) || selectedOperator?.branches?.[0];
+
+              setValue?.("operator", selectedOperator?.id || "", {
+                shouldValidate: true,
+              });
+            }}
+          />
+        ) : (
+          false
+        )}
+      </FormField>
       <FormField
         key={`space-cat-${defaultValues?.specs?.category}`}
         label="Category"
