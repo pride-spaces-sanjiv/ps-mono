@@ -462,24 +462,7 @@ const SpaceCreatePage = () => {
           />
 
           {/* Images */}
-          <SpaceImagesUploadSection
-            existingFiles={defaultValues?.files?.images?.filter(
-              (s) => typeof s === "string",
-            )}
-            processUpload={async (file) => {
-              try {
-                const fileRes = await handleFileUpload(file, mediaTypes.IMAGE);
-                if (!fileRes) {
-                  throw new Error("Incomplete");
-                }
-                return {
-                  status: "completed",
-                };
-              } catch (err) {
-                return { status: "error" };
-              }
-            }}
-          />
+          <SpaceImagesUploadSection formProps={formReturns} />
 
           {/* Layouts */}
           <SpaceLayoutsUploadSection

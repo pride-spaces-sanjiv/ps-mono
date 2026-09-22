@@ -1,7 +1,7 @@
 import { ADMIN_BUILDER, ADMIN_CONVENTIONAL } from "../config";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
-import { builderSchema } from "@/utils/schemas/builder";
+import { builderSchema } from "@pride-spaces/common/utils/schemas/builder.js";
 import { conventionalPropertySchema } from "@/utils/schemas/conventional";
 import type {
   GeneralResponseWithError,

@@ -1,5 +1,5 @@
 import { ADMIN_SPACE } from "../config";
-import { spaceSchema, baseSpaceSchema } from "@/utils/schemas/spaces";
+import { spaceSchema } from "@pride-spaces/common/utils/schemas/space.js";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
 
@@ -82,7 +82,7 @@ export const createSpace = APIBodyValidationWrapper({
 
 // 🔹 Update Space
 export const updateSpace = APIBodyValidationWrapper({
-  schema: baseSpaceSchema.partial(),
+  schema: spaceSchema.partial(),
   handle: async (param, config) => {
     const url = `/${param?.url}`;
 

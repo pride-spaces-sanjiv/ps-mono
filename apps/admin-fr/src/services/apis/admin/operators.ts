@@ -8,7 +8,7 @@ import type {
 } from "@/types/axios/response";
 
 // import type { Operator } from "@/types/data/operators";
-import { operatorSchema } from "@/utils/schemas/operators";
+import { operatorSchema } from "@pride-spaces/common/utils/schemas/operator.js";
 import type { Operator } from "@/types/data/operators";
 
 type OperatorsRes = GeneralResponseWithError<

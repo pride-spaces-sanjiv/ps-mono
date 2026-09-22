@@ -1,5 +1,5 @@
 import { ADMIN_AMENITY } from "../config";
-import { amenitySchema } from "@/utils/schemas/amenity";
+import { amenitySchema } from "@pride-spaces/common/utils/schemas/amenity.js";
 import { APIBodyValidationWrapper } from "@/utils/axios/wrappers";
 import { queryToString } from "@/utils/axios/query";
 // types
