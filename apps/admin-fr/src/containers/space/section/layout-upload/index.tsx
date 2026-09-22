@@ -37,7 +37,7 @@ export default function SpaceLayoutsUploadSection({
             canPreview={false}
             renderPreview={(file) => (
               <img
-                src={file?.imageSrc}
+                src={typeof file === "string" ? file : file?.imageSrc}
                 alt="Preview"
                 className="w-full h-full object-contain"
               />

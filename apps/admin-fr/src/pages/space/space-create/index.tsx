@@ -5,42 +5,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import moment from "moment";
+import { ArrowLeft, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useAmenities } from "@/services/hooks/useAmenities";
+import ActionButton from "@/components/buttons/action-btn";
 import { createSpace as createAdminSpace } from "@/services/apis/admin/spaces";
 import { createSpace as createOperatorSpace } from "@/services/apis/operator/spaces";
 import { useUser } from "@/services/hooks/use-user";
-import { useStatesCities } from "@/services/hooks/use-states-cities";
 import {
   spaceSchema,
   type SpaceSchema,
 } from "@pride-spaces/common/utils/schemas/space.js";
 import { generateSlug } from "@/utils/string/slug";
 import { queryKeys } from "@/utils/query-keys";
-import { days, shortDays } from "@/utils/data/days";
-import { spaceCategories } from "@/utils/data/category";
-import {
-  labelledSpaceGrades,
-  labelledSpaceTypes,
-} from "@pride-spaces/common/utils/data/spaceTypes.js";
-import {
-  certificates,
-  type Certificate,
-} from "@pride-spaces/common/utils/data/certificates.js";
-import {
-  labelledWorkingSizes,
-  workingSizes,
-  type WorkingSize,
-} from "@/utils/data/workingSizes";
-import MapsField from "@/components/maps";
-import FormField from "@/components/form/field";
-import FormSectionTitle from "@/components/form/section/title";
-import { SelectPicker } from "@/components/select";
-import { GroupedSearchSelect } from "@/components/search-select";
-import ChippedElements from "@/components/chips";
-import ActionButton from "@/components/buttons/action-btn";
-import { ArrowLeft, Save } from "lucide-react";
-import SelectAmenities from "@/containers/amenities/select-dialog";
+import { days } from "@/utils/data/days";
 import type { Operator } from "@/types/data/operators";
 import { validateNumber } from "@/utils/number";
 import { getOperators } from "@/services/apis/admin/operators";
@@ -52,24 +29,19 @@ import {
   mediaTypes,
   type MediaType,
 } from "@pride-spaces/common/utils/data/media.js";
+import { cn } from "@/utils/className";
+
+// Form Sections
+import SpaceDetailsSection from "@/containers/space/section/space-details";
+import SpacePocDetailsSection from "@/containers/space/section/space-poc-details";
+import SpaceCertificationsSection from "@/containers/space/section/space-certifications";
+import SpaceAmenitiesSection from "@/containers/space/section/space-amenities";
+import SpacePricingDetailsSection from "@/containers/space/section/space-pricing-details";
+import SpaceLocationDetailsSection from "@/containers/space/section/space-location-details";
 import SpaceImagesUploadSection from "@/containers/space/section/image-upload";
 import SpaceLayoutsUploadSection from "@/containers/space/section/layout-upload";
-import { cn } from "@/utils/className";
-import SpaceDetailsSection from "@/containers/space/section/space-details";
 
 const defaultTime = moment().hour(0).minute(0).toDate();
-
-const ocStatusOptions = [
-  { label: "OC", value: "OC" },
-  { label: "NON OC", value: "NON OC" },
-  { label: "!", value: "!" },
-];
-
-const sezStatusOptions = [
-  { label: "SEZ", value: "SEZ" },
-  { label: "NON SEZ", value: "NON SEZ" },
-  { label: "!", value: "!" },
-];
 
 type LocState = {
   operatorData: Operator | null;
@@ -79,11 +51,8 @@ const SpaceCreatePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userLevel, userData } = useUser();
-  const { groupedCities, citiesData, statesData } = useStatesCities();
 
   const formRef = useRef<HTMLFormElement | null>(null);
-
-  const { amenitiesData } = useAmenities();
 
   const formReturns = useForm({
     resolver: zodResolver(spaceSchema),
@@ -117,12 +86,6 @@ const SpaceCreatePage = () => {
         isEventSpace: false,
       },
 
-      terms: {
-        lockIn: "",
-        noticePeriod: "",
-        securityDeposit: "",
-      },
-
       pricing: {
         dayPass: 0,
         perSeat: 0,
@@ -139,10 +102,8 @@ const SpaceCreatePage = () => {
   });
 
   const {
-    register,
     handleSubmit,
-    reset,
-    formState: { errors, defaultValues },
+    formState: { defaultValues },
     watch,
     setValue,
   } = useMemo(() => formReturns, [formReturns]);
@@ -158,7 +119,7 @@ const SpaceCreatePage = () => {
     return state || {};
   }, [location.state]);
 
-  const [selectedOperatorData, setSelectedOperatorData] =
+  const [selectedOperatorData] =
     useState<Operator | null>(loggedInOperator || locationOperatorData || null);
 
   // operators list fetch
@@ -181,6 +142,7 @@ const SpaceCreatePage = () => {
       ((operatorsRes?.data?.data?.results ?? []) as Operator[]).filter(Boolean),
     [operatorsRes?.data?.data?.results],
   );
+
   const operatorData = useMemo(() => {
     return (
       loggedInOperator ||
@@ -197,7 +159,6 @@ const SpaceCreatePage = () => {
     watch("operator"),
   ]);
 
-  const selectedGrade = watch("specs.grade");
   const selectedSpaceType = watch("specs.spaceType");
   const isMos = selectedSpaceType === "MOS";
 
@@ -238,32 +199,48 @@ const SpaceCreatePage = () => {
 
   const [POCSameAsOperator, setPOCSameAsOperator] = useState(false);
 
+  // Sync operator details when selected
   useEffect(() => {
+    if (!operatorData) return;
     const primaryBranch =
       operatorData?.branches?.find((branch) => branch.isPrimary) ||
       operatorData?.branches?.[0];
 
-    reset({
-      ...defaultValues,
+    if (operatorData.id) {
+      setValue("operator", operatorData.id, { shouldValidate: true });
+    }
+    if (primaryBranch?.code) {
+      setValue("branch", primaryBranch.code, { shouldValidate: true });
+    }
+    if (operatorData.slug) {
+      setValue(
+        "slug",
+        generateSlug(
+          operatorData.slug,
+          validateNumber(operatorData.totalSpaces, {
+            invalidValue: -1,
+          }) + 1,
+        ),
+        { shouldValidate: true },
+      );
+    }
+  }, [operatorData, setValue]);
 
-      operator: operatorData?.id || defaultValues?.operator,
-
-      branch: primaryBranch?.id || defaultValues?.branch,
-
-      slug: operatorData?.slug
-        ? generateSlug(
-            operatorData.slug,
-            validateNumber(operatorData.totalSpaces, {
-              invalidValue: -1,
-            }) + 1,
-          )
-        : defaultValues?.slug,
-
-      person: {
-        ...(POCSameAsOperator ? operatorData?.person : defaultValues?.person),
-      },
-    });
-  }, [POCSameAsOperator, operatorData]);
+  // Sync POC details when "Same As Operator" is toggled
+  useEffect(() => {
+    if (POCSameAsOperator && operatorData?.person) {
+      setValue(
+        "person",
+        {
+          name: operatorData.person.name || "",
+          email: operatorData.person.email || "",
+          contactNo: operatorData.person.contactNo || "",
+          role: operatorData.person.role || "",
+        },
+        { shouldValidate: true },
+      );
+    }
+  }, [POCSameAsOperator, operatorData, setValue]);
 
   const createSpaceApi = isOperatorPortal
     ? createOperatorSpace
@@ -271,27 +248,26 @@ const SpaceCreatePage = () => {
   const homeRoute = isOperatorPortal ? "/partner" : "/spaces";
 
   const { mutateAsync, isPending: createLoading } = useMutation({
-    mutationFn: createSpaceApi,
+    mutationFn: (body: SpaceSchema) =>
+      createSpaceApi({ body: body as any }),
   });
 
-  const { mutateAsync: mapsURLPosMutater, isPending: mapsLoading } =
-    useMutation({
-      mutationFn: (
-        body: (Required<Parameters<typeof getMapsURLPos>[0]> & {})["body"],
-      ) => getMapsURLPos({ body }),
-    });
+  const { mutateAsync: mapsURLPosMutater } = useMutation({
+    mutationFn: (
+      body: (Required<Parameters<typeof getMapsURLPos>[0]> & {})["body"],
+    ) => getMapsURLPos({ body }),
+  });
 
   // 2 secs debounced maps url set
   useDebouncer(watch("location.url"), 2000, async (url) => {
     try {
-      console.log("Location url debounced :", url);
       if (
         url?.trim() &&
         spaceSchema.shape.location.shape.url.safeParse(url).success
       ) {
         const res = await mapsURLPosMutater({ url });
         const data = res.data?.data;
-        if (data.lat && data.lng) {
+        if (data?.lat && data?.lng) {
           setValue("location.lat", data.lat);
           setValue("location.lng", data.lng);
         }
@@ -358,9 +334,7 @@ const SpaceCreatePage = () => {
         }
       }
 
-      const res = await mutateAsync({
-        body,
-      });
+      const res = await mutateAsync(body);
 
       if (res.status === 201) {
         toast.success("Centre created successfully");
@@ -429,7 +403,6 @@ const SpaceCreatePage = () => {
           </div>
 
           {/* Submit */}
-
           <ActionButton
             className="justify-end"
             loading={createLoading}
@@ -449,600 +422,51 @@ const SpaceCreatePage = () => {
         <form
           ref={formRef}
           onSubmit={handleSubmit(onSubmit, (errors) => {
-            console.log("Space edit form error", errors);
+            console.log("Space create form error", errors);
           })}
           className="auto-form-grid"
         >
           {/* SECTION: Centre Details */}
-
           <SpaceDetailsSection
             formProps={formReturns}
             operatorData={operatorData}
             operators={operators}
             timeOptions={timeOptions}
             hasLoadedData={false}
-            isNew={true}
+            isNew={!isOperatorPortal && !locationOperatorData}
           />
 
           {/* SECTION: Centre Point of Contact */}
-
-          <FormSectionTitle>Point of Contact Details</FormSectionTitle>
-
-          <div className="flex items-center gap-2 col-span-full">
-            <label className="text-muted-foreground text-sm">
-              Same As Operator
-            </label>
-            <Switch
-              className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
-              checked={POCSameAsOperator}
-              onCheckedChange={(checked) => {
-                setPOCSameAsOperator(checked);
-              }}
-            />
-          </div>
-
-          <FormField
-            label="Name"
-            labelPosition="embedded"
-            placeholder="John Doe"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            {...register("person.name")}
-            error={errors.person?.name}
-          />
-
-          <FormField
-            label="Email"
-            labelPosition="embedded"
-            type="email"
-            placeholder="john.doe@example.com"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            {...register("person.email")}
-            error={errors.person?.email}
-          />
-
-          <FormField
-            key={`poc-same-${POCSameAsOperator}-${defaultValues?.person?.contactNo}`}
-            label="Telephone"
-            labelPosition="embedded"
-            type="tel"
-            inputMode="tel"
-            inputType="phone"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            defaultValue={defaultValues?.person?.contactNo}
-            value={watch("person.contactNo")}
-            placeholder="+1-123-456-7890"
-            onChange={(val) =>
-              setValue("person.contactNo", val?.toString() || "", {
-                shouldValidate: true,
-              })
-            }
-            error={errors.person?.contactNo}
-          />
-
-          <FormField
-            label="Designation"
-            placeholder="Centre Manager"
-            labelPosition="embedded"
-            readOnly={POCSameAsOperator}
-            disabled={POCSameAsOperator}
-            {...register("person.role")}
-            error={errors.person?.role}
+          <SpacePocDetailsSection
+            formProps={formReturns}
+            pocSameAsOperator={POCSameAsOperator}
+            setPOCSameAsOperator={setPOCSameAsOperator}
           />
 
           {/* SECTION: Certifications */}
-          <FormSectionTitle>Certifications</FormSectionTitle>
-
-          {/* Building Type */}
-          <FormField
-            key={`space-grade-${defaultValues?.specs?.grade}`}
-            label="Building Type"
-            labelPosition="embedded"
-            inputType="select"
-            items={labelledSpaceGrades}
-            error={errors.specs?.grade}
-            pickerProps={{
-              wrapperProps: {
-                defaultValue: defaultValues?.specs?.grade,
-                onValueChange: (val) =>
-                  setValue(
-                    "specs.grade",
-                    val as SpaceSchema["specs"]["grade"],
-                    {
-                      shouldValidate: true,
-                    },
-                  ),
-              },
-            }}
-          />
-
-          {/* OC Status */}
-          <FormField
-            key={`oc-status-${watch("flags.isOc")}`}
-            label="OC Status"
-            labelPosition="embedded"
-            inputType="select"
-            items={ocStatusOptions}
-            error={errors.flags?.isOc}
-            pickerProps={{
-              wrapperProps: {
-                defaultValue: defaultValues?.flags?.isOc || "!",
-                onValueChange: (val) =>
-                  setValue("flags.isOc", val as string, {
-                    shouldValidate: true,
-                  }),
-              },
-            }}
-          />
-
-          {/* SEZ Status */}
-          <FormField
-            key={`sez-status-${watch("flags.isSez")}`}
-            label="SEZ Status"
-            labelPosition="embedded"
-            inputType="select"
-            items={sezStatusOptions}
-            error={errors.flags?.isSez}
-            pickerProps={{
-              wrapperProps: {
-                defaultValue: defaultValues?.flags?.isSez || "!",
-                onValueChange: (val) =>
-                  setValue("flags.isSez", val as string, {
-                    shouldValidate: true,
-                  }),
-              },
-            }}
-          />
-
-          {/* Other Certifications */}
-          <FormField
-            label="Other Certifications"
-            labelPosition="embedded"
-            error={{
-              message:
-                errors.specs?.certificates?.[0]?.message ||
-                errors?.specs?.certificates?.message,
-              type:
-                errors.specs?.certificates?.[0]?.type ||
-                errors?.specs?.certificates?.type ||
-                "validate",
-            }}
-          >
-            <GroupedSearchSelect
-              key={`certificates-${defaultValues?.specs?.certificates?.length}`}
-              type="multiple"
-              showSearch={false}
-              defaultSelected={defaultValues?.specs?.certificates}
-              items={certificates.map((crt) => ({ label: crt, value: crt }))}
-              triggerProps={{
-                children: (
-                  <ActionButton
-                    type="button"
-                    variant={"outline"}
-                    className={
-                      "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
-                    }
-                  >
-                    {(watch("specs.certificates", [])?.length || 0) > 0 ? (
-                      <ChippedElements
-                        elements={watch("specs.certificates", [])}
-                      />
-                    ) : (
-                      "Select Certifications"
-                    )}
-                  </ActionButton>
-                ),
-              }}
-              contentProps={{ className: "max-h-[300px]" }}
-              onSelect={(items) => {
-                setValue(
-                  "specs.certificates",
-                  items.filter(
-                    (val) => typeof val === "string",
-                  ) as Certificate[],
-                  { shouldValidate: true },
-                );
-              }}
-            />
-          </FormField>
+          <SpaceCertificationsSection formProps={formReturns} />
 
           {/* SECTION: Amenities & Event Space Details */}
-          <FormSectionTitle>Amenities & Event Space Details</FormSectionTitle>
-
-          {/* Amenities */}
-          <FormField
-            label="Amenities"
-            labelPosition="embedded"
-            error={{
-              message:
-                errors.facilities?.[0]?.message || errors.facilities?.message,
-              type:
-                errors.facilities?.[0]?.type ||
-                errors.facilities?.type ||
-                "validate",
-            }}
-          >
-            <SelectAmenities
-              className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto"
-              defaultAmenities={watch("facilities", [])}
-              onSelect={(amenities) => {
-                setValue(
-                  "facilities",
-                  // @ts-ignore
-                  amenities.map((a) => a.id),
-                  {
-                    shouldValidate: true,
-                  },
-                );
-              }}
-            >
-              {(watch("facilities", [])?.length || 0) > 0 ? (
-                <ChippedElements
-                  elements={amenitiesData
-                    .filter((dt) => watch("facilities", [])?.includes(dt.id))
-                    .map((dt) => dt.name)}
-                />
-              ) : (
-                "Select Amenities"
-              )}
-            </SelectAmenities>
-          </FormField>
-
-          <FormField
-            key={`event-space-${watch("flags.isEventSpace")}`}
-            label="Event Space"
-            labelPosition="embedded"
-            inputType="select"
-            items={[
-              { label: "YES", value: "true" },
-              { label: "NO", value: "false" },
-            ]}
-            error={errors?.flags?.isEventSpace}
-            pickerProps={{
-              wrapperProps: {
-                value: watch("flags.isEventSpace") ? "true" : "false",
-                onValueChange: (val) => {
-                  const isYes = val === "true";
-                  setValue("flags.isEventSpace", isYes, {
-                    shouldValidate: true,
-                  });
-                  if (!isYes) {
-                    setValue("pricing.eventSpaceBrief", "", {
-                      shouldValidate: true,
-                    });
-                    setValue("pricing.eventSpaceCharges", "", {
-                      shouldValidate: true,
-                    });
-                    setValue("pricing.eventSpaceCapacity", undefined, {
-                      shouldValidate: true,
-                    });
-                  }
-                },
-              },
-            }}
-          />
-
-          {watch("flags.isEventSpace") && (
-            <>
-              <div className="col-span-full flex flex-col gap-1">
-                <FormField
-                  label="Event Space Brief"
-                  labelPosition="embedded"
-                  placeholder="Brief description of the event space..."
-                  inputType="textarea"
-                  rows={2}
-                  required
-                  {...register("pricing.eventSpaceBrief")}
-                  error={errors.pricing?.eventSpaceBrief}
-                />
-                <div className="flex justify-end text-xs text-muted-foreground px-1">
-                  <span>
-                    {
-                      (watch("pricing.eventSpaceBrief") || "")
-                        .trim()
-                        .split(/\s+/)
-                        .filter(Boolean).length
-                    }
-                    /200 words
-                  </span>
-                </div>
-              </div>
-              <FormField
-                label="Event Space Capacity"
-                labelPosition="embedded"
-                placeholder="e.g. 50"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                required
-                {...register("pricing.eventSpaceCapacity", {
-                  valueAsNumber: true,
-                })}
-                error={errors.pricing?.eventSpaceCapacity}
-              />
-              <FormField
-                label="Event Space Charges"
-                labelPosition="embedded"
-                placeholder="e.g. ₹5,000 / hour"
-                required
-                {...register("pricing.eventSpaceCharges")}
-                error={errors.pricing?.eventSpaceCharges}
-              />
-            </>
-          )}
+          <SpaceAmenitiesSection formProps={formReturns} />
 
           {/* Pricing Details */}
-          <FormSectionTitle>Pricing Details</FormSectionTitle>
-
-          <FormField
-            label="Per Seat"
-            labelPosition="embedded"
-            placeholder="300"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={99999}
-            {...register("pricing.perSeat", { valueAsNumber: true })}
-            error={errors.pricing?.perSeat}
+          <SpacePricingDetailsSection
+            formProps={formReturns}
+            isMos={isMos}
           />
 
-          {!isMos && (
-            <>
-              <FormField
-                label="Meeting Room"
-                labelPosition="embedded"
-                placeholder="3000"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={99999}
-                {...register("pricing.meetingRoom", { valueAsNumber: true })}
-                error={errors.pricing?.meetingRoom}
-              />
-
-              <FormField
-                label="Dedicated Desk"
-                labelPosition="embedded"
-                placeholder="3000"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={99999}
-                {...register("pricing.dedicatedDesk", { valueAsNumber: true })}
-                error={errors.pricing?.dedicatedDesk}
-              />
-
-              <FormField
-                label="Day Pass"
-                labelPosition="embedded"
-                placeholder="300"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={99999}
-                {...register("pricing.dayPass", { valueAsNumber: true })}
-                error={errors.pricing?.dayPass}
-              />
-
-              <FormField
-                label="Flexi/Hot Desk"
-                labelPosition="embedded"
-                placeholder="3000"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={99999}
-                {...register("pricing.flexiDesk", { valueAsNumber: true })}
-                error={errors.pricing?.flexiDesk}
-              />
-
-              <FormField
-                key={`vo-service-${watch("flags.isVoService")}`}
-                label="VO Service"
-                labelPosition="embedded"
-                inputType="select"
-                items={[
-                  { label: "YES", value: "true" },
-                  { label: "NO", value: "false" },
-                ]}
-                error={errors?.flags?.isVoService}
-                pickerProps={{
-                  wrapperProps: {
-                    value: watch("flags.isVoService") ? "true" : "false",
-                    onValueChange: (val) => {
-                      const isYes = val === "true";
-                      setValue("flags.isVoService", isYes, {
-                        shouldValidate: true,
-                      });
-                      if (!isYes) {
-                        setValue("pricing.vo", 0, { shouldValidate: true });
-                      }
-                    },
-                  },
-                }}
-              />
-
-              {watch("flags.isVoService") && (
-                <FormField
-                  label="VO P/M"
-                  labelPosition="embedded"
-                  placeholder="3000"
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  max={99999}
-                  {...register("pricing.vo", { valueAsNumber: true })}
-                  error={errors.pricing?.vo}
-                />
-              )}
-            </>
-          )}
-
-          {/* Location */}
-          <FormSectionTitle>Location Details</FormSectionTitle>
-
-          <div className="flex gap-2 w-full col-span-full">
-            {/* Details */}
-            <div className="flex flex-col gap-2 w-full">
-              <FormField
-                label="Country"
-                labelPosition="embedded"
-                placeholder="India"
-                {...register("location.country")}
-                error={errors.location?.country}
-              />
-
-              <FormField
-                label="Location URL"
-                labelPosition="embedded"
-                placeholder="https://maps.app.goo.gl/..."
-                // {...register("location.url")}
-                defaultValue={defaultValues?.location?.url || undefined}
-                onChange={(e) => {
-                  const val = e.currentTarget.value;
-                  setValue("location.url", val, { shouldValidate: true });
-                }}
-                error={errors.location?.url}
-              />
-
-              <FormField
-                key={`states-${statesData.length}-def-${defaultValues?.location?.state}-op-${operatorData?.slug}`}
-                label="State"
-                labelPosition="embedded"
-                error={errors?.location?.state}
-              >
-                <GroupedSearchSelect
-                  type="single"
-                  defaultSelected={{
-                    value:
-                      statesData?.find(
-                        (state) =>
-                          state.name === defaultValues?.location?.state,
-                      )?.name ||
-                      operatorData?.branches?.find((br) => br.isPrimary)?.name,
-                  }}
-                  items={statesData
-                    .filter((state) =>
-                      operatorData?.branches
-                        ?.map((br) => br.code)
-                        .includes(state.code as string),
-                    )
-                    .map((state) => ({
-                      label: state.name,
-                      value: state.name,
-                      searchValue: [state.name, state.code]
-                        .filter(Boolean)
-                        .join(" "),
-                    }))}
-                  inputProps={{ placeholder: "Select State" }}
-                  triggerProps={{
-                    children: (
-                      <ActionButton type="button" variant="outline">
-                        {watch("location.state", "") || "Select State"}
-                      </ActionButton>
-                    ),
-                  }}
-                  onSelect={(item) => {
-                    setValue("location.state", item?.value || "", {
-                      shouldValidate: true,
-                    });
-                  }}
-                />
-              </FormField>
-
-              <FormField
-                key={`state-${watch("location.state", "")}-cities-${citiesData.length}-def-${defaultValues?.location?.city}-op-${operatorData?.slug}`}
-                label="City"
-                labelPosition="embedded"
-                placeholder="Mumbai"
-                error={errors.location?.city}
-              >
-                <GroupedSearchSelect
-                  type="single"
-                  defaultSelected={{
-                    value: citiesData?.find(
-                      (city) => city.name === defaultValues?.location?.city,
-                    )?.name,
-                  }}
-                  items={citiesData
-                    .filter(
-                      (city) =>
-                        city.state ===
-                        statesData.find(
-                          (s) => s.name === watch("location.state", ""),
-                        )?.code,
-                    )
-                    .map((city) => ({
-                      label: city.name,
-                      value: city.name,
-                      searchValue: city.name,
-                    }))}
-                  inputProps={{ placeholder: "Select City" }}
-                  triggerProps={{
-                    children: (
-                      <ActionButton type="button" variant="outline">
-                        {watch("location.city", "") || "Select City"}
-                      </ActionButton>
-                    ),
-                  }}
-                  onSelect={(item) => {
-                    setValue("location.city", item?.value || "", {
-                      shouldValidate: true,
-                    });
-                  }}
-                />
-              </FormField>
-
-              <FormField
-                label="Area - Micro Market"
-                labelPosition="embedded"
-                placeholder="Panvel"
-                {...register("location.area")}
-                error={errors.location?.area}
-              />
-
-              <FormField
-                label="Zip Code"
-                labelPosition="embedded"
-                placeholder="349203"
-                {...register("location.postalCode")}
-                error={errors.location?.postalCode}
-              />
-
-              <FormField
-                label="Address"
-                labelPosition="embedded"
-                inputType="textarea"
-                {...register("location.address")}
-                error={errors.location?.address}
-              />
-            </div>
-            {/* Maps Preview */}
-            <MapsField
-              wrapperProps={{
-                className: "flex flex-col gap-4 w-[300px] shrink-0",
-              }}
-              mapProps={{ mapContainerClassName: "min-h-[200px] w-full" }}
-              buttonProps={{ className: "w-fit" }}
-              defaultCoords={
-                (!!watch("location.lat") &&
-                  !!watch("location.lng") && {
-                    lat: watch("location.lat"),
-                    lng: watch("location.lng"),
-                  }) ||
-                undefined
-              }
-            />
-          </div>
+          {/* Location Section */}
+          <SpaceLocationDetailsSection
+            formProps={formReturns}
+            operatorData={operatorData}
+          />
 
           {/* Images */}
           <SpaceImagesUploadSection
             existingFiles={defaultValues?.files?.images?.filter(
               (s) => typeof s === "string",
             )}
-            processUpload={async (file, setter) => {
+            processUpload={async (file) => {
               try {
                 const fileRes = await handleFileUpload(file, mediaTypes.IMAGE);
                 if (!fileRes) {
@@ -1062,7 +486,7 @@ const SpaceCreatePage = () => {
             existingFiles={defaultValues?.files?.layouts?.filter(
               (s) => typeof s === "string",
             )}
-            processUpload={async (file, setter) => {
+            processUpload={async (file) => {
               try {
                 const fileRes = await handleFileUpload(file, mediaTypes.LAYOUT);
                 if (!fileRes) {

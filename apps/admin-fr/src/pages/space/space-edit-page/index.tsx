@@ -263,12 +263,7 @@ const SpaceEditPage = () => {
         isOc: "!",
         isSez: "!",
         isVoService: false,
-      },
-
-      terms: {
-        lockIn: "",
-        noticePeriod: "",
-        securityDeposit: "",
+        isEventSpace: false,
       },
 
       pricing: {

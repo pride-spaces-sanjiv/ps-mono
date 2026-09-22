@@ -37,15 +37,15 @@ export default function SpaceAmenitiesSection({
   pricingChangesAllData,
   changedFieldProps,
   autoSave,
-}: Props) {
+}: Partial<Props>) {
   const { amenitiesData } = useAmenities();
 
   const {
     register,
     watch,
     setValue,
-    formState: { errors, defaultValues },
-  } = formProps;
+    formState: { errors, defaultValues } = {},
+  } = formProps || ({} as SpaceFormProps);
 
   return (
     <>
@@ -58,33 +58,33 @@ export default function SpaceAmenitiesSection({
         labelPosition="embedded"
         error={{
           message:
-            errors.facilities?.[0]?.message || errors?.facilities?.message,
+            errors?.facilities?.[0]?.message || errors?.facilities?.message,
           type:
-            errors.facilities?.[0]?.type ||
+            errors?.facilities?.[0]?.type ||
             errors?.facilities?.type ||
             "validate",
         }}
-        {...changedFieldProps(mainChangesAllData, "facilities")}
+        {...changedFieldProps?.(mainChangesAllData, "facilities")}
       >
         <SelectAmenities
           className="grow-1 shrink-1 w-[200px] overflow-hidden overflow-x-auto justify-start"
-          defaultAmenities={watch("facilities", [])}
+          defaultAmenities={watch?.("facilities", [])}
           onSelect={(amenities) => {
             console.log(amenities);
-            setValue(
+            setValue?.(
               "facilities",
               // @ts-ignore
               amenities.map((a) => a.id),
               { shouldValidate: true },
             );
-            autoSave();
+            autoSave?.();
           }}
         >
-          {(watch("facilities", [])?.length || 0) > 0 ? (
+          {(watch?.("facilities", [])?.length || 0) > 0 ? (
             <ChippedElements
               className=""
               elements={amenitiesData
-                .filter((dt) => watch("facilities", [])?.includes(dt.id))
+                .filter((dt) => watch?.("facilities", [])?.includes(dt.id))
                 .map((dt) => dt.name)}
             />
           ) : (
@@ -94,7 +94,7 @@ export default function SpaceAmenitiesSection({
       </FormField>
 
       <FormField
-        key={`event-space-${watch("flags.isEventSpace")}`}
+        key={`event-space-${watch?.("flags.isEventSpace")}`}
         label="Event Space"
         labelPosition="embedded"
         inputType="select"
@@ -105,30 +105,30 @@ export default function SpaceAmenitiesSection({
         error={errors?.flags?.isEventSpace}
         pickerProps={{
           wrapperProps: {
-            value: watch("flags.isEventSpace") ? "true" : "false",
+            value: watch?.("flags.isEventSpace") ? "true" : "false",
             onValueChange: (val) => {
               const isYes = val === "true";
-              setValue("flags.isEventSpace", isYes, {
+              setValue?.("flags.isEventSpace", isYes, {
                 shouldValidate: true,
               });
               if (!isYes) {
-                setValue("pricing.eventSpaceBrief", "", {
+                setValue?.("pricing.eventSpaceBrief", "", {
                   shouldValidate: true,
                 });
-                setValue("pricing.eventSpaceCharges", "", {
+                setValue?.("pricing.eventSpaceCharges", "", {
                   shouldValidate: true,
                 });
-                setValue("pricing.eventSpaceCapacity", undefined, {
+                setValue?.("pricing.eventSpaceCapacity", undefined, {
                   shouldValidate: true,
                 });
               }
-              autoSave();
+              autoSave?.();
             },
           },
         }}
       />
 
-      {watch("flags.isEventSpace") && (
+      {watch?.("flags.isEventSpace") && (
         <>
           <div className="col-span-full flex flex-col gap-1">
             <FormField
@@ -137,13 +137,13 @@ export default function SpaceAmenitiesSection({
               placeholder="Brief description of the event space..."
               inputType="textarea"
               required
-              {...register("pricing.eventSpaceBrief")}
-              error={errors.pricing?.eventSpaceBrief}
+              {...register?.("pricing.eventSpaceBrief")}
+              error={errors?.pricing?.eventSpaceBrief}
             />
             <div className="flex justify-end text-xs text-muted-foreground px-1">
               <span>
                 {
-                  (watch("pricing.eventSpaceBrief") || "")
+                  (watch?.("pricing.eventSpaceBrief") || "")
                     .trim()
                     .split(/\s+/)
                     .filter(Boolean).length
@@ -160,11 +160,11 @@ export default function SpaceAmenitiesSection({
             inputMode="numeric"
             min={0}
             required
-            {...register("pricing.eventSpaceCapacity", {
+            {...register?.("pricing.eventSpaceCapacity", {
               valueAsNumber: true,
             })}
-            error={errors.pricing?.eventSpaceCapacity}
-            {...changedFieldProps(
+            error={errors?.pricing?.eventSpaceCapacity}
+            {...changedFieldProps?.(
               pricingChangesAllData,
               "eventSpaceCapacity",
             )}
@@ -174,8 +174,8 @@ export default function SpaceAmenitiesSection({
             labelPosition="embedded"
             placeholder="e.g. ₹5,000 / hour"
             required
-            {...register("pricing.eventSpaceCharges")}
-            error={errors.pricing?.eventSpaceCharges}
+            {...register?.("pricing.eventSpaceCharges")}
+            error={errors?.pricing?.eventSpaceCharges}
           />
         </>
       )}

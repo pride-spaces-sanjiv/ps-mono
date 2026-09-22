@@ -34,13 +34,13 @@ export default function SpacePricingDetailsSection({
   pricingChangesAllData,
   changedFieldProps,
   autoSave,
-}: Props) {
+}: Partial<Props>) {
   const {
     register,
     watch,
     setValue,
-    formState: { errors },
-  } = formProps;
+    formState: { errors } = {},
+  } = formProps || ({} as SpaceFormProps);
 
   return (
     <>
@@ -54,11 +54,11 @@ export default function SpacePricingDetailsSection({
         inputMode="decimal"
         min={0}
         max={99999}
-        {...register("pricing.perSeat", {
+        {...register?.("pricing.perSeat", {
           valueAsNumber: true,
         })}
-        error={errors.pricing?.perSeat}
-        {...changedFieldProps(pricingChangesAllData, "perSeat")}
+        error={errors?.pricing?.perSeat}
+        {...changedFieldProps?.(pricingChangesAllData, "perSeat")}
       />
       {!isMos && (
         <>
@@ -70,10 +70,10 @@ export default function SpacePricingDetailsSection({
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.meetingRoom", {
+            {...register?.("pricing.meetingRoom", {
               valueAsNumber: true,
             })}
-            error={errors.pricing?.meetingRoom}
+            error={errors?.pricing?.meetingRoom}
           />
           <FormField
             label="Dedicated Desk"
@@ -83,11 +83,11 @@ export default function SpacePricingDetailsSection({
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.dedicatedDesk", {
+            {...register?.("pricing.dedicatedDesk", {
               valueAsNumber: true,
             })}
-            error={errors.pricing?.dedicatedDesk}
-            {...changedFieldProps(pricingChangesAllData, "dedicatedDesk")}
+            error={errors?.pricing?.dedicatedDesk}
+            {...changedFieldProps?.(pricingChangesAllData, "dedicatedDesk")}
           />
           <FormField
             label="Day Pass"
@@ -97,11 +97,11 @@ export default function SpacePricingDetailsSection({
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.dayPass", {
+            {...register?.("pricing.dayPass", {
               valueAsNumber: true,
             })}
-            error={errors.pricing?.dayPass}
-            {...changedFieldProps(pricingChangesAllData, "dayPass")}
+            error={errors?.pricing?.dayPass}
+            {...changedFieldProps?.(pricingChangesAllData, "dayPass")}
           />
           <FormField
             label="Flexi/Hot Desk"
@@ -111,13 +111,13 @@ export default function SpacePricingDetailsSection({
             inputMode="decimal"
             min={0}
             max={99999}
-            {...register("pricing.flexiDesk", {
+            {...register?.("pricing.flexiDesk", {
               valueAsNumber: true,
             })}
-            error={errors.pricing?.flexiDesk}
+            error={errors?.pricing?.flexiDesk}
           />
           <FormField
-            key={`vo-service-${watch("flags.isVoService")}`}
+            key={`vo-service-${watch?.("flags.isVoService")}`}
             label="VO Service"
             labelPosition="embedded"
             inputType="select"
@@ -128,21 +128,21 @@ export default function SpacePricingDetailsSection({
             error={errors?.flags?.isVoService}
             pickerProps={{
               wrapperProps: {
-                value: watch("flags.isVoService") ? "true" : "false",
+                value: watch?.("flags.isVoService") ? "true" : "false",
                 onValueChange: (val) => {
                   const isYes = val === "true";
-                  setValue("flags.isVoService", isYes, {
+                  setValue?.("flags.isVoService", isYes, {
                     shouldValidate: true,
                   });
                   if (!isYes) {
-                    setValue("pricing.vo", 0, { shouldValidate: true });
+                    setValue?.("pricing.vo", 0, { shouldValidate: true });
                   }
-                  autoSave();
+                  autoSave?.();
                 },
               },
             }}
           />
-          {watch("flags.isVoService") && (
+          {watch?.("flags.isVoService") && (
             <FormField
               label="VO P/M"
               labelPosition="embedded"
@@ -151,10 +151,10 @@ export default function SpacePricingDetailsSection({
               inputMode="decimal"
               min={0}
               max={99999}
-              {...register("pricing.vo", {
+              {...register?.("pricing.vo", {
                 valueAsNumber: true,
               })}
-              error={errors.pricing?.vo}
+              error={errors?.pricing?.vo}
             />
           )}
         </>

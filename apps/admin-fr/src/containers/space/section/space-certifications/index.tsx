@@ -54,12 +54,12 @@ export default function SpaceCertificationsSection({
   mainChangesAllData,
   changedFieldProps,
   autoSave,
-}: Props) {
+}: Partial<Props>) {
   const {
     watch,
     setValue,
-    formState: { errors, defaultValues },
-  } = formProps;
+    formState: { errors, defaultValues } = {},
+  } = formProps || ({} as SpaceFormProps);
 
   return (
     <>
@@ -73,28 +73,28 @@ export default function SpaceCertificationsSection({
         labelPosition="embedded"
         inputType="select"
         items={labelledSpaceGrades}
-        error={errors.specs?.grade}
+        error={errors?.specs?.grade}
         pickerProps={{
           wrapperProps: {
             defaultValue: defaultValues?.specs?.grade,
             onValueChange: (val) => {
-              setValue(
+              setValue?.(
                 "specs.grade",
                 val as SpaceSchema["specs"]["grade"],
                 {
                   shouldValidate: true,
                 },
               );
-              autoSave();
+              autoSave?.();
             },
           },
         }}
-        {...changedFieldProps(mainChangesAllData, "grade")}
+        {...changedFieldProps?.(mainChangesAllData, "grade")}
       />
 
       {/* OC Status */}
       <FormField
-        key={`oc-status-${watch("flags.isOc")}`}
+        key={`oc-status-${watch?.("flags.isOc")}`}
         label="OC Status"
         labelPosition="embedded"
         inputType="select"
@@ -102,21 +102,26 @@ export default function SpaceCertificationsSection({
         error={errors?.flags?.isOc}
         pickerProps={{
           wrapperProps: {
-            defaultValue: defaultValues?.flags?.isOc || "!",
+            defaultValue:
+              typeof defaultValues?.flags?.isOc === "string"
+                ? defaultValues.flags.isOc
+                : defaultValues?.flags?.isOc
+                  ? "OC"
+                  : "!",
             onValueChange: (val) => {
-              setValue("flags.isOc", val as string, {
+              setValue?.("flags.isOc", val as string, {
                 shouldValidate: true,
               });
-              autoSave();
+              autoSave?.();
             },
           },
         }}
-        {...changedFieldProps(mainChangesAllData, "isOc")}
+        {...changedFieldProps?.(mainChangesAllData, "isOc")}
       />
 
       {/* SEZ Status */}
       <FormField
-        key={`sez-status-${watch("flags.isSez")}`}
+        key={`sez-status-${watch?.("flags.isSez")}`}
         label="SEZ Status"
         labelPosition="embedded"
         inputType="select"
@@ -124,16 +129,21 @@ export default function SpaceCertificationsSection({
         error={errors?.flags?.isSez}
         pickerProps={{
           wrapperProps: {
-            defaultValue: defaultValues?.flags?.isSez || "!",
+            defaultValue:
+              typeof defaultValues?.flags?.isSez === "string"
+                ? defaultValues.flags.isSez
+                : defaultValues?.flags?.isSez
+                  ? "SEZ"
+                  : "!",
             onValueChange: (val) => {
-              setValue("flags.isSez", val as string, {
+              setValue?.("flags.isSez", val as string, {
                 shouldValidate: true,
               });
-              autoSave();
+              autoSave?.();
             },
           },
         }}
-        {...changedFieldProps(mainChangesAllData, "isSez")}
+        {...changedFieldProps?.(mainChangesAllData, "isSez")}
       />
 
       {/* Other Certifications */}
@@ -142,14 +152,14 @@ export default function SpaceCertificationsSection({
         labelPosition="embedded"
         error={{
           message:
-            errors.specs?.certificates?.[0]?.message ||
+            errors?.specs?.certificates?.[0]?.message ||
             errors?.specs?.certificates?.message,
           type:
-            errors.specs?.certificates?.[0]?.type ||
+            errors?.specs?.certificates?.[0]?.type ||
             errors?.specs?.certificates?.type ||
             "validate",
         }}
-        {...changedFieldProps(mainChangesAllData, "certificates")}
+        {...changedFieldProps?.(mainChangesAllData, "certificates")}
       >
         <GroupedSearchSelect
           key={`certificates-${defaultValues?.specs?.certificates?.length}`}
@@ -166,9 +176,9 @@ export default function SpaceCertificationsSection({
                   "min-h-[40px] grow-1 shrink-1 border-0 w-[200px] overflow-hidden overflow-x-auto"
                 }
               >
-                {(watch("specs.certificates", [])?.length || 0) > 0 ? (
+                {(watch?.("specs.certificates", [])?.length || 0) > 0 ? (
                   <ChippedElements
-                    elements={watch("specs.certificates", [])}
+                    elements={watch?.("specs.certificates", [])}
                   />
                 ) : (
                   "Select Certifications"
@@ -178,14 +188,14 @@ export default function SpaceCertificationsSection({
           }}
           contentProps={{ className: "max-h-[300px]" }}
           onSelect={(items) => {
-            setValue(
+            setValue?.(
               "specs.certificates",
               items.filter(
                 (val) => typeof val === "string",
               ) as Certificate[],
               { shouldValidate: true },
             );
-            autoSave();
+            autoSave?.();
           }}
         />
       </FormField>

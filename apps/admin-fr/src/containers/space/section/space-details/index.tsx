@@ -109,7 +109,7 @@ export default function SpaceDetailsSection({
         error={errors?.operator}
         {...changedFieldProps?.(mainChangesAllData, "operator")}
       >
-        {isNew ? (
+        {isNew && operators && operators.length > 0 ? (
           <GroupedSearchSelect
             type="single"
             items={operators?.map((operator) => ({
@@ -295,7 +295,7 @@ export default function SpaceDetailsSection({
             to
           </span>
           <SelectPicker
-            key={`close-picker-${defaultValues?.timing?.closeTime}-${timeOptions.length}`}
+            key={`close-picker-${defaultValues?.timing?.closeTime}-${timeOptions?.length}`}
             className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
             items={timeOptions}
             valueProps={{ placeholder: "End Time" }}
@@ -366,15 +366,16 @@ export default function SpaceDetailsSection({
             }
             const val = Number(e.currentTarget.value);
             const booked = (watch?.("seats.total", 0) ?? 0) - val;
-            if (booked !== currentBookedSeats) {
+            if (!isNew && booked !== currentBookedSeats) {
               const latestData = watch?.();
               setPendingFormData?.({
                 ...latestData,
                 seats: {
                   ...latestData?.seats,
+                  total: latestData?.seats?.total ?? 0,
                   booked,
                 },
-              });
+              } as any);
               if (isConfirmedRef) {
                 isConfirmedRef.current = false;
               }
@@ -465,7 +466,7 @@ export default function SpaceDetailsSection({
         placeholder="2024"
         type="number"
         {...register?.("timing.operationalSince")}
-        error={errors?.timing?.operationalSince}
+        error={errors?.timing?.operationalSince as any}
         {...changedFieldProps?.(mainChangesAllData, "operationalSince")}
       />
 

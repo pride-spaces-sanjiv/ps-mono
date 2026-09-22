@@ -36,15 +36,15 @@ export default function SpaceLocationDetailsSection({
   operatorData,
   locationChangesAllData,
   changedFieldProps,
-}: Props) {
+}: Partial<Props>) {
   const { statesData, citiesData } = useStatesCities();
 
   const {
     register,
     watch,
     setValue,
-    formState: { errors, defaultValues },
-  } = formProps;
+    formState: { errors, defaultValues } = {},
+  } = formProps || ({} as SpaceFormProps);
 
   return (
     <>
@@ -58,9 +58,9 @@ export default function SpaceLocationDetailsSection({
             label="Country"
             labelPosition="embedded"
             placeholder="India"
-            {...register("location.country")}
-            error={errors.location?.country}
-            {...changedFieldProps(locationChangesAllData, "country")}
+            {...register?.("location.country")}
+            error={errors?.location?.country}
+            {...changedFieldProps?.(locationChangesAllData, "country")}
           />
 
           <FormField
@@ -71,10 +71,10 @@ export default function SpaceLocationDetailsSection({
             defaultValue={defaultValues?.location?.url || undefined}
             onChange={(e) => {
               const val = e.currentTarget.value;
-              setValue("location.url", val, { shouldValidate: true });
+              setValue?.("location.url", val, { shouldValidate: true });
             }}
-            error={errors.location?.url}
-            {...changedFieldProps(locationChangesAllData, "url")}
+            error={errors?.location?.url}
+            {...changedFieldProps?.(locationChangesAllData, "url")}
           />
 
           <FormField
@@ -82,7 +82,7 @@ export default function SpaceLocationDetailsSection({
             label="State"
             labelPosition="embedded"
             error={errors?.location?.state}
-            {...changedFieldProps(locationChangesAllData, "state")}
+            {...changedFieldProps?.(locationChangesAllData, "state")}
           >
             <GroupedSearchSelect
               type="single"
@@ -96,9 +96,11 @@ export default function SpaceLocationDetailsSection({
               }}
               items={statesData
                 .filter((state) =>
-                  operatorData?.branches
-                    ?.map((br) => br.code)
-                    .includes(state.code as string),
+                  operatorData?.branches && operatorData.branches.length > 0
+                    ? operatorData.branches
+                        .map((br) => br.code)
+                        .includes(state.code as string)
+                    : true,
                 )
                 .map((state) => ({
                   label: state.name,
@@ -111,24 +113,24 @@ export default function SpaceLocationDetailsSection({
               triggerProps={{
                 children: (
                   <ActionButton type="button" variant="outline">
-                    {watch("location.state", "") || "Select State"}
+                    {watch?.("location.state", "") || "Select State"}
                   </ActionButton>
                 ),
               }}
               onSelect={(item) => {
-                setValue("location.state", item?.value || "", {
+                setValue?.("location.state", item?.value || "", {
                   shouldValidate: true,
                 });
               }}
             />
           </FormField>
           <FormField
-            key={`state-${watch("location.state", "")}-cities-${citiesData.length}-def-${defaultValues?.location?.city}-op-${operatorData?.slug}`}
+            key={`state-${watch?.("location.state", "")}-cities-${citiesData.length}-def-${defaultValues?.location?.city}-op-${operatorData?.slug}`}
             label="City"
             labelPosition="embedded"
             placeholder="Mumbai"
-            error={errors.location?.city}
-            {...changedFieldProps(locationChangesAllData, "city")}
+            error={errors?.location?.city}
+            {...changedFieldProps?.(locationChangesAllData, "city")}
           >
             <GroupedSearchSelect
               type="single"
@@ -142,7 +144,7 @@ export default function SpaceLocationDetailsSection({
                   (city) =>
                     city.state ===
                     statesData.find(
-                      (s) => s.name === watch("location.state", ""),
+                      (s) => s.name === watch?.("location.state", ""),
                     )?.code,
                 )
                 .map((city) => ({
@@ -154,12 +156,12 @@ export default function SpaceLocationDetailsSection({
               triggerProps={{
                 children: (
                   <ActionButton type="button" variant="outline">
-                    {watch("location.city", "") || "Select City"}
+                    {watch?.("location.city", "") || "Select City"}
                   </ActionButton>
                 ),
               }}
               onSelect={(item) => {
-                setValue("location.city", item?.value || "", {
+                setValue?.("location.city", item?.value || "", {
                   shouldValidate: true,
                 });
               }}
@@ -170,27 +172,27 @@ export default function SpaceLocationDetailsSection({
             label="Area - Micro Market"
             labelPosition="embedded"
             placeholder="Panvel"
-            {...register("location.area")}
-            error={errors.location?.area}
-            {...changedFieldProps(locationChangesAllData, "area")}
+            {...register?.("location.area")}
+            error={errors?.location?.area}
+            {...changedFieldProps?.(locationChangesAllData, "area")}
           />
 
           <FormField
             label="Zip Code"
             labelPosition="embedded"
             placeholder="349203"
-            {...register("location.postalCode")}
-            error={errors.location?.postalCode}
-            {...changedFieldProps(locationChangesAllData, "postalCode")}
+            {...register?.("location.postalCode")}
+            error={errors?.location?.postalCode}
+            {...changedFieldProps?.(locationChangesAllData, "postalCode")}
           />
 
           <FormField
             label="Address"
             labelPosition="embedded"
             inputType="textarea"
-            {...register("location.address")}
-            error={errors.location?.address}
-            {...changedFieldProps(locationChangesAllData, "address")}
+            {...register?.("location.address")}
+            error={errors?.location?.address}
+            {...changedFieldProps?.(locationChangesAllData, "address")}
           />
         </div>
         {/* Maps Preview */}
@@ -201,10 +203,10 @@ export default function SpaceLocationDetailsSection({
           mapProps={{ mapContainerClassName: "min-h-[200px] w-full" }}
           buttonProps={{ className: "w-fit" }}
           defaultCoords={
-            (!!watch("location.lat") &&
-              !!watch("location.lng") && {
-                lat: watch("location.lat"),
-                lng: watch("location.lng"),
+            (!!watch?.("location.lat") &&
+              !!watch?.("location.lng") && {
+                lat: watch?.("location.lat"),
+                lng: watch?.("location.lng"),
               }) ||
             undefined
           }

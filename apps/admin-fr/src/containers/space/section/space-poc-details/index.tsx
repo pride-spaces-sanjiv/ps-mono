@@ -41,13 +41,13 @@ export default function SpacePocDetailsSection({
   autoSave,
   revertAllFormFields,
   activeInputHasPressedEnter,
-}: Props) {
+}: Partial<Props>) {
   const {
     register,
     watch,
     setValue,
-    formState: { errors, defaultValues },
-  } = formProps;
+    formState: { errors, defaultValues } = {},
+  } = formProps || ({} as SpaceFormProps);
 
   return (
     <>
@@ -62,8 +62,8 @@ export default function SpacePocDetailsSection({
           className="data-[state=checked]:bg-green-400 data-[state=unchecked]:bg-red-400/60"
           checked={pocSameAsOperator}
           onCheckedChange={(checked) => {
-            setPOCSameAsOperator(checked);
-            autoSave();
+            setPOCSameAsOperator?.(checked);
+            autoSave?.();
           }}
         />
       </div>
@@ -74,9 +74,9 @@ export default function SpacePocDetailsSection({
         placeholder="John Doe"
         readOnly={pocSameAsOperator}
         disabled={pocSameAsOperator}
-        {...register("person.name")}
+        {...register?.("person.name")}
         error={errors?.person?.name}
-        {...changedFieldProps(personChangesAllData, "name")}
+        {...changedFieldProps?.(personChangesAllData, "name")}
       />
 
       <FormField
@@ -86,9 +86,9 @@ export default function SpacePocDetailsSection({
         readOnly={pocSameAsOperator}
         disabled={pocSameAsOperator}
         placeholder="john.doe@example.com"
-        {...register("person.email")}
+        {...register?.("person.email")}
         error={errors?.person?.email}
-        {...changedFieldProps(personChangesAllData, "email")}
+        {...changedFieldProps?.(personChangesAllData, "email")}
       />
 
       <FormField
@@ -102,22 +102,24 @@ export default function SpacePocDetailsSection({
         readOnly={pocSameAsOperator}
         disabled={pocSameAsOperator}
         defaultValue={defaultValues?.person?.contactNo}
-        value={watch("person.contactNo")}
-        {...changedFieldProps(personChangesAllData, "contactNo")}
+        value={watch?.("person.contactNo")}
+        {...changedFieldProps?.(personChangesAllData, "contactNo")}
         placeholder="+1-123-456-7890"
         onChange={(val) => {
           console.log("POC contact number:", val);
-          setValue("person.contactNo", val?.toString() || "", {
+          setValue?.("person.contactNo", val?.toString() || "", {
             shouldValidate: true,
           });
         }}
         onBlur={() => {
-          if (activeInputHasPressedEnter.current["person.contactNo"]) {
-            autoSave();
+          if (activeInputHasPressedEnter?.current?.["person.contactNo"]) {
+            autoSave?.();
           } else {
-            revertAllFormFields();
+            revertAllFormFields?.();
           }
-          activeInputHasPressedEnter.current["person.contactNo"] = false;
+          if (activeInputHasPressedEnter?.current) {
+            activeInputHasPressedEnter.current["person.contactNo"] = false;
+          }
         }}
         error={errors?.person?.contactNo}
       />
@@ -128,9 +130,9 @@ export default function SpacePocDetailsSection({
         labelPosition="embedded"
         readOnly={pocSameAsOperator}
         disabled={pocSameAsOperator}
-        {...register("person.role")}
+        {...register?.("person.role")}
         error={errors?.person?.role}
-        {...changedFieldProps(personChangesAllData, "role")}
+        {...changedFieldProps?.(personChangesAllData, "role")}
       />
     </>
   );
