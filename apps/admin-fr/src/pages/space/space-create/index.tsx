@@ -209,9 +209,6 @@ const SpaceCreatePage = () => {
     if (operatorData.id) {
       setValue("operator", operatorData.id, { shouldValidate: true });
     }
-    if (primaryBranch?.code) {
-      setValue("branch", primaryBranch.code, { shouldValidate: true });
-    }
     if (operatorData.slug) {
       setValue(
         "slug",
