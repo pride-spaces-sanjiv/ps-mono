@@ -32,3 +32,16 @@ export const locationSchema = z.object({
     }, "URL must be a valid Google Maps URL like https://maps.app.goo.gl/AbCd101")
     .optional(),
 });
+
+export const nearbyPlacesSchema = locationSchema
+  .required()
+  .pick({ lat: true, lng: true })
+  .and(
+    z.object({
+      radius: z.coerce
+        .number()
+        .min(10, "Radius must be a atleast 10 meters")
+        .optional(),
+    }),
+  );
+export type NearbyPlacesSchema = z.infer<typeof nearbyPlacesSchema>;
