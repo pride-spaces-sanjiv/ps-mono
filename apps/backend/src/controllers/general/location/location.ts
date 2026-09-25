@@ -6,8 +6,7 @@ import {
 } from "@pride-spaces/backend/types/request.js";
 import * as findPlacesUtil from "@pride-spaces/backend/utils/services/geo/find-place.js";
 import { NearbyPlacesSchema } from "@pride-spaces/common/utils/schemas/location.js";
-
-type OverpassError = findPlacesUtil.OverpassError;
+import { AxiosError, AxiosResponse } from "axios";
 
 export const getLocationFromMapsURL = async (
   req: ManagedRequest<{ url: string }>,
@@ -49,22 +48,20 @@ export const getNearbyPlaces = async (
     const { lat, lng } = req.body;
 
     // Call the nearby util
-    const { places, error, errorType, radius } =
-      await findPlacesUtil.getNearbyPlaces({
-        lat,
-        lng,
-        radius: req.body?.radius,
-      });
+    const { data, radius } = await findPlacesUtil.getNearbyPlaces({
+      lat,
+      lng,
+      radius: req.body?.radius,
+    });
+    const places = data?.elements || [];
 
-    if (error) {
-      if (errorType === "overpass") {
-        ResponseHandler.handleError(res, {
-          errorType: "places-overpass-error",
-          message: error.message,
-        });
-        return;
-      }
-      throw error;
+    if (!places || places.length <= 0) {
+      ResponseHandler.handleNotFound(res, {
+        errorType: "places-not-found",
+        message: "No places found nearby",
+        data: { lat, lng, places, radius },
+      });
+      return;
     }
 
     // Send the location data in the response
@@ -73,6 +70,20 @@ export const getNearbyPlaces = async (
     });
   } catch (err: any) {
     console.error("Error getting nearby places :", err);
+
+    if (err instanceof AxiosError) {
+      const resp = err.response || (err.request?.response as AxiosResponse);
+      ResponseHandler.handleError(res, {
+        errorType: "places-overpass-error",
+        message: "Overpass failure caused",
+        data: {
+          statusCode: resp?.status,
+          statusMessage: resp?.statusText,
+        },
+      });
+      return;
+    }
+
     ResponseHandler.handleError(res, {
       errorType: "places-general-error",
       message: "Failed to get nearby places",

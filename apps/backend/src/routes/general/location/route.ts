@@ -1,10 +1,7 @@
 import { Router } from "express";
 import { MapsUrlRouter } from "./maps-url.js";
 import { getNearbyPlaces } from "@/controllers/general/location/location.js";
-import {
-  locationSchema,
-  nearbyPlacesSchema,
-} from "@pride-spaces/common/utils/schemas/location.js";
+import { nearbyPlacesSchema } from "@pride-spaces/common/utils/schemas/location.js";
 import { RequestMiddleware } from "@pride-spaces/backend/middlewares/request.js";
 
 const router = Router();
