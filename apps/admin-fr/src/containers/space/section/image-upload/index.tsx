@@ -44,6 +44,9 @@ export default function SpaceImagesUploadSection<
   const { errors, defaultValues } = useMemo(() => formState || {}, [formState]);
 
   const [images, setImages] = useState<UploadedFile[]>([]);
+  const [selectedImage, setSelectedImage] = useState<
+    string | UploadedFile | null | undefined
+  >();
 
   const handleFileUpload = async (file: UploadedFile) => {
     try {
@@ -130,6 +133,13 @@ export default function SpaceImagesUploadSection<
                 }
               },
             }}
+            btnProps={{
+              onClick: () => {
+                if (typeof id === "string") {
+                  setSelectedImage(id);
+                }
+              },
+            }}
             renderPreview={(file) => (
               <img
                 src={
@@ -144,50 +154,34 @@ export default function SpaceImagesUploadSection<
           />
         ))}
       </div>
+
       {/* Dialog for image preview */}
       <DialogModal
+        open={!!selectedImage}
+        onOpenChange={(state) => {
+          !state && setSelectedImage(undefined);
+        }}
+        showClose={false}
         useDefaultLayout={false}
         triggerProps={{
-          children: (
-            <ActionButton variant={"secondary"} className="max-w-fit px-5 py-6">
-              <div className="flex gap-2 items-center">
-                Upload Images <ImagePlus />
-              </div>
-            </ActionButton>
-          ),
+          className: "hidden",
         }}
         contentProps={{
           className:
-            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh] overflow-y-auto",
+            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh] overflow-y-auto items-center",
         }}
       >
-        <FileUpload
-          fileType={mediaTypes.IMAGE}
-          onFilesUpload={(files) => {
-            console.log("All uploaded images :", files);
-            setImages((prev) =>
-              [...prev, ...files].filter((file) => file.status === "completed"),
-            );
-          }}
-          sizeLimit={{ val: 4, notation: "mb" }}
-          simulationOptions={{ estimatedTime: 20 }}
-          processFileUpload={
-            processUpload ||
-            (async (file, setter) => {
-              try {
-                const fileRes = await handleFileUpload(file);
-                if (!fileRes) {
-                  throw new Error("Incomplete");
-                }
-                return {
-                  status: "completed",
-                };
-              } catch (err) {
-                return { status: "error" };
-              }
-            })
-          }
-        />
+        <div className="h-[70dvh] w-[75dvw] aspect-square flex justify-center items-center">
+          <img
+            src={
+              typeof selectedImage === "string"
+                ? imageURL.replace("{{id}}", selectedImage)
+                : ""
+            }
+            alt="Preview"
+            className="h-full object-contain"
+          />
+        </div>
       </DialogModal>
 
       {/* Upload button with dialog */}
