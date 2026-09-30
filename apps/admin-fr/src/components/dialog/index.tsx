@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/utils/className";
 import ActionButton from "../buttons/action-btn";
+import { X } from "lucide-react";
 
 type Props = {
   closeProps: React.ComponentProps<typeof DialogClose>;
@@ -53,6 +54,7 @@ export function DialogModal({
       )}
       <DialogContent
         {...contentProps}
+        showCloseButton={false}
         className={cn(
           "",
           useDefaultLayout
@@ -61,6 +63,15 @@ export function DialogModal({
           contentProps?.className,
         )}
       >
+        {/* Cross button */}
+        {contentProps?.showCloseButton !== false && (
+          <div className="sticky top-0 flex justify-end">
+            <DialogClose className="absolute z-100 -top-5 -right-5 cursor-pointer px-2 py-2 bg-secondary-foreground rounded-xl flex justify-center items-center text-white">
+              <X size={18} />
+            </DialogClose>
+          </div>
+        )}
+
         {!!showHeader && (
           <DialogHeader
             {...headerProps}

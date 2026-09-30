@@ -1,15 +1,15 @@
 import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { ImagePlus } from "lucide-react";
+import { uploadImageFile } from "@/services/apis/admin/file";
+import { mediaTypes, type MediaType } from "@/utils/data/media";
 import FormSectionTitle from "@/components/form/section/title";
 import { DialogModal } from "@/components/dialog";
-import { mediaTypes, type MediaType } from "@/utils/data/media";
 import FilePreview from "@/components/file/preview";
 import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
 import ActionButton from "@/components/buttons/action-btn";
-import { ImagePlus } from "lucide-react";
-import type { SpaceFormProps } from "@/types/form/space";
 import type { AxiosResponse } from "axios";
-import { uploadImageFile } from "@/services/apis/admin/file";
-import { toast } from "sonner";
+import type { SpaceFormProps } from "@/types/form/space";
 
 type Props<U extends any = ReturnType<typeof uploadImageFile>> = {
   formProps: SpaceFormProps;
@@ -116,8 +116,19 @@ export default function SpaceImagesUploadSection<
             key={`existing-${fileType}-${i}`}
             file={id}
             canPreview={true}
-            btnProps={{
-              onClick: () => {},
+            delBtnProps={{
+              onClick: () => {
+                if (typeof id === "string") {
+                  const postRemovalFiles = new Set(
+                    watch("files", {})?.[`${mediaTypes.IMAGE}s`] || [],
+                  );
+                  postRemovalFiles.delete(id);
+                  setValue("files", {
+                    ...watch("files", {}),
+                    [`${mediaTypes.IMAGE}s`]: Array.from(postRemovalFiles),
+                  });
+                }
+              },
             }}
             renderPreview={(file) => (
               <img
@@ -133,6 +144,52 @@ export default function SpaceImagesUploadSection<
           />
         ))}
       </div>
+      {/* Dialog for image preview */}
+      <DialogModal
+        useDefaultLayout={false}
+        triggerProps={{
+          children: (
+            <ActionButton variant={"secondary"} className="max-w-fit px-5 py-6">
+              <div className="flex gap-2 items-center">
+                Upload Images <ImagePlus />
+              </div>
+            </ActionButton>
+          ),
+        }}
+        contentProps={{
+          className:
+            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh] overflow-y-auto",
+        }}
+      >
+        <FileUpload
+          fileType={mediaTypes.IMAGE}
+          onFilesUpload={(files) => {
+            console.log("All uploaded images :", files);
+            setImages((prev) =>
+              [...prev, ...files].filter((file) => file.status === "completed"),
+            );
+          }}
+          sizeLimit={{ val: 4, notation: "mb" }}
+          simulationOptions={{ estimatedTime: 20 }}
+          processFileUpload={
+            processUpload ||
+            (async (file, setter) => {
+              try {
+                const fileRes = await handleFileUpload(file);
+                if (!fileRes) {
+                  throw new Error("Incomplete");
+                }
+                return {
+                  status: "completed",
+                };
+              } catch (err) {
+                return { status: "error" };
+              }
+            })
+          }
+        />
+      </DialogModal>
+
       {/* Upload button with dialog */}
       <DialogModal
         useDefaultLayout={false}
@@ -147,7 +204,7 @@ export default function SpaceImagesUploadSection<
         }}
         contentProps={{
           className:
-            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh]",
+            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh] overflow-y-auto",
         }}
       >
         <FileUpload

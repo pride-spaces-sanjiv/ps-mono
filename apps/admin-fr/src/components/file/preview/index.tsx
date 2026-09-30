@@ -74,6 +74,7 @@ export default function FilePreview({
         {...textWrapperProps}
         className={cn(
           "px-2 py-3 self-stretch text-left relative",
+          typeof file === "object" ? "" : "px-0",
           textWrapperProps?.className,
         )}
       >
