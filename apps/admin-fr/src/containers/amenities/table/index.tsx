@@ -343,13 +343,11 @@ const AmenitiesTable = ({
           // value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           {...inputProps}
           onChange={(e) => {
+            const val = e.currentTarget.value;
             // table.getColumn("name")?.setFilterValue(e.target.value);
             setSearch((prev) => ({
               ...prev,
-              value: e.currentTarget.value
-                .trim()
-                .toLowerCase()
-                .replace(/ +/g, " "),
+              value: val.trim().toLowerCase().replace(/ +/g, " "),
             }));
             inputProps?.onChange?.(e);
           }}

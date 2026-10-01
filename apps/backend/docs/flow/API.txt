@@ -1,0 +1,20 @@
+Generate a flow diagram of title 'get centres' with the following order :
+
+The API /<scope>/spaces is hit.
+Url query is parsed using the query parser middleware.
+Express app routes to the user scope router.
+Authentication is done depending on the scope router if required.
+Control is passed to the scoped centre controller.
+Scoped centre controller prepares pre processing arguments and passes to the generalized controller for dynamic response it requires.
+The parsed query is populated.
+Projection of fields are prepared if certain fields are selected using multiple field=<field> query values
+Multiple filters are caught parsing the f<fieldMap>=<value> query values joining as OR clause
+Ranged filter values are taken parsing r<fieldMap>=<rangeId> query values containing either or both of min and max values joining every query value pair with OR clause
+Mongoose filters are created using multiple filters and ranged multiple filters created
+Url query also checks for the page and limit values if any and passes them with mongoose filters and projections created to the pagination handler
+The pagination handler runs the query with the help of DB pipeline created using mongodb and redis
+If there exists an cache of the same query in redis then pagination handler parses the redis data and returns as a mongoose documents response.
+If there is no cache, the pagination handler forwards the query to DB pipeline that executes directly from mongoDB and returns the documents also storing the query:data pair cached in redis for some amount of time
+This data is parsed into normal js arrayed objects
+If query url contains withOperator=true then all the operator ids referenced in centres data are taken and all matching operators data are retreived.
+Then the final response data is prepared inside the data object, results (containing all centres data listed), metrics (containing the pagination metrics like total, next and count got from pagination handler), references.operators (if operators data exists)

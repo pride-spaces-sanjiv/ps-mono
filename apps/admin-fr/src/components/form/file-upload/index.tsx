@@ -392,7 +392,7 @@ export default function FileUpload({
                 </Button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 overflow-y-auto">
                 {files.map((upload) => (
                   <div
                     key={upload.id}

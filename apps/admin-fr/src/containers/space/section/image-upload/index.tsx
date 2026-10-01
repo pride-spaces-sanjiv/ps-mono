@@ -1,15 +1,15 @@
 import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { ImagePlus } from "lucide-react";
+import { uploadImageFile } from "@/services/apis/admin/file";
+import { mediaTypes, type MediaType } from "@/utils/data/media";
 import FormSectionTitle from "@/components/form/section/title";
 import { DialogModal } from "@/components/dialog";
-import { mediaTypes, type MediaType } from "@/utils/data/media";
 import FilePreview from "@/components/file/preview";
 import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
 import ActionButton from "@/components/buttons/action-btn";
-import { ImagePlus } from "lucide-react";
-import type { SpaceFormProps } from "@/types/form/space";
 import type { AxiosResponse } from "axios";
-import { uploadImageFile } from "@/services/apis/admin/file";
-import { toast } from "sonner";
+import type { SpaceFormProps } from "@/types/form/space";
 
 type Props<U extends any = ReturnType<typeof uploadImageFile>> = {
   formProps: SpaceFormProps;
@@ -44,6 +44,9 @@ export default function SpaceImagesUploadSection<
   const { errors, defaultValues } = useMemo(() => formState || {}, [formState]);
 
   const [images, setImages] = useState<UploadedFile[]>([]);
+  const [selectedImage, setSelectedImage] = useState<
+    string | UploadedFile | null | undefined
+  >();
 
   const handleFileUpload = async (file: UploadedFile) => {
     try {
@@ -116,8 +119,26 @@ export default function SpaceImagesUploadSection<
             key={`existing-${fileType}-${i}`}
             file={id}
             canPreview={true}
+            delBtnProps={{
+              onClick: () => {
+                if (typeof id === "string") {
+                  const postRemovalFiles = new Set(
+                    watch("files", {})?.[`${mediaTypes.IMAGE}s`] || [],
+                  );
+                  postRemovalFiles.delete(id);
+                  setValue("files", {
+                    ...watch("files", {}),
+                    [`${mediaTypes.IMAGE}s`]: Array.from(postRemovalFiles),
+                  });
+                }
+              },
+            }}
             btnProps={{
-              onClick: () => {},
+              onClick: () => {
+                if (typeof id === "string") {
+                  setSelectedImage(id);
+                }
+              },
             }}
             renderPreview={(file) => (
               <img
@@ -133,6 +154,36 @@ export default function SpaceImagesUploadSection<
           />
         ))}
       </div>
+
+      {/* Dialog for image preview */}
+      <DialogModal
+        open={!!selectedImage}
+        onOpenChange={(state) => {
+          !state && setSelectedImage(undefined);
+        }}
+        showClose={false}
+        useDefaultLayout={false}
+        triggerProps={{
+          className: "hidden",
+        }}
+        contentProps={{
+          className:
+            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh] overflow-y-auto items-center",
+        }}
+      >
+        <div className="h-[70dvh] w-[75dvw] aspect-square flex justify-center items-center">
+          <img
+            src={
+              typeof selectedImage === "string"
+                ? imageURL.replace("{{id}}", selectedImage)
+                : ""
+            }
+            alt="Preview"
+            className="h-full object-contain"
+          />
+        </div>
+      </DialogModal>
+
       {/* Upload button with dialog */}
       <DialogModal
         useDefaultLayout={false}
@@ -147,7 +198,7 @@ export default function SpaceImagesUploadSection<
         }}
         contentProps={{
           className:
-            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh]",
+            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh] overflow-y-auto",
         }}
       >
         <FileUpload
