@@ -20,12 +20,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronDown,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { keepPreviousData, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -138,11 +133,7 @@ const AdminsTable = ({
     refetch,
   } = usePaginatedQuery({
     limit: 20,
-    queryKey: [
-      queryKeys.ADMINS,
-      debouncedSearch.field,
-      debouncedSearch.value,
-    ],
+    queryKey: [queryKeys.ADMINS, debouncedSearch.field, debouncedSearch.value],
     queryFn: (page, limit) =>
       getAdmins({
         query: {
@@ -194,9 +185,7 @@ const AdminsTable = ({
           <SortableHeader column={column}>Email</SortableHeader>
         ),
         cell: ({ row }) => (
-          <TextCell className="text-foreground">
-            {row.original?.email}
-          </TextCell>
+          <TextCell className="text-foreground">{row.original?.email}</TextCell>
         ),
       },
       {
@@ -319,12 +308,11 @@ const AdminsTable = ({
           placeholder={`Search by ${search.field.toLowerCase()}...`}
           {...inputProps}
           onChange={(e) => {
+            const val = e.currentTarget.value;
+            // table.getColumn("name")?.setFilterValue(e.target.value);
             setSearch((prev) => ({
               ...prev,
-              value: e.currentTarget.value
-                .trim()
-                .toLowerCase()
-                .replace(/\s+/g, " "),
+              value: val.trim().toLowerCase().replace(/ +/g, " "),
             }));
             inputProps?.onChange?.(e);
           }}

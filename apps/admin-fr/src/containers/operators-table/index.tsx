@@ -589,12 +589,11 @@ const OperatorsTabledResults = ({
           placeholder={`Search by ${search.field.toLowerCase()}...`}
           {...inputProps}
           onChange={(e) => {
+            const val = e.currentTarget.value;
+            // table.getColumn("name")?.setFilterValue(e.target.value);
             setSearch((prev) => ({
               ...prev,
-              value: e.currentTarget.value
-                .trim()
-                .toLowerCase()
-                .replace(/\s+/g, " "),
+              value: val.trim().toLowerCase().replace(/ +/g, " "),
             }));
             inputProps?.onChange?.(e);
           }}
