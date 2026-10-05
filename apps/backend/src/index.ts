@@ -12,6 +12,7 @@ import { handleMailQueue } from "@pride-spaces/backend/utils/services/rabbitmq/e
 import { getProcessArgsObject } from "@pride-spaces/common/utils/args.js";
 import { sleep } from "@pride-spaces/common/utils/time.js";
 import { handleMQWorkers } from "@pride-spaces/backend/utils/services/workers/mq.js";
+import { deleteMediaRecordsScheduler } from "@pride-spaces/backend/utils/services/workers/media.js";
 // import { workers } from "@pride-spaces/backend/utils/workers/handler.js";
 
 // ENV;
@@ -41,6 +42,10 @@ if (cluster.isPrimary) {
 
   // Queues
   handleMQWorkers();
+  console.log(
+    "Media record deletion scheduler status:",
+    deleteMediaRecordsScheduler.getStatus(),
+  );
 } else {
   // Workers run the HTTP server
   const server = createServer(app);
