@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import FormSectionTitle from "@/components/form/section/title";
+import CollapsibleFormSection from "@/components/form/section/collapsible";
+import type FormSectionTitle from "@/components/form/section/title";
 import { DialogModal } from "@/components/dialog";
 import { mediaTypes, type MediaType } from "@/utils/data/media";
 import FilePreview from "@/components/file/preview";
@@ -24,10 +25,10 @@ export default function SpaceLayoutsUploadSection({
 }: Partial<Props>) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   return (
-    <>
-      <FormSectionTitle {...titleProps}>
-        {titleProps?.children || "Layouts"}
-      </FormSectionTitle>
+    <CollapsibleFormSection
+      title={titleProps?.children || "Layouts"}
+      titleProps={titleProps}
+    >
       {/* File Previews */}
       <div className="col-span-full flex gap-2 flex-wrap">
         {files.map((file, i) => (
@@ -59,7 +60,7 @@ export default function SpaceLayoutsUploadSection({
         }}
         contentProps={{
           className:
-            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh]",
+            "w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[88vh] p-5 sm:p-6 overflow-y-auto rounded-2xl border shadow-xl",
         }}
       >
         <FileUpload
@@ -81,6 +82,6 @@ export default function SpaceLayoutsUploadSection({
           processFileUpload={processUpload}
         />
       </DialogModal>
-    </>
+    </CollapsibleFormSection>
   );
 }

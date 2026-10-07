@@ -3,7 +3,7 @@ import { type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { GroupedSearchSelect } from "@/components/search-select";
 import FormField from "@/components/form/field";
-import FormSectionTitle from "@/components/form/section/title";
+import CollapsibleFormSection from "@/components/form/section/collapsible";
 import MapsField from "@/components/maps";
 import ActionButton from "@/components/buttons/action-btn";
 import { useStatesCities } from "@/services/hooks/use-states-cities";
@@ -46,10 +46,10 @@ export default function SpaceLocationDetailsSection({
     formState: { errors, defaultValues } = {},
   } = formProps || ({} as SpaceFormProps);
 
+  const hasError = Boolean(errors?.location);
+
   return (
-    <>
-      {/* Location Section */}
-      <FormSectionTitle>Location Details</FormSectionTitle>
+    <CollapsibleFormSection title="Location Details" hasError={hasError}>
 
       <div className="flex gap-2 w-full col-span-full">
         {/* Details */}
@@ -212,6 +212,6 @@ export default function SpaceLocationDetailsSection({
           }
         />
       </div>
-    </>
+    </CollapsibleFormSection>
   );
 }

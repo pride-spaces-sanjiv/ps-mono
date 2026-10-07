@@ -2,7 +2,7 @@ import React from "react";
 import { type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import FormField from "@/components/form/field";
-import FormSectionTitle from "@/components/form/section/title";
+import CollapsibleFormSection from "@/components/form/section/collapsible";
 import {
   spaceSchema,
   type SpaceSchema,
@@ -42,10 +42,10 @@ export default function SpacePricingDetailsSection({
     formState: { errors } = {},
   } = formProps || ({} as SpaceFormProps);
 
+  const hasError = Boolean(errors?.pricing || errors?.flags?.isVoService);
+
   return (
-    <>
-      {/* Pricing Details */}
-      <FormSectionTitle>Pricing Details</FormSectionTitle>
+    <CollapsibleFormSection title="Pricing Details" hasError={hasError}>
       <FormField
         label="Per Seat"
         labelPosition="embedded"
@@ -159,6 +159,6 @@ export default function SpacePricingDetailsSection({
           )}
         </>
       )}
-    </>
+    </CollapsibleFormSection>
   );
 }

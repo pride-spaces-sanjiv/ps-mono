@@ -2,7 +2,7 @@ import React from "react";
 import { type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import FormField from "@/components/form/field";
-import FormSectionTitle from "@/components/form/section/title";
+import CollapsibleFormSection from "@/components/form/section/collapsible";
 import ChippedElements from "@/components/chips";
 import SelectAmenities from "@/containers/amenities/select-dialog";
 import { useAmenities } from "@/services/hooks/useAmenities";
@@ -43,10 +43,19 @@ export default function SpaceAmenitiesSection({
     formState: { errors, defaultValues } = {},
   } = formProps || ({} as SpaceFormProps);
 
+  const hasError = Boolean(
+    errors?.facilities ||
+      errors?.flags?.isEventSpace ||
+      errors?.pricing?.eventSpaceBrief ||
+      errors?.pricing?.eventSpaceCapacity ||
+      errors?.pricing?.eventSpaceCharges,
+  );
+
   return (
-    <>
-      {/* SECTION: Amenities & Event Space Details */}
-      <FormSectionTitle>Amenities & Event Space Details</FormSectionTitle>
+    <CollapsibleFormSection
+      title="Amenities & Event Space Details"
+      hasError={hasError}
+    >
 
       {/* Amenities */}
       <FormField
@@ -175,6 +184,6 @@ export default function SpaceAmenitiesSection({
           />
         </>
       )}
-    </>
+    </CollapsibleFormSection>
   );
 }
