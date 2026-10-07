@@ -7,7 +7,16 @@ import React, {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { Upload, X, FileText, Image, Video, Music } from "lucide-react";
+import {
+  Upload,
+  X,
+  FileText,
+  Image,
+  Video,
+  Music,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import { cn } from "@/utils/cn";
 import {
   getFileIntoBase64,
@@ -18,7 +27,6 @@ import {
 import { allowedExtensions, type MediaType } from "@/utils/data/media";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent } from "@/components/ui/card";
 import moment from "moment";
 
 export type UploadedFile = {
@@ -38,6 +46,7 @@ type Labels = {
 };
 
 type Props = {
+  className?: string;
   labels: Partial<Labels>;
   fileType: MediaType;
   sizeLimit: { val: number; notation?: FileSizeNotation };
@@ -103,6 +112,7 @@ export const simulateFileUpload = (
 };
 
 export default function FileUpload({
+  className,
   labels,
   fileType = "image",
   onFilesUpload,
@@ -143,11 +153,10 @@ export default function FileUpload({
 
   const getFileIcon = (file: File) => {
     const type = file.type.split("/")[0];
-    if (type === "image") return <Image className="w-10 h-10 text-blue-500" />;
-    if (type === "video")
-      return <Video className="w-10 h-10 text-purple-500" />;
-    if (type === "audio") return <Music className="w-10 h-10 text-green-500" />;
-    return <FileText className="w-10 h-10 text-gray-500" />;
+    if (type === "image") return <Image className="size-5 text-primary" />;
+    if (type === "video") return <Video className="size-5 text-purple-500" />;
+    if (type === "audio") return <Music className="size-5 text-emerald-500" />;
+    return <FileText className="size-5 text-muted-foreground" />;
   };
 
   const simulateUpload = async (file: UploadedFile) => {
@@ -317,132 +326,176 @@ export default function FileUpload({
   }, [files]);
 
   return (
-    <div className="max-w-[1200px] w-full mx-auto p-6 col-span-full h-full overflow-y-auto">
-      <Card className="w-full py-0">
-        <CardContent className="p-10">
-          <div className="text-center mb-10">
-            <div className="mx-auto w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
-              <Upload className="w-10 h-10 text-primary" />
-            </div>
-            <h2 className="text-3xl font-semibold mb-2">
-              {labels?.title || `Multi ${fileType.toUpperCase()} Upload`}
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              {labels?.description ||
-                `Drag & drop or click to upload multiple ${fileType}s`}
-              {!!sizeLimit?.val && (
-                <span className="block text-sm text-muted-foreground">
-                  {"("}Max file size:{" "}
-                  {formatFileSize(
-                    resolveFileSize(sizeLimit.val, sizeLimit.notation),
-                  )}
-                  {")"}
-                </span>
-              )}
-            </p>
-          </div>
-
-          {/* DND Section */}
-          <div
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onClick={() => inpRef.current?.click()}
-            className={cn(
-              "border-2 border-dashed px-4 py-16 rounded-2xl cursor-pointer transition-all hover:bg-muted/50",
-              isDragging
-                ? "border-primary bg-primary/5 scale-[1.01]"
-                : "border-muted-foreground/30",
+    <div className={cn("w-full flex flex-col gap-4", className)}>
+      {/* Header */}
+      <div className="flex items-center gap-3.5 pb-3 border-b border-border/60">
+        <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <Upload className="size-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground tracking-tight leading-tight">
+            {labels?.title ||
+              `Upload ${fileType === "image" ? "Images" : fileType.toUpperCase()}`}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {labels?.description ||
+              `Drag & drop or browse multiple ${fileType}s`}
+            {!!sizeLimit?.val && (
+              <span className="ml-1.5 text-xs text-muted-foreground/80 font-normal">
+                (Max:{" "}
+                {formatFileSize(
+                  resolveFileSize(sizeLimit.val, sizeLimit.notation),
+                )}
+                )
+              </span>
             )}
-          >
-            <input
-              ref={inpRef}
-              placeholder="file"
-              type="file"
-              multiple
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-            <div className="text-center">
-              <Upload className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-xl font-medium">
-                {labels?.dndTitle || `Drop your ${fileType}s here`}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                or{" "}
-                <span className="text-primary font-medium">
-                  {labels?.dndBrowse || `browse ${fileType}s`}
-                </span>
-              </p>
+          </p>
+        </div>
+      </div>
+
+      {/* DND Dropzone */}
+      <div
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onClick={() => inpRef.current?.click()}
+        className={cn(
+          "group relative border-2 border-dashed rounded-xl px-4 py-7 sm:py-8 cursor-pointer transition-all duration-200 text-center flex flex-col items-center justify-center gap-2",
+          "bg-muted/20 hover:bg-muted/40 hover:border-primary/60",
+          isDragging
+            ? "border-primary bg-primary/10 ring-2 ring-primary/20 scale-[0.99]"
+            : "border-border/80",
+        )}
+      >
+        <input
+          ref={inpRef}
+          placeholder="file"
+          type="file"
+          multiple
+          className="hidden"
+          onChange={handleFileSelect}
+        />
+        <div className="size-11 rounded-full bg-background border border-border/60 shadow-xs flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+          <Upload className="size-5 text-primary" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm sm:text-base font-medium text-foreground">
+            {labels?.dndTitle || `Drop your ${fileType}s here, or`}{" "}
+            <span className="text-primary font-semibold hover:underline">
+              {labels?.dndBrowse || `browse`}
+            </span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {fileType === "image"
+              ? "Supports PNG, JPG, JPEG, WEBP"
+              : "Supported files"}
+            {!!sizeLimit?.val &&
+              ` • up to ${formatFileSize(resolveFileSize(sizeLimit.val, sizeLimit.notation))}`}
+          </p>
+        </div>
+      </div>
+
+      {/* Files List & Uploading Process */}
+      {files.length > 0 && (
+        <div className="flex flex-col gap-2.5 mt-1">
+          <div className="flex justify-between items-center px-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">
+                Files
+              </span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                {files.length}
+              </span>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setFiles([])}
+            >
+              Clear All
+            </Button>
           </div>
 
-          {files.length > 0 && (
-            <div className="mt-10">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold">
-                  Files ({files.length})
-                </h3>
+          <div className="max-h-[250px] overflow-y-auto space-y-2 pr-1">
+            {files.map((upload) => (
+              <div
+                key={upload.id}
+                className="flex items-center gap-3 bg-muted/30 border border-border/50 rounded-xl p-2.5 sm:p-3 hover:bg-muted/50 transition-colors"
+              >
+                {/* Thumbnail / Icon */}
+                <div className="size-11 rounded-lg bg-background border border-border/60 overflow-hidden flex items-center justify-center shrink-0">
+                  {upload.imageSrc ? (
+                    <img
+                      src={upload.imageSrc}
+                      alt={upload.file.name}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    getFileIcon(upload.file)
+                  )}
+                </div>
+
+                {/* File info and Progress */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <p
+                      className="text-sm font-medium text-foreground truncate"
+                      title={upload.file.name}
+                    >
+                      {upload.file.name}
+                    </p>
+                    <span className="text-xs text-muted-foreground font-mono shrink-0">
+                      {formatFileSize(upload.file.size)}
+                    </span>
+                  </div>
+
+                  <Progress
+                    value={upload.progress}
+                    className="h-1.5 bg-muted/80 mb-1.5"
+                    style={{ transitionDuration: `${estimatedMsStep}ms` }}
+                  />
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span
+                      className={cn(
+                        "capitalize font-medium text-xs flex items-center gap-1.5",
+                        upload.status === "completed" &&
+                          "text-emerald-500 font-semibold",
+                        upload.status === "uploading" && "text-primary",
+                        upload.status === "error" && "text-destructive",
+                      )}
+                    >
+                      {upload.status === "completed" && (
+                        <CheckCircle2 className="size-3.5" />
+                      )}
+                      {upload.status === "error" && (
+                        <AlertCircle className="size-3.5" />
+                      )}
+                      {upload.status === "completed"
+                        ? "Completed"
+                        : upload.status}
+                    </span>
+                    <span className="font-mono text-xs">
+                      {upload.progress}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Remove file button */}
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFiles([])}
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                  onClick={() => removeFile(upload.id)}
                 >
-                  Clear All
+                  <X className="size-4" />
                 </Button>
               </div>
-
-              <div className="space-y-4 overflow-y-auto">
-                {files.map((upload) => (
-                  <div
-                    key={upload.id}
-                    className="flex gap-5 bg-muted/60 rounded-xl p-5 group hover:bg-muted transition-colors"
-                  >
-                    <div className="flex-shrink-0 pt-1">
-                      {getFileIcon(upload.file)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between mb-2">
-                        <p className="font-medium truncate pr-4">
-                          {upload.file.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground font-mono">
-                          {formatFileSize(upload.file.size)}
-                        </p>
-                      </div>
-                      <Progress
-                        value={upload.progress}
-                        className="h-2 mb-2 ease-in-out"
-                        style={{ transitionDuration: `${estimatedMsStep}ms` }}
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span
-                          className={
-                            upload.status === "completed"
-                              ? "text-green-600 font-medium"
-                              : ""
-                          }
-                        >
-                          {upload.status}
-                        </span>
-                        <span>{upload.progress}%</span>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover:opacity-100 transition-all"
-                      onClick={() => removeFile(upload.id)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

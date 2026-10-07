@@ -3,7 +3,7 @@ import { type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Switch } from "@/components/ui/switch";
 import FormField from "@/components/form/field";
-import FormSectionTitle from "@/components/form/section/title";
+import CollapsibleFormSection from "@/components/form/section/collapsible";
 import {
   spaceSchema,
   type SpaceSchema,
@@ -49,10 +49,13 @@ export default function SpacePocDetailsSection({
     formState: { errors, defaultValues } = {},
   } = formProps || ({} as SpaceFormProps);
 
+  const hasError = Boolean(errors?.person);
+
   return (
-    <>
-      {/* SECTION: Centre Point of Contact */}
-      <FormSectionTitle>Point of Contact Details</FormSectionTitle>
+    <CollapsibleFormSection
+      title="Point of Contact Details"
+      hasError={hasError}
+    >
 
       <div className="flex items-center gap-2 col-span-full">
         <label className="text-muted-foreground text-sm">
@@ -134,6 +137,6 @@ export default function SpacePocDetailsSection({
         error={errors?.person?.role}
         {...changedFieldProps?.(personChangesAllData, "role")}
       />
-    </>
+    </CollapsibleFormSection>
   );
 }

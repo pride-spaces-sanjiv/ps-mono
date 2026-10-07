@@ -4,7 +4,6 @@ import { type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { GroupedSearchSelect } from "@/components/search-select";
 import FormField from "@/components/form/field";
-import FormSectionTitle from "@/components/form/section/title";
 import { SelectPicker } from "@/components/select";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
@@ -22,7 +21,7 @@ import {
   type SpaceSchema,
 } from "@pride-spaces/common/utils/schemas/space.js";
 import type { SpaceFormProps } from "@/types/form/space";
-
+import CollapsibleFormSection from "@/components/form/section/collapsible";
 type ChangedAllData = Record<string, any> | null | undefined;
 type ChangedFieldPropsFn = (
   data: Record<string, unknown> | null | undefined,
@@ -71,10 +70,33 @@ export default function SpaceDetailsSection({
   );
   const { errors, defaultValues } = useMemo(() => formState || {}, [formState]);
 
+  const defaultHourOptions = useMemo(() => {
+    const options: TimeOption[] = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const hh = hour.toString().padStart(2, "0");
+      const val = `${hh}:00`;
+      const label = moment(val, "HH:mm").format("hh:mma");
+      options.push({ label, value: val });
+    }
+    return options;
+  }, []);
+
+  const resolvedTimeOptions =
+    timeOptions && timeOptions.length > 0 ? timeOptions : defaultHourOptions;
+
+  const hasError = Boolean(
+    errors?.name ||
+      errors?.slug ||
+      errors?.operator ||
+      errors?.specs?.spaceType ||
+      errors?.specs?.category ||
+      errors?.specs?.workingSize ||
+      errors?.timing ||
+      errors?.specs?.area,
+  );
+
   return (
-    <>
-      {/* SECTION: Centre Details */}
-      <FormSectionTitle>Centre Details</FormSectionTitle>
+    <CollapsibleFormSection title="Centre Details" hasError={hasError}>
 
       <FormField
         label="Centre Name"
@@ -270,9 +292,9 @@ export default function SpaceDetailsSection({
       >
         <div className="flex items-center gap-1.5 px-2 py-1 grow shrink min-w-0 min-h-[40px] flex-nowrap">
           <SelectPicker
-            key={`open-picker-${defaultValues?.timing?.openTime}-${timeOptions?.length}`}
+            key={`open-picker-${defaultValues?.timing?.openTime}-${resolvedTimeOptions?.length}`}
             className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
-            items={timeOptions}
+            items={resolvedTimeOptions}
             valueProps={{ placeholder: "Start Time" }}
             wrapperProps={{
               defaultValue: defaultValues?.timing?.openTime
@@ -291,9 +313,9 @@ export default function SpaceDetailsSection({
             to
           </span>
           <SelectPicker
-            key={`close-picker-${defaultValues?.timing?.closeTime}-${timeOptions?.length}`}
+            key={`close-picker-${defaultValues?.timing?.closeTime}-${resolvedTimeOptions?.length}`}
             className="h-8 flex-1 min-w-0 bg-secondary/80 hover:bg-secondary text-foreground text-xs font-semibold rounded-md border-0 justify-between shadow-none px-2"
-            items={timeOptions}
+            items={resolvedTimeOptions}
             valueProps={{ placeholder: "End Time" }}
             wrapperProps={{
               defaultValue: defaultValues?.timing?.closeTime
@@ -478,6 +500,6 @@ export default function SpaceDetailsSection({
         error={errors?.specs?.area}
         {...changedFieldProps?.(mainChangesAllData, "area")}
       />
-    </>
+    </CollapsibleFormSection>
   );
 }

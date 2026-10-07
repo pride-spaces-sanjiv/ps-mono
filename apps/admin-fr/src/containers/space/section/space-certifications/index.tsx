@@ -3,7 +3,7 @@ import { type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { GroupedSearchSelect } from "@/components/search-select";
 import FormField from "@/components/form/field";
-import FormSectionTitle from "@/components/form/section/title";
+import CollapsibleFormSection from "@/components/form/section/collapsible";
 import ChippedElements from "@/components/chips";
 import ActionButton from "@/components/buttons/action-btn";
 import {
@@ -61,10 +61,17 @@ export default function SpaceCertificationsSection({
     formState: { errors, defaultValues } = {},
   } = formProps || ({} as SpaceFormProps);
 
+  const hasError = Boolean(
+    errors?.specs?.grade ||
+      errors?.specs?.ocStatus ||
+      errors?.specs?.sezStatus ||
+      errors?.specs?.fireNoc ||
+      errors?.specs?.reraApproved ||
+      errors?.specs?.certificates,
+  );
+
   return (
-    <>
-      {/* SECTION: Certifications */}
-      <FormSectionTitle>Certifications</FormSectionTitle>
+    <CollapsibleFormSection title="Certifications" hasError={hasError}>
 
       {/* Building Type */}
       <FormField
@@ -199,6 +206,6 @@ export default function SpaceCertificationsSection({
           }}
         />
       </FormField>
-    </>
+    </CollapsibleFormSection>
   );
 }

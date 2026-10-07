@@ -168,13 +168,10 @@ const SpaceCreatePage = () => {
   const timeOptions = useMemo(() => {
     const options = [];
     for (let hour = 0; hour < 24; hour++) {
-      for (const min of [0, 30]) {
-        const hh = hour.toString().padStart(2, "0");
-        const mm = min.toString().padStart(2, "0");
-        const val = `${hh}:${mm}`;
-        const label = moment(val, "HH:mm").format("hh:mma");
-        options.push({ label, value: val });
-      }
+      const hh = hour.toString().padStart(2, "0");
+      const val = `${hh}:00`;
+      const label = moment(val, "HH:mm").format("hh:mma");
+      options.push({ label, value: val });
     }
     const currentOpen = openTimeWatch
       ? moment(openTimeWatch).format("HH:mm")

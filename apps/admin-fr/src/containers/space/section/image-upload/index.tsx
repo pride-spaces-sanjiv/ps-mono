@@ -1,14 +1,26 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ImagePlus,
+  X,
+} from "lucide-react";
 import { uploadImageFile } from "@/services/apis/admin/file";
 import { mediaTypes, type MediaType } from "@/utils/data/media";
-import FormSectionTitle from "@/components/form/section/title";
+import CollapsibleFormSection from "@/components/form/section/collapsible";
+import type FormSectionTitle from "@/components/form/section/title";
 import { DialogModal } from "@/components/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/utils/cn";
 import FilePreview from "@/components/file/preview";
 import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
 import ActionButton from "@/components/buttons/action-btn";
-import type { AxiosResponse } from "axios";
 import type { SpaceFormProps } from "@/types/form/space";
 
 type Props<U extends any = ReturnType<typeof uploadImageFile>> = {
@@ -24,6 +36,22 @@ type Props<U extends any = ReturnType<typeof uploadImageFile>> = {
 const imageURL = (import.meta.env.VITE_RUSTFS_BASE as string).concat(
   "/pridespaces/images/{{id}}",
 );
+
+const getImageUrl = (id: string | UploadedFile | null | undefined): string => {
+  if (!id) return "";
+  if (typeof id === "object") {
+    return id.imageSrc || "";
+  }
+  if (
+    id.startsWith("http://") ||
+    id.startsWith("https://") ||
+    id.startsWith("blob:") ||
+    id.startsWith("data:")
+  ) {
+    return id;
+  }
+  return imageURL.replace("{{id}}", id);
+};
 
 export default function SpaceImagesUploadSection<
   U extends ReturnType<typeof uploadImageFile>,
@@ -44,9 +72,61 @@ export default function SpaceImagesUploadSection<
   const { errors, defaultValues } = useMemo(() => formState || {}, [formState]);
 
   const [images, setImages] = useState<UploadedFile[]>([]);
-  const [selectedImage, setSelectedImage] = useState<
-    string | UploadedFile | null | undefined
-  >();
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+
+  const currentImages: string[] = useMemo(() => {
+    const fileList = watch("files", {})?.[`${mediaTypes.IMAGE}s`];
+    if (!Array.isArray(fileList)) return [];
+    return fileList.filter((item): item is string => typeof item === "string");
+  }, [watch("files", {})?.[`${mediaTypes.IMAGE}s`]]);
+
+  const currentImageId =
+    previewIndex !== null && currentImages[previewIndex]
+      ? currentImages[previewIndex]
+      : null;
+
+  useEffect(() => {
+    if (previewIndex !== null) {
+      if (currentImages.length === 0) {
+        setPreviewIndex(null);
+      } else if (previewIndex >= currentImages.length) {
+        setPreviewIndex(currentImages.length - 1);
+      }
+    }
+  }, [currentImages.length, previewIndex]);
+
+  const handlePrev = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (currentImages.length <= 1) return;
+    setPreviewIndex((prev) => {
+      if (prev === null) return 0;
+      return prev > 0 ? prev - 1 : currentImages.length - 1;
+    });
+  };
+
+  const handleNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (currentImages.length <= 1) return;
+    setPreviewIndex((prev) => {
+      if (prev === null) return 0;
+      return prev < currentImages.length - 1 ? prev + 1 : 0;
+    });
+  };
+
+  useEffect(() => {
+    if (previewIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewIndex, currentImages.length]);
 
   const handleFileUpload = async (file: UploadedFile) => {
     try {
@@ -93,28 +173,17 @@ export default function SpaceImagesUploadSection<
       });
   };
 
+  const hasError = Boolean(errors?.files?.images);
+
   return (
-    <>
-      <FormSectionTitle {...titleProps}>
-        {titleProps?.children || "Images"}
-      </FormSectionTitle>
+    <CollapsibleFormSection
+      title={titleProps?.children || "Images"}
+      titleProps={titleProps}
+      hasError={hasError}
+    >
       {/* File Previews */}
       <div className="col-span-full flex gap-2 flex-wrap">
-        {/* {images.map((file, i) => (
-          <FilePreview
-            key={`${fileType}-${i}`}
-            file={file}
-            canPreview={true}
-            renderPreview={(file) => (
-              <img
-                src={typeof file === "string" ? file : file?.imageSrc}
-                alt="Preview"
-                className="w-full h-full object-contain"
-              />
-            )}
-          />
-        ))} */}
-        {watch("files", {})?.[`${mediaTypes.IMAGE}s`]?.map((id, i) => (
+        {currentImages.map((id, i) => (
           <FilePreview
             key={`existing-${fileType}-${i}`}
             file={id}
@@ -135,18 +204,12 @@ export default function SpaceImagesUploadSection<
             }}
             btnProps={{
               onClick: () => {
-                if (typeof id === "string") {
-                  setSelectedImage(id);
-                }
+                setPreviewIndex(i);
               },
             }}
             renderPreview={(file) => (
               <img
-                src={
-                  typeof file === "string"
-                    ? imageURL.replace("{{id}}", file)
-                    : ""
-                }
+                src={getImageUrl(file)}
                 alt="Preview"
                 className="w-full h-full object-contain"
               />
@@ -155,34 +218,111 @@ export default function SpaceImagesUploadSection<
         ))}
       </div>
 
-      {/* Dialog for image preview */}
-      <DialogModal
-        open={!!selectedImage}
+      {/* Attractive Lightbox Dialog for Image Preview */}
+      <Dialog
+        open={previewIndex !== null && !!currentImageId}
         onOpenChange={(state) => {
-          !state && setSelectedImage(undefined);
-        }}
-        showClose={false}
-        useDefaultLayout={false}
-        triggerProps={{
-          className: "hidden",
-        }}
-        contentProps={{
-          className:
-            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh] overflow-y-auto items-center",
+          if (!state) setPreviewIndex(null);
         }}
       >
-        <div className="h-[70dvh] w-[75dvw] aspect-square flex justify-center items-center">
-          <img
-            src={
-              typeof selectedImage === "string"
-                ? imageURL.replace("{{id}}", selectedImage)
-                : ""
-            }
-            alt="Preview"
-            className="h-full object-contain"
-          />
-        </div>
-      </DialogModal>
+        <DialogContent
+          showCloseButton={false}
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[96vw] sm:max-w-[96vw] md:max-w-6xl lg:max-w-7xl h-[90vh] sm:h-[92vh] max-h-[95vh] p-0 gap-0 border border-white/15 bg-neutral-950/95 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col justify-between overflow-hidden outline-none z-50 text-white"
+        >
+          <DialogTitle className="sr-only">Image Preview</DialogTitle>
+          <DialogDescription className="sr-only">
+            Preview of uploaded image{" "}
+            {previewIndex !== null ? previewIndex + 1 : 1} of{" "}
+            {currentImages.length} with navigation controls
+          </DialogDescription>
+
+          {/* Top Bar: Counter & Close */}
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 bg-black/40 border-b border-white/10 z-20 shrink-0">
+            <span className="text-xs sm:text-sm font-medium tracking-wide text-white/90">
+              Image {previewIndex !== null ? previewIndex + 1 : 1} of{" "}
+              {currentImages.length}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setPreviewIndex(null)}
+              title="Close preview (Esc)"
+              aria-label="Close image preview"
+              className="p-1.5 sm:p-2 rounded-lg text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 transition-colors cursor-pointer"
+            >
+              <X className="size-4 sm:size-5" />
+            </button>
+          </div>
+
+          {/* Middle: Left Arrow, Image, Right Arrow */}
+          <div className="relative flex-1 flex items-center justify-center px-12 sm:px-20 py-2 sm:py-4 overflow-hidden min-h-0 bg-neutral-950/40">
+            {/* Left Navigation Arrow */}
+            {currentImages.length > 1 && (
+              <button
+                type="button"
+                onClick={handlePrev}
+                title="Previous image (Left Arrow)"
+                aria-label="Previous image"
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 size-11 sm:size-12 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 text-white/90 hover:text-white border border-white/20 hover:border-white/50 backdrop-blur-md flex items-center justify-center shadow-2xl transition-all duration-200 hover:scale-105 cursor-pointer group"
+              >
+                <ChevronLeft className="size-6 transition-transform group-hover:-translate-x-0.5" />
+              </button>
+            )}
+
+            {/* Main Preview Image Container */}
+            <div className="flex items-center justify-center w-full h-full max-w-full max-h-full min-h-0 min-w-0">
+              {currentImageId && (
+                <img
+                  key={currentImageId}
+                  src={getImageUrl(currentImageId)}
+                  alt={`Preview ${previewIndex !== null ? previewIndex + 1 : 1}`}
+                  className="max-h-full max-w-full w-auto h-auto object-contain rounded-xl shadow-2xl select-none animate-in fade-in zoom-in-95 duration-200"
+                />
+              )}
+            </div>
+
+            {/* Right Navigation Arrow */}
+            {currentImages.length > 1 && (
+              <button
+                type="button"
+                onClick={handleNext}
+                title="Next image (Right Arrow)"
+                aria-label="Next image"
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 size-11 sm:size-12 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 text-white/90 hover:text-white border border-white/20 hover:border-white/50 backdrop-blur-md flex items-center justify-center shadow-2xl transition-all duration-200 hover:scale-105 cursor-pointer group"
+              >
+                <ChevronRight className="size-6 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails Strip */}
+          {currentImages.length > 1 && (
+            <div className="flex items-center justify-center gap-2 px-4 py-3 bg-black/50 border-t border-white/10 overflow-x-auto max-w-full shrink-0">
+              {currentImages.map((id, idx) => (
+                <button
+                  key={`thumb-${id}-${idx}`}
+                  type="button"
+                  onClick={() => setPreviewIndex(idx)}
+                  title={`Jump to image ${idx + 1}`}
+                  aria-label={`Thumbnail ${idx + 1}`}
+                  className={cn(
+                    "relative size-12 sm:size-14 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer bg-neutral-900",
+                    idx === previewIndex
+                      ? "border-primary ring-2 ring-primary/40 scale-105 opacity-100 shadow-md"
+                      : "border-transparent opacity-50 hover:opacity-90 hover:border-white/30",
+                  )}
+                >
+                  <img
+                    src={getImageUrl(id)}
+                    alt={`Thumbnail ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Upload button with dialog */}
       <DialogModal
@@ -198,7 +338,7 @@ export default function SpaceImagesUploadSection<
         }}
         contentProps={{
           className:
-            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh] overflow-y-auto",
+            "w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[88vh] p-5 sm:p-6 overflow-y-auto rounded-2xl border shadow-xl",
         }}
       >
         <FileUpload
@@ -229,6 +369,6 @@ export default function SpaceImagesUploadSection<
           }
         />
       </DialogModal>
-    </>
+    </CollapsibleFormSection>
   );
 }
