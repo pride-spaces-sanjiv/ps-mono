@@ -25,7 +25,7 @@ const CitySchema = new Conn.Schema(
     lng: { type: Number },
     state: { type: String },
   },
-  { _id: false },
+  { _id: false, timestamps: true },
 );
 indexFieldsFromSchema(CitySchema, {
   singleFields: ["name", "state", "areas"],

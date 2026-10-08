@@ -14,3 +14,23 @@ export const LocationSchema = new Conn.Schema(
   },
   { _id: false },
 );
+
+export const GeoLocationSchema = new Conn.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["Point"],
+      required: true,
+      default: "Point",
+    },
+    coordinates: {
+      type: [Number],
+      required: true,
+      validate: {
+        validator: (value: number[]) => value.length === 2,
+        message: "Coordinates must contain [longitude, latitude]",
+      },
+    },
+  },
+  { _id: false },
+);

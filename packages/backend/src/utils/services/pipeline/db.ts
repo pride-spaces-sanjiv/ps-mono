@@ -7,6 +7,7 @@ import { ConventionalProperty } from "@/database/models/conventional.js";
 import { Dump } from "@/database/models/dump.js";
 import { Amenity } from "@/database/models/amenities.js";
 import { City, State } from "@/database/models/state-cities.js";
+import { Place } from "@/database/models/place.js";
 import { RedisClients } from "@/utils/services/redis/redis.js";
 // types
 import { SetOptions } from "redis";
@@ -36,7 +37,7 @@ const invalidateSimilarCaches = async (
     const key = `${redisBaseKey}:${docId}:*`;
     const res = (
       await Promise.allSettled(
-        [docId ? key : "", `${redisBaseKey}:multi:*`]
+        [docId ? key : "", `${redisBaseKey}:multi:*`, `${redisBaseKey}:aggr:*`]
           .filter((k) => k.trim())
           .map((k) => RedisClients.DBPIPED.del(k)),
       )
@@ -206,7 +207,7 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
   ) => {
     if (data) {
       const { expiration = { type: "EX", value: 20 } } = redisOptions;
-      const cacheStr = JSON.stringify(data);
+      const cacheStr = typeof data === "object" ? JSON.stringify(data) : data;
       const result = await RedisClients.DBPIPED.set(redisKey, cacheStr, {
         ...redisOptions,
         expiration,
@@ -403,10 +404,12 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
         const parsed = JSON.parse(cacheStr) as D[];
         const docs = parsed.map((data) => {
           const doc = data;
-          if (typeof data === "object" && data && (data as any)._id) {
-            // @ts-ignore
-            doc._id = Types.ObjectId.createFromHexString((doc as any)._id);
-          }
+          try {
+            if (typeof data === "object" && data && (data as any)._id) {
+              // @ts-ignore
+              doc._id = Types.ObjectId.createFromHexString((doc as any)._id);
+            }
+          } catch (err) {}
           return doc;
         });
         return docs;
@@ -527,6 +530,7 @@ export const pipelineDBs = {
   AMENITY: new PipelineDB({ name: Amenity.collection.name, model: Amenity }),
   STATE: new PipelineDB({ name: State.collection.name, model: State }),
   CITY: new PipelineDB({ name: City.collection.name, model: City }),
+  PLACE: new PipelineDB({ name: Place.collection.name, model: Place }),
   DUMP: new PipelineDB({ name: Dump.collection.name, model: Dump }),
   MIGRATION: new PipelineDB({
     name: Migration.collection.name,
