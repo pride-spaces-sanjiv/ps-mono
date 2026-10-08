@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { placeTypes } from "../data/place.js";
 
 export const locationSchema = z.object({
   address: z.string().trim().min(1, "Address is required"),
@@ -38,9 +39,26 @@ export const nearbyPlacesSchema = locationSchema
   .pick({ lat: true, lng: true })
   .and(
     z.object({
+      types: z
+        .array(
+          z.enum(placeTypes, "Invalid place type mentioned"),
+          "Place types must be a list of valid place",
+        )
+        .optional(),
       radius: z.coerce
         .number()
-        .min(10, "Radius must be a atleast 10 meters")
+        .min(100, "Radius must be a atleast 100 meters")
+        .optional(),
+      radiusFilters: z
+        .array(
+          z.object({
+            type: z.enum(placeTypes, "Invalid place type mentioned"),
+            radius: z.coerce
+              .number()
+              .min(100, "Radius must be a atleast 100 meters"),
+          }),
+          "Radius filters must be a list of data mentioning place type and radius area to search under",
+        )
         .optional(),
     }),
   );
