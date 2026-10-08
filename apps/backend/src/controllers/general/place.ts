@@ -254,19 +254,16 @@ export const getNearbyPlaces = async (
       return;
     }
 
-    const data = cleanPaginatedData({
-      results,
-      page,
-      metrics,
-      err: null,
-      errored: false,
-    });
+    const data = results.map((place) =>
+      convertDataToJSON(place, { alreadyConverted: true, convertId: true }),
+    );
     ResponseHandler.handleSuccess(res, {
       ...responseOpts?.success,
       message: responseOpts?.success?.message || "Got nearby places list",
       data: {
         ...responseOpts?.success?.data,
-        ...data,
+        results: data,
+        metrics: metrics,
       },
     });
   } catch (err) {

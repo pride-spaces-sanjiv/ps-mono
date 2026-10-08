@@ -1,4 +1,4 @@
-import { Document, FlattenMaps } from "mongoose";
+import { Document, FlattenMaps, ObjectId } from "mongoose";
 import { ObjectFieldsMapsToObject } from "@/types/object.js";
 
 /**
@@ -16,6 +16,7 @@ export const convertDataToJSON = <
     showVersionKey: V;
     passId: I;
     alreadyConverted: boolean;
+    convertId: boolean;
     deleteFields: (keyof T)[];
   }>,
   jsonOptions?: Parameters<Document<unknown, any, T>["toJSON"]>[0],
@@ -39,6 +40,12 @@ export const convertDataToJSON = <
     }
     // @ts-ignore
     data.id = data._id;
+    if (options?.convertId) {
+      try {
+        // @ts-ignore
+        data.id = (data._id as ObjectId).toHexString();
+      } catch (err) {}
+    }
     if (!options?.passId) {
       // @ts-ignore
       delete data._id;
