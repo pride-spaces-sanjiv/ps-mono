@@ -225,11 +225,13 @@ export const getNearbyPlaces = async (
     if (aggregatorHandle) {
       aggregatorHandle(aggregator);
     }
+    console.log("Nearby Places aggregator :", aggregator);
 
     const [aggr] = await pipelineDBs.PLACE.getAggregateData<{
       data: any[];
       total?: { count: number }[];
     }>({ aggregation: aggregator, options: preOptions });
+    console.log("Nearby places aggregated response :", aggr);
 
     const metrics: Awaited<ReturnType<typeof paginatedResults>>["metrics"] = {
       total: aggr.total?.[0]?.count ?? 0,
