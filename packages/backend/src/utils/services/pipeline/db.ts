@@ -22,8 +22,10 @@ import {
   UpdateQuery,
   SortOrder,
   Query,
+  AggregateOptions,
 } from "mongoose";
 import { Migration } from "@/database/models/migration.js";
+import { PipelineStage } from "mongoose";
 // import { projectiseDoc } from "@/utils/mongoose/filters.js";
 
 const invalidateSimilarCaches = async (
@@ -197,6 +199,23 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
     return null;
   };
 
+  cacheDirect = async (
+    redisKey: string,
+    data: any,
+    redisOptions: Partial<SetOptions> = {},
+  ) => {
+    if (data) {
+      const { expiration = { type: "EX", value: 20 } } = redisOptions;
+      const cacheStr = JSON.stringify(data);
+      const result = await RedisClients.DBPIPED.set(redisKey, cacheStr, {
+        ...redisOptions,
+        expiration,
+      });
+      return result;
+    }
+    return null;
+  };
+
   cacheDoc = async (
     redisKey: string,
     doc: HydratedDocument<T> | null,
@@ -359,6 +378,46 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
         )
       : this.cacheDoc(redisKey, doc, redisOptions);
     return doc;
+  };
+
+  getAggregateData = async <D extends any>(
+    dbOptions: Partial<{
+      aggregation: PipelineStage[] | undefined;
+      options: AggregateOptions | undefined;
+    }> = {},
+    redisOptions: Partial<SetOptions> = {},
+  ) => {
+    this.validate();
+
+    const { aggregation, options } = dbOptions;
+    const strs = {
+      aggregation: JSON.stringify(aggregation || []),
+      options: JSON.stringify(options || {}),
+    };
+    const redisKey = `${this.redisKeyPrefix}:aggr:${strs.aggregation}:opts:${strs.options}`;
+
+    // Process if cache exists
+    try {
+      const cacheStr = await RedisClients.DBPIPED.get(redisKey);
+      if (cacheStr?.trim()) {
+        const parsed = JSON.parse(cacheStr) as D[];
+        const docs = parsed.map((data) => {
+          const doc = data;
+          if (typeof data === "object" && data && (data as any)._id) {
+            // @ts-ignore
+            doc._id = Types.ObjectId.createFromHexString((doc as any)._id);
+          }
+          return doc;
+        });
+        return docs;
+      }
+    } catch (err) {}
+
+    // Get docs from DB
+    const docs = await this.model?.aggregate<D>(aggregation, options);
+    // Cache data
+    this.cacheDirect(redisKey, docs, redisOptions);
+    return docs;
   };
 
   // Updaters
