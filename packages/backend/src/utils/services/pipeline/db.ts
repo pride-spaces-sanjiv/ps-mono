@@ -317,6 +317,7 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
           }
           return doc;
         });
+        console.log("PIPELINE DB GET MULTI CACHE HIT :", this.name);
         return docs;
       }
     } catch (err) {}
@@ -363,6 +364,7 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
         projection,
       });
       if (cache) {
+        console.log("PIPELINE DB GET SINGLE CACHE HIT :", this.name);
         return cache;
       }
     } catch (err) {}
@@ -412,6 +414,7 @@ export class PipelineDB<N extends string, T extends Record<string, any>> {
           } catch (err) {}
           return doc;
         });
+        console.log("PIPELINE DB AGGREGATE CACHE HIT :", this.name);
         return docs;
       }
     } catch (err) {}
