@@ -6,6 +6,7 @@ import {
 } from "@pride-spaces/backend/types/request.js";
 import * as findPlacesUtil from "@pride-spaces/backend/utils/services/geo/find-place.js";
 import { NearbyPlacesSchema } from "@pride-spaces/common/utils/schemas/location.js";
+import * as GeneralizedPlaces from "@/controllers/general/place.js";
 import { AxiosError, AxiosResponse } from "axios";
 
 export const getLocationFromMapsURL = async (
@@ -47,27 +48,29 @@ export const getNearbyPlaces = async (
   try {
     const { lat, lng } = req.body;
 
-    // Call the nearby util
-    const { data, radius } = await findPlacesUtil.getNearbyPlaces({
-      lat,
-      lng,
-      radius: req.body?.radius,
-    });
-    const places = data?.elements || [];
+    GeneralizedPlaces.getNearbyPlaces(req, res);
 
-    if (!places || places.length <= 0) {
-      ResponseHandler.handleNotFound(res, {
-        errorType: "places-not-found",
-        message: "No places found nearby",
-        data: { lat, lng, places, radius },
-      });
-      return;
-    }
+    // // Call the nearby util
+    // const { data, radius } = await findPlacesUtil.getNearbyPlaces({
+    //   lat,
+    //   lng,
+    //   radius: req.body?.radius,
+    // });
+    // const places = data?.elements || [];
 
-    // Send the location data in the response
-    ResponseHandler.handleSuccess(res, {
-      data: { lat, lng, places, radius },
-    });
+    // if (!places || places.length <= 0) {
+    //   ResponseHandler.handleNotFound(res, {
+    //     errorType: "places-not-found",
+    //     message: "No places found nearby",
+    //     data: { lat, lng, places, radius },
+    //   });
+    //   return;
+    // }
+
+    // // Send the location data in the response
+    // ResponseHandler.handleSuccess(res, {
+    //   data: { lat, lng, places, radius },
+    // });
   } catch (err: any) {
     console.error("Error getting nearby places :", err);
 
@@ -87,6 +90,7 @@ export const getNearbyPlaces = async (
     ResponseHandler.handleError(res, {
       errorType: "places-general-error",
       message: "Failed to get nearby places",
+      data: { error: err?.message },
     });
   }
 };

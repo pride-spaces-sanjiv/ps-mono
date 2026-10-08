@@ -5,6 +5,8 @@ import {
   RootFilterQuery,
   AnyObject,
   QueryOptions,
+  AggregateOptions,
+  PipelineStage,
 } from "mongoose";
 import { ModelToDocument, ModelToRaw } from "../mongoose/document.js";
 import { ResponseHandler } from "@/middlewares/request.js";
@@ -19,6 +21,19 @@ export namespace GeneralizedControllers {
       | ExclusionProjection<RawOfModel<T>>
       | AnyObject;
     preOptions: QueryOptions<RawOfModel<T>>;
+    response: Partial<{
+      error: Partial<typeof ResponseHandler.options.handleErrorOptions>;
+      notFound: Partial<typeof ResponseHandler.options.handleNotFound>;
+      unAuthorized: Partial<
+        typeof ResponseHandler.options.handleUnauthorizedOptions
+      >;
+      success: Partial<typeof ResponseHandler.options.handleSuccess>;
+    }>;
+  }>;
+  export type GetAggregateOptions = Partial<{
+    preAggregators: PipelineStage[];
+    aggregatorHandle: (aggregators?: PipelineStage[]) => PipelineStage[];
+    preOptions: AggregateOptions;
     response: Partial<{
       error: Partial<typeof ResponseHandler.options.handleErrorOptions>;
       notFound: Partial<typeof ResponseHandler.options.handleNotFound>;

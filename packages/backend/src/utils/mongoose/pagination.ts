@@ -28,6 +28,67 @@ type PipelineModel<K extends PipelineNames> = Exclude<
   undefined | null
 >;
 
+export const getPaginationProps = <
+  M extends Model<any> | PipelineModel<PDBKey>,
+  T extends ModelToRaw<M> = ModelToRaw<M>,
+  F extends string = string,
+  PDBKey extends PipelineNames = PipelineNames,
+>(
+  req: ManagedRequest<
+    any,
+    { page?: number; limit?: number; order?: "desc" | "asc"; [k: string]: any }
+  >,
+  acceptedFields?: F[],
+  params?: Partial<{ limit: number }>,
+  sorterOptions?: Partial<SortOptions<F>>,
+) => {
+  const data = {
+    page: 0,
+    limit: 0,
+    offset: 0,
+    sortBy: "" as
+      | Required<NonNullable<ReturnType<typeof getSortOptions<F>>>>["sortBy"]
+      | "",
+    sortOrder: "" as
+      | Required<NonNullable<ReturnType<typeof getSortOptions<F>>>>["sortOrder"]
+      | "",
+    errored: false,
+    err: null as null | Error | MongooseError | MongoError,
+  };
+  try {
+    data.page = Math.max(
+      validateNumber(req.parsedQuery.page, {
+        convertToInt: true,
+        invalidValue: 1,
+      }),
+      1,
+    );
+    const allParams = { limit: 10, ...params };
+    data.limit = validateNumber(req.parsedQuery.limit ?? allParams.limit, {
+      convertToInt: true,
+      invalidValue: 10,
+    });
+    data.offset = (data.page - 1) * data.limit;
+
+    const { sortBy = "", sortOrder = "" } =
+      getSortOptions(req, {
+        allowOnly: acceptedFields || [],
+        ...sorterOptions,
+      }) || {};
+    data.sortBy = sortBy;
+    data.sortOrder = sortOrder;
+    console.log("Pagination sort options : ", {
+      sortBy,
+      sortOrder,
+      acceptedFields,
+    });
+  } catch (err: any) {
+    data.errored = true;
+    data.err = err;
+  }
+  return data;
+};
+
 export const paginatedResults = async <
   M extends Model<any> | PipelineModel<PDBKey>,
   T extends ModelToRaw<M> = ModelToRaw<M>,
@@ -95,6 +156,7 @@ export const paginatedResults = async <
       acceptedFields,
     });
 
+    // @ts-ignore
     const total = await model.countDocuments(args?.filter);
     const next = await model.countDocuments(args?.filter, {
       skip: offset + limit,
