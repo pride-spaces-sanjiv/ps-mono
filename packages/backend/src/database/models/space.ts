@@ -10,7 +10,6 @@ import {
   spaceGrades,
 } from "@pride-spaces/common/utils/data/spaceTypes.js";
 import { workingSizes } from "@pride-spaces/common/utils/data/workingSizes.js";
-import { FilesSchema } from "./schemas/files.js";
 import { LocationSchema } from "./schemas/location.js";
 import { spaceCategories } from "@pride-spaces/common/utils/data/category.js";
 import { certificates } from "@pride-spaces/common/utils/data/certificates.js";
@@ -80,6 +79,29 @@ const FlagsSchema = new Conn.Schema(
     isActive: { type: Boolean },
     isVoService: { type: Boolean, default: false },
     isEventSpace: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
+// Files
+const ImageFilesSchema = new Conn.Schema(
+  {
+    building: { type: [String], default: [] },
+    lobby: { type: [String], default: [] },
+    workspaceArea: { type: [String], default: [] },
+    meetingRoom: { type: [String], default: [] },
+    conferenceRoom: { type: [String], default: [] },
+    pantry: { type: [String], default: [] },
+    cafeteria: { type: [String], default: [] },
+    default: { type: [String], default: [] },
+  },
+  { _id: false },
+);
+
+const FilesSchema = new Conn.Schema(
+  {
+    images: { type: ImageFilesSchema },
+    layouts: { type: [String], default: [] },
   },
   { _id: false },
 );

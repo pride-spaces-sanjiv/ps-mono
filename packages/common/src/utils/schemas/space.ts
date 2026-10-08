@@ -6,7 +6,7 @@ import {
   getSlugSchema,
   getPhoneSchema,
 } from "./string.js";
-import { filesSchema } from "./files.js";
+import { uuidFileSchema } from "./files.js";
 import { locationSchema } from "./location.js";
 import { approvalSchema } from "./dump.js";
 import { personSchema } from "./person.js";
@@ -142,6 +142,66 @@ export const pricingSchema = z.object({
   eventSpaceBrief: z.string().optional(),
   eventSpaceCharges: z.string().optional(),
   eventSpaceCapacity: z.number().optional(),
+});
+
+// -- Files
+const imageFilesSchema = z.object({
+  building: z
+    .array(
+      uuidFileSchema("Invalid image file id"),
+      "Images must be array of image file ids",
+    )
+    .default([]),
+  lobby: z
+    .array(
+      uuidFileSchema("Invalid image file id"),
+      "Images must be array of image file ids",
+    )
+    .default([]),
+  workspaceArea: z
+    .array(
+      uuidFileSchema("Invalid image file id"),
+      "Images must be array of image file ids",
+    )
+    .default([]),
+  meetingRoom: z
+    .array(
+      uuidFileSchema("Invalid image file id"),
+      "Images must be array of image file ids",
+    )
+    .default([]),
+  conferenceRoom: z
+    .array(
+      uuidFileSchema("Invalid image file id"),
+      "Images must be array of image file ids",
+    )
+    .default([]),
+  pantry: z
+    .array(
+      uuidFileSchema("Invalid image file id"),
+      "Images must be array of image file ids",
+    )
+    .default([]),
+  cafeteria: z
+    .array(
+      uuidFileSchema("Invalid image file id"),
+      "Images must be array of image file ids",
+    )
+    .default([]),
+  default: z
+    .array(
+      uuidFileSchema("Invalid image file id"),
+      "Images must be array of image file ids",
+    )
+    .default([]),
+});
+
+const filesSchema = z.object({
+  images: imageFilesSchema.partial().optional(),
+  layouts: z.array(
+    uuidFileSchema("Invalid layout file id"),
+    "Layouts must be array of layout file ids",
+  ),
 });
 
 // --- Space Schema ---

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { validate } from "uuid";
 
-const uuidFileSchema = (message: string) =>
+export const uuidFileSchema = (message: string) =>
   z.string().refine(
     (filename) => {
       const [uuid] = filename.split(/\.[A-z0-9]+/);
