@@ -11,6 +11,15 @@ import {
 import { DefaultTimestampProps } from "mongoose";
 import moment from "moment";
 
+const { default: airports } =
+  await import("../../data/places/bengaluru/airports.json");
+const { default: metros } =
+  await import("../../data/places/bengaluru/metro-stations.json");
+const { default: railways } =
+  await import("../../data/places/bengaluru/railway-stations.json");
+const { default: buses } =
+  await import("../../data/places/bengaluru/bus-stations.json");
+
 const createPlace = async (
   data: Omit<
     ModelToRaw<typeof Place>,
@@ -22,7 +31,8 @@ const createPlace = async (
   return doc;
 };
 
-const places = [];
+await Place.collection.drop();
+const places = [...airports, ...metros, ...railways, ...buses];
 
 for (let i = 0; i < places.length; i++) {
   const place = places[i] as Omit<

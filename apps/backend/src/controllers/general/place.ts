@@ -182,7 +182,9 @@ export const getNearbyPlaces = async (
         maxDistance: maxRadius,
         query: {
           type: {
-            $in: radiusFilters ? Array.from(radiusFiltersTypes) : placeTypes,
+            $in: radiusFilters
+              ? Array.from(radiusFiltersTypes)
+              : body.types || placeTypes,
           },
         },
       },
