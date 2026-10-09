@@ -39,6 +39,7 @@ import {
 import { GeneralizedControllers } from "@pride-spaces/backend/types/data/general-controllers.js";
 import { ModelToRaw } from "@pride-spaces/backend/types/mongoose/document.js";
 import { NearbyPlacesSchema } from "@pride-spaces/common/utils/schemas/location.js";
+import * as NearbyPlaceUtil from "@pride-spaces/backend/utils/services/geo/nearby-place.js";
 import { placeTypes } from "@pride-spaces/common/utils/data/place.js";
 
 type ModelType = typeof Place;
@@ -161,82 +162,92 @@ export const getNearbyPlaces = async (
 
     const { radius = 5000, ...body } = req.body;
 
-    // Preparing radius filters
-    const radiusFilters = body.radiusFilters;
-    const radiusFiltersTypes = new Set(radiusFilters?.map((f) => f.type) || []);
-
-    const aggregator: PipelineStage[] = [...preAggregators];
-    const maxRadius = radiusFilters
-      ? // Prepare firstly with geoNear aggr to attend all places picked up for the max radius of all
-        Math.max(...radiusFilters.map((filter) => filter.radius))
-      : radius;
-    aggregator.push({
-      $geoNear: {
-        near: {
-          type: "Point",
-          coordinates: [req.body.lng, req.body.lat],
-        },
-        key: "location",
-        distanceField: "distance",
-        spherical: true,
-        maxDistance: maxRadius,
-        query:
-          radiusFilters || body.types
-            ? {
-                type: {
-                  $in: radiusFilters
-                    ? Array.from(radiusFiltersTypes)
-                    : body.types,
-                },
-              }
-            : {},
+    const [aggr] = await NearbyPlaceUtil.getNearbyPlacesFromLoc(
+      { radius, ...body },
+      {
+        preAggregators,
+        preOptions,
+        aggregatorHandle,
+        paginationProps: { page, limit, offset, sortBy, sortOrder },
       },
-    });
-    // Only filter matches that bound within max radius passed to them
-    radiusFilters &&
-      aggregator.push({
-        $match: {
-          $or: radiusFilters.map((filter) => ({
-            type: filter.type,
-            distance: { $lte: filter.radius },
-          })),
-        },
-      });
-    aggregator.push({
-      $facet: {
-        data: [
-          { $skip: offset },
-          { $limit: limit },
-          {
-            $project: {
-              _id: 1,
-              name: 1,
-              type: 1,
-              lat: {
-                $arrayElemAt: ["$location.coordinates", 1],
-              },
-              lng: {
-                $arrayElemAt: ["$location.coordinates", 0],
-              },
-              distance: 1,
-              createdAt: 1,
-              updatedAt: 1,
-            },
-          },
-        ],
-        total: [{ $count: "count" }],
-      },
-    });
-    if (aggregatorHandle) {
-      aggregatorHandle(aggregator);
-    }
-    console.log("Nearby Places aggregator :", aggregator);
+    );
 
-    const [aggr] = await pipelineDBs.PLACE.getAggregateData<{
-      data: any[];
-      total?: { count: number }[];
-    }>({ aggregation: aggregator, options: preOptions });
-    console.log("Nearby places aggregated response :", aggr);
+    // // Preparing radius filters
+    // const radiusFilters = body.radiusFilters;
+    // const radiusFiltersTypes = new Set(radiusFilters?.map((f) => f.type) || []);
+
+    // const aggregator: PipelineStage[] = [...preAggregators];
+    // const maxRadius = radiusFilters
+    //   ? // Prepare firstly with geoNear aggr to attend all places picked up for the max radius of all
+    //     Math.max(...radiusFilters.map((filter) => filter.radius))
+    //   : radius;
+    // aggregator.push({
+    //   $geoNear: {
+    //     near: {
+    //       type: "Point",
+    //       coordinates: [req.body.lng, req.body.lat],
+    //     },
+    //     key: "location",
+    //     distanceField: "distance",
+    //     spherical: true,
+    //     maxDistance: maxRadius,
+    //     query:
+    //       radiusFilters || body.types
+    //         ? {
+    //             type: {
+    //               $in: radiusFilters
+    //                 ? Array.from(radiusFiltersTypes)
+    //                 : body.types,
+    //             },
+    //           }
+    //         : {},
+    //   },
+    // });
+    // // Only filter matches that bound within max radius passed to them
+    // radiusFilters &&
+    //   aggregator.push({
+    //     $match: {
+    //       $or: radiusFilters.map((filter) => ({
+    //         type: filter.type,
+    //         distance: { $lte: filter.radius },
+    //       })),
+    //     },
+    //   });
+    // aggregator.push({
+    //   $facet: {
+    //     data: [
+    //       { $skip: offset },
+    //       { $limit: limit },
+    //       {
+    //         $project: {
+    //           _id: 1,
+    //           name: 1,
+    //           type: 1,
+    //           lat: {
+    //             $arrayElemAt: ["$location.coordinates", 1],
+    //           },
+    //           lng: {
+    //             $arrayElemAt: ["$location.coordinates", 0],
+    //           },
+    //           distance: 1,
+    //           createdAt: 1,
+    //           updatedAt: 1,
+    //         },
+    //       },
+    //     ],
+    //     total: [{ $count: "count" }],
+    //   },
+    // });
+    // if (aggregatorHandle) {
+    //   aggregatorHandle(aggregator);
+    // }
+    // console.log("Nearby Places aggregator :", aggregator);
+
+    // const [aggr] = await pipelineDBs.PLACE.getAggregateData<{
+    //   data: any[];
+    //   total?: { count: number }[];
+    // }>({ aggregation: aggregator, options: preOptions });
+    // console.log("Nearby places aggregated response :", aggr);
 
     const metrics: Awaited<ReturnType<typeof paginatedResults>>["metrics"] = {
       total: aggr.total?.[0]?.count ?? 0,
@@ -269,6 +280,7 @@ export const getNearbyPlaces = async (
         ...responseOpts?.success?.data,
         results: data,
         metrics: metrics,
+        totalPlaces: aggr.totalCounts || null,
       },
     });
   } catch (err) {

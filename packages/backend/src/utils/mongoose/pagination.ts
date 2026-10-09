@@ -29,8 +29,7 @@ type PipelineModel<K extends PipelineNames> = Exclude<
 >;
 
 export const getPaginationProps = <
-  M extends Model<any> | PipelineModel<PDBKey>,
-  T extends ModelToRaw<M> = ModelToRaw<M>,
+  T extends any = any,
   F extends string = string,
   PDBKey extends PipelineNames = PipelineNames,
 >(
