@@ -180,13 +180,16 @@ export const getNearbyPlaces = async (
         distanceField: "distance",
         spherical: true,
         maxDistance: maxRadius,
-        query: {
-          type: {
-            $in: radiusFilters
-              ? Array.from(radiusFiltersTypes)
-              : body.types || placeTypes,
-          },
-        },
+        query:
+          radiusFilters || body.types
+            ? {
+                type: {
+                  $in: radiusFilters
+                    ? Array.from(radiusFiltersTypes)
+                    : body.types,
+                },
+              }
+            : {},
       },
     });
     // Only filter matches that bound within max radius passed to them
